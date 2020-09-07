@@ -1,0 +1,19 @@
+<root>
+    <strings>
+        <mode>train</mode>
+        <seq_data>data/seq.data</seq_data>
+        <train_data>checkpoint/seq2seq</train_data>
+        <resource_data>data/data.conv</resource_data>
+        <start>E</start>
+        <end>M</end>
+    </strings>
+    <ints>
+        <enc_vocab_size>20000</enc_vocab_size>
+        <dec_vocab_size>20000</dec_vocab_size>
+        <embedding_dim>128</embedding_dim>
+        <layer_size>256</layer_size>
+        <max_train_data_size>50000</max_train_data_size>
+        <batch_size>128</batch_size>
+    </ints>
+    <floats></floats>
+</root>
