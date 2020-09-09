@@ -1,16 +1,6 @@
 import tensorflow as tf
-import config.getConfig as getConfig
+import config.getConfig as gConfig
 import common.attention as attention
-
-config = {}
-
-config = getConfig.get_config_ini('config/ini/seq2seq.ini')
-
-vocab_inp_size = config['enc_vocab_size']
-vocab_tar_size = config['dec_vocab_size']
-embedding_dim = config['embedding_dim']
-units = config['layer_size']
-BATCH_SIZE = config['batch_size']
 
 class Encoder(tf.keras.Model):
     def __init__(self, vocab_size, embedding_dim, enc_units, batch_sz):
@@ -55,8 +45,8 @@ class Decoder(tf.keras.Model):
 
         return x, state, attention_weights
 
-encoder = Encoder(vocab_inp_size, embedding_dim, units, BATCH_SIZE)
-decoder = Decoder(vocab_tar_size, embedding_dim, units, BATCH_SIZE)
+encoder = Encoder(gConfig.vocab_inp_size, gConfig.embedding_dim, gConfig.units, gConfig.BATCH_SIZE)
+decoder = Decoder(gConfig.vocab_tar_size, gConfig.embedding_dim, gConfig.units, gConfig.BATCH_SIZE)
 
 optimizer = tf.keras.optimizers.Adam()
 loss_object = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)
@@ -82,7 +72,7 @@ def train_step(inp, targ, targ_lang, enc_hidden):
         enc_output, enc_hidden = encoder(inp, enc_hidden)
         dec_hidden = enc_hidden
 
-        dec_input = tf.expand_dims([targ_lang.word_index['start']] * BATCH_SIZE, 1)
+        dec_input = tf.expand_dims([targ_lang.word_index['start']] * gConfig.BATCH_SIZE, 1)
 
         for t in range(1, targ.shape[1]):
             predictions, dec_hidden, _ = decoder(dec_input, dec_hidden, enc_output)
