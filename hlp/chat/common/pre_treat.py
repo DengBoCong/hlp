@@ -17,6 +17,7 @@ def preprocess_raw_data():  # tokenizer
 
     # 首先判断原数据集是否存在，不存在则退出
     if not os.path.exists(raw_data):
+        print('数据集不存在，请添加数据集!')
         exit()
 
     pairs = []

@@ -2,6 +2,7 @@ import io
 import os
 import sys
 import time
+from pathlib import Path
 import tensorflow as tf
 import model.Seq2Seq.model as model
 import config.getConfig as gConfig
@@ -9,7 +10,13 @@ from common.data_utils import preprocess_sentence
 
 
 def create_dataset(path, num_examples):
-    lines = io.open(path, encoding='UTF-8').read().strip().split('\n')
+    is_exist = Path(path)
+    if not is_exist.exists():
+        file = open(path, 'w', encoding='utf-8')
+        file.write('吃饭 了 吗' + '\t' + '吃 了')
+        file.close()
+    size = os.path.getsize(path)
+    lines = io.open(path, encoding='utf-8').read().strip().split('\n')
     word_pairs = [[preprocess_sentence(w) for w in l.split('\t')] for l in lines[:num_examples]]
     return zip(*word_pairs)
 
@@ -44,27 +51,24 @@ def train():
     print(steps_per_epoch)
     enc_hidden = model.encoder.initialize_hidden_state()
     checkpoint_dir = gConfig.train_data
+    # 这里需要检查一下是否有模型的目录，没有的话就创建，有的话就跳过
+    is_exist = Path(checkpoint_dir)
+    if not is_exist.exists():
+        os.makedirs(checkpoint_dir, exist_ok=True)
     ckpt = tf.io.gfile.listdir(checkpoint_dir)
     if ckpt:
-        model.checkpoint.restore(tf.train.latest_checkpoint(checkpoint_dir))
+        model.checkpoint.restore(tf.train.latest_checkpoint(checkpoint_dir)).expect_partial()
     BUFFER_SIZE = len(input_tensor)
     dataset = tf.data.Dataset.from_tensor_slices((input_tensor, target_tensor)).shuffle(BUFFER_SIZE)
     dataset = dataset.batch(gConfig.BATCH_SIZE, drop_remainder=True)
     checkpoint_dir = gConfig.train_data
     checkpoint_prefix = os.path.join(checkpoint_dir, "ckpt")
-    start_time = time.time()
 
     while True:
-        start_time_epoch = time.time()
         total_loss = 0
         for (batch, (inp, targ)) in enumerate(dataset.take(steps_per_epoch)):
             batch_loss = model.train_step(inp, targ, target_token, enc_hidden)
             total_loss += batch_loss
             print(batch_loss.numpy())
-
-        step_time_epoch = (time.time() - start_time_epoch) / steps_per_epoch
-        step_loss = total_loss / steps_per_epoch
-        current_steps = +steps_per_epoch
-        step_time_total = (time.time() - start_time) / current_steps
         model.checkpoint.save(file_prefix=checkpoint_prefix)
         sys.stdout.flush()
