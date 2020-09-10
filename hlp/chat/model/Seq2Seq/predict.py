@@ -1,3 +1,5 @@
+import os
+from pathlib import Path
 import tensorflow as tf
 import config.getConfig as gConfig
 import model.Seq2Seq.model as model
@@ -7,8 +9,16 @@ import model.Seq2Seq.trainer as seq
 
 def predict(sentence):
     checkpoint_dir = gConfig.train_data
-    print(tf.train.latest_checkpoint(checkpoint_dir))
-    model.checkpoint.restore(tf.train.latest_checkpoint(checkpoint_dir)).expect_partial()
+    # print(checkpoint_dir)
+    pExist = Path(checkpoint_dir)
+    if not pExist.exists():
+        os.makedirs(checkpoint_dir, exist_ok=True)
+    ckpt = tf.io.gfile.listdir(checkpoint_dir)
+    if ckpt:
+        model.checkpoint.restore(tf.train.latest_checkpoint(checkpoint_dir)).expect_partial()
+    else:
+        print('请先训练再进行测试体验，训练轮数建议一百轮以上!')
+        return
     sentence = preprocess_sentence(sentence)
     inputs = [seq.input_token.word_index.get(i, 3) for i in sentence.split(' ')]
     inputs = tf.keras.preprocessing.sequence.pad_sequences([inputs], maxlen=gConfig.max_length_inp, padding='post')

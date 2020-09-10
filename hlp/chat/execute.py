@@ -2,6 +2,7 @@ import sys
 import os
 from model.Seq2Seq.trainer import train
 from model.Seq2Seq.predict import predict
+from common.pre_treat import preprocess_raw_data
 
 '''
 主入口：指令需要附带运行参数
@@ -26,6 +27,8 @@ if __name__ == '__main__':
                     break
                 else:
                     print('ChatBot:', predict(sentence))
+        elif sys.argv[2] == 'pre_treat':
+            preprocess_raw_data()
         else:
             print('Error:不存在', sys.argv[2], '模式!')
     else:
