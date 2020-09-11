@@ -13,7 +13,7 @@
 ### 部分配置参数说明
 配置文件中的max_train_data_size用来设置训练用的最大数据量，目前设置的是100个问答对，在运行了100epoch之后的测试结果如下：
 
-![](https://github.com/hlp-ai/hlp/tree/master/hlp/chat/image/test.png)
+![](https://img-blog.csdnimg.cn/20200911224136498.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L0RCQ18xMjE=,size_16,color_FFFFFF,t_70#pic_center)
 
 # 版本日志：
 
