@@ -9,7 +9,7 @@ __pycache__/
 # Distribution / packaging
 .Python
 #data/
-#checkpoint/
+checkpoint/
 build/
 develop-eggs/
 dist/

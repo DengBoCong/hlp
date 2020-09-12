@@ -1,7 +1,7 @@
 import os
 import re
 import jieba
-import config.getConfig as gConfig
+import config.get_config as gConfig
 from zhon.hanzi import punctuation
 
 '''
@@ -29,7 +29,7 @@ def preprocess_raw_data():  # tokenizer
         pair_count = 0
         for line in raw_file:
             line = line.strip('\n').replace('/', '')
-            line = re.sub(r"[%s]+" % punctuation, "", line)
+            # line = re.sub(r"[%s]+" % punctuation, "", line)
             if line == '':
                 one_pair = []
                 continue
@@ -42,6 +42,7 @@ def preprocess_raw_data():  # tokenizer
             else:
                 one_pair.append(line)
 
+    print('读取完毕，处理中...')
     results = []
     # 接下来，我们把上面的对话内容进行分词，并存入train_tokenized文本中
     for pair in pairs:
@@ -52,6 +53,7 @@ def preprocess_raw_data():  # tokenizer
         pair[0] = " ".join(jieba.cut(pair[0]))
         pair[1] = " ".join(jieba.cut(pair[1]))
         results.append(pair[0] + '\t' + pair[1])
+
 
     train_tokenized = open(tokenized_data, 'w', encoding='utf-8')
     for i in range(len(results)):

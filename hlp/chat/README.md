@@ -10,15 +10,13 @@
 
 **正常执行顺序为pre_treat->train->chat**
 
-**相关参数后继补充**
+### 部分配置参数说明
+配置文件中的max_train_data_size用来设置训练用的最大数据量，目前设置的是100个问答对，在运行了100epoch之后的测试结果如下：
+
+![](https://img-blog.csdnimg.cn/20200911224136498.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L0RCQ18xMjE=,size_16,color_FFFFFF,t_70#pic_center)
 
 # 版本日志：
-+ 2020.9.9 
-   + 目前分词处理的文本读取还有一点逻辑问题，待处理，所以在没有生成足够的train_tokenized.txt
-的分词数据进行训练和预测时，需要执行pre_treat模式
-   + 还有模型评估和保存下一个issue完善
-+ 2020.9.10
-   + 更新了text.txt和text_tokenized.txt用于测试，只包含一百左右的问答对
+
 
 
 # 数据集

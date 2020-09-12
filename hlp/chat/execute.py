@@ -1,7 +1,7 @@
 import sys
 import os
-from model.Seq2Seq.trainer import train
-from model.Seq2Seq.predict import predict
+from model.seq2seq.trainer import train
+from model.seq2seq.predict import predict
 from common.pre_treat import preprocess_raw_data
 
 '''
