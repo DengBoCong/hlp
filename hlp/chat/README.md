@@ -1,9 +1,11 @@
 # 运行说明
 + execute.py主入口文件：指令需要附带运行参数
-+ cmd：python execute.py [模型类别] [执行模式]
-+ 模型类别：seq2seq/gpt2
-+ 执行类别：chat/train/pre_treat
-
++ cmd：python execute.py -t/--type [模型类别] -k/--kind [执行模式]
++ 模型类别：seq2seq(默认)/gpt2
++ 执行类别：pre_treat(默认)/train/chat
++ 执行指令示例：
+   + python execute.py
+   + python execute.py -t seq2seq -k pre_treat
 + pre_treat模式为文本预处理模式，如果在没有分词结果集的情况下，需要先运行pre_treat模式
 + train模式为训练模式
 + chat模式为对话模式。chat模式下运行时，输入exit即退出对话。
