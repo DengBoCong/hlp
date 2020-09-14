@@ -1,27 +1,11 @@
 import os
 import jieba
-from pathlib import Path
 import tensorflow as tf
 import config.get_config as _config
-import model.seq2seq.model as model
 import common.data_utils as _data
-import model.seq2seq.trainer as seq
 
 
-def predict(sentence):
-    checkpoint_dir = _config.train_data
-
-    # 这里需要检查一下是否有模型的目录，没有的话就创建，有的话就跳过
-    is_exist = Path(checkpoint_dir)
-    if not is_exist.exists():
-        os.makedirs(checkpoint_dir, exist_ok=True)
-    ckpt = tf.io.gfile.listdir(checkpoint_dir)
-    if ckpt:
-        model.checkpoint.restore(tf.train.latest_checkpoint(checkpoint_dir)).expect_partial()
-    else:
-        print('请先训练再进行测试体验，训练轮数建议一百轮以上!')
-        return
-
+def predict(sentence, model):
     # 在这里，我们需要对输入的语句进行文本处理
     sentence = " ".join(jieba.cut(sentence))
     sentence = _data.preprocess_sentence(sentence)
