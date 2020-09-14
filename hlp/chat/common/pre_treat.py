@@ -1,7 +1,7 @@
 import os
 import re
 import jieba
-import config.get_config as gConfig
+import config.get_config as _config
 from zhon.hanzi import punctuation
 
 '''
@@ -12,8 +12,8 @@ tokenized_data保存分词后的数据集路径
 
 
 def preprocess_raw_data():  # tokenizer
-    raw_data = gConfig.resource_data
-    tokenized_data = gConfig.tokenized_data
+    raw_data = _config.resource_data
+    tokenized_data = _config.tokenized_data
 
     # 首先判断原数据集是否存在，不存在则退出
     if not os.path.exists(raw_data):
@@ -54,7 +54,6 @@ def preprocess_raw_data():  # tokenizer
         pair[1] = " ".join(jieba.cut(pair[1]))
         results.append(pair[0] + '\t' + pair[1])
 
-
     train_tokenized = open(tokenized_data, 'w', encoding='utf-8')
     for i in range(len(results)):
         train_tokenized.write(results[i] + '\n')
@@ -63,4 +62,3 @@ def preprocess_raw_data():  # tokenizer
             print(len(range(len(results))), '处理进度：', i)
 
     train_tokenized.close()
-
