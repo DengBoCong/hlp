@@ -1,6 +1,6 @@
 import tensorflow as tf
 import config.get_config as _config
-import common.attention as attention
+import common.layers as layers
 import common.data_utils as _data
 
 
@@ -35,7 +35,7 @@ class Decoder(tf.keras.Model):
                                        return_state=True,
                                        recurrent_initializer='glorot_uniform')
         self.fc = tf.keras.layers.Dense(vocab_size)
-        self.attention = attention.BahdanauAttention(self.dec_units)
+        self.attention = layers.BahdanauAttention(self.dec_units)
 
     def call(self, x, hidden, enc_output):
         context_vector, attention_weights = self.attention(hidden, enc_output)

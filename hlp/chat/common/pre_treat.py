@@ -38,7 +38,8 @@ def preprocess_raw_data():  # tokenizer
                 pairs.append(one_pair)
                 one_pair = [line]
                 pair_count += 1
-                print('已处理：', pair_count, '个问答对')
+                if pair_count % 10000 == 0:
+                    print('已处理：', pair_count, '个问答对')
             else:
                 one_pair.append(line)
 
@@ -58,7 +59,7 @@ def preprocess_raw_data():  # tokenizer
     for i in range(len(results)):
         train_tokenized.write(results[i] + '\n')
 
-        if i % 1000 == 0:
+        if i % 10000 == 0:
             print(len(range(len(results))), '处理进度：', i)
 
     train_tokenized.close()

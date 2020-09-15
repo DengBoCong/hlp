@@ -12,7 +12,7 @@ import common.data_utils as _data
 def train():
     print('训练开始，正在准备数据中...')
     steps_per_epoch = len(_data.input_tensor) // _config.BATCH_SIZE
-    checkpoint_dir = _config.train_data
+    checkpoint_dir = _config.seq2seq_train_data
     # 这里需要检查一下是否有模型的目录，没有的话就创建，有的话就跳过
     is_exist = Path(checkpoint_dir)
     if not is_exist.exists():
@@ -20,10 +20,9 @@ def train():
     ckpt = tf.io.gfile.listdir(checkpoint_dir)
     if ckpt:
         model.checkpoint.restore(tf.train.latest_checkpoint(checkpoint_dir)).expect_partial()
-    BUFFER_SIZE = len(_data.input_tensor)
-    dataset = tf.data.Dataset.from_tensor_slices((_data.input_tensor, _data.target_tensor)).shuffle(BUFFER_SIZE)
+    # 这里一系列的操作是加速模型的学习
+    dataset = tf.data.Dataset.from_tensor_slices((_data.input_tensor, _data.target_tensor)).cache().shuffle(_config.BUFFER_SIZE).prefetch(tf.data.experimental.AUTOTUNE)
     dataset = dataset.batch(_config.BATCH_SIZE, drop_remainder=True)
-    checkpoint_dir = _config.train_data
     checkpoint_prefix = os.path.join(checkpoint_dir, "ckpt")
     start_time = time.time()
 

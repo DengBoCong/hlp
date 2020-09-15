@@ -1,7 +1,7 @@
 # 运行说明
 + execute.py主入口文件：指令需要附带运行参数
 + cmd：python execute.py -t/--type [模型类别] -k/--kind [执行模式]
-+ 模型类别：seq2seq(默认)/gpt2
++ 模型类别：seq2seq(默认)/transformer/gpt2
 + 执行类别：pre_treat(默认)/train/chat
 + 执行指令示例：
    + python execute.py

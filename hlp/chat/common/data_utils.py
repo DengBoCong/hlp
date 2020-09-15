@@ -39,10 +39,21 @@ def tokenize(lang):
     lang_tokenizer.fit_on_texts(lang)
 
     tensor = lang_tokenizer.texts_to_sequences(lang)
-
-    tensor = tf.keras.preprocessing.sequence.pad_sequences(tensor, padding='post')
+    tensor = tf.keras.preprocessing.sequence.pad_sequences(tensor, maxlen=_config.max_length_inp, padding='post')
 
     return tensor, lang_tokenizer
+
+
+def create_padding_mask(input):
+    mask = tf.cast(tf.math.equal(input, 0), tf.float32)
+    return mask[:, tf.newaxis, tf.newaxis, :]
+
+
+def create_look_ahead_mask(input):
+    seq_len = tf.shape(input)[1]
+    look_ahead_mask = 1 - tf.linalg.band_part(tf.ones((seq_len, seq_len)), -1, 0)
+    padding_mask = create_padding_mask(input)
+    return tf.maximum(look_ahead_mask, padding_mask)
 
 
 input_tensor, input_token, target_tensor, target_token = read_data(_config.data, _config.max_train_data_size)
