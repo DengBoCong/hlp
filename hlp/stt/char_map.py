@@ -50,5 +50,3 @@ for line in char_map_str.strip().split('\n'):
     index_map[int(index)] = ch
 
 index_map[0] = ' ' #在index_map里边以0:' '为键值对而char_map里边以'<space>':0为键值对.
-
-print(index_map)
