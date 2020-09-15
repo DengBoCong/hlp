@@ -1,0 +1,15 @@
+{
+  "mode": "train",
+  "train_data": "checkpoint\\seq2seq",
+  "resource_data": "data\\train.txt",
+  "tokenized_data": "data\\train_tokenized.txt",
+  "start": "E",
+  "end": "M",
+  "enc_vocab_size": 20000,
+  "dec_vocab_size": 20000,
+  "embedding_dim": 256,
+  "layer_size": 1024,
+  "max_train_data_size": 100,
+  "batch_size": 64,
+  "epochs": 100
+}
