@@ -8,7 +8,8 @@ from common.data_utils import load_dataset
 
 def predict(sentence):
     """
-    这里的相关操作基本seq2seq中差不多，不过多注释
+    这里的相关操作基本seq2seq中差不多，不过多注释，需要
+    多提一下的就是这里使用了Beam Search
     :param sentence:
     :return:
     """

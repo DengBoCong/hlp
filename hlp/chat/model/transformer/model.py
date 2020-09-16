@@ -13,12 +13,12 @@ def encoder(vocab_size, num_layers, units, d_model,
     encoder_layer层，更具Transformer架构里面的描述，可以根据
     效果进行调整，在encoder中还进行了位置编码，具体原理自行翻阅
     资料，就是实现公式的问题，这里就不多做注释了
-    :param vocab_size:
-    :param num_layers:
-    :param units:
-    :param d_model:
-    :param num_heads:
-    :param dropout:
+    :param vocab_size:token大小
+    :param num_layers:编码解码的数量
+    :param units:单元大小
+    :param d_model:深度
+    :param num_heads:多头注意力的头部层数量
+    :param dropout:dropout的权重
     :param name:
     :return: Model(inputs=[inputs, padding_mask], outputs=outputs)
     """
@@ -48,12 +48,12 @@ def decoder(vocab_size, num_layers, units, d_model, num_heads, dropout, name="de
     transformer的decoder，使用函数式API进行编写，实现了
     模型层内部的一系列操作，相关的一些变量的时候基本和上面
     的encoder差不多，这里不多说
-    :param vocab_size:
-    :param num_layers:
-    :param units:
-    :param d_model:
-    :param num_heads:
-    :param dropout:
+    :param vocab_size:token大小
+    :param num_layers:编码解码的层数量
+    :param units:单元大小
+    :param d_model:深度
+    :param num_heads:多头注意力的头部层数量
+    :param dropout:dropout的权重
     :param name:
     :return:
     """
@@ -70,18 +70,12 @@ def decoder(vocab_size, num_layers, units, d_model, num_heads, dropout, name="de
 
     for i in range(num_layers):
         outputs = layers.transformer_decoder_layer(
-            units=units,
-            d_model=d_model,
-            num_heads=num_heads,
-            dropout=dropout,
-            name="transformer_decoder_layer_{}".format(i),
+            units=units, d_model=d_model, num_heads=num_heads,
+            dropout=dropout, name="transformer_decoder_layer_{}".format(i),
         )(inputs=[outputs, enc_outputs, look_ahead_mask, padding_mask])
 
-    return tf.keras.Model(
-        inputs=[inputs, enc_outputs, look_ahead_mask, padding_mask],
-        outputs=outputs,
-        name=name
-    )
+    return tf.keras.Model(inputs=[inputs, enc_outputs, look_ahead_mask, padding_mask],
+                          outputs=outputs, name=name)
 
 
 def transformer(vocab_size, num_layers, units, d_model,
@@ -91,12 +85,12 @@ def transformer(vocab_size, num_layers, units, d_model,
     encoder和decoder的实现，这里需要注意的是，因为是使用self_attention，
     所以在输入的时候，这里需要进行mask，防止暴露句子中带预测的信息，影响
     模型的效果
-    :param vocab_size:
-    :param num_layers:
-    :param units:
-    :param d_model:
-    :param num_heads:
-    :param dropout:
+    :param vocab_size:token大小
+    :param num_layers:编码解码层的数量
+    :param units:单元大小
+    :param d_model:深度
+    :param num_heads:多头注意力的头部层数量
+    :param dropout:dropout的权重
     :param name:
     :return:
     """
@@ -154,9 +148,7 @@ class CustomSchedule(tf.keras.optimizers.schedules.LearningRateSchedule):
 def loss_function(real, pred):
     real = tf.reshape(real, shape=(-1, _config.max_length_inp - 1))
     loss = tf.keras.losses.SparseCategoricalCrossentropy(
-        from_logits=True, reduction='none'
-    )(real, pred)
-
+        from_logits=True, reduction='none')(real, pred)
     mask = tf.cast(tf.not_equal(real, 0), tf.float32)
     loss = tf.multiply(loss, mask)
 
@@ -185,8 +177,6 @@ model = transformer(
     dropout=_config.transformer_dropout
 )
 
-# model.compile(optimizer=optimizer, loss=loss_function, metrics=[accuracy])
-
 checkpoint = tf.train.Checkpoint(transformer=model, optimizer=optimizer)
 
 train_loss = tf.keras.metrics.Mean(name='train_loss')
@@ -196,8 +186,8 @@ train_accuracy = tf.keras.metrics.SparseCategoricalAccuracy(name='train_accuracy
 def train_step(inp, tar):
     """
     这里要多提一下的就是把target的end标志去掉，然后作为decoder的输入
-    :param inp:
-    :param tar:
+    :param inp:编码后的问句
+    :param tar:编码后的答句
     :return:
     """
     tar_inp = tar[:, :-1]

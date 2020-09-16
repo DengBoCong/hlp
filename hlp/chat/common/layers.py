@@ -96,6 +96,7 @@ class PositionalEncoding(tf.keras.layers.Layer):
     位置编码的简单实现，实现了位置编码的两个公式(针对奇偶位置进行的编码)
     位置编码原理自行翻阅资料，这边不做注释
     """
+
     def __init__(self, position, d_model):
         super(PositionalEncoding, self).__init__()
         self.pos_encoding = self.positional_encoding(position, d_model)
@@ -107,8 +108,7 @@ class PositionalEncoding(tf.keras.layers.Layer):
     def positional_encoding(self, position, d_model):
         angle_rads = self.get_angles(
             position=tf.range(position, dtype=tf.float32)[:, tf.newaxis],
-            i=tf.range(d_model, dtype=tf.float32)[tf.newaxis, :],
-            d_model=d_model
+            i=tf.range(d_model, dtype=tf.float32)[tf.newaxis, :], d_model=d_model
         )
 
         sines = tf.math.sin(angle_rads[:, 0::2])
@@ -121,23 +121,20 @@ class PositionalEncoding(tf.keras.layers.Layer):
         return inputs + self.pos_encoding[:, :tf.shape(inputs)[1], :]
 
 
-
 def transformer_encoder_layer(units, d_model, num_heads, dropout, name="transformer_encoder_layer"):
     """
-    # Transformerd的encoder层，使用函数式API
-    :param units:
-    :param d_model:
-    :param num_heads:
-    :param dropout:
+    # Transformer的encoder层，使用函数式API
+    :param units:单元大小
+    :param d_model:深度
+    :param num_heads:多头注意力的头部层数量
+    :param dropout:dropout的权重
     :param name:
     :return:
     """
     inputs = tf.keras.Input(shape=(None, d_model), name="inputs")
     padding_mask = tf.keras.Input(shape=(1, 1, None), name="padding_mask")
 
-    attention = MultiHeadAttention(
-        d_model, num_heads, name="attention"
-    )({
+    attention = MultiHeadAttention(d_model, num_heads, name="attention")({
         'query': inputs,
         'key': inputs,
         'value': inputs,
@@ -155,16 +152,14 @@ def transformer_encoder_layer(units, d_model, num_heads, dropout, name="transfor
     return tf.keras.Model(inputs=[inputs, padding_mask], outputs=outputs, name=name)
 
 
-# Transformerd的decoder层，使用函数式API
+# Transformer的decoder层，使用函数式API
 def transformer_decoder_layer(units, d_model, num_heads, dropout, name="transformer_decoder_layer"):
     inputs = tf.keras.Input(shape=(None, d_model), name="inputs")
     enc_outputs = tf.keras.Input(shape=(None, d_model), name="encoder_outputs")
     look_ahead_mask = tf.keras.Input(shape=(1, None, None), name="look_ahead_mask")
     padding_mask = tf.keras.Input(shape=(1, 1, None), name="padding_mask")
 
-    attention1 = MultiHeadAttention(
-        d_model, num_heads, name="attention_1"
-    )(inputs={
+    attention1 = MultiHeadAttention(d_model, num_heads, name="attention_1")(inputs={
         'query': inputs,
         'key': inputs,
         'value': inputs,
@@ -172,9 +167,7 @@ def transformer_decoder_layer(units, d_model, num_heads, dropout, name="transfor
     })
     attention1 = tf.keras.layers.LayerNormalization(epsilon=1e-6)(attention1 + inputs)
 
-    attention2 = MultiHeadAttention(
-        d_model, num_heads, name="attention_2"
-    )(inputs={
+    attention2 = MultiHeadAttention(d_model, num_heads, name="attention_2")(inputs={
         'query': attention1,
         'key': enc_outputs,
         'value': enc_outputs,

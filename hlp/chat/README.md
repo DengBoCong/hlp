@@ -25,12 +25,14 @@
 
 #### Transformer架构
 目前设置的是100个问答对，在运行了300epoch之后的测试结果如下：
+
 ![](https://img-blog.csdnimg.cn/20200916135748737.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L0RCQ18xMjE=,size_16,color_FFFFFF,t_70#pic_center)
 
 # 版本日志：
 + 2020.09.16：补充transformer模型
    + 代码进行部分调整和重构
    + 针对项目中的代码进行了注释，提高可读性
+   + beam search的具体实现还在考虑中，seq2seq以及transformer均加上使用beam search
 
 
 # 数据集
