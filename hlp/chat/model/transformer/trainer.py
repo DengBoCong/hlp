@@ -6,22 +6,20 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import tensorflow as tf
 import common.layers as layers
-import common.data_utils as _data
 import config.get_config as _config
 import model.transformer.model as model
-
-
-
-
-
-
-
-
+from common.data_utils import load_dataset
 
 
 def train():
+    """
+    这里的相关操作基本seq2seq中差不多，不过多注释，需要多提一下的就是
+    不像seq2seq那样进行手动计算损失，而是在训练步中，就使用API进行损失计算和保存
+    :return:
+    """
+    input_tensor, _, target_tensor, _ = load_dataset()
     print('训练开始，正在准备数据中...')
-    step_per_epoch = len(_data.input_tensor) // _config.BATCH_SIZE
+    step_per_epoch = len(input_tensor) // _config.BATCH_SIZE
     checkpoint_dir = _config.transformer_train_data
     is_exist = Path(checkpoint_dir)
     if not is_exist.exists():
@@ -29,10 +27,10 @@ def train():
     ckpt = tf.io.gfile.listdir(checkpoint_dir)
     if ckpt:
         model.checkpoint.restore(tf.train.latest_checkpoint(checkpoint_dir)).expect_partial()
-    dataset = tf.data.Dataset.from_tensor_slices((_data.input_tensor, _data.target_tensor)).cache().shuffle(_config.BUFFER_SIZE).prefetch(tf.data.experimental.AUTOTUNE)
+    dataset = tf.data.Dataset.from_tensor_slices((input_tensor, target_tensor)).cache().shuffle(
+        _config.BUFFER_SIZE).prefetch(tf.data.experimental.AUTOTUNE)
     dataset = dataset.batch(_config.BATCH_SIZE, drop_remainder=True)
     checkpoint_prefix = os.path.join(checkpoint_dir, "ckpt")
-    # model.model.fit(dataset, epochs=EPOCHS)
     for epoch in range(_config.epochs):
         print("当前训练epoch为：{}".format(epoch + 1))
         start_time = time.time()
@@ -47,5 +45,3 @@ def train():
         model.checkpoint.save(file_prefix=checkpoint_prefix)
         sys.stdout.flush()
     print('训练结束')
-
-

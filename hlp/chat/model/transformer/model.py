@@ -2,10 +2,26 @@ import tensorflow as tf
 import common.layers as layers
 import common.data_utils as _data
 import config.get_config as _config
+from common.data_utils import load_dataset
 
 
 def encoder(vocab_size, num_layers, units, d_model,
             num_heads, dropout, name="encoder"):
+    """
+    transformer的encoder，使用函数式API进行编写，实现了
+    模型层内部的一系列操作，num_layers决定了使用多少个
+    encoder_layer层，更具Transformer架构里面的描述，可以根据
+    效果进行调整，在encoder中还进行了位置编码，具体原理自行翻阅
+    资料，就是实现公式的问题，这里就不多做注释了
+    :param vocab_size:
+    :param num_layers:
+    :param units:
+    :param d_model:
+    :param num_heads:
+    :param dropout:
+    :param name:
+    :return: Model(inputs=[inputs, padding_mask], outputs=outputs)
+    """
     inputs = tf.keras.Input(shape=(None,), name="inputs")
     padding_mask = tf.keras.Input(shape=(1, 1, None), name="padding_mask")
     embeddings = tf.keras.layers.Embedding(vocab_size, d_model)(inputs)
@@ -14,6 +30,7 @@ def encoder(vocab_size, num_layers, units, d_model,
 
     outputs = tf.keras.layers.Dropout(rate=dropout)(embeddings)
 
+    # 这里layer使用的name是为了调试的时候答应信息方便查看，也可以不写
     for i in range(num_layers):
         outputs = layers.transformer_encoder_layer(
             units=units,
@@ -27,6 +44,19 @@ def encoder(vocab_size, num_layers, units, d_model,
 
 
 def decoder(vocab_size, num_layers, units, d_model, num_heads, dropout, name="decoder"):
+    """
+    transformer的decoder，使用函数式API进行编写，实现了
+    模型层内部的一系列操作，相关的一些变量的时候基本和上面
+    的encoder差不多，这里不多说
+    :param vocab_size:
+    :param num_layers:
+    :param units:
+    :param d_model:
+    :param num_heads:
+    :param dropout:
+    :param name:
+    :return:
+    """
     inputs = tf.keras.Input(shape=(None,), name="inputs")
     enc_outputs = tf.keras.Input(shape=(None, d_model), name="encoder_outputs")
     look_ahead_mask = tf.keras.Input(shape=(1, None, None), name="look_ahead_mask")
@@ -56,17 +86,31 @@ def decoder(vocab_size, num_layers, units, d_model, num_heads, dropout, name="de
 
 def transformer(vocab_size, num_layers, units, d_model,
                 num_heads, dropout, name="transformer"):
+    """
+    transformer的粗粒度的结构实现，在忽略细节的情况下，看作是
+    encoder和decoder的实现，这里需要注意的是，因为是使用self_attention，
+    所以在输入的时候，这里需要进行mask，防止暴露句子中带预测的信息，影响
+    模型的效果
+    :param vocab_size:
+    :param num_layers:
+    :param units:
+    :param d_model:
+    :param num_heads:
+    :param dropout:
+    :param name:
+    :return:
+    """
     inputs = tf.keras.Input(shape=(None,), name="inputs")
     dec_inputs = tf.keras.Input(shape=(None,), name="dec_inputs")
 
+    # 使用了Lambda将方法包装成层，为的是满足函数式API的需要
     enc_padding_mask = tf.keras.layers.Lambda(
         _data.create_padding_mask, output_shape=(1, 1, None),
         name="enc_padding_mask"
     )(inputs)
 
     look_ahead_mask = tf.keras.layers.Lambda(
-        _data.create_look_ahead_mask,
-        output_shape=(1, None, None),
+        _data.create_look_ahead_mask, output_shape=(1, None, None),
         name="look_ahead_mask"
     )(dec_inputs)
 
@@ -76,21 +120,13 @@ def transformer(vocab_size, num_layers, units, d_model,
     )(inputs)
 
     enc_outputs = encoder(
-        vocab_size=vocab_size,
-        num_layers=num_layers,
-        units=units,
-        d_model=d_model,
-        num_heads=num_heads,
-        dropout=dropout,
+        vocab_size=vocab_size, num_layers=num_layers, units=units,
+        d_model=d_model, num_heads=num_heads, dropout=dropout
     )(inputs=[inputs, enc_padding_mask])
 
     dec_outputs = decoder(
-        vocab_size=vocab_size,
-        num_layers=num_layers,
-        units=units,
-        d_model=d_model,
-        num_heads=num_heads,
-        dropout=dropout,
+        vocab_size=vocab_size, num_layers=num_layers, units=units,
+        d_model=d_model, num_heads=num_heads, dropout=dropout
     )(inputs=[dec_inputs, enc_outputs, look_ahead_mask, dec_padding_mask])
 
     outputs = tf.keras.layers.Dense(units=vocab_size, name="outputs")(dec_outputs)
@@ -98,6 +134,11 @@ def transformer(vocab_size, num_layers, units, d_model,
 
 
 class CustomSchedule(tf.keras.optimizers.schedules.LearningRateSchedule):
+    """
+    优化器将 Adam 优化器与自定义的学习速率调度程序配合使用，这里直接参考了官网的实现
+    因为是公式的原因，其实大同小异
+    """
+
     def __init__(self, d_model, warmup_steps=4000):
         super(CustomSchedule, self).__init__()
         self.d_model = d_model
@@ -133,8 +174,10 @@ def accuracy(real, pred):
     return tf.keras.metrics.sparse_categorical_accuracy(real, pred)
 
 
+_, input_token, _, _ = load_dataset()
+
 model = transformer(
-    vocab_size=len(_data.input_token.word_index) + 1,
+    vocab_size=len(input_token.word_index) + 1,
     num_layers=_config.transformer_num_layers,
     units=_config.transformer_units,
     d_model=_config.transformer_d_model,
@@ -151,6 +194,12 @@ train_accuracy = tf.keras.metrics.SparseCategoricalAccuracy(name='train_accuracy
 
 
 def train_step(inp, tar):
+    """
+    这里要多提一下的就是把target的end标志去掉，然后作为decoder的输入
+    :param inp:
+    :param tar:
+    :return:
+    """
     tar_inp = tar[:, :-1]
     tar_real = tar[:, 1:]
     with tf.GradientTape() as tape:

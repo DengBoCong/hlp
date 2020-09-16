@@ -92,6 +92,10 @@ class BahdanauAttention(tf.keras.layers.Layer):
 
 
 class PositionalEncoding(tf.keras.layers.Layer):
+    """
+    位置编码的简单实现，实现了位置编码的两个公式(针对奇偶位置进行的编码)
+    位置编码原理自行翻阅资料，这边不做注释
+    """
     def __init__(self, position, d_model):
         super(PositionalEncoding, self).__init__()
         self.pos_encoding = self.positional_encoding(position, d_model)
@@ -117,8 +121,17 @@ class PositionalEncoding(tf.keras.layers.Layer):
         return inputs + self.pos_encoding[:, :tf.shape(inputs)[1], :]
 
 
-# Transformerd的encoder层，使用函数式API
+
 def transformer_encoder_layer(units, d_model, num_heads, dropout, name="transformer_encoder_layer"):
+    """
+    # Transformerd的encoder层，使用函数式API
+    :param units:
+    :param d_model:
+    :param num_heads:
+    :param dropout:
+    :param name:
+    :return:
+    """
     inputs = tf.keras.Input(shape=(None, d_model), name="inputs")
     padding_mask = tf.keras.Input(shape=(1, 1, None), name="padding_mask")
 
