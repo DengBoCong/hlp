@@ -11,7 +11,12 @@ tokenized_data保存分词后的数据集路径
 '''
 
 
-def preprocess_raw_data():  # tokenizer
+def preprocess_raw_data():
+    """
+    用来对原始文本进行预处理的方法，主要是将原
+    始文本进行分词后，保存在一个新的文本中，供后继使用
+    :return:
+    """
     raw_data = _config.resource_data
     tokenized_data = _config.tokenized_data
 
@@ -30,6 +35,8 @@ def preprocess_raw_data():  # tokenizer
         for line in raw_file:
             line = line.strip('\n').replace('/', '')
             # line = re.sub(r"[%s]+" % punctuation, "", line)
+            # 因为原始数据集中，是一轮一轮的对话排列的，所以需要注意的是
+            # 在一轮对话结束之后，最后一句不能作为问句，需要跳到下一轮进行处理
             if line == '':
                 one_pair = []
                 continue
@@ -38,7 +45,8 @@ def preprocess_raw_data():  # tokenizer
                 pairs.append(one_pair)
                 one_pair = [line]
                 pair_count += 1
-                print('已处理：', pair_count, '个问答对')
+                if pair_count % 10000 == 0:
+                    print('已处理：', pair_count, '个问答对')
             else:
                 one_pair.append(line)
 
@@ -54,11 +62,11 @@ def preprocess_raw_data():  # tokenizer
         pair[1] = " ".join(jieba.cut(pair[1]))
         results.append(pair[0] + '\t' + pair[1])
 
+    # 将处理之后存在内存中的数据写入到新文本中
     train_tokenized = open(tokenized_data, 'w', encoding='utf-8')
     for i in range(len(results)):
         train_tokenized.write(results[i] + '\n')
-
-        if i % 1000 == 0:
+        if i % 10000 == 0:
             print(len(range(len(results))), '处理进度：', i)
 
     train_tokenized.close()
