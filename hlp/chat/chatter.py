@@ -12,7 +12,7 @@ class Chatter(object):
         子类可能需要利用模型进行推断和搜索以产生回复。
 
         :param req: 外部聊天请求字符串
-        :return: 系统恢复字符串
+        :return: 系统回复字符串
         """
         pass
 
