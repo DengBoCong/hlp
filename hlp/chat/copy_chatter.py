@@ -1,7 +1,7 @@
 """聊天器使用例子
 """
 
-from Chatter import Chatter
+from chatter import Chatter
 
 class CopyChatter(Chatter):
     """ 简单重复外部聊天请求的聊天器
