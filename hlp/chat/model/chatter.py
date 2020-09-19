@@ -17,7 +17,8 @@ class Chatter(object):
         """
         Transformer聊天器初始化，用于加载模型
         """
-        _, self.input_token, _, self.target_token = _data.load_dataset()
+        self.checkpoint_dir = checkpoint_dir
+        self.input_tensor, self.input_token, self.target_tensor, self.target_token = _data.load_dataset()
         is_exist = Path(checkpoint_dir)
         if not is_exist.exists():
             os.makedirs(checkpoint_dir, exist_ok=True)
@@ -28,6 +29,12 @@ class Chatter(object):
         子类需要利用模型进行推断和搜索以产生回复。
         :param req: 外部聊天请求字符串
         :return: 系统回复字符串
+        """
+        pass
+
+    def train(self):
+        """
+        对模型进行训练
         """
         pass
 
@@ -53,6 +60,13 @@ class Chatter(object):
         # decoder的input就是开始符号
         dec_input = tf.expand_dims([self.target_token.word_index['start']], 0)
         return inputs, dec_input
+
+    def treat_dataset(self):
+        dataset = tf.data.Dataset.from_tensor_slices((self.input_tensor, self.target_tensor)).cache().shuffle(
+            _config.BUFFER_SIZE).prefetch(tf.data.experimental.AUTOTUNE)
+        dataset = dataset.batch(_config.BATCH_SIZE, drop_remainder=True)
+        checkpoint_prefix = os.path.join(self.checkpoint_dir, "ckpt")
+        return dataset, checkpoint_prefix
 
     # def treat_predictions(self, predictions):
     #     # 取概率最大的值
