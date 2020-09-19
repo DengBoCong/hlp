@@ -27,9 +27,11 @@ def predict(sentence, model):
     enc_out, enc_hidden = model.encoder(inputs, hidden)
     dec_hidden = enc_hidden
     dec_input = tf.expand_dims([target_token.word_index['start']], 0)
-
+    print(inputs.shape)
     for t in range(_config.max_length_tar):
         predictions, dec_hidden, attention_weights = model.decoder(dec_input, dec_hidden, enc_out)
+        print(predictions.shape)
+        return 'ni'
         predicted_id = tf.argmax(predictions[0]).numpy()
         # 这里就是做一下判断，当预测结果解码是end，说明预测结束
         if target_token.index_word.get(predicted_id) == 'end':

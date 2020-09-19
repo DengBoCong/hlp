@@ -10,13 +10,7 @@ import model.transformer.predict as transformer_predict
 from common.pre_treat import preprocess_raw_data
 
 if __name__ == '__main__':
-    """
-    Transformer入口：指令需要附带运行参数
-    cmd：python transformer.py -t/--type [执行模式]
-    执行类别：pre_treat/train/chat
 
-    chat模式下运行时，输入exit即退出对话
-    """
     parser = OptionParser(version='%transformer chatbot V1.0')
     parser.add_option("-t", "--type", action="store", type="string",
                       dest="type", default="pre_treat",
