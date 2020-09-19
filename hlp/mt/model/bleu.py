@@ -1,11 +1,14 @@
+import numpy as np
+import re
+import math
+from common import preprocess
+from model import translator
+import config.get_config as _config
+
 """
 Description:
     BLEU
 """
-import numpy as np
-import re
-import math
-from nltk.translate.bleu_score import corpus_bleu
 
 
 def calculate_average(precisions, weights):
@@ -16,8 +19,10 @@ def calculate_average(precisions, weights):
             continue
         else:
             tmp_res += weights[id] * math.log(item)
-    tmp_res = math.exp(tmp_res)
-    return tmp_res
+    if tmp_res == 0:
+        return tmp_res
+    else:
+        return math.exp(tmp_res)
 
 
 
@@ -121,10 +126,24 @@ def sentence_bleu(candidate_sentence, reference_sentences, max_gram = 4, weights
     print('bp:%f' % bp)
     return bp * average_res
 
+def calc_bleu():
 
-if __name__ == '__main__':
-
-    predict_sentence = 'Going to play basketball this afternoon'
-    train_sentences = ['Going to play basketball in the afternoon']
-    bleu_score = sentence_bleu(predict_sentence, train_sentences, 4, weights=[0.25, 0.25, 0.25, 0.25])
-    print(bleu_score)
+    # 导入评估文本计算BLEU
+    path_to_eval_file = _config.path_to_eval_file  # 评估文本路径
+    num_eval = _config.num_eval  # 用来评估的句子数量
+    en, ch = preprocess.create_eval_dataset(path_to_eval_file, num_eval)
+    print('开始计算BLEU指标...')
+    bleu_sum = 0
+    for i in range(num_eval):
+        candidate_sentence = translator.translate(en[i])
+        print('-' * 20)
+        print('第%d个句子：' % (i + 1))
+        print('Input:' + en[i])
+        print('Translate:' + candidate_sentence)
+        print('Reference:' + ch[i])
+        bleu_i = sentence_bleu(candidate_sentence, [ch[i]], ch=True)
+        print('此句子BLEU:%.2f' % bleu_i)
+        bleu_sum += bleu_i
+    bleu = bleu_sum / num_eval
+    print('-' * 20)
+    print('平均BLEU指标为：%.2f' % bleu)

@@ -2,6 +2,15 @@ import tensorflow as tf
 import re
 import io
 from sklearn.model_selection import train_test_split
+import config.get_config as _config
+
+
+'''
+文本预处理模块
+
+此模块用来对文本进行处理
+输出所需的处理后的句子及字典
+'''
 
 
 # 对英文句子：小写化，切分句子，添加开始和结束标记
@@ -39,17 +48,8 @@ def preprocess_ch_sentence(s):
     return s
 
 
-# en_sentence = u"May I borrow this book?"   # <start> may i borrow this book ? <end>
-# print(preprocess_en_sentence(en_sentence))
-#
-# ch_sentence = '这个对吗？ 试试看。'  # <start> 这 个 对 吗 ？ 试 试 看 。 <end>
-# print(preprocess_ch_sentence(ch_sentence))
-
-
 def max_length(texts):
     return max(len(t) for t in texts)
-
-
 
 
 def create_dataset(path, num_examples):
@@ -72,7 +72,7 @@ def create_dataset(path, num_examples):
     en_sentences = [preprocess_en_sentence(s) for s in en_sentences]
     ch_sentences = [preprocess_ch_sentence(s) for s in ch_sentences]
 
-    print("导入文本的英中句子数：",len(en_sentences), len(ch_sentences))  # 句子对总数
+    # print("导入文本的英中句子数：",len(en_sentences), len(ch_sentences))  # 句子对总数
     # print("导入文本的英中句子最大长度：",print(max_length(en_sentences), max_length(ch_sentences)))  # 句子最大长度
 
     return en_sentences, ch_sentences
@@ -98,13 +98,6 @@ def tokenize(texts):
     return sequences, tokenizer
 
 
-# sequences, tokenizer = tokenize(["<start> may i borrow this book ? <end>", "<start> i love you ! <end>"])
-# print("sequences:",sequences)  # [[ 1  4  2  5  6  7  8  3] [ 1  2  9 10 11  3  0  0]]
-# print(tokenizer.word_index)
-# # {'<start>': 1, 'i': 2, '<end>': 3,  # 'may': 4,
-# # 'borrow': 5, 'this': 6, 'book': 7, '?': 8, 'love': 9, 'you': 10, '!': 11}
-
-
 def load_dataset(path, num_examples=None):
     """
     :param path: 文本路径
@@ -119,37 +112,17 @@ def load_dataset(path, num_examples=None):
 
     input_tensor, inp_lang_tokenizer = tokenize(inp_lang)
     target_tensor, targ_lang_tokenizer = tokenize(targ_lang)
-    print('英文词典大小：', len(inp_lang_tokenizer.word_index))  # 英文词典大小
-    print('中文词典大小：', len(targ_lang_tokenizer.word_index))  # 中文字典大小
+    # print('英文词典大小：', len(inp_lang_tokenizer.word_index))  # 英文词典大小
+    # print('中文词典大小：', len(targ_lang_tokenizer.word_index))  # 中文字典大小
 
     return input_tensor, target_tensor, inp_lang_tokenizer, targ_lang_tokenizer
 
 
-def encode(inp_sentence):
+def encode(inp_sentence,inp_lang_tokenizer):
     inp_sentence = '<start> ' + inp_sentence + ' <end>'
     inp_sentence = [inp_lang_tokenizer.word_index[i] for i in inp_sentence.split(' ')]  # token编码
     encoder_input = tf.expand_dims(inp_sentence, 0)
     return  encoder_input
-
-
-if __name__ == '__main__':
-    # 生成编码后的中英句子及字典
-    input_tensor, target_tensor, inp_lang_tokenizer, targ_lang_tokenizer = load_dataset('en-ch.txt', 20000)
-
-    x_train, x_test, y_train, y_test = train_test_split(input_tensor, target_tensor, test_size=0.2, shuffle=True)
-    train_dataset = tf.data.Dataset.from_tensor_slices((x_train, y_train))
-
-    train_dataset = train_dataset.shuffle(10000).padded_batch(batch_size=64,
-                                                              padded_shapes=((len(x_train[0]),), (len(y_train[0]),)))
-
-    print(train_dataset)
-
-    en_batch, ch_batch = next(iter(train_dataset))
-    print(en_batch, ch_batch)
-
-    print('-' * 50)
-
-
 
 
 
@@ -178,3 +151,24 @@ def create_eval_dataset(path, num_examples):
     # print("导入文本的英中句子最大长度：",print(max_length(en_sentences), max_length(ch_sentences)))  # 句子最大长度
 
     return en_sentences, ch_sentences
+
+
+def get_data(path_to_file,NUM_EXAMPLES):
+    '''根据指定文本生成输入输出句子及字典'''
+    path_to_file = path_to_file  # 训练测试文本路径
+    input_tensor, target_tensor, inp_tokenizer, target_tokenizer = load_dataset(path_to_file, NUM_EXAMPLES)
+    return input_tensor, target_tensor, inp_tokenizer, target_tokenizer
+
+
+def split_batch(input_tensor , target_tensor, BUFFER_SIZE, BATCH_SIZE, test_size):
+    '''对给定的输入输出句子分训练验证集及batch'''
+    x_train,x_test,y_train,y_test = train_test_split(input_tensor, target_tensor,test_size = test_size)
+    train_dataset = tf.data.Dataset.from_tensor_slices((x_train,y_train))
+    # MAX_LENGTH = len(x_train[0])
+    train_dataset = train_dataset.shuffle(BUFFER_SIZE).padded_batch(BATCH_SIZE,
+                                                                    padded_shapes = ((len(x_train[0]),),(len(y_train[0]),)))
+
+    val_dataset = tf.data.Dataset.from_tensor_slices((x_test,y_test))
+    val_dataset = val_dataset.padded_batch(BATCH_SIZE,
+                                               padded_shapes = ((len(x_test[0]),),(len(y_test[0]),)))
+    return train_dataset,val_dataset
