@@ -19,5 +19,6 @@
   "max_train_data_size": 100,
   "batch_size": 64,
   "buffer_size": 20000,
+  "beam_size": 3,
   "epochs": 100
 }
