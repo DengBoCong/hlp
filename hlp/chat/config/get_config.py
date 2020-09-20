@@ -31,6 +31,7 @@ max_train_data_size = conf['max_train_data_size']
 data = path + conf['tokenized_data']  # 训练数据位置
 resource_data = path + conf['resource_data']  # 原始数据位置
 tokenized_data = path + conf['tokenized_data'] # 预处理之后数据位置
+beam_size = conf['beam_size'] # beam_search大小
 epochs = conf['epochs']  # 训练轮次
 
 # seq2seq模型相关配置
