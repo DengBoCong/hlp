@@ -5,6 +5,7 @@ import tensorflow as tf
 from model.chatter import Chatter
 from optparse import OptionParser
 import config.get_config as _config
+from model.chatter import BeamContainer
 from model.transformer.model import model
 import model.transformer.model as transformer
 from common.pre_treat import preprocess_raw_data
@@ -15,54 +16,39 @@ class TransformerChatter(Chatter):
     Transformer模型的聊天类
     """
 
-    def __init__(self, checkpoint_dir):
+    def __init__(self, checkpoint_dir, beam_size):
         """
         Transformer聊天器初始化，用于加载模型
         """
         super().__init__(checkpoint_dir)
+        self.beam_search_container = BeamContainer(
+            beam_size=beam_size,
+            max_length=_config.max_length_tar,
+            worst_score=1e9,
+            length_penalty=6
+        )
+        self.beam_size = beam_size
         if self.ckpt:
             transformer.checkpoint.restore(tf.train.latest_checkpoint(checkpoint_dir)).expect_partial()
 
-    def respond(self, req):
-        # 对req进行初步处理
-        inputs, dec_input = self.pre_treat_inputs(req)
-        result = ''
-        for t in range(_config.max_length_tar):
-            predictions = model(inputs=[inputs, dec_input], training=False)
-            predictions = predictions[:, -1:, :]
-            predicted_id = tf.cast(tf.argmax(predictions, axis=-1), tf.int32)
-            if self.target_token.index_word.get(predicted_id[0][0].numpy()) == 'end':
-                break
-            result += self.target_token.index_word.get(predicted_id[0][0].numpy(), '')
-            dec_input = tf.concat([dec_input, predicted_id], axis=-1)
+    def init_loss_accuracy(self):
+        transformer.train_loss.reset_states()
+        transformer.train_accuracy.reset_states()
 
-        return result
+    def train_step(self, inp, tar, step_loss):
+        transformer.train_step(inp, tar)
+        step_loss[0] = transformer.train_loss.result()
 
-    def train(self):
-        """
-        Transformer的训练模块
-        """
-        print('训练开始，正在准备数据中...')
-        step_per_epoch = len(self.input_tensor) // _config.BATCH_SIZE
-        if self.ckpt:
-            transformer.checkpoint.restore(tf.train.latest_checkpoint(self.checkpoint_dir)).expect_partial()
-        dataset, checkpoint_prefix = self.treat_dataset()
-
-        for epoch in range(_config.epochs):
-            print("当前训练epoch为：{}".format(epoch + 1))
-            start_time = time.time()
-            transformer.train_loss.reset_states()
-            transformer.train_accuracy.reset_states()
-
-            for (batch, (inp, tar)) in enumerate(dataset.take(step_per_epoch)):
-                transformer.train_step(inp, tar)
-            step_time = (time.time() - start_time)
-            print('当前epoch损失：{:.4f}，精度：{:.4f}'.format(transformer.train_loss.result(),
-                                                      transformer.train_accuracy.result()))
-            print('当前epoch耗时：{:.4f}'.format(step_time))
-            transformer.checkpoint.save(file_prefix=checkpoint_prefix)
-            sys.stdout.flush()
-        print('训练结束')
+    def create_predictions(self, inputs, dec_input, t):
+        predictions = model(inputs=[inputs, dec_input], training=False)
+        predictions = predictions[:, -1:, :]
+        # for i in range(self.beam_size):
+        #     for k in range(len(predictions[0][0])):
+        #         self.beam_search_container.add()
+        predicted_id = tf.cast(tf.argmax(predictions, axis=-1), tf.int32)
+        dec_input = tf.concat([dec_input, predicted_id], axis=-1)
+        predicted_id = tf.squeeze(predicted_id)
+        return predicted_id, dec_input
 
 
 def main():
@@ -73,10 +59,10 @@ def main():
     (options, args) = parser.parse_args()
 
     # 初始化要使用的聊天器
-    chatter = TransformerChatter(checkpoint_dir=_config.transformer_train_data)
+    chatter = TransformerChatter(checkpoint_dir=_config.transformer_train_data, beam_size=_config.beam_size)
 
     if options.type == 'train':
-        chatter.train()
+        chatter.train(transformer.checkpoint)
     elif options.type == 'chat':
         print("Agent: 你好！结束聊天请输入ESC。")
         while True:

@@ -89,13 +89,6 @@ def loss_function(real, pred):
 
 checkpoint = tf.train.Checkpoint(optimizer=optimizer, encoder=encoder, decoder=decoder)
 
-def question_to_answer(inputs={}):
-    # 初始化隐藏层，并使用encoder得到隐藏层和decoder的输入给decoder使用
-    hidden = [tf.zeros((1, _config.units))]
-    enc_out, enc_hidden = encoder(inputs[0], hidden)
-    dec_hidden = enc_hidden
-
-    predictions, dec_hidden, attention_weights = decoder(inputs[1], dec_hidden, enc_out)
 
 # @tf.function
 def train_step(inp, targ, targ_lang, enc_hidden):
