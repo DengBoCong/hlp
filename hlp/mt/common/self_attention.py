@@ -1,20 +1,23 @@
+"""
+transformer中除了层之外的内容
+包含：
+- Positional encoding 位置编码：由于transformer采用self-attention,不包含位置信息，所以需要额外加入位置信息
+
+- Masking 掩码：
+    - 前瞻遮挡 ： 使用前n个word来预测第n个word，将之后的word信息遮挡起来
+    - 填充遮挡 ： 将填充位置，即0元素遮挡起来
+
+- Scaled dot product attention 点积注意力：根据 q、k、v 和 mask 计算出输出
+    返回值 :
+    - output : (..., seq_len_q, depth_v)
+    - attention :  (..., seq_len_q, seq_len_k)
+
+- Multi-head attention 多头注意力 ：将原来单个头分成多头
+
+"""
+
 import tensorflow as tf
 import numpy as np
-
-
-# 掩码（Masking）
-def create_padding_mask(seq):
-    seq = tf.cast(tf.math.equal(seq, 0), tf.float32)
-
-    # 添加额外的维度来将填充加到
-    # 注意力对数（logits）。
-    return seq[:, tf.newaxis, tf.newaxis, :]  # (batch_size, 1, 1, seq_len)
-
-
-def create_look_ahead_mask(size):
-  mask = 1 - tf.linalg.band_part(tf.ones((size, size)), -1, 0)
-  return mask  # (seq_len, seq_len)
-
 
 
 # 位置编码
@@ -24,6 +27,7 @@ def get_angles(pos, i, d_model):
 
 
 def positional_encoding(position, d_model):
+    '''位置编码，在embedding中加入位置信息'''
     angle_rads = get_angles(np.arange(position)[:, np.newaxis],
                             np.arange(d_model)[np.newaxis, :],
                             d_model)
@@ -39,6 +43,38 @@ def positional_encoding(position, d_model):
     return tf.cast(pos_encoding, dtype=tf.float32)
 
 
+# 遮挡
+def create_padding_mask(seq):
+    seq = tf.cast(tf.math.equal(seq, 0), tf.float32)
+
+    # 添加额外的维度来将填充加到
+    # 注意力对数（logits）。
+    return seq[:, tf.newaxis, tf.newaxis, :]  # (batch_size, 1, 1, seq_len)
+
+
+def create_look_ahead_mask(size):
+  mask = 1 - tf.linalg.band_part(tf.ones((size, size)), -1, 0)
+  return mask  # (seq_len, seq_len)
+
+
+def create_masks(inp, tar):
+    # 编码器填充遮挡
+    enc_padding_mask = create_padding_mask(inp)
+
+    # 在解码器的第二个注意力模块使用。
+    # 该填充遮挡用于遮挡编码器的输出。
+    dec_padding_mask = create_padding_mask(inp)
+
+    # 在解码器的第一个注意力模块使用。
+    # 用于填充（pad）和遮挡（mask）解码器获取到的输入的后续标记（future tokens）。
+    look_ahead_mask = create_look_ahead_mask(tf.shape(tar)[1])
+    dec_target_padding_mask = create_padding_mask(tar)
+    combined_mask = tf.maximum(dec_target_padding_mask, look_ahead_mask)
+
+    return enc_padding_mask, combined_mask, dec_padding_mask
+
+
+# 点积注意力
 def scaled_dot_product_attention(q, k, v, mask):
     """计算注意力权重。
     q, k, v 必须具有匹配的前置维度。
@@ -76,52 +112,3 @@ def scaled_dot_product_attention(q, k, v, mask):
     return output, attention_weights
 
 
-class MultiHeadAttention(tf.keras.layers.Layer):
-
-    def __init__(self, d_model, num_heads):
-        super(MultiHeadAttention, self).__init__()
-        self.num_heads = num_heads
-        self.d_model = d_model
-
-        assert d_model % self.num_heads == 0
-
-        self.depth = d_model // self.num_heads
-
-        self.wq = tf.keras.layers.Dense(d_model)
-        self.wk = tf.keras.layers.Dense(d_model)
-        self.wv = tf.keras.layers.Dense(d_model)
-
-        self.dense = tf.keras.layers.Dense(d_model)
-
-    def split_heads(self, x, batch_size):
-        """分拆最后一个维度到 (num_heads, depth).
-        转置结果使得形状为 (batch_size, num_heads, seq_len, depth)
-        """
-        x = tf.reshape(x, (batch_size, -1, self.num_heads, self.depth))
-        return tf.transpose(x, perm=[0, 2, 1, 3])
-
-    def call(self, v, k, q, mask):
-        batch_size = tf.shape(q)[0]
-
-        q = self.wq(q)  # (batch_size, seq_len, d_model)
-        k = self.wk(k)  # (batch_size, seq_len, d_model)
-        v = self.wv(v)  # (batch_size, seq_len, d_model)
-
-        q = self.split_heads(q, batch_size)  # (batch_size, num_heads, seq_len_q, depth)
-        k = self.split_heads(k, batch_size)  # (batch_size, num_heads, seq_len_k, depth)
-        v = self.split_heads(v, batch_size)  # (batch_size, num_heads, seq_len_v, depth)
-
-        # scaled_attention.shape == (batch_size, num_heads, seq_len_q, depth)
-        # attention_weights.shape == (batch_size, num_heads, seq_len_q, seq_len_k)
-        scaled_attention, attention_weights = scaled_dot_product_attention(
-            q, k, v, mask)
-
-        scaled_attention = tf.transpose(scaled_attention,
-                                        perm=[0, 2, 1, 3])  # (batch_size, seq_len_q, num_heads, depth)
-
-        concat_attention = tf.reshape(scaled_attention,
-                                      (batch_size, -1, self.d_model))  # (batch_size, seq_len_q, d_model)
-
-        output = self.dense(concat_attention)  # (batch_size, seq_len_q, d_model)
-
-        return output, attention_weights

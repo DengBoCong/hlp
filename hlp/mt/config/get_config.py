@@ -1,9 +1,7 @@
 import os
 import json
 
-path = os.path.dirname(os.path.dirname(__file__))  # mt目录
 json_path = os.path.join(os.path.dirname(__file__), 'transformer.json')  # 配置文件路径
-print(json_path)
 
 
 def get_config_json(config_file='main.json'):
@@ -11,26 +9,21 @@ def get_config_json(config_file='main.json'):
         return json.load(file)
 
 
-def config(config_file=json_path):
-    return get_config_json(config_file=config_file)
+conf = get_config_json(json_path)
 
-
-conf = config()
-
-NUM_EXAMPLES = conf['NUM_EXAMPLES']  # 用来训练测试的句子数
+# 对各变量赋值
+path_to_file = conf['path_to_file']  # 用于训练的文本路径
+path_to_eval_file = conf['path_to_eval_file']  # 用于评估计算指标的文本路径
+num_eval = conf['num_eval']  # 用于计算指标的句子对数量
+checkpoint_path = conf["checkpoint_path"]   # 检查点路径
 BUFFER_SIZE = conf['BUFFER_SIZE']
 BATCH_SIZE = conf['BATCH_SIZE']
-TEST_SIZE = conf['TEST_SIZE']  # test文本比例
-EPOCHS = conf['EPOCHS']  # 训练轮次
-TARGET_LENGTH = conf['TARGET_LENGTH']  # 生成目标文本最大长度
-num_layers = conf['num_layers']
-d_model = conf['d_model']
-dff = conf['dff']
-num_heads = conf['num_heads']
-dropout_rate = conf['dropout_rate']
-# path_to_file = os.path.join(os.path.dirname(__file__), conf['path_to_file'])
-# path_to_eval_file = os.path.join(os.path.dirname(__file__), conf['path_to_eval_file'])
-path_to_file = conf['path_to_file']
-path_to_eval_file = conf['path_to_eval_file']
-checkpoint_path = conf['checkpoint_path']
-num_eval = conf['num_eval']
+test_size = conf['test_size']  # 训练数据中test数据占比
+num_sentences = conf["num_sentences"]  # 用于训练的句子对数量
+num_layers = conf["num_layers"]  # encoder 与 decoder 中包含的 encoder 与 decoder 层数
+d_model = conf["d_model"]  # embedding 的维度
+dff = conf["dff"]  # 点式前馈网络（Point wise feed forward network）第一层dense的维度
+num_heads = conf["num_heads"]  # 多头注意力的头数
+dropout_rate = conf["dropout_rate"]
+EPOCHS = conf["EPOCHS"]  # 训练轮次
+max_target_length = conf['max_target_length']  # 最大生成目标句子长度
