@@ -5,7 +5,7 @@ Created on Tue Sep 15 16:50:12 2020
 @author: 彭康
 """
 
-# Character map list
+# Character_index map list
 
 
 char_map_str = """
@@ -38,7 +38,6 @@ y 25
 z 26
 ' 27
 . 28
-% 29
 """
 
 char_map = {}
