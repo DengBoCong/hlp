@@ -1,33 +1,100 @@
+"""
+transformer中网络层的部分
+包括：
+- 多头注意力（Multi-head attention）
+- 点式前馈网络（Point wise feed forward network）
+- 编码器层（Encoder layer）
+- 解码器层（Decoder layer）
+- 编码器（Encoder）
+- 解码器（Decoder）
+- Transformer
+- 优化器（Optimizer）
+- 损失函数与指标（Loss and metrics）
+
+在此模块空间中完成数据集及字典的加载
+
+"""
+
 import tensorflow as tf
-import numpy as np
 from common import self_attention
+from config import get_config as _config
+from common import preprocess
 
 
-def print_out(q, k, v):
-  temp_out, temp_attn = self_attention.scaled_dot_product_attention(
-      q, k, v, None)
-  print ('Attention weights are:')
-  print (temp_attn)
-  print ('Output is:')
-  print (temp_out)
+# 多头注意力层
+class MultiHeadAttention(tf.keras.layers.Layer):
+    def __init__(self, d_model, num_heads):
+        super(MultiHeadAttention, self).__init__()
+        self.num_heads = num_heads
+        self.d_model = d_model
+
+        assert d_model % self.num_heads == 0
+
+        self.depth = d_model // self.num_heads
+
+        self.wq = tf.keras.layers.Dense(d_model)
+        self.wk = tf.keras.layers.Dense(d_model)
+        self.wv = tf.keras.layers.Dense(d_model)
+
+        self.dense = tf.keras.layers.Dense(d_model)
+
+    def split_heads(self, x, batch_size):
+        """分拆最后一个维度到 (num_heads, depth).
+        转置结果使得形状为 (batch_size, num_heads, seq_len, depth)
+        """
+        x = tf.reshape(x, (batch_size, -1, self.num_heads, self.depth))
+        return tf.transpose(x, perm=[0, 2, 1, 3])
+
+    def call(self, v, k, q, mask):
+        batch_size = tf.shape(q)[0]
+
+        q = self.wq(q)  # (batch_size, seq_len, d_model)
+        k = self.wk(k)  # (batch_size, seq_len, d_model)
+        v = self.wv(v)  # (batch_size, seq_len, d_model)
+
+        q = self.split_heads(q, batch_size)  # (batch_size, num_heads, seq_len_q, depth)
+        k = self.split_heads(k, batch_size)  # (batch_size, num_heads, seq_len_k, depth)
+        v = self.split_heads(v, batch_size)  # (batch_size, num_heads, seq_len_v, depth)
+
+        # scaled_attention.shape == (batch_size, num_heads, seq_len_q, depth)
+        # attention_weights.shape == (batch_size, num_heads, seq_len_q, seq_len_k)
+        scaled_attention, attention_weights = self_attention.scaled_dot_product_attention(
+            q, k, v, mask)
+
+        scaled_attention = tf.transpose(scaled_attention,
+                                        perm=[0, 2, 1, 3])  # (batch_size, seq_len_q, num_heads, depth)
+
+        concat_attention = tf.reshape(scaled_attention,
+                                      (batch_size, -1, self.d_model))  # (batch_size, seq_len_q, d_model)
+
+        output = self.dense(concat_attention)  # (batch_size, seq_len_q, d_model)
+
+        return output, attention_weights
 
 
-# np.set_printoptions(suppress=True)
-
-
-
+# 点式前馈网络（Point wise feed forward network）
 def point_wise_feed_forward_network(d_model, dff):
-  return tf.keras.Sequential([
+    """
+    简单的两个全连接层网络
+    Args:
+        d_model:第二层dense的维度
+        dff: 第一层dense的维度
+
+    Returns:包含两个dense层的Sequential
+
+    """
+    return tf.keras.Sequential([
       tf.keras.layers.Dense(dff, activation='relu'),  # (batch_size, seq_len, dff)
       tf.keras.layers.Dense(d_model)  # (batch_size, seq_len, d_model)
-  ])
+    ])
 
 
+# 编码器层（Encoder layer）
 class EncoderLayer(tf.keras.layers.Layer):
     def __init__(self, d_model, num_heads, dff, rate=0.1):
         super(EncoderLayer, self).__init__()
 
-        self.mha = self_attention.MultiHeadAttention(d_model, num_heads)
+        self.mha = MultiHeadAttention(d_model, num_heads)
         self.ffn = point_wise_feed_forward_network(d_model, dff)
 
         self.layernorm1 = tf.keras.layers.LayerNormalization(epsilon=1e-6)
@@ -48,12 +115,13 @@ class EncoderLayer(tf.keras.layers.Layer):
         return out2
 
 
+# 解码器层
 class DecoderLayer(tf.keras.layers.Layer):
     def __init__(self, d_model, num_heads, dff, rate=0.1):
         super(DecoderLayer, self).__init__()
 
-        self.mha1 = self_attention.MultiHeadAttention(d_model, num_heads)
-        self.mha2 = self_attention.MultiHeadAttention(d_model, num_heads)
+        self.mha1 = MultiHeadAttention(d_model, num_heads)
+        self.mha2 = MultiHeadAttention(d_model, num_heads)
 
         self.ffn = point_wise_feed_forward_network(d_model, dff)
 
@@ -85,7 +153,16 @@ class DecoderLayer(tf.keras.layers.Layer):
         return out3, attn_weights_block1, attn_weights_block2
 
 
+# 编码器
 class Encoder(tf.keras.layers.Layer):
+    """
+    包含
+    - 输入嵌入（Input Embedding）
+    - 位置编码（Positional Encoding）
+    - N 个编码器层（encoder layers）
+    输入经过嵌入（embedding）后，该嵌入与位置编码相加。该加法结果的输出是编码器层的输入。编码器的输出是解码器的输入。
+
+    """
     def __init__(self, num_layers, d_model, num_heads, dff, input_vocab_size,
                  maximum_position_encoding, rate=0.1):
         super(Encoder, self).__init__()
@@ -118,7 +195,15 @@ class Encoder(tf.keras.layers.Layer):
         return x  # (batch_size, input_seq_len, d_model)
 
 
+# 解码器（Decoder）
 class Decoder(tf.keras.layers.Layer):
+    """
+    解码器包括：
+    - 输出嵌入（Output Embedding）
+    - 位置编码（Positional Encoding）
+    - N 个解码器层（decoder layers）
+    目标（target）经过一个嵌入后，该嵌入和位置编码相加。该加法结果是解码器层的输入。解码器的输出是最后的线性层的输入。
+    """
     def __init__(self, num_layers, d_model, num_heads, dff, target_vocab_size,
                  maximum_position_encoding, rate=0.1):
         super(Decoder, self).__init__()
@@ -155,7 +240,11 @@ class Decoder(tf.keras.layers.Layer):
         return x, attention_weights
 
 
+# Transformer模型
 class Transformer(tf.keras.Model):
+    """
+    Transformer 包括编码器，解码器和最后的线性层。解码器的输出是线性层的输入，返回线性层的输出。
+    """
     def __init__(self, num_layers, d_model, num_heads, dff, input_vocab_size,
                  target_vocab_size, pe_input, pe_target, rate=0.1):
         super(Transformer, self).__init__()
@@ -181,7 +270,14 @@ class Transformer(tf.keras.Model):
         return final_output, attention_weights
 
 
-# 自定义优化器
+
+input_sequences, target_sequences, input_tokenizer, target_tokenizer = preprocess.get_tokenized_dataset()
+input_vocab_size = len(input_tokenizer.word_index) + 1
+dic_keys = [i for i in input_tokenizer.word_index]  # 字典中包含的单词列表
+target_vocab_size = len(target_tokenizer.word_index) + 1
+
+
+# 自定义优化器（Optimizer）
 class CustomSchedule(tf.keras.optimizers.schedules.LearningRateSchedule):
     def __init__(self, d_model, warmup_steps=4000):
         super(CustomSchedule, self).__init__()
@@ -198,8 +294,16 @@ class CustomSchedule(tf.keras.optimizers.schedules.LearningRateSchedule):
         return tf.math.rsqrt(self.d_model) * tf.math.minimum(arg1, arg2)
 
 
-def loss_function(real, pred , loss_object):
+learning_rate = CustomSchedule(_config.d_model)
+
+optimizer = tf.keras.optimizers.Adam(learning_rate, beta_1=0.9, beta_2=0.98,
+                                     epsilon=1e-9)
+
+
+def loss_function(real, pred):
     mask = tf.math.logical_not(tf.math.equal(real, 0))
+    loss_object = tf.keras.losses.SparseCategoricalCrossentropy(
+        from_logits=True, reduction='none')
     loss_ = loss_object(real, pred)
 
     mask = tf.cast(mask, dtype=loss_.dtype)
@@ -208,19 +312,25 @@ def loss_function(real, pred , loss_object):
     return tf.reduce_mean(loss_)
 
 
-def create_masks(inp, tar):
-    # 编码器填充遮挡
-    enc_padding_mask = self_attention.create_padding_mask(inp)
+train_loss = tf.keras.metrics.Mean(name='train_loss')
+train_accuracy = tf.keras.metrics.SparseCategoricalAccuracy(
+    name='train_accuracy')
+transformer = Transformer(_config.num_layers, _config.d_model, _config.num_heads, _config.dff,
+                          input_vocab_size, target_vocab_size,
+                          pe_input=input_vocab_size,
+                          pe_target=target_vocab_size,
+                          rate=_config.dropout_rate)
 
-    # 在解码器的第二个注意力模块使用。
-    # 该填充遮挡用于遮挡编码器的输出。
-    dec_padding_mask = self_attention.create_padding_mask(inp)
 
-    # 在解码器的第一个注意力模块使用。
-    # 用于填充（pad）和遮挡（mask）解码器获取到的输入的后续标记（future tokens）。
-    look_ahead_mask = self_attention.create_look_ahead_mask(tf.shape(tar)[1])
-    dec_target_padding_mask = self_attention.create_padding_mask(tar)
-    combined_mask = tf.maximum(dec_target_padding_mask, look_ahead_mask)
+def load_checkpoint(transformer, optimizer):
+    # 加载检查点
+    checkpoint_path = _config.checkpoint_path
+    ckpt = tf.train.Checkpoint(transformer=transformer,
+                               optimizer=optimizer)
+    ckpt_manager = tf.train.CheckpointManager(ckpt, checkpoint_path, max_to_keep=5)
+    if ckpt_manager.latest_checkpoint:
+        ckpt.restore(ckpt_manager.latest_checkpoint)
+        print('已恢复至最新的检查点！')
 
-    return enc_padding_mask, combined_mask, dec_padding_mask
+
 
