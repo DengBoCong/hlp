@@ -32,7 +32,7 @@ def train(model, optimizer, X, Y, epochs):
 
 
 if __name__ == "__main__":
-    epochs=100
+    epochs=1
     model=DS2(256,11,2,256,30)
     #提取了单个音频的特征(batch_size,timesteps,n_mfcc)，但只是一个list
     x=wav_to_mfcc(20,'./sample.wav')
@@ -54,7 +54,7 @@ if __name__ == "__main__":
     """
     optimizer = tf.keras.optimizers.Adam()
     train(model, optimizer, x, y, epochs) 
-    #model.save()
+    model.save('saved_model/my_model') 
     y=model.predict(x)
     output=tf.keras.backend.ctc_decode(y_pred=y,input_length=tf.constant([y.shape[1]]),greedy=True)
     out=output[0][0]
