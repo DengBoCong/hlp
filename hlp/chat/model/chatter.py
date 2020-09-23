@@ -1,5 +1,6 @@
 import os
 import sys
+import copy
 import time
 import jieba
 import tensorflow as tf
@@ -15,12 +16,18 @@ class Chatter(object):
     不同模型或方法实现的聊天子类化该类。
     """
 
-    def __init__(self, checkpoint_dir):
+    def __init__(self, checkpoint_dir, beam_size):
         """
         Transformer聊天器初始化，用于加载模型
         """
         self.checkpoint_dir = checkpoint_dir
         self.input_tensor, self.input_token, self.target_tensor, self.target_token = _data.load_dataset()
+        self.beam_search_container = BeamContainer(
+            beam_size=beam_size,
+            max_length=_config.max_length_tar,
+            worst_score=0
+        )
+        self.beam_size = beam_size
         is_exist = Path(checkpoint_dir)
         if not is_exist.exists():
             os.makedirs(checkpoint_dir, exist_ok=True)
@@ -79,14 +86,16 @@ class Chatter(object):
     def respond(self, req):
         # 对req进行初步处理
         inputs, dec_input = self.pre_treat_inputs(req)
+        self.beam_search_container.init_inputs(inputs=inputs, dec_input=dec_input)
+        inputs, dec_input = self.beam_search_container.get_inputs()
         result = ''
         for t in range(_config.max_length_tar):
-            predicted_id, dec_input = self.create_predictions(inputs, dec_input, t)
-            if self.target_token.index_word.get(predicted_id.numpy()) == 'end':
+            self.create_predictions(inputs, dec_input, t)
+            if self.beam_search_container.beam_size == 0:
                 break
-            result += self.target_token.index_word.get(predicted_id.numpy(), '')
 
-        return result
+            inputs, dec_input = self.beam_search_container.get_inputs()
+        return self.beam_search_container.sequence_to_text(self.target_token)
 
     def stop(self):
         """ 结束聊天
@@ -127,48 +136,108 @@ class Chatter(object):
     #     # 返回对应token和最大的值
     #     return self.target_token.word_index.get(predicted_id, 'end'), predicted_id
 
+
 class BeamContainer(object):
-    def __init__(self, beam_size, max_length, worst_score, length_penalty):
+    """
+    BeamSearch容器使用说明：
+    1.首先需要将问句编码成token向量并对齐，然后调用init_input方法进行初始化
+    2.对模型要求能够进行批量输入
+    3.BeamSearch使用实例已经集成到Chatter中，如果不进行自定义调用，
+    可以将聊天器继承Chatter，在满足上述两点的基础之上设计create_predictions方法，并调用BeamSearch
+    """
+    def __init__(self, beam_size, max_length, worst_score):
         """
         初始化BeamSearch的序列容器
         """
         self.beam_size = beam_size
+        self.remain_beam_size = beam_size
         self.max_length = max_length - 1
-        self.remain = []
+        self.container = [] # 保存序列的容器
+        self.result = []
         self.worst_score = worst_score
-        self.length_penalty = length_penalty
+        self.remain_worst_score = worst_score
+        self.requests = tf.constant(0, shape=(1, 1))  # 聊天时问句处理后的序列
+        self.inputs = tf.constant(0, shape=(1, 1))
+        self.dec_inputs = tf.constant(0, shape=(1, 1))  # 处理后的的编码器输入
 
     def __len__(self):
         """
         已存在BeamSearch的序列容器的大小
         """
-        return len(self.remain)
+        return len(self.container)
 
-    def add(self, hyp, sum_logprobs):
+    def init_inputs(self, inputs, dec_input):
         """
-        往容器中添加序列，并行添加
+        用来初始化输入
         """
-        score = sum_logprobs / len(hyp) ** self.length_penalty
-        if len(self) < self.beam_size or score > self.worst_score:
-            self.remain.append((score, hyp))
-            if len(self) > self.beam_size:
-                sorted_scores = sorted([(s, idx) for idx, (s, _) in enumerate(self.remain)])
-                del self.remain[sorted_scores[0][1]]
-                self.worst_score = sorted_scores[1][0]
-            else:
-                self.worst_score = min(score, self.worst_score)
+        self.container.append((1, dec_input))
+        self.requests = inputs
+        self.inputs = inputs
+        self.dec_inputs = dec_input
 
-    def is_done(self, best_sum_logprobs, cur_len=None):
+    def get_inputs(self):
+        # 生成多beam输入
+        inputs = self.inputs
+        for i in range(len(self) - 1):
+            inputs = tf.concat([inputs, self.inputs], 0)
+        self.requests = inputs
+        # 生成多beam的decoder的输入
+        temp = self.container[0][1]
+        for i in range(1, len(self)):
+            temp = tf.concat([temp, self.container[i][1]], axis=0)
+        self.dec_inputs = copy.deepcopy(temp)
+        return self.requests, self.dec_inputs
+
+    def reduce_end(self):
         """
-        相关样本是否已经完成生成
-        best_sum_logprobs是新的候选序列中最高得分
+        当序列遇到了结束token，需要将该序列从容器中移除
         """
-        if len(self) < self.beam_size:
-            return False
-        else:
-            if cur_len is None:
-                cur_len = self.max_length
-            cur_score = best_sum_logprobs / cur_len ** self.length_penalty
-            # 是否最高分比当前保存的最低分还差
-            ret = self.worst_score >= cur_score
-            return ret
+        for idx, (s, dec) in enumerate(self.container):
+            temp = dec.numpy()
+            if temp[0][-1] == 3:
+                self.result.append(self.container[idx][1])
+                del self.container[idx]
+                self.beam_size -= 1
+
+    def add(self, predictions):
+        """
+        往容器中添加预测结果，在本方法中对预测结果进行整理、排序的操作
+        """
+        remain = copy.deepcopy(self.container)
+        for i in range(self.dec_inputs.shape[0]):
+            for k in range(predictions.shape[-1]):
+                # 负数则直接跳过
+                if predictions[i][k] <= 0:
+                    continue
+                # 计算分数
+                score = remain[i][0] * predictions[i][k]
+                # 判断容器容量以及分数比较
+                if len(self) < self.beam_size or score > self.worst_score:
+                    self.container.append((score, tf.concat([remain[i][1], tf.constant([[k]], shape=(1,1))], axis=-1)))
+                    if len(self) > self.beam_size:
+                        sorted_scores = sorted([(s, idx) for idx, (s, _) in enumerate(self.container)])
+                        del self.container[sorted_scores[0][1]]
+                        self.worst_score = sorted_scores[1][0]
+                    else:
+                        self.worst_score = min(score, self.worst_score)
+        self.reduce_end()
+
+    def sequence_to_text(self, target_token):
+        result = ''
+        # 从容器中抽取序列，生成最终结果
+        for i in range(len(self.result)):
+            temp = self.result[i].numpy()
+            text = target_token.sequences_to_texts(temp)
+            text[0] = text[0].replace('start', '').replace('end', '').replace(' ', '')
+            result = '<' + text[0] + '>' + result
+
+        # 每轮回答之后，需要重置容器内部的相关变量值
+        self.beam_size = self.remain_beam_size
+        self.container = []
+        self.result = []
+        self.worst_score = self.remain_worst_score
+        self.requests = tf.constant(0, shape=(1, 1))  # 聊天时问句处理后的序列
+        self.inputs = tf.constant(0, shape=(1, 1))
+        self.dec_inputs = tf.constant(0, shape=(1, 1))  # 处理后的的编码器输入
+        return result
+
