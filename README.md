@@ -6,6 +6,7 @@
    - stt: 语音识别包目录
    - tts: 语音合成包目录
    - chat: 对话系统包目录
+   - utils: 公共功能包目录
 
 每个部分的不同方法、模型和实现应该在mt、stt、tts、chat其中一个目录下建立单独的子包目录。<br>
 例如，Tacotron实现语音合成，应在tts下建立tacotron包。

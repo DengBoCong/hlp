@@ -66,6 +66,7 @@ _, input_token, _, target_token = load_dataset()
 encoder = Encoder(len(input_token.word_index) + 1, _config.embedding_dim, _config.units, _config.BATCH_SIZE)
 decoder = Decoder(len(target_token.word_index) + 1, _config.embedding_dim, _config.units, _config.BATCH_SIZE)
 
+
 optimizer = tf.keras.optimizers.Adam()
 loss_object = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True, reduction='none')
 

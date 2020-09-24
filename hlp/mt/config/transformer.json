@@ -1,0 +1,18 @@
+{
+  "path_to_file": "./data/en-ch.txt",
+  "path_to_eval_file": "./data/en-ch_eval.txt",
+  "num_eval": 10,
+  "checkpoint_path": "./checkpoints/train",
+  "BUFFER_SIZE": 20000,
+  "BATCH_SIZE": 64,
+  "test_size": 0.2,
+  "num_sentences": 20000,
+  "num_layers": 4,
+  "d_model": 128,
+  "dff": 512,
+  "num_heads": 8,
+  "dropout_rate" : 0.1,
+  "EPOCHS": 10,
+  "max_target_length": 20
+
+}
