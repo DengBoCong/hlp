@@ -8,7 +8,7 @@ Created on Thu Sep 24 09:20:25 2020
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 from sklearn.model_selection import train_test_split
-from LAS import LAS
+from model import minilas
 from data.mfcc_extract import MFCC
 import tensorflow as tf
 import re
@@ -131,7 +131,7 @@ def loss_function(real, pred):
 
   return tf.reduce_mean(loss_)
 
-model = LAS(256, 39, 456)
+model = minilas.LAS(256, 39, 456)
 
 checkpoint_dir = './lastraining_checkpoints'
 checkpoint_prefix = os.path.join(checkpoint_dir, "ckpt")
@@ -205,6 +205,16 @@ if __name__ == "__main__":
 文字输出部分还在调试中
 '''     
      
+     
+        
+     
+  
+
+
+
+
+
+
      
         
      
