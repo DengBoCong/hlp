@@ -17,6 +17,7 @@ def preprocess_raw_data(args, tokenizer, n_ctx):
         train_data = data.split("\r\n\r\n")###切成一段一段的
     else:
         train_data = data.split("\n\n")
+    i=0
     with open(args.train_tokenized_path, "w", encoding="utf-8") as f:
         for dialogue_index, dialogue in enumerate(tqdm(train_data)): ##每段话进行循环 抽取
             if "\r\n" in data:   ##切分句子 成一句一句的
@@ -30,11 +31,16 @@ def preprocess_raw_data(args, tokenizer, n_ctx):
                 dialogue_ids.append(tokenizer.sep_token_id)  # #每个utterance之后添加[SEP]，表示utterance结束
             # 对超过n_ctx的长度进行截断,否则GPT2模型会报错
             dialogue_ids = dialogue_ids[:n_ctx]  #自设 n_ctx---统一长度
+            print('dialogue_ids={}'.format(dialogue_ids))
+            print('n_ctx={}'.format(n_ctx))
             ##将处理好的token写入文件
             for dialogue_id in dialogue_ids:  #对一段话中的每个字id 转换成str 后加 空格 隔开
+
                 f.write(str(dialogue_id) + ' ')
+
             # 最后一条记录不添加换行符----避免空行的产生
             if dialogue_index < len(train_data) - 1:
                 f.write("\n")
 
 
+    f.close()
