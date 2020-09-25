@@ -5,7 +5,6 @@ import tensorflow as tf
 from model.chatter import Chatter
 from optparse import OptionParser
 import config.get_config as _config
-from model.chatter import BeamContainer
 from model.transformer.model import model
 import model.transformer.model as transformer
 from common.pre_treat import preprocess_raw_data
@@ -37,7 +36,7 @@ class TransformerChatter(Chatter):
         predictions = model(inputs=[inputs, dec_input], training=False)
         predictions = predictions[:, -1:, :]
         predictions = tf.squeeze(predictions, axis=1)
-        self.beam_search_container.add(predictions)
+        return predictions
 
 
 def main():

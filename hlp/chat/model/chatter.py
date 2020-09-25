@@ -22,12 +22,11 @@ class Chatter(object):
         """
         self.checkpoint_dir = checkpoint_dir
         self.input_tensor, self.input_token, self.target_tensor, self.target_token = _data.load_dataset()
-        self.beam_search_container = BeamContainer(
+        self.beam_search_container = BeamSearch(
             beam_size=beam_size,
             max_length=_config.max_length_tar,
             worst_score=0
         )
-        self.beam_size = beam_size
         is_exist = Path(checkpoint_dir)
         if not is_exist.exists():
             os.makedirs(checkpoint_dir, exist_ok=True)
@@ -86,16 +85,16 @@ class Chatter(object):
     def respond(self, req):
         # 对req进行初步处理
         inputs, dec_input = self.pre_treat_inputs(req)
-        self.beam_search_container.init_inputs(inputs=inputs, dec_input=dec_input)
-        inputs, dec_input = self.beam_search_container.get_inputs()
-        result = ''
+        self.beam_search_container.init_variables(inputs=inputs, dec_input=dec_input)
+        inputs, dec_input = self.beam_search_container.get_variables()
         for t in range(_config.max_length_tar):
-            self.create_predictions(inputs, dec_input, t)
+            predictions = self.create_predictions(inputs, dec_input, t)
+            self.beam_search_container.add(predictions)
             if self.beam_search_container.beam_size == 0:
                 break
 
-            inputs, dec_input = self.beam_search_container.get_inputs()
-        return self.beam_search_container.sequence_to_text(self.target_token)
+            inputs, dec_input = self.beam_search_container.get_variables()
+        return self.beam_search_container.get_result(self.target_token)
 
     def stop(self):
         """ 结束聊天
@@ -130,21 +129,16 @@ class Chatter(object):
 
         return dataset, checkpoint_prefix, step_per_epoch
 
-    # def treat_predictions(self, predictions):
-    #     # 取概率最大的值
-    #     predicted_id = tf.cast(tf.argmax(predictions), tf.int32).numpy()
-    #     # 返回对应token和最大的值
-    #     return self.target_token.word_index.get(predicted_id, 'end'), predicted_id
 
-
-class BeamContainer(object):
+class BeamSearch(object):
     """
-    BeamSearch容器使用说明：
+    BeamSearch使用说明：
     1.首先需要将问句编码成token向量并对齐，然后调用init_input方法进行初始化
     2.对模型要求能够进行批量输入
     3.BeamSearch使用实例已经集成到Chatter中，如果不进行自定义调用，
     可以将聊天器继承Chatter，在满足上述两点的基础之上设计create_predictions方法，并调用BeamSearch
     """
+
     def __init__(self, beam_size, max_length, worst_score):
         """
         初始化BeamSearch的序列容器
@@ -152,7 +146,7 @@ class BeamContainer(object):
         self.beam_size = beam_size
         self.remain_beam_size = beam_size
         self.max_length = max_length - 1
-        self.container = [] # 保存序列的容器
+        self.container = []  # 保存序列的容器
         self.result = []
         self.worst_score = worst_score
         self.remain_worst_score = worst_score
@@ -166,16 +160,24 @@ class BeamContainer(object):
         """
         return len(self.container)
 
-    def init_inputs(self, inputs, dec_input):
+    def init_variables(self, inputs, dec_input):
         """
         用来初始化输入
+        :param inputs: 已经序列化的输入句子
+        :param dec_input: 编码器输入序列
+        :return: 无返回值
         """
         self.container.append((1, dec_input))
         self.requests = inputs
         self.inputs = inputs
         self.dec_inputs = dec_input
 
-    def get_inputs(self):
+    def get_variables(self):
+        """
+        用来动态的更新模型的inputs和dec_inputs，以适配随着Beam Search
+        结果的得出而变化的beam_size
+        :return: requests, dec_inputs
+        """
         # 生成多beam输入
         inputs = self.inputs
         for i in range(len(self) - 1):
@@ -188,9 +190,10 @@ class BeamContainer(object):
         self.dec_inputs = copy.deepcopy(temp)
         return self.requests, self.dec_inputs
 
-    def reduce_end(self):
+    def _reduce_end(self):
         """
         当序列遇到了结束token，需要将该序列从容器中移除
+        :return: 无返回值
         """
         for idx, (s, dec) in enumerate(self.container):
             temp = dec.numpy()
@@ -202,6 +205,8 @@ class BeamContainer(object):
     def add(self, predictions):
         """
         往容器中添加预测结果，在本方法中对预测结果进行整理、排序的操作
+        :param predictions: 传入每个时间步的模型预测值
+        :return: 无返回值
         """
         remain = copy.deepcopy(self.container)
         for i in range(self.dec_inputs.shape[0]):
@@ -213,16 +218,20 @@ class BeamContainer(object):
                 score = remain[i][0] * predictions[i][k]
                 # 判断容器容量以及分数比较
                 if len(self) < self.beam_size or score > self.worst_score:
-                    self.container.append((score, tf.concat([remain[i][1], tf.constant([[k]], shape=(1,1))], axis=-1)))
+                    self.container.append((score, tf.concat([remain[i][1], tf.constant([[k]], shape=(1, 1))], axis=-1)))
                     if len(self) > self.beam_size:
                         sorted_scores = sorted([(s, idx) for idx, (s, _) in enumerate(self.container)])
                         del self.container[sorted_scores[0][1]]
                         self.worst_score = sorted_scores[1][0]
                     else:
                         self.worst_score = min(score, self.worst_score)
-        self.reduce_end()
+        self._reduce_end()
 
-    def sequence_to_text(self, target_token):
+    def get_result(self, target_token):
+        """
+        :param target_token: 传入token字典，用于将序列转为文字
+        :return: 返回处理好的文字回答列表，每个回答用'<>'分隔
+        """
         result = ''
         # 从容器中抽取序列，生成最终结果
         for i in range(len(self.result)):
@@ -240,4 +249,3 @@ class BeamContainer(object):
         self.inputs = tf.constant(0, shape=(1, 1))
         self.dec_inputs = tf.constant(0, shape=(1, 1))  # 处理后的的编码器输入
         return result
-
