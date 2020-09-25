@@ -7,9 +7,10 @@ Created on Tue Sep 15 16:50:12 2020
 #模型搭建
 #step1：1-3 Conv1D -> 1BN -> 1-3 bi_gru -> 1BN -> 1dense
 import tensorflow as tf
+import char_index_map
 
 #函数式构建DS2模型
-def DS2_func(n_mfcc=20,conv_layers=1,filters=256,kernel_size=11,strides=2,bi_gru_layers=1,gru_units=256, dense_units=30):
+def DS2_func(n_mfcc=20,conv_layers=1,filters=256,kernel_size=11,strides=2,bi_gru_layers=1,gru_units=256, dense_units=len(char_index_map.index_map)+2):
     inputs=tf.keras.Input(shape=(None,None,n_mfcc))
     x=inputs
     for l in range(conv_layers):
@@ -47,7 +48,7 @@ def DS2_func(n_mfcc=20,conv_layers=1,filters=256,kernel_size=11,strides=2,bi_gru
 #子类化构建DS2模型
 class DS2(tf.keras.Model):
     #dense_units=num_classes
-    def __init__(self,n_mfcc=20,conv_layers=1,filters=256,kernel_size=11,strides=2,bi_gru_layers=1,gru_units=256, dense_units=30):
+    def __init__(self,n_mfcc=20,conv_layers=1,filters=256,kernel_size=11,strides=2,bi_gru_layers=1,gru_units=256,dense_units=len(char_index_map.index_map)+2):
         super(DS2,self).__init__()
         self.conv_layers=conv_layers
         self.conv = tf.keras.layers.Conv1D(

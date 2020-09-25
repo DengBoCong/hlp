@@ -14,20 +14,21 @@ import numpy as np
 def wav_to_mfcc(n_mfcc,wav_path):
     #加载音频
     y, sr = librosa.load(wav_path,sr=None)
-    #提取mfcc
-    mfcc = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=n_mfcc)
+    #提取mfcc(返回list(timestep,n_mfcc))
+    mfcc = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=n_mfcc).transpose(1,0).tolist()
     return mfcc
 
 def text_to_int_sequence(text):
-    """ Use a character map and convert text to an integer sequence """
+    #转成list
     int_sequence = []
-    for c in text:
-        if c == ' ':
-            ch = char_index_map.char_map['<SPACE>']
+    for ch in text:
+        if ch == ' ':
+            c = char_index_map.char_map['<SPACE>']
         else:
-            ch = char_index_map.char_map[c]
-        int_sequence.append(ch)
+            c = char_index_map.char_map[ch]
+        int_sequence.append(c)
     return int_sequence
+
 
 def int_to_text_sequence(seq):
     """ Use a index map and convert int to a text sequence
@@ -37,13 +38,13 @@ def int_to_text_sequence(seq):
     """
     text_sequence = []
     for c in seq:
-        if c == 28: #ctc/pad char
-            ch = ''
-        else:
+        if c>=1 and c<=(len(char_index_map.index_map)):
             ch = char_index_map.index_map[c]
+        else:
+            ch = ''
         text_sequence.append(ch)
     #"".join(text_sequence)就会转成字符串
-    return text_sequence 
+    return text_sequence
 
 def sparse_tuple_from(sequences, dtype=np.int32):
     """Create a sparse representention of x.
@@ -124,3 +125,54 @@ class WordAccuracy(tf.keras.metrics.Metric):
     def reset_states(self):
         self.count.assign(0)
         self.total.assign(0)
+        
+#输入的应该均是字符串的list,是wer计算的入口
+def wers(originals, results):
+    count = len(originals)
+    try:
+        assert count > 0
+    except:
+        print(originals)
+        raise("ERROR assert count>0 - looks like data is missing")
+    rates = []
+    mean = 0.0
+    assert count == len(results)
+    for i in range(count):
+        rate = _wer(originals[i], results[i])
+        mean = mean + rate
+        rates.append(rate)
+    return rates, mean / float(count)
+
+def _wer(original, result):
+    r"""
+    The WER is defined as the editing/Levenshtein distance on word level
+    divided by the amount of words in the original text.
+    In case of the original having more words (N) than the result and both
+    being totally different (all N words resulting in 1 edit operation each),
+    the WER will always be 1 (N / N = 1).
+    """
+    # The WER ist calculated on word (and NOT on character) level.
+    # Therefore we split the strings into words first:
+    original = original.split()
+    result = result.split()
+    return _levenshtein(original, result) / float(len(original))
+
+def _levenshtein(a,b):
+    "Calculates the Levenshtein distance between a and b."
+    n, m = len(a), len(b)
+    if n > m:
+        # Make sure n <= m, to use O(min(n,m)) space
+        a,b = b,a
+        n,m = m,n
+
+    current = list(range(n+1))
+    for i in range(1,m+1):
+        previous, current = current, [i]+[0]*n
+        for j in range(1,n+1):
+            add, delete = previous[j]+1, current[j-1]+1
+            change = previous[j-1]
+            if a[j-1] != b[i-1]:
+                change = change + 1
+            current[j] = min(add, delete, change)
+
+    return current[n]
