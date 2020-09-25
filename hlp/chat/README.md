@@ -1,8 +1,7 @@
 # 目录
 + 运行说明
 + 模型效果
-+ Beam Search说明及效果(新增)
-+ 版本日志(修改)
++ Beam Search说明及效果
 + 数据集
 + 其他
 
@@ -37,7 +36,7 @@
 
 ![](https://img-blog.csdnimg.cn/20200916135748737.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L0RCQ18xMjE=,size_16,color_FFFFFF,t_70#pic_center)
 
-#### Beam Search
+# Beam Search
 Beam Search功能已经基本完成且完善，抽象完成并能够应用在不同模型之间(目前已经非常方便的应用在了Seq2Seq和Transformer模型中)。注：在调用本Beam Search实现时，需要满足以下几点要求：
 + 首先需要将问句编码成token向量并对齐，然后调用init_input方法进行初始化
 + 对模型要求能够进行批量输入
@@ -54,10 +53,6 @@ Beam Search功能已经基本完成且完善，抽象完成并能够应用在不
 + **beam_size = 3**
 
 ![](https://img-blog.csdnimg.cn/20200922211722639.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L0RCQ18xMjE=,size_16,color_FFFFFF,t_70#pic_center)
-
-# 版本日志：
-+ 2020.09.22：
-   + 完成BeamSearch
 
 
 # 数据集
