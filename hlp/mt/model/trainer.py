@@ -29,7 +29,7 @@ def train_step(inp, tar):
 
 def train():
     print('开始处理数据集...')
-    train_dataset, val_dataset = preprocess.split_batch(network.input_sequences, network.target_sequences)
+    train_dataset, val_dataset = preprocess.split_batch(network.input_pre.sequences, network.target_pre.sequences)
     print('数据集处理完毕！')
     checkpoint_path = _config.checkpoint_path
 

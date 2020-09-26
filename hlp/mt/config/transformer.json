@@ -1,4 +1,5 @@
 {
+  "en_tokenize_type": "BPE",
   "path_to_file": "./data/en-ch.txt",
   "path_to_eval_file": "./data/en-ch_eval.txt",
   "num_eval": 10,
@@ -13,6 +14,8 @@
   "num_heads": 8,
   "dropout_rate" : 0.1,
   "EPOCHS": 10,
-  "max_target_length": 20
-
+  "max_target_length": 20,
+  "start_word": "<start>",
+  "end_word": "<end>",
+  "target_vocab_size": 8192
 }
