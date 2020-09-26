@@ -46,7 +46,7 @@ if __name__ == "__main__":
         manager = tf.train.CheckpointManager(checkpoint, directory='./checkpoint',max_to_keep=5)
         checkpoint.restore(manager.latest_checkpoint)
     
-    epochs=1
+    epochs=10
     data_path="./data/train_data"
     inputs,labels,label_length=data_process.data_process1(data_path=data_path)
     optimizer = tf.keras.optimizers.Adam()
