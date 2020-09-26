@@ -11,7 +11,7 @@ import tensorflow as tf
 import random
 
 #批处理数据并返回模型的inputs和labels
-def data_process(data_path,batch_size=36,n_mfcc=20):
+def data_process1(data_path,batch_size=36,n_mfcc=20):
     files = os.listdir(data_path) #得到文件夹下的所有文件名称
     #除去最后一个文本txt的所有音频文件
     audio_nums = len(files)-1
@@ -24,22 +24,27 @@ def data_process(data_path,batch_size=36,n_mfcc=20):
     text_list=open(data_path+'/'+files[text_index],"r").readlines()
     mfccs_list = []
     labels_list = []
+    
+    label_length_list=[]
+    
     for i in file_list_num:
         filepath = data_path+'/'+ files[i]
-        print(filepath)
-        #得到了(timestep,n_mfcc)的mfcc list,转成list是为了后面的填充。
-        mfcc = wav_to_mfcc(n_mfcc=n_mfcc,wav_path=filepath).transpose(1,0).tolist()
+        #得到了(timestep,n_mfcc)的mfcc list
+        mfcc = wav_to_mfcc(n_mfcc=n_mfcc,wav_path=filepath)
         mfccs_list.append(mfcc)
-        seq_list=text_to_int_sequence(text_list[i][12:len(text_list[i])-1].lower())
+        #文本格式从第12个开始才是正式字符串，后面还切断了一个回车符
+        str=text_list[i][12:len(text_list[i])-1].lower()
+        seq_list=text_to_int_sequence(str)
         labels_list.append(seq_list)
-    mfccs_numpy = tf.keras.preprocessing.sequence.pad_sequences(mfccs_list,padding='post')
+        label_length_list.append([len(str)])
+    #将内部list不同长度按最大长度填充
+    mfccs_numpy = tf.keras.preprocessing.sequence.pad_sequences(mfccs_list,padding='post',dtype='float32')
     inputs = tf.convert_to_tensor(mfccs_numpy)
     labels_numpy = tf.keras.preprocessing.sequence.pad_sequences(labels_list,padding='post')
     labels = tf.convert_to_tensor(labels_numpy)
-    print(inputs.shape,labels.shape)
-    
-    return inputs,labels
+    #每个lebel的真实长度
+    label_length=tf.convert_to_tensor(label_length_list)
+    return inputs,labels,label_length
 
 if __name__=="__main__":
-    path = "./train-clean-5/LibriSpeech/train-clean-5/19/198"
-    inputs,labels=data_process(path)
+    pass
