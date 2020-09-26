@@ -86,11 +86,11 @@ def sentence_bleu(candidate_sentence, reference_sentences, max_gram = 4, weights
                     truncation_list.append(np.min([gram_candidate_count, item]))  # 在截断列表中添加该n-gram在机翻与各个参考句子中最小次数
                 curr_gram_mole += np.max(truncation_list)  # 将该n-gram的截断count加入分子
                 curr_gram_deno += gram_candidate_count  # 将该n-gram在机翻句子中数量加入分母
-        print(' 当前n-gram长度 %d 分子 %d 分母 %d' % (i+1, curr_gram_mole, curr_gram_deno))
+        # print(' 当前n-gram长度 %d 分子 %d 分母 %d' % (i+1, curr_gram_mole, curr_gram_deno))
         gram_precisions.append(curr_gram_mole/curr_gram_deno * 100)  # 将该阶n-gram的precisions加入列表gram_precisions
     # 此处得到的gram_precisions为 1 ~ N 的gram的 precision 的列表
-    print('所有n-gram精确度：')
-    print(gram_precisions)
+    # print('所有n-gram精确度：')
+    # print(gram_precisions)
 
 
     # 其次对多元组合(n-gram)的precision 进行加权取平均作为最终的bleu评估指标
@@ -112,6 +112,6 @@ def sentence_bleu(candidate_sentence, reference_sentences, max_gram = 4, weights
     else:
         if candidate_tokens_len < np.max(reference_len_list):
             bp = np.exp(1-(np.max(reference_len_list)/candidate_tokens_len))
-    print('短句惩罚:%f' % bp)
+    # print('短句惩罚:%f' % bp)
     return bp * average_res
 
