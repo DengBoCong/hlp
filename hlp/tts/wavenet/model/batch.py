@@ -5,7 +5,7 @@
 import os
 import numpy as np
 from tqdm import tqdm
-from hlp.tts.Wavenet.model.audio import process_wav
+from hlp.tts.wavenet.model.audio import process_wav
 
 
 # 加载音频处理好的sequence序列，二维（38，），每个值是采样点的值（0-255）之间用来表示音频特征

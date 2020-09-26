@@ -7,9 +7,9 @@ import tensorflow as tf
 import matplotlib.pyplot as plt
 from tensorflow.keras.utils import to_categorical
 from tensorflow.python.keras import Input
-from tensorflow.python.keras.layers import Conv1D, Activation, Multiply, Add
+from tensorflow.python.keras.layers import Conv1D, Activation, Multiply, Add, Convolution1D, Flatten, Dense
 from tensorflow.keras.models import Model
-from hlp.tts.Wavenet.model.batch import random_batch_generator, batch_inputs, batch_outputs
+from hlp.tts.wavenet.model.batch import random_batch_generator, batch_inputs, batch_outputs
 
 causal_kernel = 2
 causal_channels = 32
@@ -18,16 +18,6 @@ quantization_channels = 256
 dilation_channels = 64
 causal_channels = 32
 dilation_kernel = 2
-
-
-# 残差块
-def residual_block(X, dilation_rate):
-    F = Conv1D(dilation_channels, dilation_kernel, padding='causal', dilation_rate=dilation_rate)(X)
-    G = Conv1D(dilation_channels, dilation_kernel, padding='causal', dilation_rate=dilation_rate)(X)
-    F = Activation('tanh')(F)
-    G = Activation('sigmoid')(G)
-    Y = Multiply()([F, G])
-    return Y
 
 
 # 构建训练集，分为（输入和输出），输出作为输入的标签
@@ -44,55 +34,39 @@ X_test = to_categorical(X_test, 256)
 Y_test = to_categorical(Y_test, 256)
 
 
+# 输出维度，每个过滤器扩展的时间或空间，
+def wavenetBlock(n_atrous_filters, atrous_filter_size, atrous_rate):
+    def f(input_):
+        residual = input_
+        h = Convolution1D(n_atrous_filters, atrous_filter_size, padding='same', dilation_rate=atrous_rate)(input_)
+        tanh_out = Activation('tanh')(h)
+        s = Convolution1D(n_atrous_filters, atrous_filter_size, padding='same', dilation_rate=atrous_rate)(input_)
+        sigmoid_out = Activation('sigmoid')(s)
+        merged = Multiply()([tanh_out, sigmoid_out])
+        skip_out = Convolution1D(1, 1, activation='relu', padding='same')(merged)
+        out = Add()([skip_out, residual])
+        return out, skip_out
+    return f
+
+
 # 创建模型
 def model(input_shape):
-    X_input = Input(input_shape)
-    X = Conv1D(causal_channels, causal_kernel, padding='causal', dilation_rate=1)(X_input)
-    Y = residual_block(X, 1)
-    S0 = Conv1D(dilation_channels, 1, padding="same")(Y)
-    Y = Conv1D(causal_channels, 1, padding="same")(Y)
-    X = Add()([X, Y])
-    Y = residual_block(X, 2)
-    S1 = Conv1D(dilation_channels, 1, padding="same")(Y)
-    Y = Conv1D(causal_channels, 1, padding="same")(Y)
-    X = Add()([X, Y])
-    Y = residual_block(X, 4)
-    S2 = Conv1D(dilation_channels, 1, padding="same")(Y)
-    Y = Conv1D(causal_channels, 1, padding="same")(Y)
-    X = Add()([X, Y])
-    Y = residual_block(X, 8)
-    S3 = Conv1D(dilation_channels, 1, padding="same")(Y)
-    Y = Conv1D(causal_channels, 1, padding="same")(Y)
-    X = Add()([X, Y])
-    Y = residual_block(X, 16)
-    S4 = Conv1D(dilation_channels, 1, padding="same")(Y)
-    Y = Conv1D(causal_channels, 1, padding="same")(Y)
-    X = Add()([X, Y])
-    Y = residual_block(X, 32)
-    S5 = Conv1D(dilation_channels, 1, padding="same")(Y)
-    Y = Conv1D(causal_channels, 1, padding="same")(Y)
-    X = Add()([X, Y])
-    Y = residual_block(X, 64)
-    S6 = Conv1D(dilation_channels, 1, padding="same")(Y)
-    Y = Conv1D(causal_channels, 1, padding="same")(Y)
-    X = Add()([X, Y])
-    Y = residual_block(X, 128)
-    S7 = Conv1D(dilation_channels, 1, padding="same")(Y)
-    Y = Conv1D(causal_channels, 1, padding="same")(Y)
-    X = Add()([X, Y])
-    Y = residual_block(X, 256)
-    S8 = Conv1D(dilation_channels, 1, padding="same")(Y)
-    Y = Conv1D(causal_channels, 1, padding="same")(Y)
-    X = Add()([X, Y])
-    Y = residual_block(X, 512)
-    S9 = Conv1D(dilation_channels, 1, padding="same")(Y)
-    S = Add()([S0, S1, S2, S3, S4, S5, S6, S7, S8, S9])
-    X = Activation('relu')(S)
-    X = Conv1D(128, 1, padding="same")(X)
-    X = Activation('relu')(X)
-    X = Conv1D(256, 1, padding="same")(X)
-    X = Activation('softmax')(X)
-    return Model(inputs=X_input, outputs=X)
+    input_ = Input(input_shape)
+    # dilation_rate为1的一层因果卷积
+    X = Convolution1D(32, 2, padding='causal', dilation_rate=1)(input_)
+    # dilation_rate为2的一层扩张卷积
+    A, B = wavenetBlock(64, 2, 2)(X)
+    skip_connections = [B]
+    # 扩大倍数4,8,16,32,64,128,256,1,2,4,8,16,32,64,128,256,1,2,4,8的20层扩张卷积
+    for i in range(20):
+        A, B = wavenetBlock(64, 2, 2**((i+2)%9))(A)
+        skip_connections.append(B)
+    net = Add()(skip_connections)
+    net = Activation('relu')(net)
+    net = Convolution1D(128, 1, activation='relu')(net)
+    net = Convolution1D(256, 1)(net)
+    net = Activation('softmax')(net)
+    return Model(inputs=input_, outputs=net)
 
 
 # model实例化
