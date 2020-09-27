@@ -1,2 +1,0 @@
-model_checkpoint_path: "wavenet.ckpt"
-all_model_checkpoint_paths: "wavenet.ckpt"
