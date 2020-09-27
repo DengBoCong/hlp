@@ -5,39 +5,37 @@ Created on Tue Sep 15 16:50:12 2020
 @author: 彭康
 """
 
-# Character_index map list
-
+#字符集构建的字典char_map,index_map
 
 char_map_str = """
-<SPACE> 0
-a 1
-b 2
-c 3
-d 4
-e 5
-f 6
-g 7
-h 8
-i 9
-j 10
-k 11
-l 12
-m 13
-n 14
-o 15
-p 16
-q 17
-r 18
-s 19
-t 20
-u 21
-v 22
-w 23
-x 24
-y 25
-z 26
-' 27
-. 28
+<SPACE> 1
+a 2
+b 3
+c 4
+d 5
+e 6
+f 7
+g 8
+h 9
+i 10
+j 11
+k 12
+l 13
+m 14
+n 15
+o 16
+p 17
+q 18
+r 19
+s 20
+t 21
+u 22
+v 23
+w 24
+x 25
+y 26
+z 27
+' 28
 """
 
 char_map = {}
@@ -48,4 +46,4 @@ for line in char_map_str.strip().split('\n'):
     char_map[ch] = int(index)
     index_map[int(index)] = ch
 
-index_map[0] = ' ' #在index_map里边以0:' '为键值对而char_map里边以'<space>':0为键值对.
+index_map[1] = ' ' #在index_map里边以1:' '为键值对而char_map里边以'<space>':1为键值对.

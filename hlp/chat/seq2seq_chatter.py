@@ -32,7 +32,7 @@ class Seq2SeqChatter(Chatter):
         dec_hidden = enc_hidden
         dec_input = tf.expand_dims(dec_input[:, t], 1)
         predictions, _, _ = seq2seq.decoder(dec_input, dec_hidden, enc_out)
-        self.beam_search_container.add(predictions)
+        return predictions
 
 
 def main():
