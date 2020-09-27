@@ -5,7 +5,6 @@ import tensorflow as tf
 from model.chatter import Chatter
 from optparse import OptionParser
 import config.get_config as _config
-from model.chatter import BeamContainer
 from model.transformer.model import model
 import model.transformer.model as transformer
 from common.pre_treat import preprocess_raw_data
@@ -20,14 +19,7 @@ class TransformerChatter(Chatter):
         """
         Transformer聊天器初始化，用于加载模型
         """
-        super().__init__(checkpoint_dir)
-        self.beam_search_container = BeamContainer(
-            beam_size=beam_size,
-            max_length=_config.max_length_tar,
-            worst_score=1e9,
-            length_penalty=6
-        )
-        self.beam_size = beam_size
+        super().__init__(checkpoint_dir, beam_size)
         if self.ckpt:
             transformer.checkpoint.restore(tf.train.latest_checkpoint(checkpoint_dir)).expect_partial()
 
@@ -40,15 +32,11 @@ class TransformerChatter(Chatter):
         step_loss[0] = transformer.train_loss.result()
 
     def create_predictions(self, inputs, dec_input, t):
+        # 获取目前已经保存在容器中的序列
         predictions = model(inputs=[inputs, dec_input], training=False)
         predictions = predictions[:, -1:, :]
-        # for i in range(self.beam_size):
-        #     for k in range(len(predictions[0][0])):
-        #         self.beam_search_container.add()
-        predicted_id = tf.cast(tf.argmax(predictions, axis=-1), tf.int32)
-        dec_input = tf.concat([dec_input, predicted_id], axis=-1)
-        predicted_id = tf.squeeze(predicted_id)
-        return predicted_id, dec_input
+        predictions = tf.squeeze(predictions, axis=1)
+        return predictions
 
 
 def main():

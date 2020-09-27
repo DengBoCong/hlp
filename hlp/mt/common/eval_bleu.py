@@ -1,14 +1,10 @@
+"""
+对两个句子进行比对并得出BLEU指标
+"""
+
 import numpy as np
 import re
 import math
-from common import preprocess
-from model import translator
-import config.get_config as _config
-
-"""
-Description:
-    BLEU
-"""
 
 
 def calculate_average(precisions, weights):
@@ -23,7 +19,6 @@ def calculate_average(precisions, weights):
         return tmp_res
     else:
         return math.exp(tmp_res)
-
 
 
 def calculate_candidate(gram_list, candidate):
@@ -48,11 +43,11 @@ def sentence_bleu(candidate_sentence, reference_sentences, max_gram = 4, weights
     :param reference_sentence:参考句子列表
     :param max_gram:计算至max_gram的N-gram，默认为 4
     :param weights:各N-gram的权重，默认为 (0.25, 0.25, 0.25, 0.25)
-    :param ch:输入是否为中文句子。若为TRUE，则函数会进行预处理
+    :param ch:输入是否用' '分隔。若未分隔，则设置为True，将对candidate_sentence及reference_sentences进行' '分隔
     :description: 此BLUE为改良的BLEU,采用了截断、加权平均及短句惩罚因子
     :return:精度
 
-    注意：输入的句子的单位之间需要用' '分割
+    注意：输入的句子的单位之间需要用' '分割，若未分隔，请将ch 设置为True
     """
     if ch:
         candidate_sentence = ' '.join(candidate_sentence)
@@ -73,8 +68,7 @@ def sentence_bleu(candidate_sentence, reference_sentences, max_gram = 4, weights
     # 两个值相除即可得到这个长度为n的gram 的precision值
     gram_precisions= []
     for i in range(max_gram):
-        # calculate each gram precision
-        # set current gram length
+        # 计算每个n-gram的精确度
         curr_gram_len = i+1
         # calculate current gram length mole(分子)
         curr_gram_mole = 0
@@ -85,23 +79,18 @@ def sentence_bleu(candidate_sentence, reference_sentences, max_gram = 4, weights
                 continue
             else:  # curr_gram_list 为机翻的第j个 n-gram 列表
                 curr_gram_list = candidate_corpus[j:j+curr_gram_len]
-                # print('curr_gram_list:' + ' '.join(curr_gram_list))
                 gram_candidate_count = calculate_candidate(curr_gram_list, candidate_sentence)  #
-                # print(' current gram candidate count')
-                # print(gram_candidate_count)
                 gram_reference_count_list = calculate_reference(curr_gram_list, reference_sentences)  # gram_reference_count_list 为计算 n-gram 在参考句子中数量的列表
-                # print(' current gram reference count list')
-                # print(gram_reference_count_list)
                 truncation_list = []
                 for item in gram_reference_count_list:
                     truncation_list.append(np.min([gram_candidate_count, item]))  # 在截断列表中添加该n-gram在机翻与各个参考句子中最小次数
                 curr_gram_mole += np.max(truncation_list)  # 将该n-gram的截断count加入分子
                 curr_gram_deno += gram_candidate_count  # 将该n-gram在机翻句子中数量加入分母
-        print(' current length %d and gram mole %d and deno %d' % (i+1, curr_gram_mole, curr_gram_deno))
+        # print(' 当前n-gram长度 %d 分子 %d 分母 %d' % (i+1, curr_gram_mole, curr_gram_deno))
         gram_precisions.append(curr_gram_mole/curr_gram_deno * 100)  # 将该阶n-gram的precisions加入列表gram_precisions
     # 此处得到的gram_precisions为 1 ~ N 的gram的 precision 的列表
-    print('all the precisions about the grams')
-    print(gram_precisions)
+    # print('所有n-gram精确度：')
+    # print(gram_precisions)
 
 
     # 其次对多元组合(n-gram)的precision 进行加权取平均作为最终的bleu评估指标
@@ -123,27 +112,6 @@ def sentence_bleu(candidate_sentence, reference_sentences, max_gram = 4, weights
     else:
         if candidate_tokens_len < np.max(reference_len_list):
             bp = np.exp(1-(np.max(reference_len_list)/candidate_tokens_len))
-    print('bp:%f' % bp)
+    # print('短句惩罚:%f' % bp)
     return bp * average_res
 
-def calc_bleu():
-
-    # 导入评估文本计算BLEU
-    path_to_eval_file = _config.path_to_eval_file  # 评估文本路径
-    num_eval = _config.num_eval  # 用来评估的句子数量
-    en, ch = preprocess.create_eval_dataset(path_to_eval_file, num_eval)
-    print('开始计算BLEU指标...')
-    bleu_sum = 0
-    for i in range(num_eval):
-        candidate_sentence = translator.translate(en[i])
-        print('-' * 20)
-        print('第%d个句子：' % (i + 1))
-        print('Input:' + en[i])
-        print('Translate:' + candidate_sentence)
-        print('Reference:' + ch[i])
-        bleu_i = sentence_bleu(candidate_sentence, [ch[i]], ch=True)
-        print('此句子BLEU:%.2f' % bleu_i)
-        bleu_sum += bleu_i
-    bleu = bleu_sum / num_eval
-    print('-' * 20)
-    print('平均BLEU指标为：%.2f' % bleu)

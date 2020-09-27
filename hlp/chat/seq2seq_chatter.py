@@ -14,11 +14,11 @@ class Seq2SeqChatter(Chatter):
     Seq2Seq模型的聊天类
     """
 
-    def __init__(self, checkpoint_dir):
+    def __init__(self, checkpoint_dir, beam_size):
         """
         Seq2Seq聊天器初始化，用于加载模型
         """
-        super().__init__(checkpoint_dir)
+        super().__init__(checkpoint_dir, beam_size)
         if self.ckpt:
             seq2seq.checkpoint.restore(tf.train.latest_checkpoint(checkpoint_dir)).expect_partial()
 
@@ -27,14 +27,12 @@ class Seq2SeqChatter(Chatter):
         step_loss[0] += seq2seq.train_step(inp, tar, self.target_token, enc_hidden)
 
     def create_predictions(self, inputs, dec_input, t):
-        hidden = [tf.zeros((1, _config.units))]
+        hidden = tf.zeros((inputs.shape[0], _config.units))
         enc_out, enc_hidden = seq2seq.encoder(inputs, hidden)
         dec_hidden = enc_hidden
-        predictions, dec_hidden, _ = seq2seq.decoder(dec_input, dec_hidden, enc_out)
-        predicted_id = tf.argmax(predictions[0]).numpy()
-        dec_input = tf.expand_dims([predicted_id], 0)
-        predicted_id = tf.squeeze(predicted_id)
-        return predicted_id, dec_input
+        dec_input = tf.expand_dims(dec_input[:, t], 1)
+        predictions, _, _ = seq2seq.decoder(dec_input, dec_hidden, enc_out)
+        return predictions
 
 
 def main():
@@ -45,7 +43,7 @@ def main():
     (options, args) = parser.parse_args()
 
     # 初始化要使用的聊天器
-    chatter = Seq2SeqChatter(checkpoint_dir=_config.seq2seq_train_data)
+    chatter = Seq2SeqChatter(checkpoint_dir=_config.seq2seq_train_data, beam_size=_config.beam_size)
 
     if options.type == 'train':
         chatter.train(seq2seq.checkpoint)
