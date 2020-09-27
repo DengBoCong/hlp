@@ -57,9 +57,9 @@ def main():
                     else:
                         print('翻译结果:', translator.translate(sentence))
             else:
-                print("请输入正确的指令")
+                print("请输入正确的指令：translate/eval/train")
         else:
-            print('请先训练再进行测试体验...')
+            print('请先训练才可使用其它功能...')
 
 
 if __name__ == '__main__':

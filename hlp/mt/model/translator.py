@@ -10,12 +10,10 @@ from common import self_attention
 
 def predict_index(inp_sentence):
     '''对输入句子进行翻译并返回编码的句子列表'''
-    inp_sentence = preprocess.preprocess_en_sentence(inp_sentence)
-    inp_sequence = [network.input_tokenizer.word_index[i] for i in inp_sentence.split(' ')
-                    if i in network.dic_keys]  # token编码 对不在词典中的单词不加入编码
+    inp_sequence = network.input_pre.encode_sentence(inp_sentence)
     encoder_input = tf.expand_dims(inp_sequence, 0)
 
-    decoder_input = [network.target_tokenizer.word_index['<start>']]
+    decoder_input = [network.target_pre.tokenizer.word_index[_config.start_word]]
     output = tf.expand_dims(decoder_input, 0)
 
     for i in range(_config.max_target_length):
@@ -36,7 +34,7 @@ def predict_index(inp_sentence):
         predicted_id = tf.cast(tf.argmax(predictions, axis=-1), tf.int32)
 
         # 如果 predicted_id 等于结束标记，就返回结果
-        if predicted_id == [network.target_tokenizer.word_index['<end>']]:
+        if predicted_id == [network.target_pre.tokenizer.word_index[_config.end_word]]:
             return tf.squeeze(output, axis=0)
 
         # 连接 predicted_id 与输出，作为解码器的输入传递到解码器。
@@ -46,11 +44,9 @@ def predict_index(inp_sentence):
 
 
 def translate(sentence):
-    '''对句子进行翻译,未进行检查点的判断'''
-    predict_id = predict_index(sentence)
-    predicted_sentence = [network.target_tokenizer.index_word[i.numpy()] for i in predict_id
-                          if i != [network.target_tokenizer.word_index['<start>']]]
-    predicted_sentence = ''.join(predicted_sentence)
+    '''对句子(经过预处理未经过编码)进行翻译,未进行检查点的判断'''
+    predict_idx = predict_index(sentence)
+    predicted_sentence = network.target_pre.decode_sequence(predict_idx)
     return predicted_sentence
 
 
