@@ -5,6 +5,7 @@ from optparse import OptionParser
 from model import evaluate as eval
 from common import preprocess
 from model import network
+from config import get_config as _config
 '''
 
 程序入口
@@ -20,7 +21,17 @@ cmd: python nml.py -t/--type [执行模式]
 '''
 
 
+
+
 def main():
+    # 数据加载及预处理
+    print('正在加载数据...')
+    input_pre = preprocess.get_en_preprocess(_config.path_to_file, _config.num_sentences)  # 英文分词类的实例化，完成英文数据的加载及处理
+    target_pre = preprocess.get_ch_preprocess(_config.path_to_file, _config.num_sentences)  # 中文分词类的实例化，完成中文数据的加载及处理
+
+    # 创建模型及相关变量
+    optimizer, train_loss, train_accuracy, transformer = network.get_model(input_pre.vocab_size, target_pre.vocab_size)
+
     parser = OptionParser(version='%prog V1.0')
     parser.add_option("-t", "--type", action="store", type="string",
                       dest="type", default="translate",
@@ -28,11 +39,11 @@ def main():
     (options, args) = parser.parse_args()
 
     if options.type == 'train':
-        trainer.train()
+        trainer.train(input_pre, target_pre, transformer, optimizer, train_loss, train_accuracy)
     else:
         if_ckpt = preprocess.check_point()  # 检测是否有检查点
         if if_ckpt:
-            network.load_checkpoint(network.transformer, network.optimizer)  # 加载检查点
+            network.load_checkpoint(transformer, optimizer)  # 加载检查点
             if options.type == 'eval':
                 # 评估模式
                 while(True):
@@ -40,7 +51,7 @@ def main():
                     print('可选择评价指标： 1.bleu指标  0.退出程序')
                     eval_mode = input('请输入选择指标的序号：')
                     if eval_mode == '1':
-                        eval.calc_bleu()
+                        eval.calc_bleu(transformer, input_pre, target_pre)
                     elif eval_mode == '0':
                         print('感谢您的体验！')
                         break
@@ -55,7 +66,7 @@ def main():
                     if sentence == '0':
                         break
                     else:
-                        print('翻译结果:', translator.translate(sentence))
+                        print('翻译结果:', translator.translate(sentence, transformer, input_pre, target_pre))
             else:
                 print("请输入正确的指令：translate/eval/train")
         else:

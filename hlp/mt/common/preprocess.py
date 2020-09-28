@@ -19,6 +19,8 @@
 - 中文分词子类 EnPreprocessTokenize
     - 使用字分词方法进行编码
 
+- 得到中英分词实例的方法
+
 - 训练集与验证集划分方法 split_batch(input_tensor, target_tensor)
 
 - 检测检查点方法 check_point()
@@ -36,6 +38,7 @@ import os
 
 class EnPreprocess(object):
     '''英文分词父类'''
+
     def __init__(self, path, num_sentences, start_word, end_word):
         '''子类__init__需要对句子进行预处理编码及生成字典'''
         self.start_word = start_word
@@ -69,8 +72,9 @@ class EnPreprocessBpe(EnPreprocess):
     encode_sentence:使用字典对句子进行编码
     decode_sequence：使用字典对句子进行解码
     """
-    def __init__(self, path, num_sentences, start_word, end_word ,
-                 target_vocab_size=2**13, load=False, vocab_filename=r'./data/vocab'):
+
+    def __init__(self, path, num_sentences, start_word, end_word,
+                 target_vocab_size=2 ** 13, load=False, vocab_filename=r'./data/vocab'):
         """
         Args:
             path: 加载的文本路径
@@ -81,11 +85,12 @@ class EnPreprocessBpe(EnPreprocess):
             load: 是否加载保存的字典
             vocab_filename: 保存字典的路径
         """
+        print('正在配置英文分词（BPE）...')
         super(EnPreprocessBpe, self).__init__(path, num_sentences, start_word, end_word)
 
         # 对句子进行预处理，加上开始结束标志
         self.sentences = [self.__preprocess_sentence(s) for s in self.raw_sentences]
-        print('选择的英文分词配置为：BPE')
+
         # 得到编码的句子及字典
         if load:
             tokenizer = tfds.features.text.SubwordTextEncoder.load_from_file(vocab_filename)
@@ -101,8 +106,9 @@ class EnPreprocessBpe(EnPreprocess):
 
         # 词典大小
         self.vocab_size = self.tokenizer.vocab_size
+        print('英文分词配置完成')
 
-    def __preprocess_sentence(self,sentence):
+    def __preprocess_sentence(self, sentence):
         sentence = self.start_word + ' ' + sentence + ' ' + self.end_word
         return sentence
 
@@ -132,7 +138,8 @@ class EnPreprocessTokenize(EnPreprocess):
 
     类方法：
     """
-    def __init__(self, path, num_sentences, start_word, end_word ):
+
+    def __init__(self, path, num_sentences, start_word, end_word):
         """
         Args:
             path: 加载的文本路径
@@ -140,8 +147,9 @@ class EnPreprocessTokenize(EnPreprocess):
             start_word: 开始标志
             end_word: 结束标志
         """
+
+        print('正在配置英文分词（TOKENIZE）...')
         super(EnPreprocessTokenize, self).__init__(path, num_sentences, start_word, end_word)
-        print('选择的英文分词配置为：TOKENIZE（单词分词）')
         # 对句子进行预处理，加上开始结束标志
         self.sentences = [self.__preprocess_sentence(s) for s in self.raw_sentences]
 
@@ -157,8 +165,9 @@ class EnPreprocessTokenize(EnPreprocess):
 
         # 词库
         self.vocab = [i for i in self.tokenizer.word_index]
+        print('英文分词配置完成')
 
-    def __preprocess_sentence(self,sentence):
+    def __preprocess_sentence(self, sentence):
         '''对英语句子进行处理'''
         s = sentence.lower().strip()
         s = re.sub(r'([?.!,])', r' \1', s)  # 在?.!,前添加空格
@@ -191,6 +200,7 @@ class EnPreprocessTokenize(EnPreprocess):
 
 class ChPreprocess(object):
     '''中文分词父类'''
+
     def __init__(self, path, num_sentences, start_word, end_word):
         '''子类__init__需要对句子进行预处理编码及生成字典'''
         self.start_word = start_word
@@ -210,6 +220,7 @@ class ChPreprocess(object):
 
 class ChPreprocessTokenize(ChPreprocess):
     '''使用单字分词法的中文分词子类'''
+
     def __init__(self, path, num_sentences, start_word, end_word):
         """
         Args:
@@ -218,8 +229,8 @@ class ChPreprocessTokenize(ChPreprocess):
             start_word: 开始标志
             end_word: 结束标志
         """
+        print('正在配置中文分词（TOKENIZE）...')
         super(ChPreprocessTokenize, self).__init__(path, num_sentences, start_word, end_word)
-        print('选择的中文分词配置为：TOKENIZE（字分词）')
         # 对句子进行预处理，加上开始结束标志
         self.sentences = [self.__preprocess_sentence(s) for s in self.raw_sentences]
 
@@ -235,20 +246,22 @@ class ChPreprocessTokenize(ChPreprocess):
 
         # 词库
         self.vocab = [i for i in self.tokenizer.word_index]
+        print('中文分词配置完成')
 
-    def __preprocess_sentence(self,sentence):
-        '''对中文句子进行处理'''
+    def __preprocess_sentence(self, sentence):
+        """
+        对中文句子进行处理
+        """
         s = sentence.strip()
         s = ' '.join(s)
         s = s.strip()
-        s = '<start> ' + s + ' <end>'  # 给句子加上开始结束标志
-        return s
-
         s = self.start_word + ' ' + s + ' ' + self.end_word  # 给句子加上开始结束标志
         return s
 
     def encode_sentence(self, sentence):
-        '''输入编码的句子，输出编码的句子'''
+        """
+        输入编码的句子，输出编码的句子
+        """
         sentence = self.__preprocess_sentence(sentence).split()
         sequence = []
         # 将句子中未出现在词库中的word替换为'unk'
@@ -268,10 +281,29 @@ class ChPreprocessTokenize(ChPreprocess):
         return sentence
 
 
+def get_en_preprocess(path, num_sentences):
+    """
+    根据配置文件所选择的分词方法返回所选择的英文实例
+    """
+    if _config.en_tokenize_type == 'BPE':
+        return EnPreprocessBpe(path, num_sentences, _config.start_word, _config.end_word)
+    else:
+        return EnPreprocessTokenize(path, num_sentences, _config.start_word, _config.end_word)
+
+
+def get_ch_preprocess(path, num_sentences):
+    """
+    根据配置文件所选择的分词方法返回所选择的中文实例
+    """
+    return ChPreprocessTokenize(path, num_sentences, _config.start_word, _config.end_word)
+
+
 def split_batch(input_tensor, target_tensor):
-    '''将输入输出句子进行训练集及验证集的划分,返回张量'''
+    """
+    将输入输出句子进行训练集及验证集的划分,返回张量
+    """
     x_train, x_test, y_train, y_test = train_test_split(input_tensor, target_tensor, test_size=_config.test_size)
-    train_dataset = tf.data.Dataset.from_tensor_slices((x_train,y_train))
+    train_dataset = tf.data.Dataset.from_tensor_slices((x_train, y_train))
     train_dataset = train_dataset.shuffle(_config.BUFFER_SIZE).batch(_config.BATCH_SIZE, drop_remainder=True)
     val_dataset = tf.data.Dataset.from_tensor_slices((x_test, y_test))
     val_dataset = val_dataset.shuffle(_config.BUFFER_SIZE).batch(_config.BATCH_SIZE, drop_remainder=True)
@@ -284,11 +316,12 @@ def split_batch(input_tensor, target_tensor):
 # print('-'*20)
 
 def check_point():
-    '''检测检查点目录下是否有文件'''
+    """
+    检测检查点目录下是否有文件
+    """
     checkpoint_dir = _config.checkpoint_path
     is_exist = Path(checkpoint_dir)
     if not is_exist.exists():
         os.makedirs(checkpoint_dir, exist_ok=True)
     if_ckpt = tf.io.gfile.listdir(checkpoint_dir)
     return if_ckpt
-
