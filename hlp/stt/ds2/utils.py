@@ -19,7 +19,7 @@ def wav_to_mfcc(n_mfcc,wav_path):
     return mfcc
 
 def text_to_int_sequence(text):
-    #转成list
+    #字符序列list转成数字label list
     int_sequence = []
     for ch in text:
         if ch == ' ':
@@ -31,11 +31,7 @@ def text_to_int_sequence(text):
 
 
 def int_to_text_sequence(seq):
-    """ Use a index map and convert int to a text sequence
-        >>> from utils import int_to_text_sequence
-        >>> a = [2,22,10,11,21,2,13,11,6,1,21,2,8,20,17]
-        >>> b = int_to_text_sequence(a)
-    """
+    #数字label list转成字符序列list
     text_sequence = []
     for c in seq:
         if c>=1 and c<=(len(char_index_map.index_map)):
@@ -126,7 +122,7 @@ class WordAccuracy(tf.keras.metrics.Metric):
         self.count.assign(0)
         self.total.assign(0)
         
-#输入的应该均是字符串的list,是wer计算的入口
+#输入的两个参数均是字符串的list,是wer计算的入口
 def wers(originals, results):
     count = len(originals)
     try:

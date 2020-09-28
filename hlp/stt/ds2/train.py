@@ -36,9 +36,9 @@ def train(model, optimizer,inputs,labels,label_length, epochs):
 if __name__ == "__main__":
     #是否为初次训练
     is_first_train=False
+    
     if is_first_train:
         model=DS2()
-        
     else:
         model=DS2()
         #加载检查点
