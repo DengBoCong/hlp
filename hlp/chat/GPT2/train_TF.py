@@ -13,9 +13,11 @@ from transformers import GPT2Tokenizer, TFGPT2LMHeadModel
 from transformers import BertTokenizer
 from itertools import zip_longest, chain
 #不能是一一对应 得是理解了之后的重新编写
-import train_args
-import preprocess_data
+
+from hlp.chat.GPT2 import preprocess_data
 #数据处理
+from hlp.chat.GPT2 import train_args
+
 PAD='[PAD]'
 
 def create_model(args, vocab_size):
