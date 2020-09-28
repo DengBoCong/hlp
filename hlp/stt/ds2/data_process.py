@@ -9,9 +9,14 @@ import os
 from utils import wav_to_mfcc,text_to_int_sequence
 import tensorflow as tf
 import random
+import config
 
-#批处理数据并返回模型的inputs和labels
-def data_process1(data_path,batch_size=36,n_mfcc=20):
+#批处理train数据并返回模型的inputs和labels
+def data_process1(
+    data_path,
+    batch_size=config.configs_train["batch_size"],
+    n_mfcc=config.configs_other["n_mfcc"]
+    ):
     files = os.listdir(data_path) #得到文件夹下的所有文件名称
     #除去最后一个文本txt的所有音频文件
     audio_nums = len(files)-1
@@ -46,8 +51,12 @@ def data_process1(data_path,batch_size=36,n_mfcc=20):
     label_length=tf.convert_to_tensor(label_length_list)
     return inputs,labels,label_length
 
-#test计算wer
-def data_process2(data_path,batch_size=24,n_mfcc=20):
+#test数据集加载
+def data_process2(
+    data_path,
+    batch_size=config.configs_test["batch_size"],
+    n_mfcc=config.configs_other["n_mfcc"]
+    ):
     files = os.listdir(data_path) #得到文件夹下的所有文件名称
     #除去最后一个文本txt的所有音频文件
     audio_nums = len(files)-1
