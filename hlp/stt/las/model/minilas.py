@@ -6,7 +6,7 @@ Created on Wed Sep 16 10:34:04 2020
 #!/usr/bin/env python
 
 import tensorflow as tf
-import numpy as np
+
 
 class attention(tf.keras.layers.Layer):
   def __init__(self, dim):
@@ -97,21 +97,3 @@ def LAS(dim, f_1, no_tokens):
 
   model = tf.keras.Model(inputs=[input_1,input_2], outputs=x)
   return model
-'''
-调试中
-model = LAS(256, 256, 16)
-model.compile(loss="mse", optimizer="adam")
-
-# x_1 should have shape (Batch-size, timesteps, f_1)
-x_1 = np.random.random((1, 550, 256))
-
-# x_2 should have shape (Batch-size, no_prev_tokens, No_tokens). The token vector should be one-hot encoded.
-x_2 = np.zeros((1,12,16))
-for n in range(12):
-  x_2[0, n, np.random.randint(1, 16)] = 1
-
-# By passing x_1 and x_2 the model will predict the 12th token 
-# given by the spectogram and the prev predicted tokens
-
-output = model.predict([x_1, x_2])
-'''
