@@ -1,14 +1,13 @@
 import tensorflow as tf
 
-'''
-# 这里直接根据注意力的公式进行编写
-参数：
-    query,key,value:这三个均来自输入自身
-    mask:
-'''
-
 
 def scaled_dot_product_attention(query, key, value, mask):
+    """
+    # 这里直接根据注意力的公式进行编写
+    参数：
+    query,key,value:这三个均来自输入自身
+    mask:
+    """
     # 先将query和可以做点积
     matmul_qk = tf.matmul(query, key, transpose_b=True)
     deep = tf.cast(tf.shape(key)[-1], tf.float32)
@@ -26,14 +25,13 @@ def scaled_dot_product_attention(query, key, value, mask):
     return output
 
 
-'''
-# 按照过头注意力的结构进行编写
-参数：
-    inputs: query,key,value
-'''
-
-
 class MultiHeadAttention(tf.keras.layers.Layer):
+    '''
+    # 按照过头注意力的结构进行编写
+    参数：
+        inputs: query,key,value
+    '''
+
     def __init__(self, d_model, num_heads, name="multi_head_attention"):
         super(MultiHeadAttention, self).__init__(name=name)
         self.num_heads = num_heads
@@ -186,3 +184,38 @@ def transformer_decoder_layer(units, d_model, num_heads, dropout, name="transfor
         outputs=outputs,
         name=name
     )
+
+
+class InformSlotTracker(tf.keras.layers.Layer):
+    """
+    informable插槽跟踪器，informable插槽是用户告知系统的信息，用
+    来约束对话的一些条件，系统为了完成任务必须满足这些条件
+    用来获得时间t的状态的槽值分布，比如price=cheap
+    输入为状态跟踪器的输入'state_t'，输出为槽值分布'P(v_s_t| state_t)'
+    """
+
+    def __init__(self, n_choices):
+        super(InformSlotTracker, self).__init__()
+        self.n_choices = n_choices + 1
+        self.fc = tf.keras.layers.Dense(units=n_choices)
+
+    def forward(self, state):
+        return self.fc(state)
+
+
+class RequestSlotTracker(tf.keras.layers.Layer):
+    """
+    requestable插槽跟踪器，requestable插槽是用户询问系统的信息
+    用来获得时间t的状态的非分类插槽槽值分布，
+    比如：
+    address=1 (地址被询问)
+    phone=0 (用户不关心电话号码)
+    输入为状态跟踪器的输入'state_t'，输出为槽值二元分布'P(v_s_t| state_t)'
+    """
+
+    def __init__(self):
+        super(RequestSlotTracker, self).__init__()
+        self.fc = tf.keras.layers.Dense(2)
+
+    def forward(self, state):
+        return self.fc(state)

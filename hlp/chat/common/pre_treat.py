@@ -1,8 +1,10 @@
 import os
 import re
 import jieba
+import pickle
+from model.task.kb import load_kb
 import config.get_config as _config
-from zhon.hanzi import punctuation
+
 
 '''
 对话数据集预处理模块
@@ -70,3 +72,14 @@ def preprocess_raw_data():
             print(len(range(len(results))), '处理进度：', i)
 
     train_tokenized.close()
+
+def load_embed_model(fn, embed_dim=300):
+    with open(fn + '.w2i', 'rb') as file:
+        word2idx = pickle.load(file)
+
+def load_embed(**kargs):
+    if not kargs["generate_embed"]:
+        word2idx, embed = loa
+
+def load_data(**kargs):
+    kb = load_kb(kargs["kb"], "name")

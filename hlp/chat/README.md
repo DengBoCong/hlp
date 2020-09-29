@@ -3,6 +3,7 @@
 + 模型效果
 + Beam Search说明及效果
 + 数据集
++ 版本日志（新）
 + 其他
 
 
@@ -19,6 +20,8 @@
    + python seq2seq_chatter.py -t pre_treat
    + python transformer_chatter.py
    + python transformer_chatter.py -t pre_treat
+   + python task_chatter.py
+   + python task_chatter.py -t pre_treat
 + pre_treat模式为文本预处理模式，如果在没有分词结果集的情况下，需要先运行pre_treat模式
 + train模式为训练模式
 + chat模式为对话模式。chat模式下运行时，输入exit即退出对话。
@@ -54,8 +57,15 @@ Beam Search功能已经基本完成且完善，抽象完成并能够应用在不
 
 ![](https://img-blog.csdnimg.cn/20200922211722639.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L0RCQ18xMjE=,size_16,color_FFFFFF,t_70#pic_center)
 
+# 版本日志
++ 2020-9-30：数据集处理
+   + 先使用MultiWOZ2.2数据集进行预处理，完善数据处理代码
+   + 构建模型及训练代码
 
 # 数据集
++ [MultiWOZ2](https://www.repository.cam.ac.uk/bitstream/handle/1810/280608/MULTIWOZ2.zip?sequence=3&isAllowed=y)
++ [CrossWOZ](https://github.com/thu-coai/CrossWOZ)
+
 data目录中的语料为缩减版，是原版语料的六分之一，需要原版语料可以自取
 
 链接：https://pan.baidu.com/s/1qAIrdX-mv-Bzq1Y7MDjmLg 
