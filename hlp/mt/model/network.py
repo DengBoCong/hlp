@@ -18,8 +18,6 @@ transformer中网络层的部分
 import tensorflow as tf
 from common import self_attention
 from config import get_config as _config
-from common import preprocess
-
 
 # 多头注意力层
 class MultiHeadAttention(tf.keras.layers.Layer):
@@ -270,19 +268,6 @@ class Transformer(tf.keras.Model):
         return final_output, attention_weights
 
 
-# 数据预处理,创建预处理对象
-# 判断所选择的类型，EnPreprocessTokenize
-print('正在加载数据...')
-if _config.en_tokenize_type == 'BPE':
-    input_pre = preprocess.EnPreprocessBpe(_config.path_to_file,
-                                           _config.num_sentences, _config.start_word, _config.end_word)
-else:
-    input_pre = preprocess.EnPreprocessTokenize(_config.path_to_file,
-                                           _config.num_sentences, _config.start_word, _config.end_word)
-
-target_pre = preprocess.ChPreprocessTokenize(_config.path_to_file, _config.num_sentences, _config.start_word, _config.end_word)
-
-
 # 自定义优化器（Optimizer）
 class CustomSchedule(tf.keras.optimizers.schedules.LearningRateSchedule):
     def __init__(self, d_model, warmup_steps=4000):
@@ -300,12 +285,6 @@ class CustomSchedule(tf.keras.optimizers.schedules.LearningRateSchedule):
         return tf.math.rsqrt(self.d_model) * tf.math.minimum(arg1, arg2)
 
 
-learning_rate = CustomSchedule(_config.d_model)
-
-optimizer = tf.keras.optimizers.Adam(learning_rate, beta_1=0.9, beta_2=0.98,
-                                     epsilon=1e-9)
-
-
 def loss_function(real, pred):
     mask = tf.math.logical_not(tf.math.equal(real, 0))
     loss_object = tf.keras.losses.SparseCategoricalCrossentropy(
@@ -318,14 +297,22 @@ def loss_function(real, pred):
     return tf.reduce_mean(loss_)
 
 
-train_loss = tf.keras.metrics.Mean(name='train_loss')
-train_accuracy = tf.keras.metrics.SparseCategoricalAccuracy(
-    name='train_accuracy')
-transformer = Transformer(_config.num_layers, _config.d_model, _config.num_heads, _config.dff,
-                          input_pre.vocab_size + 1, target_pre.vocab_size + 1,
-                          pe_input=input_pre.vocab_size + 1,
-                          pe_target=target_pre.vocab_size + 1,
-                          rate=_config.dropout_rate)
+def get_model(input_vocab_size, target_vocab_size):
+    """获取模型相关变量"""
+    learning_rate = CustomSchedule(_config.d_model)
+
+    optimizer = tf.keras.optimizers.Adam(learning_rate, beta_1=0.9, beta_2=0.98,
+                                         epsilon=1e-9)
+
+    train_loss = tf.keras.metrics.Mean(name='train_loss')
+    train_accuracy = tf.keras.metrics.SparseCategoricalAccuracy(
+        name='train_accuracy')
+    transformer = Transformer(_config.num_layers, _config.d_model, _config.num_heads, _config.dff,
+                              input_vocab_size + 1, target_vocab_size + 1,
+                              pe_input=input_vocab_size + 1,
+                              pe_target=target_vocab_size + 1,
+                              rate=_config.dropout_rate)
+    return optimizer, train_loss, train_accuracy, transformer
 
 
 def load_checkpoint(transformer, optimizer):
