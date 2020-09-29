@@ -2,7 +2,7 @@ import collections
 import numpy as np
 import tensorflow as tf
 from tensorflow_addons.seq2seq import BahdanauAttention, Decoder, Sampler
-from tacotron2.process.decoder import dynamic_decode
+from tacotron2.model.decoder import dynamic_decode
 def get_initializer(initializer_range=0.02):
     """Creates a `tf.initializers.truncated_normal` with the given range.
     Args:

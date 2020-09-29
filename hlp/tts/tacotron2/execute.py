@@ -1,9 +1,6 @@
-import matplotlib.pyplot as plt
 import logging
 import os
 import time
-import librosa
-import librosa.display
 import numpy as np
 import pytest
 import tensorflow as tf
@@ -11,15 +8,13 @@ from tacotron2.dataset.dataset_wav import Dataset_wave
 from tacotron2.dataset.dataset_txt import Dataset_txt
 from tacotron2.config.config import Tacotron2Config
 from tacotron2.model.tacotron2 import TFTacotron2
-
-
-
+from tacotron2.plot.plot import plot_mel
 os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
 logging.basicConfig(
-    level=logging.WARNING,
-    format="%(asctime)s (%(module)s:%(lineno)d) %(levelname)s: %(message)s",
-)
+     level=logging.WARNING,
+     format="%(asctime)s (%(module)s:%(lineno)d) %(levelname)s: %(message)s",
+ )
 
 
 @pytest.mark.parametrize(
@@ -39,19 +34,7 @@ def test_tacotron2_trainable(
     path = r".\wavs1"
     mel_gts = Dataset_wave(path)
     mel_gts = tf.cast(mel_gts, tf.float32)
-    x = mel_gts[0]
-    x = x.numpy()
-    plt.figure()
-    librosa.display.specshow(x, sr=22050, x_axis='time', y_axis='mel')
-    plt.title('实际1')
-    plt.show()
-
-    x = mel_gts[1]
-    x = x.numpy()
-    plt.figure()
-    librosa.display.specshow(x, sr=22050, x_axis='time', y_axis='mel')
-    plt.title('实际2')
-    plt.show()
+    plot_mel(mel_gts)
 
     mel_lengths = np.random.randint(
         max_mel_length, high=max_mel_length + 1, size=[batch_size]
@@ -59,9 +42,6 @@ def test_tacotron2_trainable(
 
     mel_lengths[-1] = max_mel_length
     mel_lengths = tf.convert_to_tensor(mel_lengths, dtype=tf.int32)
-
-    stop_tokens = np.zeros((batch_size, max_mel_length), np.float32)
-    stop_tokens = tf.convert_to_tensor(stop_tokens)
 
     optimizer = tf.keras.optimizers.Adam(lr=0.001)
 
@@ -109,20 +89,4 @@ def test_tacotron2_trainable(
     total_runtime = time.time() - start
     print(f" > Total run-time: {total_runtime}")
     print(f" > Avg run-time: {total_runtime/10}")
-
-
-    x=post_mel_preds[0]
-    x=x.numpy()
-    plt.figure()
-    librosa.display.specshow(x, sr=22050, x_axis='time', y_axis='mel')
-    plt.title('预测1')
-    plt.show()
-    #
-    x = post_mel_preds[1]
-    x = x.numpy()
-    plt.figure()
-    librosa.display.specshow(x, sr=22050, x_axis='time', y_axis='mel')
-    plt.title('预测2')
-    plt.show()
-
-
+    plot_mel(post_mel_preds)
