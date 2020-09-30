@@ -10,6 +10,14 @@
     "units": 512,
     "dropout": 0.1
   },
+  "task": {
+    "train_data": "checkpoint\\task",
+    "state_tracker_hidden_size": 300,
+    "use_pretrained_embedding" : true,
+    "kb" : "data/kb.json",
+    "sent_groups": "data/groups.json",
+    "dstc2": "data/dstc2.json"
+  },
   "resource_data": "data\\train.txt",
   "tokenized_data": "data\\train_tokenized.txt",
   "enc_vocab_size": 20000,

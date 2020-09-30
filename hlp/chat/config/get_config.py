@@ -26,12 +26,12 @@ BATCH_SIZE = conf['batch_size']
 BUFFER_SIZE = conf['buffer_size']
 units = conf['layer_size']
 max_length_inp = 40  # 最大文本长度
-max_length_tar = 40 # 最大文本长度
+max_length_tar = 40  # 最大文本长度
 max_train_data_size = conf['max_train_data_size']
 data = path + conf['tokenized_data']  # 训练数据位置
 resource_data = path + conf['resource_data']  # 原始数据位置
-tokenized_data = path + conf['tokenized_data'] # 预处理之后数据位置
-beam_size = conf['beam_size'] # beam_search大小
+tokenized_data = path + conf['tokenized_data']  # 预处理之后数据位置
+beam_size = conf['beam_size']  # beam_search大小
 epochs = conf['epochs']  # 训练轮次
 
 # seq2seq模型相关配置
@@ -44,3 +44,9 @@ transformer_d_model = conf['transformer']['d_model']
 transformer_num_heads = conf['transformer']['num_heads']
 transformer_units = conf['transformer']['units']
 transformer_dropout = conf['transformer']['dropout']
+
+# task模型相关配置
+state_tracker_hidden_size = conf['task']['state_tracker_hidden_size']
+task_train_data = path + conf['task']['train_data']
+sent_groups = path + conf['task']['sent_groups']  # 含插槽的句子组合
+dstc2 = path + conf['task']['dstc2']
