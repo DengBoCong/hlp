@@ -4,4 +4,4 @@ matplotlib==3.3.2
 numpy==1.18.5
 scikit-learn==0.23.2
 tensorflow==2.3.1
-zhon==1.1.5
+tensorflow-datasets==3.2.1
