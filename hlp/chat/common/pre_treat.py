@@ -1,9 +1,6 @@
 import os
-import re
+import json
 import jieba
-import pickle
-from model.task.kb import load_kb
-import config.get_config as _config
 
 
 '''
@@ -13,14 +10,14 @@ tokenized_data保存分词后的数据集路径
 '''
 
 
-def preprocess_raw_data():
+def preprocess_raw_data(raw_data, tokenized_data):
     """
     用来对原始文本进行预处理的方法，主要是将原
     始文本进行分词后，保存在一个新的文本中，供后继使用
+    :param raw_data:  原始数据路径
+    :param tokenized_data: 生成token数据保存路径
     :return:
     """
-    raw_data = _config.resource_data
-    tokenized_data = _config.tokenized_data
 
     # 首先判断原数据集是否存在，不存在则退出
     if not os.path.exists(raw_data):
@@ -73,13 +70,21 @@ def preprocess_raw_data():
 
     train_tokenized.close()
 
-def load_embed_model(fn, embed_dim=300):
-    with open(fn + '.w2i', 'rb') as file:
-        word2idx = pickle.load(file)
+def preprocess_raw_task_data(raw_data, tokenized_data):
+    """
+    专门针对task标注数据的client和agent对话的token数据处理
+    :param raw_data:  原始对话数据路径
+    :param tokenized_data: 生成token数据保存路径
+    :return:
+    """
+    # 首先判断原数据集是否存在，不存在则退出
+    if not os.path.exists(raw_data):
+        print('数据集不存在，请添加数据集!')
+        exit()
 
-def load_embed(**kargs):
-    if not kargs["generate_embed"]:
-        word2idx, embed = loa
+    dialogs = []
+    with open(raw_data) as file:
+        data = json.load(file)
 
-def load_data(**kargs):
-    kb = load_kb(kargs["kb"], "name")
+    # for dialog in data:
+    #     for turn in dialog["dial"]

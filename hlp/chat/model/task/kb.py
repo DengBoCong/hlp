@@ -30,8 +30,13 @@ class KnowledgeBase:
         """
         添加一个知识对象到KB中
         """
-        for key, value in obj.iteritems():
+        for key, value in obj.items():
+            # print(key)
+            # print(value)
+            # print(self.index[key][value])
             self.index[key][value].append(obj[self.primary])
+            # print(self.index)
+            # exit(0)
 
         self.objs[obj[self.primary]] = obj
 

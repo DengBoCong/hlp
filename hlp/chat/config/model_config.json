@@ -16,7 +16,11 @@
     "use_pretrained_embedding" : true,
     "kb" : "data/kb.json",
     "sent_groups": "data/groups.json",
-    "dstc2": "data/dstc2.json"
+    "cam_rest": "data/CamRestDB.json",
+    "ontology": "data/CamRestOTGY.json",
+    "dialogues_train": "data/woz_train_en.json",
+    "dialogues_val": "data/woz_validate_en.json",
+    "dialogues_test" : "data/woz_test_en.json"
   },
   "resource_data": "data\\train.txt",
   "tokenized_data": "data\\train_tokenized.txt",
