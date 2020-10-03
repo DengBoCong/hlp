@@ -50,5 +50,3 @@ def translate(sentence, transformer, input_pre, target_pre):
     return predicted_sentence
 
 
-if __name__ == '__main__':
-    translate('i love you')

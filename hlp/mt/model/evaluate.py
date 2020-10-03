@@ -13,17 +13,19 @@ from common import preprocess
 
 # BLEU指标计算
 def calc_bleu(transformer, input_pre, target_pre):
-    # 导入评估文本计算BLEU
-    num_eval = _config.num_eval  # 用来评估的句子数量
-    # 对英文句子进行预处理，中文句子不预处理,因为将用en用来翻译
-    eval_pre_en = preprocess.get_en_preprocess(_config.path_to_eval_file, _config.num_eval)
-    eval_pre_ch = preprocess.get_ch_preprocess(_config.path_to_eval_file, _config.num_eval)
+    # 读入文本
+    eval_pre_en = preprocess.EnPreprocess(_config.path_to_eval_file,
+                                          _config.num_eval, _config.start_word, _config.end_word)
+    eval_pre_ch = preprocess.ChPreprocess(_config.path_to_eval_file,
+                                          _config.num_eval, _config.start_word, _config.end_word)
 
-    en = eval_pre_en.sentences
+    # 对英文句子进行预处理,中文句子不预处理,因为将用en用来翻译
+    en = [input_pre.preprocess_sentence(s) for s in eval_pre_en.raw_sentences]
     ch = eval_pre_ch.raw_sentences
+
     print('开始计算BLEU指标...')
     bleu_sum = 0
-    for i in range(num_eval):
+    for i in range(_config.num_eval):
         candidate_sentence = translator.translate(en[i], transformer, input_pre, target_pre)
         print('-' * 20)
         print('第%d个句子：' % (i + 1))
@@ -33,10 +35,8 @@ def calc_bleu(transformer, input_pre, target_pre):
         bleu_i = eval_bleu.sentence_bleu(candidate_sentence, [ch[i]], ch=True)
         print('此句子BLEU指标:%.2f' % bleu_i)
         bleu_sum += bleu_i
-    bleu = bleu_sum / num_eval
+    bleu = bleu_sum / _config.num_eval
     print('-' * 20)
     print('平均BLEU指标为：%.2f' % bleu)
 
 
-if __name__ == '__main__':
-    pass

@@ -34,19 +34,22 @@ import re
 from sklearn.model_selection import train_test_split
 from pathlib import Path
 import os
+import json
 
 
 class EnPreprocess(object):
     '''英文分词父类'''
 
-    def __init__(self, path, num_sentences, start_word, end_word):
+    def __init__(self, path, num_sentences, start_word, end_word, load_data=True):
         '''子类__init__需要对句子进行预处理编码及生成字典'''
         self.start_word = start_word
         self.end_word = end_word
-        with open(path, encoding='UTF-8') as file:
-            lines = file.read().strip().split('\n')
+        # 评价或者训练模式都需加载文本
+        if load_data:
+            with open(path, encoding='UTF-8') as file:
+                lines = file.read().strip().split('\n')
 
-        self.raw_sentences = [l.split('\t')[0] for l in lines[:num_sentences]]
+            self.raw_sentences = [l.split('\t')[0] for l in lines[:num_sentences]]
 
     def encode_sentence(self, sentence):
         '''使用字典对句子进行编码'''
@@ -74,7 +77,7 @@ class EnPreprocessBpe(EnPreprocess):
     """
 
     def __init__(self, path, num_sentences, start_word, end_word,
-                 target_vocab_size=2 ** 13, load=False, vocab_filename=r'./data/vocab'):
+                 target_vocab_size=2 ** 13, load_data=True, vocab_filename=r'./data/en_tokenizer'):
         """
         Args:
             path: 加载的文本路径
@@ -84,37 +87,36 @@ class EnPreprocessBpe(EnPreprocess):
             target_vocab_size:目标字典大小
             load: 是否加载保存的字典
             vocab_filename: 保存字典的路径
+            load_data: 若为True则将加载处理数据集并生成保存字典，若为False则将只加载字典（前提是有保存的好的字典）
         """
         print('正在配置英文分词（BPE）...')
-        super(EnPreprocessBpe, self).__init__(path, num_sentences, start_word, end_word)
+        super(EnPreprocessBpe, self).__init__(path, num_sentences, start_word, end_word, load_data=True)
+        if load_data:
+            # 对句子进行预处理，加上开始结束标志
+            self.sentences = [self.preprocess_sentence(s) for s in self.raw_sentences]
 
-        # 对句子进行预处理，加上开始结束标志
-        self.sentences = [self.__preprocess_sentence(s) for s in self.raw_sentences]
-
-        # 得到编码的句子及字典
-        if load:
-            tokenizer = tfds.features.text.SubwordTextEncoder.load_from_file(vocab_filename)
-        else:
-            tokenizer = tfds.features.text.SubwordTextEncoder.build_from_corpus(
+            # 得到编码的句子及字典，保存字典
+            self.tokenizer = tfds.features.text.SubwordTextEncoder.build_from_corpus(
                 self.sentences, target_vocab_size=target_vocab_size,
                 reserved_tokens=[self.start_word, self.end_word])
-            tokenizer.save_to_file(vocab_filename)
-        self.sequences = [tokenizer.encode(s) for s in self.sentences]
-        self.sequences = tf.keras.preprocessing.sequence.pad_sequences(self.sequences, padding='post')
-        self.max_sequence_length = len(self.sequences[0])
-        self.tokenizer = tokenizer
+            self.tokenizer.save_to_file(vocab_filename)
+            self.sequences = [self.tokenizer.encode(s) for s in self.sentences]
+            self.sequences = tf.keras.preprocessing.sequence.pad_sequences(self.sequences, padding='post')
+            self.max_sequence_length = len(self.sequences[0])
+        else:
+            self.tokenizer = tfds.features.text.SubwordTextEncoder.load_from_file(vocab_filename)
 
         # 词典大小
         self.vocab_size = self.tokenizer.vocab_size
         print('英文分词配置完成')
 
-    def __preprocess_sentence(self, sentence):
+    def preprocess_sentence(self, sentence):
         sentence = self.start_word + ' ' + sentence + ' ' + self.end_word
         return sentence
 
     def encode_sentence(self, sentence):
         '''输入编码的句子，输出编码的句子'''
-        sentence = self.__preprocess_sentence(sentence)
+        sentence = self.preprocess_sentence(sentence)
         return self.tokenizer.encode(sentence)
 
     def decode_sequence(self, sequence):
@@ -139,7 +141,7 @@ class EnPreprocessTokenize(EnPreprocess):
     类方法：
     """
 
-    def __init__(self, path, num_sentences, start_word, end_word):
+    def __init__(self, path, num_sentences, start_word, end_word, load_data=True):
         """
         Args:
             path: 加载的文本路径
@@ -149,16 +151,24 @@ class EnPreprocessTokenize(EnPreprocess):
         """
 
         print('正在配置英文分词（TOKENIZE）...')
-        super(EnPreprocessTokenize, self).__init__(path, num_sentences, start_word, end_word)
-        # 对句子进行预处理，加上开始结束标志
-        self.sentences = [self.__preprocess_sentence(s) for s in self.raw_sentences]
+        super(EnPreprocessTokenize, self).__init__(path, num_sentences, start_word, end_word, load_data=True)
+        if load_data:
+            # 对句子进行预处理，加上开始结束标志
+            self.sentences = [self.preprocess_sentence(s) for s in self.raw_sentences]
 
-        # 得到编码的句子及字典
-        self.tokenizer = tf.keras.preprocessing.text.Tokenizer(filters='', oov_token='unk')
-        self.tokenizer.fit_on_texts(self.sentences)
-        self.sequences = self.tokenizer.texts_to_sequences(self.sentences)
-        self.sequences = tf.keras.preprocessing.sequence.pad_sequences(self.sequences, padding='post')
-        self.max_sequence_length = len(self.sequences[0])
+            # 得到编码的句子及字典
+            self.tokenizer = tf.keras.preprocessing.text.Tokenizer(filters='', oov_token='unk')
+            self.tokenizer.fit_on_texts(self.sentences)
+            self.sequences = self.tokenizer.texts_to_sequences(self.sentences)
+            self.sequences = tf.keras.preprocessing.sequence.pad_sequences(self.sequences, padding='post')
+            self.max_sequence_length = len(self.sequences[0])
+            json_string = self.tokenizer.to_json()
+            with open('./data/ch_tokenizer.json', 'w') as f:
+                json.dump(json_string, f)
+        else:
+            with open('./data/ch_tokenizer.json') as f:
+                json_string = json.load(f)
+            self.tokenizer = tf.keras.preprocessing.text.tokenizer_from_json(json_string)
 
         # 词典大小
         self.vocab_size = len(self.tokenizer.word_index)
@@ -167,7 +177,7 @@ class EnPreprocessTokenize(EnPreprocess):
         self.vocab = [i for i in self.tokenizer.word_index]
         print('英文分词配置完成')
 
-    def __preprocess_sentence(self, sentence):
+    def preprocess_sentence(self, sentence):
         '''对英语句子进行处理'''
         s = sentence.lower().strip()
         s = re.sub(r'([?.!,])', r' \1', s)  # 在?.!,前添加空格
@@ -180,7 +190,7 @@ class EnPreprocessTokenize(EnPreprocess):
 
     def encode_sentence(self, sentence):
         '''输入编码的句子，输出编码的句子'''
-        sentence = self.__preprocess_sentence(sentence).split()
+        sentence = self.preprocess_sentence(sentence).split()
         sequence = []
         # 将句子中未出现在词库中的word替换为'unk'
         for w in sentence:
@@ -201,14 +211,15 @@ class EnPreprocessTokenize(EnPreprocess):
 class ChPreprocess(object):
     '''中文分词父类'''
 
-    def __init__(self, path, num_sentences, start_word, end_word):
+    def __init__(self, path, num_sentences, start_word, end_word, load_data=True):
         '''子类__init__需要对句子进行预处理编码及生成字典'''
         self.start_word = start_word
         self.end_word = end_word
-        with open(path, encoding='UTF-8') as file:
-            lines = file.read().strip().split('\n')
+        if load_data:
+            with open(path, encoding='UTF-8') as file:
+                lines = file.read().strip().split('\n')
 
-        self.raw_sentences = [l.split('\t')[1] for l in lines[:num_sentences]]
+            self.raw_sentences = [l.split('\t')[1] for l in lines[:num_sentences]]
 
     def encode_sentence(self, sentence):
         '''使用字典对句子进行编码'''
@@ -221,7 +232,7 @@ class ChPreprocess(object):
 class ChPreprocessTokenize(ChPreprocess):
     '''使用单字分词法的中文分词子类'''
 
-    def __init__(self, path, num_sentences, start_word, end_word):
+    def __init__(self, path, num_sentences, start_word, end_word, load_data=True):
         """
         Args:
             path: 加载的文本路径
@@ -230,17 +241,25 @@ class ChPreprocessTokenize(ChPreprocess):
             end_word: 结束标志
         """
         print('正在配置中文分词（TOKENIZE）...')
-        super(ChPreprocessTokenize, self).__init__(path, num_sentences, start_word, end_word)
-        # 对句子进行预处理，加上开始结束标志
-        self.sentences = [self.__preprocess_sentence(s) for s in self.raw_sentences]
+        super(ChPreprocessTokenize, self).__init__(path, num_sentences, start_word, end_word, load_data=True)
+        if load_data:
+            # 对句子进行预处理，加上开始结束标志
+            self.sentences = [self.preprocess_sentence(s) for s in self.raw_sentences]
 
-        # 得到编码的句子及字典
-        self.tokenizer = tf.keras.preprocessing.text.Tokenizer(filters='', oov_token='unk')
-        self.tokenizer.fit_on_texts(self.sentences)
-        self.sequences = self.tokenizer.texts_to_sequences(self.sentences)
-        self.sequences = tf.keras.preprocessing.sequence.pad_sequences(self.sequences, padding='post')
-        self.max_sequence_length = len(self.sequences[0])
-
+            # 得到编码的句子及字典
+            self.tokenizer = tf.keras.preprocessing.text.Tokenizer(filters='', oov_token='unk')
+            self.tokenizer.fit_on_texts(self.sentences)
+            self.sequences = self.tokenizer.texts_to_sequences(self.sentences)
+            self.sequences = tf.keras.preprocessing.sequence.pad_sequences(self.sequences, padding='post')
+            self.max_sequence_length = len(self.sequences[0])
+            json_string = self.tokenizer.to_json()
+            with open('./data/ch_tokenizer.json', 'w') as file_obj:
+                json.dump(json_string, file_obj)
+        else:
+            # 加载已保存的字典
+            with open('./data/ch_tokenizer.json') as f:
+                json_string = json.load(f)
+            self.tokenizer = tf.keras.preprocessing.text.tokenizer_from_json(json_string)
         # 词典大小
         self.vocab_size = len(self.tokenizer.word_index)
 
@@ -248,7 +267,7 @@ class ChPreprocessTokenize(ChPreprocess):
         self.vocab = [i for i in self.tokenizer.word_index]
         print('中文分词配置完成')
 
-    def __preprocess_sentence(self, sentence):
+    def preprocess_sentence(self, sentence):
         """
         对中文句子进行处理
         """
@@ -262,7 +281,7 @@ class ChPreprocessTokenize(ChPreprocess):
         """
         输入编码的句子，输出编码的句子
         """
-        sentence = self.__preprocess_sentence(sentence).split()
+        sentence = self.preprocess_sentence(sentence).split()
         sequence = []
         # 将句子中未出现在词库中的word替换为'unk'
         for w in sentence:
@@ -281,21 +300,21 @@ class ChPreprocessTokenize(ChPreprocess):
         return sentence
 
 
-def get_en_preprocess(path, num_sentences):
+def get_en_preprocess(path, num_sentences, load_data=True):
     """
     根据配置文件所选择的分词方法返回所选择的英文实例
     """
     if _config.en_tokenize_type == 'BPE':
-        return EnPreprocessBpe(path, num_sentences, _config.start_word, _config.end_word)
+        return EnPreprocessBpe(path, num_sentences, _config.start_word, _config.end_word, load_data=load_data)
     else:
-        return EnPreprocessTokenize(path, num_sentences, _config.start_word, _config.end_word)
+        return EnPreprocessTokenize(path, num_sentences, _config.start_word, _config.end_word, load_data=load_data)
 
 
-def get_ch_preprocess(path, num_sentences):
+def get_ch_preprocess(path, num_sentences, load_data=True):
     """
     根据配置文件所选择的分词方法返回所选择的中文实例
     """
-    return ChPreprocessTokenize(path, num_sentences, _config.start_word, _config.end_word)
+    return ChPreprocessTokenize(path, num_sentences, _config.start_word, _config.end_word, load_data=load_data)
 
 
 def split_batch(input_tensor, target_tensor):
@@ -325,3 +344,17 @@ def check_point():
         os.makedirs(checkpoint_dir, exist_ok=True)
     if_ckpt = tf.io.gfile.listdir(checkpoint_dir)
     return if_ckpt
+
+
+def main():
+    """
+    模块方法测试
+    """
+    en_pre_examples = get_en_preprocess(path='./data/en-ch.txt', num_sentences=100, load_data=True)
+    ch_pre_examples = get_ch_preprocess(path='./data/en-ch.txt', num_sentences=100, load_data=True)
+    print('en_pre_examples.vocab_size:'+en_pre_examples.vocab_size)
+    print('ch_pre_examples.vocab_size:'+ch_pre_examples.vocab_size)
+
+
+if __name__ == '__main__':
+    main()

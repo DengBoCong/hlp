@@ -19,6 +19,7 @@ import tensorflow as tf
 from common import self_attention
 from config import get_config as _config
 
+
 # 多头注意力层
 class MultiHeadAttention(tf.keras.layers.Layer):
     def __init__(self, d_model, num_heads):

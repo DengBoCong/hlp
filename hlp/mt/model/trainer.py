@@ -74,6 +74,3 @@ def train(input_pre, target_pre, transformer, optimizer, train_loss, train_accur
         print('Time taken for 1 epoch: {} secs\n'.format(time.time() - start))
     print('训练完毕！')
 
-
-if __name__ == '__main__':
-    train()
