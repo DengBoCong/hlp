@@ -58,9 +58,11 @@ Beam Search功能已经基本完成且完善，抽象完成并能够应用在不
 ![](https://img-blog.csdnimg.cn/20200922211722639.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L0RCQ18xMjE=,size_16,color_FFFFFF,t_70#pic_center)
 
 # 版本日志
-+ 2020-9-30：数据集处理
-   + 先使用MultiWOZ2.2数据集进行预处理，完善数据处理代码
-   + 构建模型及训练代码
++ 2020-10-2：
+   + 数据集分类整合完毕
+   + 数据预处理完毕
+   + 整体模型结构形状完成
+   + DST模型编写中...
 
 # 数据集
 + [MultiWOZ2](https://www.repository.cam.ac.uk/bitstream/handle/1810/280608/MULTIWOZ2.zip?sequence=3&isAllowed=y)

@@ -62,7 +62,7 @@ def main():
             response = chatter.respond(req)
             print("Agent: ", response)
     elif options.type == 'pre_treat':
-        preprocess_raw_data()
+        preprocess_raw_data(raw_data=_config.resource_data, tokenized_data=_config.tokenized_data)
     else:
         print('Error:不存在', sys.argv[2], '模式!')
 

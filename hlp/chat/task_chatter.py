@@ -36,8 +36,8 @@ def main():
 
     if options.type == 'train':
         # chatter.train()
-        kb = load_kb(_config.dstc2, "name")
-        print(kb.index['food']['cheap'])
+        kb = load_kb(_config.cam_rest, "name")
+        print(kb.index['food']['italian'])
         print(kb.search_multi([[u'food', u'swedish'], [u'pricerange', u'cheap']]))
     elif options.type == 'chat':
         print('Agent: 你好！结束聊天请输入ESC。')
@@ -47,10 +47,11 @@ def main():
                 chatter.stop()
                 print('Agent: 再见！')
                 exit(0)
-            response = chatter.respond(req)
+            # response = chatter.respond(req)
+            response = '待完善'
             print('Agent: ', response)
     elif options.type == 'pre_treat':
-        print('s')
+        print('待完善')
     else:
         print('Error:不存在', sys.argv[2], '模式!')
 
