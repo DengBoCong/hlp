@@ -4,10 +4,10 @@ Created on Tue Sep 15 17:47:11 2020
 
 @author: 彭康
 """
-import data_process
 import tensorflow as tf
-from model import DS2
 import config
+from data_process import data_process
+from model import DS2
 
 
 def train_sample(inputs,labels,label_length,optimizer, model):
@@ -62,7 +62,12 @@ if __name__ == "__main__":
     
     epochs=config.configs_train["train_epochs"]
     data_path=config.configs_train["data_path"]
-    inputs,labels,label_length=data_process.data_process1(data_path=data_path)
+    batch_size=config.configs_train["batch_size"]
+    inputs,labels,label_length=data_process(
+        data_path=data_path,
+        batch_size=batch_size,
+        if_train_or_test='train'
+        )
     optimizer = tf.keras.optimizers.Adam()
     train(model, optimizer, inputs, labels,label_length, epochs)
     

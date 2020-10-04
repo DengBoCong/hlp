@@ -5,10 +5,16 @@ Created on Wed Sep 16 21:15:16 2020
 @author: 彭康
 """
 
-import tensorflow as tf
+import os
+import time
+import wave
 import librosa
-import char_index_map
 import numpy as np
+import pyaudio
+import tensorflow as tf
+import char_index_map
+import config
+
 
 #音频的处理
 def wav_to_mfcc(n_mfcc,wav_path):
@@ -153,6 +159,29 @@ def _wer(original, result):
     result = result.split()
     return _levenshtein(original, result) / float(len(original))
 
+def lers(originals, results):
+    count = len(originals)
+    assert count > 0
+    rates = []
+    norm_rates = []
+
+    mean = 0.0
+    norm_mean = 0.0
+
+    assert count == len(results)
+    for i in range(count):
+        rate = _levenshtein(originals[i], results[i])
+        mean = mean + rate
+
+        normrate = (float(rate) / len(originals[i]))
+
+        norm_mean = norm_mean + normrate
+
+        rates.append(rate)
+        norm_rates.append(round(normrate, 4))
+
+    return rates, (mean / float(count)), norm_rates, (norm_mean/float(count))
+
 def _levenshtein(a,b):
     "Calculates the Levenshtein distance between a and b."
     n, m = len(a), len(b)
@@ -172,3 +201,41 @@ def _levenshtein(a,b):
             current[j] = min(add, delete, change)
 
     return current[n]
+
+#获取麦克风录音并保存在filepath中
+def record(file_path=config.configs_record["record_path"]):
+        CHUNK = 256
+        FORMAT = pyaudio.paInt16
+        CHANNELS = 1                # 声道数
+        RATE = 16000               # 采样率
+        RECORD_SECONDS = config.configs_record["record_times"]        #录音时长
+        WAVE_OUTPUT_FILENAME = file_path
+        p = pyaudio.PyAudio()
+
+        stream = p.open(format=FORMAT,
+                        channels=CHANNELS,
+                        rate=RATE,
+                        input=True,
+                        frames_per_buffer=CHUNK)
+        print("开始录音：请在%d秒内输入语音:",RECORD_SECONDS)
+        frames = []
+        for i in range(1,int(RATE / CHUNK * RECORD_SECONDS)+1):
+            data = stream.read(CHUNK)
+            frames.append(data)
+            if (i % (RATE / CHUNK)) == 0:
+                print('\r%s%d%s' % ("剩余",int(RECORD_SECONDS-(i//(RATE / CHUNK))),"秒"),end="")
+        print("\n录音结束\n")
+
+        stream.stop_stream()
+        stream.close()
+        p.terminate()
+
+        wf = wave.open(WAVE_OUTPUT_FILENAME, 'wb')
+        wf.setnchannels(CHANNELS)
+        wf.setsampwidth(p.get_sample_size(FORMAT))
+        wf.setframerate(RATE)
+        wf.writeframes(b''.join(frames))
+        wf.close()
+
+if __name__ == "__main__":
+    pass
