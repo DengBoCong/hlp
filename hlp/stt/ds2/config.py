@@ -28,7 +28,11 @@ configs_checkpoint={}
 configs_checkpoint["directory"] = "./checkpoint" #检查点保存路径
 configs_checkpoint["max_to_keep"] = 5 #保存的最近的检查点的最多个数
 
+"""----------------------record------------------------------"""
+configs_record={}
+configs_record["record_path"] = "./record/record.wav" #说话人的录音文件路径
+configs_record["record_times"] = 30
+
 """----------------------other-------------------------------"""
 configs_other={}
 configs_other["n_mfcc"] = 20 #声学模型里提取的mfcc特征数
-configs_other["record_path"] = "./record/record.wav" #说话人的录音文件路径
