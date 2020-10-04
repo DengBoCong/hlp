@@ -33,7 +33,6 @@ if __name__=="__main__":
         )
     originals = labels_list
     results = []
-
     y_pred=model(inputs)
     output=tf.keras.backend.ctc_decode(
     y_pred=y_pred,
@@ -41,10 +40,8 @@ if __name__=="__main__":
     greedy=True
     )
     results_int_list=output[0][0].numpy().tolist()
-    print(results_int_list)
     for i in range(len(results_int_list)):
         str = "".join(int_to_text_sequence(results_int_list[i])).strip()
-        print(str)
         results.append(str)
     rates_wers,aver_wers=wers(originals,results)
     rates_lers,aver_lers,norm_rates_lers,norm_aver_lers=lers(originals,results)

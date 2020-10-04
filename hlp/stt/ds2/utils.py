@@ -8,12 +8,10 @@ Created on Wed Sep 16 21:15:16 2020
 import os
 import time
 import wave
-
 import librosa
 import numpy as np
 import pyaudio
 import tensorflow as tf
-
 import char_index_map
 import config
 
@@ -240,7 +238,4 @@ def record(file_path=config.configs_record["record_path"]):
         wf.close()
 
 if __name__ == "__main__":
-    """
-    #测试一下录音方法
-    record()
-    """
+    pass

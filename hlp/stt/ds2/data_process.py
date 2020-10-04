@@ -6,10 +6,11 @@ Created on Tue Sep 22 12:05:42 2020
 """
 
 import os
-from utils import wav_to_mfcc,text_to_int_sequence
-import tensorflow as tf
 import random
+import tensorflow as tf
 import config
+from utils import text_to_int_sequence, wav_to_mfcc
+
 
 def data_process(
     data_path,
@@ -51,7 +52,6 @@ def data_process(
         labels = tf.convert_to_tensor(labels_numpy)
         label_length=tf.convert_to_tensor(label_length_list)
         return inputs,labels,label_length
-
 
 if __name__=="__main__":
     pass

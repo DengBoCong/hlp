@@ -10,6 +10,7 @@ import tensorflow as tf
 import char_index_map
 import config
 
+
 #函数式构建DS2模型
 def DS2_func(
     n_mfcc=config.configs_other["n_mfcc"],

@@ -4,10 +4,10 @@ Created on Tue Sep 15 17:47:11 2020
 
 @author: 彭康
 """
-from data_process import data_process
 import tensorflow as tf
-from model import DS2
 import config
+from data_process import data_process
+from model import DS2
 
 
 def train_sample(inputs,labels,label_length,optimizer, model):
