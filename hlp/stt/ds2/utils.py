@@ -153,6 +153,29 @@ def _wer(original, result):
     result = result.split()
     return _levenshtein(original, result) / float(len(original))
 
+def lers(originals, results):
+    count = len(originals)
+    assert count > 0
+    rates = []
+    norm_rates = []
+
+    mean = 0.0
+    norm_mean = 0.0
+
+    assert count == len(results)
+    for i in range(count):
+        rate = _levenshtein(originals[i], results[i])
+        mean = mean + rate
+
+        normrate = (float(rate) / len(originals[i]))
+
+        norm_mean = norm_mean + normrate
+
+        rates.append(rate)
+        norm_rates.append(round(normrate, 4))
+
+    return rates, (mean / float(count)), norm_rates, (norm_mean/float(count))
+
 def _levenshtein(a,b):
     "Calculates the Levenshtein distance between a and b."
     n, m = len(a), len(b)
