@@ -2,13 +2,14 @@ import tensorflow as tf
 import os
 import librosa
 ch=[]
+
 def Dataset_wave(path):
     x = tf.constant(0, shape=(1, 500, 80))
     i = 0
     dirs = os.listdir(path)
     for file in dirs:
-        file='E:\LJSpeech-1.1\LJSpeech-1.1\wavs1\\' + file
-        y, sr = librosa.load(file, sr=None)
+        #file=file
+        y, sr = librosa.load(path+file, sr=None)
         melspec = librosa.feature.melspectrogram(y, sr, n_fft=1024, hop_length=512, n_mels=80)
         logmelspec = librosa.power_to_db(melspec)
         logmelspec = tf.keras.preprocessing.sequence.pad_sequences(logmelspec, maxlen=500, padding='post')
