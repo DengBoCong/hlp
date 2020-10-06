@@ -4,7 +4,6 @@ from common import self_attention
 from config import get_config as _config
 import time
 from common import preprocess
-import nmt
 
 
 def train_step(inp, tar, transformer, optimizer, train_loss, train_accuracy):
@@ -29,11 +28,9 @@ def train_step(inp, tar, transformer, optimizer, train_loss, train_accuracy):
     return transformer, optimizer, train_loss, train_accuracy
 
 
-def train(input_pre, target_pre, transformer, optimizer, train_loss, train_accuracy):
+def train(input_tensor, target_tensor, transformer, optimizer, train_loss, train_accuracy):
 
-    print('开始处理数据集...')
-    train_dataset, val_dataset = preprocess.split_batch(input_pre.sequences, target_pre.sequences)
-    print('数据集处理完毕！')
+    train_dataset, val_dataset = preprocess.split_batch(input_tensor, target_tensor)
     checkpoint_path = _config.checkpoint_path
 
     ckpt = tf.train.Checkpoint(transformer=transformer,
@@ -73,4 +70,5 @@ def train(input_pre, target_pre, transformer, optimizer, train_loss, train_accur
 
         print('Time taken for 1 epoch: {} secs\n'.format(time.time() - start))
     print('训练完毕！')
+
 
