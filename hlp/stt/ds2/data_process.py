@@ -47,7 +47,7 @@ def data_process(
         label_length_list=[]
         for i in range(len(labels_str_list)):
             labels_list.append(text_to_int_sequence(labels_str_list[i]))
-            label_length_list.append(len(labels_str_list[i]))
+            label_length_list.append([len(labels_str_list[i])])
         labels_numpy = tf.keras.preprocessing.sequence.pad_sequences(labels_list,padding='post')
         labels = tf.convert_to_tensor(labels_numpy)
         label_length=tf.convert_to_tensor(label_length_list)
