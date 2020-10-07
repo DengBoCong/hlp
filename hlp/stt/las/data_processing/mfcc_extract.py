@@ -3,11 +3,14 @@
 Created on Tue Sep 15 10:20:05 2020
 
 @author: 九童
+提取音频文件mfcc特征
 """
 import os
 import numpy as np
 from matplotlib import pyplot as plt
 from scipy.fftpack import dct
+import scipy.io.wavfile
+import tensorflow as tf
 
 def MFCC(sample_rate, signal):    
 # 原始数据,读取前3.5s 的数据    original_signal = signal[0:int(3.5*sample_rate)]
@@ -156,4 +159,16 @@ def MFCC(sample_rate, signal):
     '''
     return mfcc
 
+def wav_to_mfcc(path):
+  files= os.listdir(path) #得到文件夹下的所有文件名称
+  mfccs = []
 
+  for file in files: #遍历文件夹
+    position = path+'\\'+ file #构造绝对路径，"\\"，其中一个'\'为转义符
+    sample_rate, signal = scipy.io.wavfile.read(position) 
+    mfcc = MFCC(sample_rate,signal)
+    #mfcc = temp.mfcc_extract(position)
+    mfccs.append(mfcc)
+  mfccs = tf.keras.preprocessing.sequence.pad_sequences(mfccs,padding='post',dtype = float)
+  print('====mfccs.shape = {}'.format(mfccs.shape))#(100, 93, 39)
+  return mfccs
