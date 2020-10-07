@@ -12,21 +12,14 @@ from common import preprocess
 
 
 # BLEU指标计算
-def calc_bleu(transformer, input_pre, target_pre):
+def calc_bleu(path, transformer, tokenizer_en, tokenizer_ch):
     # 读入文本
-    eval_pre_en = preprocess.EnPreprocess(_config.path_to_eval_file,
-                                          _config.num_eval, _config.start_word, _config.end_word)
-    eval_pre_ch = preprocess.ChPreprocess(_config.path_to_eval_file,
-                                          _config.num_eval, _config.start_word, _config.end_word)
-
-    # 对英文句子进行预处理,中文句子不预处理,因为将用en用来翻译
-    en = [input_pre.preprocess_sentence(s) for s in eval_pre_en.raw_sentences]
-    ch = eval_pre_ch.raw_sentences
+    en, ch = preprocess.load_sentences(path, _config.num_eval)
 
     print('开始计算BLEU指标...')
     bleu_sum = 0
     for i in range(_config.num_eval):
-        candidate_sentence = translator.translate(en[i], transformer, input_pre, target_pre)
+        candidate_sentence = translator.translate(en[i], transformer, tokenizer_en, tokenizer_ch)
         print('-' * 20)
         print('第%d个句子：' % (i + 1))
         print('英文句子:' + en[i])

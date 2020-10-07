@@ -2,6 +2,9 @@
 对两个句子进行比对并得出BLEU指标
 """
 
+
+import sys
+sys.path.append('..')
 import numpy as np
 import re
 import math
@@ -115,3 +118,18 @@ def sentence_bleu(candidate_sentence, reference_sentences, max_gram = 4, weights
     # print('短句惩罚:%f' % bp)
     return bp * average_res
 
+
+def main():
+    """
+    方法测试
+    Returns:返回BLEU指数
+    """
+    candidate_sentence = '今天的天气真好啊。'
+    reference_sentence = '今天可真是个好天气啊。'
+    bleu = sentence_bleu(candidate_sentence, [reference_sentence], max_gram=4
+                         , weights=(0.25, 0.25, 0.25, 0.25), ch=True)
+    print(bleu)
+
+
+if __name__ == '__main__':
+    main()
