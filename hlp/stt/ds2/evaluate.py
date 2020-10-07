@@ -21,7 +21,8 @@ if __name__=="__main__":
         directory=config.configs_checkpoint['directory'],
         max_to_keep=config.configs_checkpoint['max_to_keep']
         )
-    checkpoint.restore(manager.latest_checkpoint)
+    if manager.latest_checkpoint:
+        checkpoint.restore(manager.latest_checkpoint)
     
     #评价
     test_data_path = config.configs_test["data_path"]

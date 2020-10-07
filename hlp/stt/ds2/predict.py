@@ -16,7 +16,8 @@ if __name__=="__main__":
        directory=config.configs_checkpoint['directory'],
        max_to_keep=config.configs_checkpoint['max_to_keep']
        )
-    checkpoint.restore(manager.latest_checkpoint)
+    if manager.latest_checkpoint:
+        checkpoint.restore(manager.latest_checkpoint)
 
     audio_path = config.configs_record["record_path"]
     x_test = wav_to_mfcc(config.configs_other["n_mfcc"],audio_path)
