@@ -4,6 +4,7 @@ import json
 import random
 import tensorflow as tf
 from pathlib import Path
+import common.common as com
 from model.task.kb import load_kb
 from collections import defaultdict
 import config.get_config as _config
@@ -17,7 +18,7 @@ def preprocess_sentence(w):
     :param w:
     :return: 合成之后的句子
     """
-    w = 'start ' + w + ' end'
+    w = com.global_start + w + com.global_end
     return w
 
 
@@ -233,6 +234,7 @@ class DataLoader:
     """
     对话数据加载工具类
     """
+
     def __init__(self, dialogues, word2idx, sys_word2idx, onto, onto_idx, kb_fonud_len=5, mode='train'):
         self.dialogues = dialogues
         self.word2idx = word2idx
@@ -333,6 +335,7 @@ class DataLoader:
             self.cur = 0
 
         return ret
+
 
 def load_data(kb, ):
     kb = load_kb(kb, 'name')

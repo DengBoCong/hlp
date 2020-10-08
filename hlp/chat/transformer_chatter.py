@@ -3,7 +3,7 @@ import sys
 import time
 import tensorflow as tf
 from model.chatter import Chatter
-from optparse import OptionParser
+from common.common import CmdParser
 import config.get_config as _config
 from model.transformer.model import model
 import model.transformer.model as transformer
@@ -23,15 +23,15 @@ class TransformerChatter(Chatter):
         if self.ckpt:
             transformer.checkpoint.restore(tf.train.latest_checkpoint(checkpoint_dir)).expect_partial()
 
-    def init_loss_accuracy(self):
+    def _init_loss_accuracy(self):
         transformer.train_loss.reset_states()
         transformer.train_accuracy.reset_states()
 
-    def train_step(self, inp, tar, step_loss):
+    def _train_step(self, inp, tar, step_loss):
         transformer.train_step(inp, tar)
         step_loss[0] = transformer.train_loss.result()
 
-    def create_predictions(self, inputs, dec_input, t):
+    def _create_predictions(self, inputs, dec_input, t):
         # 获取目前已经保存在容器中的序列
         predictions = model(inputs=[inputs, dec_input], training=False)
         predictions = predictions[:, -1:, :]
@@ -40,7 +40,7 @@ class TransformerChatter(Chatter):
 
 
 def main():
-    parser = OptionParser(version='%transformer chatbot V1.0')
+    parser = CmdParser(version='%transformer chatbot V1.0')
     parser.add_option("-t", "--type", action="store", type="string",
                       dest="type", default="pre_treat",
                       help="execute type, pre_treat/train/chat")
@@ -56,7 +56,6 @@ def main():
         while True:
             req = input("User: ")
             if req == "ESC":
-                chatter.stop()
                 print("Agent: 再见！")
                 exit(0)
             response = chatter.respond(req)
@@ -64,7 +63,7 @@ def main():
     elif options.type == 'pre_treat':
         preprocess_raw_data(raw_data=_config.resource_data, tokenized_data=_config.tokenized_data)
     else:
-        print('Error:不存在', sys.argv[2], '模式!')
+        parser.error(msg='')
 
 
 if __name__ == "__main__":

@@ -40,19 +40,19 @@ class Chatter(object):
         """
         pass
 
-    def init_loss_accuracy(self):
+    def _init_loss_accuracy(self):
         """
         初始化损失
         """
         pass
 
-    def train_step(self, inp, tar, step_loss):
+    def _train_step(self, inp, tar, step_loss):
         """
         模型训练步方法，需要返回时间步损失
         """
         pass
 
-    def create_predictions(self, inputs, dec_input, t):
+    def _create_predictions(self, inputs, dec_input, t):
         """
         使用模型预测下一个Token的id
         """
@@ -62,49 +62,55 @@ class Chatter(object):
         """
         对模型进行训练
         """
-        dataset, checkpoint_prefix, steps_per_epoch = self.treat_dataset()
+        dataset, checkpoint_prefix, steps_per_epoch = self._treat_dataset()
 
         for epoch in range(_config.epochs):
-            print('当前训练epoch为：{}'.format(epoch + 1))
+            print('Epoch {}/{}'.format(epoch + 1, _config.epochs))
             start_time = time.time()
 
-            self.init_loss_accuracy()
+            self._init_loss_accuracy()
 
             step_loss = [0]
+            batch_sum = 0
+            sample_sum = 0
             for (batch, (inp, tar)) in enumerate(dataset.take(steps_per_epoch)):
-                self.train_step(inp, tar, step_loss)
+                self._train_step(inp, tar, step_loss)
+                batch_sum = batch_sum + len(inp)
+                sample_sum = steps_per_epoch * len(inp)
+                sys.stdout.write('{}/{} [==================================]'.format(batch_sum, sample_sum))
+                sys.stdout.flush()
 
             step_time = (time.time() - start_time)
-            print('当前epoch耗时：{:.4f}s：'.format(step_time))
-            print('当前epoch损失：{:.4f}'.format(step_loss[0]))
-            checkpoint.save(file_prefix=checkpoint_prefix)
+            sys.stdout.write(' - {:.4f}s/step - loss: {:.4f}\n'
+                             .format(step_time, step_loss[0]))
             sys.stdout.flush()
+            checkpoint.save(file_prefix=checkpoint_prefix)
 
         print('训练结束')
 
     def respond(self, req):
         # 对req进行初步处理
-        inputs, dec_input = self.pre_treat_inputs(req)
+        inputs, dec_input = self._pre_treat_inputs(req)
         self.beam_search_container.init_variables(inputs=inputs, dec_input=dec_input)
         inputs, dec_input = self.beam_search_container.get_variables()
         for t in range(_config.max_length_tar):
-            predictions = self.create_predictions(inputs, dec_input, t)
-            self.beam_search_container.add(predictions)
+            predictions = self._create_predictions(inputs, dec_input, t)
+            self.beam_search_container.add(predictions=predictions, end_sign=self.target_token.word_index.get('end'))
             if self.beam_search_container.beam_size == 0:
                 break
 
             inputs, dec_input = self.beam_search_container.get_variables()
-        return self.beam_search_container.get_result(self.target_token)
+        beam_search_result = self.beam_search_container.get_result()
+        result = ''
+        # 从容器中抽取序列，生成最终结果
+        for i in range(len(beam_search_result)):
+            temp = beam_search_result[i].numpy()
+            text = self.target_token.sequences_to_texts(temp)
+            text[0] = text[0].replace('start', '').replace('end', '').replace(' ', '')
+            result = '<' + text[0] + '>' + result
+        return result
 
-    def stop(self):
-        """ 结束聊天
-
-        可以做一些清理工作
-        :return:
-        """
-        pass
-
-    def pre_treat_inputs(self, sentence):
+    def _pre_treat_inputs(self, sentence):
         # 分词
         sentence = " ".join(jieba.cut(sentence))
         # 添加首尾符号
@@ -119,7 +125,7 @@ class Chatter(object):
         dec_input = tf.expand_dims([self.target_token.word_index['start']], 0)
         return inputs, dec_input
 
-    def treat_dataset(self):
+    def _treat_dataset(self):
         dataset = tf.data.Dataset.from_tensor_slices((self.input_tensor, self.target_tensor)).cache().shuffle(
             _config.BUFFER_SIZE).prefetch(tf.data.experimental.AUTOTUNE)
         dataset = dataset.batch(_config.BATCH_SIZE, drop_remainder=True)
@@ -136,23 +142,17 @@ class BeamSearch(object):
     1.首先需要将问句编码成token向量并对齐，然后调用init_input方法进行初始化
     2.对模型要求能够进行批量输入
     3.BeamSearch使用实例已经集成到Chatter中，如果不进行自定义调用，
-    可以将聊天器继承Chatter，在满足上述两点的基础之上设计create_predictions方法，并调用BeamSearch
+    可以将聊天器继承Chatter，在满足上述两点的基础之上设计_create_predictions方法，并调用BeamSearch
     """
 
     def __init__(self, beam_size, max_length, worst_score):
         """
         初始化BeamSearch的序列容器
         """
-        self.beam_size = beam_size
         self.remain_beam_size = beam_size
         self.max_length = max_length - 1
-        self.container = []  # 保存序列的容器
-        self.result = []
-        self.worst_score = worst_score
         self.remain_worst_score = worst_score
-        self.requests = tf.constant(0, shape=(1, 1))  # 聊天时问句处理后的序列
-        self.inputs = tf.constant(0, shape=(1, 1))
-        self.dec_inputs = tf.constant(0, shape=(1, 1))  # 处理后的的编码器输入
+        self._reset_variables()
 
     def __len__(self):
         """
@@ -168,7 +168,6 @@ class BeamSearch(object):
         :return: 无返回值
         """
         self.container.append((1, dec_input))
-        self.requests = inputs
         self.inputs = inputs
         self.dec_inputs = dec_input
 
@@ -182,27 +181,39 @@ class BeamSearch(object):
         inputs = self.inputs
         for i in range(len(self) - 1):
             inputs = tf.concat([inputs, self.inputs], 0)
-        self.requests = inputs
+        requests = inputs
         # 生成多beam的decoder的输入
         temp = self.container[0][1]
         for i in range(1, len(self)):
             temp = tf.concat([temp, self.container[i][1]], axis=0)
         self.dec_inputs = copy.deepcopy(temp)
-        return self.requests, self.dec_inputs
+        return requests, self.dec_inputs
 
-    def _reduce_end(self):
+    def _reduce_end(self, end_sign):
         """
         当序列遇到了结束token，需要将该序列从容器中移除
         :return: 无返回值
         """
         for idx, (s, dec) in enumerate(self.container):
             temp = dec.numpy()
-            if temp[0][-1] == 3:
+            if temp[0][-1] == end_sign:
                 self.result.append(self.container[idx][1])
                 del self.container[idx]
                 self.beam_size -= 1
 
-    def add(self, predictions):
+    def _reset_variables(self):
+        """
+        重置相关变量
+        :return: 无返回值
+        """
+        self.beam_size = self.remain_beam_size
+        self.worst_score = self.remain_worst_score
+        self.container = []  # 保存中间状态序列的容器，元素格式为(score, sequence)类型为(float, [])
+        self.result = []  # 用来保存已经遇到结束符的序列
+        self.inputs = tf.constant(0, shape=(1, 1))
+        self.dec_inputs = tf.constant(0, shape=(1, 1))  # 处理后的的编码器输入
+
+    def add(self, predictions, end_sign):
         """
         往容器中添加预测结果，在本方法中对预测结果进行整理、排序的操作
         :param predictions: 传入每个时间步的模型预测值
@@ -211,7 +222,6 @@ class BeamSearch(object):
         remain = copy.deepcopy(self.container)
         for i in range(self.dec_inputs.shape[0]):
             for k in range(predictions.shape[-1]):
-                # 负数则直接跳过
                 if predictions[i][k] <= 0:
                     continue
                 # 计算分数
@@ -225,27 +235,15 @@ class BeamSearch(object):
                         self.worst_score = sorted_scores[1][0]
                     else:
                         self.worst_score = min(score, self.worst_score)
-        self._reduce_end()
+        self._reduce_end(end_sign=end_sign)
 
-    def get_result(self, target_token):
+    def get_result(self):
         """
-        :param target_token: 传入token字典，用于将序列转为文字
-        :return: 返回处理好的文字回答列表，每个回答用'<>'分隔
+        获取最终beam个序列
+        :return: beam个序列
         """
-        result = ''
-        # 从容器中抽取序列，生成最终结果
-        for i in range(len(self.result)):
-            temp = self.result[i].numpy()
-            text = target_token.sequences_to_texts(temp)
-            text[0] = text[0].replace('start', '').replace('end', '').replace(' ', '')
-            result = '<' + text[0] + '>' + result
+        result = self.result
 
         # 每轮回答之后，需要重置容器内部的相关变量值
-        self.beam_size = self.remain_beam_size
-        self.container = []
-        self.result = []
-        self.worst_score = self.remain_worst_score
-        self.requests = tf.constant(0, shape=(1, 1))  # 聊天时问句处理后的序列
-        self.inputs = tf.constant(0, shape=(1, 1))
-        self.dec_inputs = tf.constant(0, shape=(1, 1))  # 处理后的的编码器输入
+        self._reset_variables()
         return result

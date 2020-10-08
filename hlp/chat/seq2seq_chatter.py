@@ -3,7 +3,7 @@ import sys
 import time
 import tensorflow as tf
 from model.chatter import Chatter
-from optparse import OptionParser
+from common.common import CmdParser
 import config.get_config as _config
 import model.seq2seq.model as seq2seq
 from common.pre_treat import preprocess_raw_data
@@ -22,11 +22,11 @@ class Seq2SeqChatter(Chatter):
         if self.ckpt:
             seq2seq.checkpoint.restore(tf.train.latest_checkpoint(checkpoint_dir)).expect_partial()
 
-    def train_step(self, inp, tar, step_loss):
+    def _train_step(self, inp, tar, step_loss):
         enc_hidden = seq2seq.encoder.initialize_hidden_state()
         step_loss[0] += seq2seq.train_step(inp, tar, self.target_token, enc_hidden)
 
-    def create_predictions(self, inputs, dec_input, t):
+    def _create_predictions(self, inputs, dec_input, t):
         hidden = tf.zeros((inputs.shape[0], _config.units))
         enc_out, enc_hidden = seq2seq.encoder(inputs, hidden)
         dec_hidden = enc_hidden
@@ -36,7 +36,7 @@ class Seq2SeqChatter(Chatter):
 
 
 def main():
-    parser = OptionParser(version='%seq2seq chatbot V1.0')
+    parser = CmdParser(version='%seq2seq chatbot V1.0')
     parser.add_option("-t", "--type", action="store", type="string",
                       dest="type", default="pre_treat",
                       help="execute type, pre_treat/train/chat")
@@ -52,7 +52,6 @@ def main():
         while True:
             req = input("User: ")
             if req == "ESC":
-                chatter.stop()
                 print("Agent: 再见！")
                 exit(0)
             response = chatter.respond(req)
@@ -60,7 +59,7 @@ def main():
     elif options.type == 'pre_treat':
         preprocess_raw_data(raw_data=_config.resource_data, tokenized_data=_config.tokenized_data)
     else:
-        print('Error:不存在', sys.argv[2], '模式!')
+        parser.error(msg='')
 
 
 if __name__ == "__main__":
