@@ -36,7 +36,8 @@ def data_process(
         filepath = data_path +'/'+files[i]
         mfcc = wav_to_mfcc(n_mfcc=n_mfcc,wav_path=filepath)
         mfccs_list.append(mfcc)
-        str=text_list[i][12:len(text_list[i])-1].lower()
+        #每一个text数据格式为"index_num test_str\n"，因此将第一个空格部分和最后一个回车符切分，并小写。
+        str=text_list[i].split(" ",1)[1].strip().lower()
         labels_str_list.append(str)
     mfccs_numpy = tf.keras.preprocessing.sequence.pad_sequences(mfccs_list,padding='post',dtype='float32')
     inputs = tf.convert_to_tensor(mfccs_numpy)

@@ -28,38 +28,26 @@ def train_sample(inputs,labels,label_length,optimizer, model):
     return loss
 
 def train(model, optimizer,inputs,labels,label_length, epochs):
-    #trian的迭代
+    #加载检查点
+    checkpoint = tf.train.Checkpoint(model=model)
+    manager = tf.train.CheckpointManager(
+        checkpoint,
+        directory=config.configs_checkpoint['directory'],
+        max_to_keep=config.configs_checkpoint['max_to_keep']
+        )
+    if manager.latest_checkpoint:
+        checkpoint.restore(manager.latest_checkpoint)
+    #迭代训练
     for epoch in range(1,epochs+1):
         loss = train_sample(inputs,labels,label_length,optimizer,model)
         #5次保存一个检查点并输出一个loss
         if epoch%5==0:
-            checkpoint = tf.train.Checkpoint(model=model)
-            manager = tf.train.CheckpointManager(
-                checkpoint,
-                directory=config.configs_checkpoint['directory'],
-                max_to_keep=config.configs_checkpoint['max_to_keep']
-                )
             manager.save()
             print('Epoch {}, Loss: {}'.format(epoch, loss))
 
 
 if __name__ == "__main__":
-    #是否为初次训练
-    is_first_train=config.configs_train["is_first_train"]
-
-    if is_first_train:
-        model=DS2()
-    else:
-        model=DS2()
-        #加载检查点
-        checkpoint = tf.train.Checkpoint(model=model)
-        manager = tf.train.CheckpointManager(
-            checkpoint,
-            directory=config.configs_checkpoint['directory'],
-            max_to_keep=config.configs_checkpoint['max_to_keep']
-            )
-        checkpoint.restore(manager.latest_checkpoint)
-    
+    model=DS2()
     epochs=config.configs_train["train_epochs"]
     data_path=config.configs_train["data_path"]
     batch_size=config.configs_train["batch_size"]
@@ -70,12 +58,3 @@ if __name__ == "__main__":
         )
     optimizer = tf.keras.optimizers.Adam()
     train(model, optimizer, inputs, labels,label_length, epochs)
-    
-    #保存检查点
-    checkpoint = tf.train.Checkpoint(model=model)
-    manager = tf.train.CheckpointManager(
-        checkpoint,
-        directory=config.configs_checkpoint['directory'],
-        max_to_keep=config.configs_checkpoint['max_to_keep']
-        )
-    manager.save()

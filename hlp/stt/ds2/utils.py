@@ -238,4 +238,15 @@ def record(file_path=config.configs_record["record_path"]):
         wf.close()
 
 if __name__ == "__main__":
-    pass
+    #通过断言进行测试wer和ler
+    originals1 = ["a bcde fghij kl"]
+    results1 = ["a bcde fgh ijk l"]
+    originals2 = ["我是中国人民"]
+    results2 = ["我美国人"]
+    rates_wers,aver_wers=wers(originals1,results1)
+    #1为增加的词，2为替换的词，0为删除的词，4为原始的词的数量
+    assert rates_wers[0] == (1+2+0)/4
+    rates_lers,aver_lers,norm_rates_lers,norm_aver_lers=lers(originals2,results2)
+    #0为增加的字符，1为替换的字符，2为删除的字符，6为原始的字符数量
+    assert rates_lers[0] == (0+1+2)
+    assert norm_rates_lers[0] == (0+1+2)/6

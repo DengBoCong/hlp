@@ -13,7 +13,6 @@ configs_model["dense_units"] = len(char_index_map.index_map)+2
 
 """----------------------train-------------------------------"""
 configs_train={}
-configs_train["is_first_train"] = False #是否初次训练，否则加载保存的checkpoint
 configs_train["train_epochs"] = 100 #训练轮数
 configs_train["data_path"] = "./data/train_data" #训练数据文件夹路径
 configs_train["batch_size"] = 36 #训练数据的batch_size
