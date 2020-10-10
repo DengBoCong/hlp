@@ -21,7 +21,6 @@ PAD='[PAD]'
 
 def create_model(args, vocab_size):
     """
-
     :param args:
     :param vocab_size:字典大小
     :return:
@@ -99,7 +98,7 @@ def train(model,  train_list,  args,tokenizer):
     optimizer = tf.keras.optimizers.Adam(learning_rate=0.1)
     model.summary()
 
-    #     # # 开始训练
+    # # 开始训练
     for epoch in range(args.epochs):
         print('epoch={}'.format(epoch))
         for bantch_idx,input_ids in enumerate(dataset):
