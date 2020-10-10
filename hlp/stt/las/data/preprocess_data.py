@@ -108,15 +108,15 @@ print(example_target_batch)
 print(example_input_batch.shape, example_target_batch.shape)
 '''
 调试中
-chit = LAS(256, 39, 15)
+model = LAS(256, 39, 15)
 
-chit.compile(loss="mse", optimizer="adam")
+model.compile(loss="mse", optimizer="adam")
 #x_1 = np.random.random((1, 550, 256))
 
-chit.fit(dataset)
+model.fit(dataset)
 
-chit = LAS(256, 39, 16)
-chit.compile(loss="mse", optimizer="adam")
+model = LAS(256, 39, 16)
+model.compile(loss="mse", optimizer="adam")
 
 # x_1 should have shape (Batch-size, timesteps, f_1)
 x_1 = np.random.random((1, 550, 256))
@@ -126,11 +126,11 @@ x_2 = np.zeros((1,12,15))
 for n in range(12):
   x_2[0, n, np.random.randint(1, 15)] = 1
 
-# By passing x_1 and x_2 the chit will predict the 12th token 
+# By passing x_1 and x_2 the model will predict the 12th token 
 # given by the spectogram and the prev predicted tokens
 x_1 = example_input_batch
 #x_2 = tf.shape(tf.expand_dims(example_target_batch, 1))
-output = chit.predict([x_1, x_2])
+output = model.predict([x_1, x_2])
 
 output.shape(1,12,16)
 '''
