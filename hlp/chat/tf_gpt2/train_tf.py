@@ -229,7 +229,7 @@ def main():
     # 加载GPT2模型
     model, n_ctx = create_model(args, vocab_size)
     print('n_ctx={}'.format(n_ctx))
-    print('kkkk')
+
 
     # 对原始数据进行预处理,将原始语料转换成对应的token_id
 
