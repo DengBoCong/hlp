@@ -74,7 +74,7 @@ def calculate_loss_and_accuracy(outputs, labels,tokenizer):
     print('预测的文本序列：={}'.format(text))
 
     for i in range(len(preds)):
-        text = tokenizer.convert_ids_to_tokens(preds[i])
+        #text = tokenizer.convert_ids_to_tokens(preds[i])
         # print('text={}'.format(text))
         # print('shift_labels={}'.format(shift_labels[i]))
         if (preds[i] == shift_labels[i]):
@@ -212,8 +212,8 @@ def main():
 
     # 初始化tokenizer
     tokenizer = BertTokenizer(vocab_file=args.vocab_path)
-    print(tokenizer.get_vocab)
-    return
+
+
     # tokenizer的字典大小
     vocab_size = len(tokenizer)
     print('vocab_size{}'.format(vocab_size))
