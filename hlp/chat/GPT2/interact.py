@@ -1,4 +1,4 @@
-import transformers
+from transformers import GPT2Tokenizer, TFGPT2LMHeadModel
 import tensorflow as tf
 import os
 import numpy as np
@@ -22,6 +22,8 @@ def set_interact_args():
     parser.add_argument('--topp', default=0, type=float, required=False, help='最高积累概率')
     parser.add_argument('--model_config', default='config/model_config_dialogue_small.json', type=str, required=False,
                         help='模型参数')
+    parser.add_argument('--dialogue_model_path', default='models/modls/117M', required=False, help='对话模型路径')
+
     parser.add_argument('--log_path', default='data/interacting.log', type=str, required=False, help='interact日志存放位置')
     parser.add_argument('--voca_path', default='vocab/vocab_small.txt', type=str, required=False, help='选择词库')
     parser.add_argument('--save_samples_path', default="sample/", type=str, required=False, help="保存聊天记录的文件路径")
@@ -108,17 +110,28 @@ def main():
         samples_file = open(args.save_samples_path + '/samples.txt', 'a', encoding='utf8')
         samples_file.write("聊天记录{}:\n".format(datetime.now()))
 
-    logger = create_logger(args)
+
     tokenizer = BertTokenizer(vocab_file=args.voca_path)
     vocab_size = len(tokenizer)
 
     args_train = train_args.setup_train_args()
-    checkpoint_dir = './dialogue_model'
+
     model, _ = train_TF.create_model(args_train, vocab_size)
-    #train_TF.checkpoint.restore(tf.train.latest_checkpoint(checkpoint_dir))
 
+    ckpt = tf.train.Checkpoint(model=model)
+    checkpoint_dir = './models/modls/117M'
+    ckpt_manager = tf.train.CheckpointManager(ckpt, checkpoint_dir,max_to_keep=5)
 
-    model.load_weights('model_weight')
+    ckpt.restore(ckpt_manager.latest_checkpoint)
+
+    print("Model Restored..........................")
+
+    # checkpoint = tf.train.Checkpoint(optimizer=optimizer,
+    #                                  model=model)
+    #checkpoint.restore(tf.train.latest_checkpoint(checkpoint_dir))
+    print('加载完权重')
+
+    #model.load_weights('model_weight')
 
         # 存储聊天记录，每个utterance以token的id的形式进行存储
     history = []
@@ -172,6 +185,7 @@ def main():
                 # print("his_text:{}".format(his_text))
             history.append(generated)
             #print("history:{}".format(history))
+            #print(tokenizer.word_index)
             text = tokenizer.convert_ids_to_tokens(generated)
             print("chatbot:" + "".join(text))
             if args.save_samples_path:
