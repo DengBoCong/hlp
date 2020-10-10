@@ -1,6 +1,4 @@
-import json
 import tensorflow as tf
-import config.get_config as _config
 
 
 class InformSlotTracker(tf.keras.layers.Layer):
@@ -13,10 +11,10 @@ class InformSlotTracker(tf.keras.layers.Layer):
 
     def __init__(self, n_choices):
         super(InformSlotTracker, self).__init__()
-        self.n_choices = n_choices + 1
+        self.n_choices = n_choices + 1 # 因为包括dontcare
         self.fc = tf.keras.layers.Dense(units=n_choices)
 
-    def forward(self, state):
+    def call(self, state):
         return self.fc(state)
 
 
@@ -34,16 +32,5 @@ class RequestSlotTracker(tf.keras.layers.Layer):
         super(RequestSlotTracker, self).__init__()
         self.fc = tf.keras.layers.Dense(2)
 
-    def forward(self, state):
+    def call(self, state):
         return self.fc(state)
-
-
-sent_groups = {}
-
-
-def main():
-    global sent_groups
-
-    # 获取本体信息
-    with open(_config.sent_groups) as file:
-        sent_groups = json.load(file)

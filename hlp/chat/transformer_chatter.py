@@ -1,12 +1,8 @@
-import os
-import sys
-import time
 import tensorflow as tf
-from model.chatter import Chatter
+from chit.chatter import Chatter
 from common.common import CmdParser
 import config.get_config as _config
-from model.transformer.model import model
-import model.transformer.model as transformer
+import chit.transformer.model as transformer
 from common.pre_treat import preprocess_raw_data
 
 
@@ -15,28 +11,64 @@ class TransformerChatter(Chatter):
     Transformer模型的聊天类
     """
 
-    def __init__(self, checkpoint_dir, beam_size):
+    def __init__(self, checkpoint_dir, beam_size, vocab_size):
         """
         Transformer聊天器初始化，用于加载模型
         """
         super().__init__(checkpoint_dir, beam_size)
+
+        self.model = transformer.transformer(
+            vocab_size=vocab_size,
+            num_layers=_config.transformer_num_layers,
+            units=_config.transformer_units,
+            d_model=_config.transformer_d_model,
+            num_heads=_config.transformer_num_heads,
+            dropout=_config.transformer_dropout
+        )
+        self.learning_rate = transformer.CustomSchedule(_config.transformer_d_model)
+        self.optimizer = tf.keras.optimizers.Adam(
+            self.learning_rate, beta_1=0.9, beta_2=0.98, epsilon=1e-9
+        )
+        self.train_loss = tf.keras.metrics.Mean(name='train_loss')
+        self.train_accuracy = tf.keras.metrics.SparseCategoricalAccuracy(name='train_accuracy')
+        self.checkpoint = tf.train.Checkpoint(transformer=self.model, optimizer=self.optimizer)
+
         if self.ckpt:
-            transformer.checkpoint.restore(tf.train.latest_checkpoint(checkpoint_dir)).expect_partial()
+            self.checkpoint.restore(tf.train.latest_checkpoint(checkpoint_dir)).expect_partial()
 
     def _init_loss_accuracy(self):
-        transformer.train_loss.reset_states()
-        transformer.train_accuracy.reset_states()
+        self.train_loss.reset_states()
+        self.train_accuracy.reset_states()
 
     def _train_step(self, inp, tar, step_loss):
-        transformer.train_step(inp, tar)
-        step_loss[0] = transformer.train_loss.result()
+        tar_inp = tar[:, :-1]
+        tar_real = tar[:, 1:]
+        with tf.GradientTape() as tape:
+            predictions = self.model(inputs=[inp, tar_inp])
+            loss = self._loss_function(tar_real, predictions)
+        gradients = tape.gradient(loss, self.model.trainable_variables)
+        self.optimizer.apply_gradients(zip(gradients, self.model.trainable_variables))
+
+        self.train_loss(loss)
+        self.train_accuracy(tar_real, predictions)
+
+        step_loss[0] = self.train_loss.result()
 
     def _create_predictions(self, inputs, dec_input, t):
         # 获取目前已经保存在容器中的序列
-        predictions = model(inputs=[inputs, dec_input], training=False)
+        predictions = self.model(inputs=[inputs, dec_input], training=False)
         predictions = predictions[:, -1:, :]
         predictions = tf.squeeze(predictions, axis=1)
         return predictions
+
+    def _loss_function(self, real, pred):
+        real = tf.reshape(real, shape=(-1, _config.max_length_inp - 1))
+        loss = tf.keras.losses.SparseCategoricalCrossentropy(
+            from_logits=True, reduction='none')(real, pred)
+        mask = tf.cast(tf.not_equal(real, 0), tf.float32)
+        loss = tf.multiply(loss, mask)
+
+        return tf.reduce_mean(loss)
 
 
 def main():
@@ -47,10 +79,14 @@ def main():
     (options, args) = parser.parse_args()
 
     # 初始化要使用的聊天器
-    chatter = TransformerChatter(checkpoint_dir=_config.transformer_train_data, beam_size=_config.beam_size)
+    chatter = TransformerChatter(checkpoint_dir=_config.transformer_train_data,
+                                 beam_size=_config.beam_size,
+                                 vocab_size=_config.vocab_size)
 
     if options.type == 'train':
-        chatter.train(transformer.checkpoint)
+        chatter.train(chatter.checkpoint,
+                      input_dict_fn='data/transformer_input_dict.json',
+                      target_dict_fn='data/transformer_target_dict.json')
     elif options.type == 'chat':
         print("Agent: 你好！结束聊天请输入ESC。")
         while True:
@@ -58,7 +94,9 @@ def main():
             if req == "ESC":
                 print("Agent: 再见！")
                 exit(0)
-            response = chatter.respond(req)
+            response = chatter.respond(req,
+                                       input_dict_fn='data/transformer_input_dict.json',
+                                       target_dict_fn='data/transformer_target_dict.json')
             print("Agent: ", response)
     elif options.type == 'pre_treat':
         preprocess_raw_data(raw_data=_config.resource_data, tokenized_data=_config.tokenized_data)

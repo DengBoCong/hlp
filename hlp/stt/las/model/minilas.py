@@ -99,8 +99,8 @@ def LAS(dim, f_1, no_tokens):
   return model
 '''
 调试中
-model = LAS(256, 256, 16)
-model.compile(loss="mse", optimizer="adam")
+chit = LAS(256, 256, 16)
+chit.compile(loss="mse", optimizer="adam")
 
 # x_1 should have shape (Batch-size, timesteps, f_1)
 x_1 = np.random.random((1, 550, 256))
@@ -110,8 +110,8 @@ x_2 = np.zeros((1,12,16))
 for n in range(12):
   x_2[0, n, np.random.randint(1, 16)] = 1
 
-# By passing x_1 and x_2 the model will predict the 12th token 
+# By passing x_1 and x_2 the chit will predict the 12th token 
 # given by the spectogram and the prev predicted tokens
 
-output = model.predict([x_1, x_2])
+output = chit.predict([x_1, x_2])
 '''
