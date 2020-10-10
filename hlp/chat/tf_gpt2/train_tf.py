@@ -56,10 +56,7 @@ def calculate_loss_and_accuracy(outputs, labels,tokenizer):
     shift_logits=tf.reshape(shift_logits,[-1, tf.convert_to_tensor(shift_logits).shape[-1]])
     shift_labels=tf.reshape(shift_labels,[-1])
     #shift_logits是预测的各个单词出现的概率
-    print('预测结果={}'.format(shift_logits))
-    print('shift_logits.shape={}'.format(shift_logits))
     loss = tf.keras.losses.sparse_categorical_crossentropy(shift_labels, shift_logits,from_logits=True)##reduction='?'
-
     preds = np.argmax(shift_logits,axis=1)  # preds表示对应的prediction_score预测出的token在voca中的id。维度为[batch_size,token_len]
     print('预测id={}'.format(preds))
     print('预测label={}'.format(shift_labels))
@@ -96,7 +93,7 @@ def train(model,  train_list,  args,tokenizer):
     dataset=train_dataset.batch(BATCH_SIZE,drop_remainder=True)#drop_remainder 忽略最后一个不足数量的batch
     #数据读取
     print('dataset={}'.format(dataset))
-    #model.train()##model有train和evalute状态
+
     # # 计算所有epoch进行参数优化的总步数total_steps     ？？
     # # 设置优化器，并且在初始训练时，使用warmup策略
     optimizer = tf.keras.optimizers.Adam(learning_rate=0.1)
@@ -118,109 +115,23 @@ def train(model,  train_list,  args,tokenizer):
 
         print('epoch={} loss={} accuracy={} '.format(epoch,loss,accuracy))
     model.save_weights('model_weight')
-    return model
-
     # model_name="Model_1/model"
     # model.save('saved_model/my_model')
     #model.save('Model_1/my_model')#此方法适用于功能模型或者顺序模型 不适用于此种子类模型
     # 调用 model = tf.saved_model.load("Model_1")
-
-
-def predict(model):
-
-    args = predict_arg.set_interact_args()
-    if args.save_samples_path:
-        if not os.path.exists(args.save_samples_path):
-            os.makedirs(args.save_samples_path)
-        samples_file = open(args.save_samples_path + '/samples.txt', 'a', encoding='utf8')
-        samples_file.write("聊天记录{}:\n".format(datetime.now()))
-
-    logger = predict_arg.create_logger(args)
-    tokenizer = BertTokenizer(vocab_file=args.voca_path)
-    vocab_size = len(tokenizer)
-
-    # args_train = train_args.setup_train_args()
-    # model, _ = train_TF.create_model(args_train, vocab_size)
-    # model.load_weights('model_weight')
-
-        # 存储聊天记录，每个utterance以token的id的形式进行存储
-    history = []
-    print('开始和chatbot聊天，输入CTRL + Z以退出')
-
-    while True:
-        try:
-            text = input("user:")
-            if args.save_samples_path:
-                samples_file.write("user:{}\n".format(text))
-            history.append(tokenizer.encode(text))   #把输入的文本变成 token id
-            input_ids = [tokenizer.cls_token_id]  # 每个input以[CLS]为开头
-
-            for history_id, history_utr in enumerate(history[-args.max_history_len:]):##切片
-                input_ids.extend(history_utr)
-                input_ids.append(tokenizer.sep_token_id)  #加分割ID
-                # print('input_ids={}'.format(input_ids))
-            curr_input_tensor =tf.convert_to_tensor(input_ids,tf.int64)#完整的输入id
-            #print('curr_input_tensor={}'.format(curr_input_tensor))
-            generated = []
-            # 最多生成max_len个token
-            for _ in range(args.max_len):
-                outputs = model(inputs=curr_input_tensor)
-                next_token_logits = outputs[0][-1, :]
-                # 对于已生成的结果generated中的每个token添加一个重复惩罚项，降低其生成概率--减少重复
-                # for id in set(generated):
-                #     print('id = {}'.format(id))
-                #     next_token_logits[id] = next_token_logits[id]/args.repetition_penalty
-                next_token_logits = next_token_logits / args.temperature
-                # 对于[UNK]的概率设为无穷小，也就是说模型的预测结果不可能是[UNK]这个token
-                next_token_logits=np.array(next_token_logits)
-                next_token_logits[tokenizer.convert_tokens_to_ids('[UNK]')] = -float('Inf')##？？？
-                #print('next_token_logits[100]={}'.format(next_token_logits[100]))
-                next_token_logits=tf.convert_to_tensor(next_token_logits)
-                filtered_logits,promax_index = predict_arg.top_k_top_p_filtering(next_token_logits, top_k=args.topk, top_p=args.topp)
-                #tf.raw_ops.Multinomial表示从候选集合中无放回地进行抽取num_samples个元素，权重越高，抽到的几率越高，返回元素的下标
-
-                #print('filtered_logits={}'.format(filtered_logits))
-                next_token_id = tf.raw_ops.Multinomial(logits=[tf.nn.softmax(filtered_logits, -1)], num_samples=1)
-                next_token=promax_index[next_token_id]
-                #print('next_token={}'.format(next_token))
-
-
-                if next_token == tokenizer.sep_token_id:  # 遇到[SEP]则表明response生成结束
-                    break
-                #print('next_token={}'.format(next_token))
-                generated.append(next_token[0])
-                #print('generated=============={}'.format(generated))
-                curr_input_tensor = tf.concat([curr_input_tensor, next_token], 0)
-                # his_text = tokenizer.convert_ids_to_tokens(curr_input_tensor.tolist())
-                # print("his_text:{}".format(his_text))
-            history.append(generated)
-            print('generated={}'.format(generated))
-            #print("history:{}".format(history))
-            text = tokenizer.convert_ids_to_tokens(generated)
-            print("chatbot:" + "".join(text))
-            if args.save_samples_path:
-                samples_file.write("chatbot:{}\n".format("".join(text)))
-        except KeyboardInterrupt:
-            if args.save_samples_path:
-                samples_file.close()
-            break
-
 def main():
     args = train_args.setup_train_args()
     if args.seed:
         train_args.set_random_seed(args)
-
     # 初始化tokenizer
     tokenizer = BertTokenizer(vocab_file=args.vocab_path)
-
-
     # tokenizer的字典大小
     vocab_size = len(tokenizer)
-    print('vocab_size{}'.format(vocab_size))
+    #print('vocab_size{}'.format(vocab_size))
 
     global pad_id
     pad_id = tokenizer.convert_tokens_to_ids(PAD)
-    print('pad_id{}'.format(pad_id))
+    #print('pad_id{}'.format(pad_id))
 
     # 创建对话模型的输出目录
     if not os.path.exists(args.dialogue_model_output_path):
@@ -228,7 +139,7 @@ def main():
 
     # 加载GPT2模型
     model, n_ctx = create_model(args, vocab_size)
-    print('n_ctx={}'.format(n_ctx))
+    #print('n_ctx={}'.format(n_ctx))
 
 
     # 对原始数据进行预处理,将原始语料转换成对应的token_id
@@ -248,7 +159,7 @@ def main():
     #print(result)
     data_list = result
     # return
-    print('data_list{}'.format(data_list))
+    #print('data_list{}'.format(data_list))
 
     train_list, test_list = train_test_split(data_list, test_size=0.1, random_state=1)
     optimizer = tf.keras.optimizers.Adam(learning_rate=0.1)
@@ -257,18 +168,12 @@ def main():
     checkpoint_prefix = os.path.join(checkpoint_dir, "GPT2_1")
     checkpoint = tf.train.Checkpoint(optimizer=optimizer,
                                       model=model)
-
-
     print('开始训练')
-    model=train(model, train_list, args,tokenizer)
-
+    train(model, train_list, args,tokenizer)
     checkpoint.save(file_prefix=checkpoint_prefix)
-
-    checkpoint.restore(tf.train.latest_checkpoint(checkpoint_dir))
+    #checkpoint.restore(tf.train.latest_checkpoint(checkpoint_dir))
 
     print('训练结束')
-    print('开始交互')
-    predict(model)
 
 if __name__ == '__main__':
     main()

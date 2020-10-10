@@ -7,59 +7,10 @@ from datetime import datetime
 import logging
 from transformers import BertTokenizer
 import train_args
-
+import train_tf
+import predict_arg
 PAD = '[PAD]'
 pad_id = 0
-
-
-def set_interact_args():
-    """
-    Sets up the training arguments.
-    """
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--temperature', default=1, type=float, required=False, help='生成的temperature')
-    parser.add_argument('--topk', default=8, type=int, required=False, help='最高k选1')
-    parser.add_argument('--topp', default=0, type=float, required=False, help='最高积累概率')
-    parser.add_argument('--model_config', default='config/model_config_dialogue_small.json', type=str, required=False,
-                        help='模型参数')
-    parser.add_argument('--dialogue_model_path', default='models/modls/117M', required=False, help='对话模型路径')
-
-    parser.add_argument('--log_path', default='data/interacting.log', type=str, required=False, help='interact日志存放位置')
-    parser.add_argument('--voca_path', default='vocab/vocab_small.txt', type=str, required=False, help='选择词库')
-    parser.add_argument('--save_samples_path', default="sample/", type=str, required=False, help="保存聊天记录的文件路径")
-    parser.add_argument('--repetition_penalty', default=1.0, type=float, required=False,
-                        help="重复惩罚参数，若生成的对话重复性较高，可适当提高该参数")
-    parser.add_argument('--seed', type=int, default=None, help='设置种子用于生成随机数，以使得训练的结果是确定的')
-    parser.add_argument('--max_len', type=int, default=25, help='每个utterance的最大长度,超过指定长度则进行截断')
-    parser.add_argument('--max_history_len', type=int, default=5, help="dialogue history的最大长度")
-    return parser.parse_args()
-
-
-def create_logger(args):
-    """
-    将日志输出到日志文件和控制台
-    """
-    logger = logging.getLogger(__name__)
-    logger.setLevel(logging.INFO)
-
-    formatter = logging.Formatter(
-        '%(asctime)s - %(levelname)s - %(message)s')
-
-    # 创建一个handler，用于写入日志文件
-    file_handler = logging.FileHandler(
-        filename=args.log_path)
-    file_handler.setFormatter(formatter)
-    file_handler.setLevel(logging.INFO)
-    logger.addHandler(file_handler)
-
-    # 创建一个handler，用于将日志输出到控制台
-    console = logging.StreamHandler()
-    console.setLevel(logging.DEBUG)
-    console.setFormatter(formatter)
-    logger.addHandler(console)
-
-    return logger
-
 
 def top_k_top_p_filtering(logits, top_k=0, top_p=0.0, filter_value=-float('Inf')):
 
@@ -102,37 +53,25 @@ def top_k_top_p_filtering(logits, top_k=0, top_p=0.0, filter_value=-float('Inf')
 
 
 def main():
-
-    args = set_interact_args()
+    args = predict_arg.set_interact_args()
     if args.save_samples_path:
         if not os.path.exists(args.save_samples_path):
             os.makedirs(args.save_samples_path)
         samples_file = open(args.save_samples_path + '/samples.txt', 'a', encoding='utf8')
         samples_file.write("聊天记录{}:\n".format(datetime.now()))
-
-
     tokenizer = BertTokenizer(vocab_file=args.voca_path)
     vocab_size = len(tokenizer)
 
     args_train = train_args.setup_train_args()
 
-    model, _ = train_TF.create_model(args_train, vocab_size)
+    model, _ = train_tf.create_model(args_train, vocab_size)
 
-    ckpt = tf.train.Checkpoint(model=model)
-    checkpoint_dir = './models/modls/117M'
-    ckpt_manager = tf.train.CheckpointManager(ckpt, checkpoint_dir,max_to_keep=5)
-
-    ckpt.restore(ckpt_manager.latest_checkpoint)
-
+    model.load_weights('model_weight')
     print("Model Restored..........................")
-
     # checkpoint = tf.train.Checkpoint(optimizer=optimizer,
     #                                  model=model)
     #checkpoint.restore(tf.train.latest_checkpoint(checkpoint_dir))
     print('加载完权重')
-
-    #model.load_weights('model_weight')
-
         # 存储聊天记录，每个utterance以token的id的形式进行存储
     history = []
     print('开始和chatbot聊天，输入CTRL + Z以退出')
