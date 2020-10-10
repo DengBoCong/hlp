@@ -10,7 +10,7 @@ def setup_train_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--model_config', default='config/model_config_dialogue_small.json', type=str, required=False,
                         help='选择模型参数')
-    parser.add_argument('--vocab_path', default='vocab/vocab.txt', type=str, required=False, help='选择词库')
+    parser.add_argument('--vocab_path', default='vocab/vocab_small.txt', type=str, required=False, help='选择词库')
     parser.add_argument('--train_raw_path', default='data/data.txt', type=str, required=False, help='原始训练语料')
     parser.add_argument('--train_tokenized_path', default='data/train_tokenized.txt', type=str,
                         required=False,

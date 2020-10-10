@@ -14,7 +14,7 @@ from os.path import join, exists
 from itertools import zip_longest, chain
 # from chatbot.model import DialogueGPT2Model
 import train_args
-import train_TF
+import train_tf
 PAD = '[PAD]'
 pad_id = 0
 

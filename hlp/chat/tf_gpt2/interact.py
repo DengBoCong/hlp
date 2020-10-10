@@ -7,7 +7,7 @@ from datetime import datetime
 import logging
 from transformers import BertTokenizer
 import train_args
-import train_TF
+
 PAD = '[PAD]'
 pad_id = 0
 
