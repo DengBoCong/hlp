@@ -23,7 +23,7 @@ def main():
     args_train = train_args.setup_train_args()
 
     model, _ = train.create_model(args_train, vocab_size)
-    model.load_weights('model_weight')
+    model.load_weights('./dialogue_model/model_weight').expect_partial()
     print("Model Restored..........................")
     print('加载完权重')
 

@@ -29,8 +29,8 @@ def preprocess_raw_data(args, tokenizer, n_ctx):
                 dialogue_ids.append(tokenizer.sep_token_id)  # #每个utterance之后添加[SEP]，表示utterance结束
             # 对超过n_ctx的长度进行截断,否则GPT2模型会报错
             dialogue_ids = dialogue_ids[:n_ctx]  #自设 n_ctx---统一长度
-            print('dialogue_ids={}'.format(dialogue_ids))
-            print('n_ctx={}'.format(n_ctx))
+            #print('dialogue_ids={}'.format(dialogue_ids))
+            #print('n_ctx={}'.format(n_ctx))
             ##将处理好的token写入文件
             for dialogue_id in dialogue_ids:  #对一段话中的每个字id 转换成str 后加 空格 隔开
                 f.write(str(dialogue_id) + ' ')

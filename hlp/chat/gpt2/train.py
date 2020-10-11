@@ -1,4 +1,6 @@
 import tensorflow as tf
+import transformers
+from transformers import GPT2Config
 import os
 import numpy as np
 from tqdm import tqdm #可以在控制台显示进度条
@@ -7,7 +9,6 @@ from transformers import  TFGPT2LMHeadModel
 from transformers import BertTokenizer
 #不能是一一对应 得是理解了之后的重新编写
 import hlp.chat.gpt2.train_args as train_args
-
 import hlp.chat.gpt2.preprocess_data as preprocess_data
 #数据处理
 PAD='[PAD]'
@@ -20,12 +21,21 @@ def create_model(args, vocab_size):
     """
     print('配置模型参数')
     #model_config = GPT2Config.from_json_file('config/model_config_dialogue_small.json')
-
+    print(vocab_size)
     print('创建model')
-    model = TFGPT2LMHeadModel.from_pretrained('gpt2')
+    #model = TFGPT2LMHeadModel.from_pretrained('gpt2')
+    if args.pretrained_model:  # 如果指定了预训练的GPT2模型
+        model = TFGPT2LMHeadModel.from_pretrained(args.pretrained_model)
+    else:  # 若没有指定预训练模型，则初始化模型
+        print('初始化模型')
+        model_config = GPT2Config.from_json_file(args.model_config)
+        print('config:\n' + model_config.to_json_string())
+        model = TFGPT2LMHeadModel(config=model_config)
+        print('构造好模型')
+        # 根据tokenizer的vocabulary调整GPT2模型的voca的大小
+    #model.resize_token_embeddings(vocab_size)
 
     #model = TFGPT2LMHeadModel.from_pretrained()#实例化一个类
-    # 根据tokenizer的vocabulary调整GPT2模型的voca的大小
     return model, model.config.to_dict().get("n_ctx")
 
 pad_id = 0
@@ -89,8 +99,6 @@ def train(model,  train_list,  args,tokenizer):
     # # 计算所有epoch进行参数优化的总步数total_steps     ？？
     # # 设置优化器，并且在初始训练时，使用warmup策略
     optimizer = tf.keras.optimizers.Adam(learning_rate=0.1)
-    model.summary()
-
     # # 开始训练
     for epoch in range(args.epochs):
         print('epoch={}'.format(epoch))
@@ -106,6 +114,27 @@ def train(model,  train_list,  args,tokenizer):
     model.save_weights('./dialogue_model/model_weight')
     #model.save('Model_1/my_model')#此方法适用于功能模型或者顺序模型 不适用于此种子类化模型
     # 调用 model = tf.saved_model.load("Model_1")
+
+def evaluate(model, test_list,  args, tokenizer):
+
+    # 记录tensorboardX
+    test_dataset = train_args.collate_fn(test_list)
+    print(test_dataset)
+    new_list = []
+    for i in range(len(test_dataset)):
+        s = list(map(int, test_dataset[i]))
+        new_list.append(s)
+    dd = tf.convert_to_tensor(new_list)
+    test_dataset = tf.data.Dataset.from_tensor_slices(dd)
+    dataset = test_dataset.batch(BATCH_SIZE, drop_remainder=True)  # drop_remainder
+
+    for batch_idx, input_ids in enumerate(dataset):
+        outputs = model.call(input_ids=input_ids)
+        loss, accuracy = calculate_loss_and_accuracy(outputs, labels=input_ids, tokenizer=tokenizer)
+
+        if args.gradient_accumulation > 1:
+            loss = loss / args.gradient_accumulation
+            accuracy = accuracy / args.gradient_accumulation
 def main():
     args = train_args.setup_train_args()
     if args.seed:
@@ -127,20 +156,16 @@ def main():
     # 加载GPT2模型
     model, n_ctx = create_model(args, vocab_size)
     #print('n_ctx={}'.format(n_ctx))
-
     # 对原始数据进行预处理,将原始语料转换成对应的token_id
-
       # 如果当前是要训练对话生成模型
     print('开始产生token')
     #不修改数据集的情况下，没必要每次训练都运行preprocess_raw_data 因为 生成的data是一样的
     preprocess_data.preprocess_raw_data(args, tokenizer, n_ctx)
-
-    #进项数据类型变换
+    #进行数据类型变换
     with open(args.train_tokenized_path, "r", encoding="utf8") as f:
         data_list = []
         # 一行行地读取 str类型的data  然后转换为list形式
         for line in f.readlines():
-            print(line)
             data = line.strip()
             data = data.split(' ')
             data_list.append(data)
@@ -149,7 +174,7 @@ def main():
 
     print('开始训练')
     train(model, train_list, args,tokenizer)
-
+    evaluate(model, test_list, args,tokenizer)
     print('训练结束')
 
 if __name__ == '__main__':
