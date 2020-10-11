@@ -1,7 +1,7 @@
 from optparse import OptionParser
 
-global_start = 'start '
-global_end = ' end'
+global_start = 'start'
+global_end = 'end'
 
 class CmdParser(OptionParser):
     def error(self, msg):

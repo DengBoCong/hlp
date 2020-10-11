@@ -16,14 +16,15 @@
     "use_pretrained_embedding" : true,
     "kb" : "data/kb.json",
     "sent_groups": "data/groups.json",
-    "cam_rest": "data/CamRestDB.json",
-    "ontology": "data/CamRestOTGY.json",
-    "dialogues_train": "data/woz_train_en.json",
-    "dialogues_val": "data/woz_validate_en.json",
-    "dialogues_test" : "data/woz_test_en.json"
+    "database": "data/database.json",
+    "ontology": "data/ontology.json",
+    "semi_dict": "data/semi_dict.json",
+    "dialogues_train": "data/dstc2_train_en.json",
+    "tokenized_data": "data\\dialogues_tokenized.txt"
   },
   "resource_data": "data\\train.txt",
   "tokenized_data": "data\\train_tokenized.txt",
+  "vocab_size": 500,
   "enc_vocab_size": 20000,
   "dec_vocab_size": 20000,
   "embedding_dim": 256,
@@ -32,5 +33,5 @@
   "batch_size": 64,
   "buffer_size": 20000,
   "beam_size": 3,
-  "epochs": 2
+  "epochs": 20
 }

@@ -5,7 +5,7 @@ import random
 import tensorflow as tf
 from pathlib import Path
 import common.common as com
-from model.task.kb import load_kb
+from task.kb import load_kb
 from collections import defaultdict
 import config.get_config as _config
 from nltk import wordpunct_tokenize
@@ -18,7 +18,7 @@ def preprocess_sentence(w):
     :param w:
     :return: 合成之后的句子
     """
-    w = com.global_start + w + com.global_end
+    w = com.global_start + ' ' + w + ' ' + com.global_end
     return w
 
 
@@ -104,6 +104,23 @@ def tokenize_en(sent, tokenizer):
     return ret
 
 
+def sequences_to_texts(sequences, token_dict):
+    """
+    将序列转换成text
+    """
+    inv = {}
+    for key, value in token_dict.items():
+        inv[value] = key
+
+    result = []
+    for text in sequences:
+        temp = ''
+        for token in text:
+            temp = temp + ' ' + inv[token]
+        result.append(temp)
+    return result
+
+
 def create_padding_mask(input):
     """
     对input中的padding单位进行mask
@@ -121,12 +138,34 @@ def create_look_ahead_mask(input):
     return tf.maximum(look_ahead_mask, padding_mask)
 
 
-def load_dataset():
+def load_dataset(input_dict_fn, target_dict_fn):
     """
     数据加载方法，含四个元素的元组，包括如下：
     :return:input_tensor, input_token, target_tensor, target_token
     """
-    return read_data(_config.data, _config.max_train_data_size)
+    input_tensor, input_token, target_tensor, target_token = read_data(_config.data, _config.max_train_data_size)
+
+    with open(input_dict_fn, 'w', encoding='utf-8') as file:
+        file.write(json.dumps(input_token.word_index, indent=4, ensure_ascii=False))
+
+    with open(target_dict_fn, 'w', encoding='utf-8') as file:
+        file.write(json.dumps(target_token.word_index, indent=4, ensure_ascii=False))
+
+    return input_tensor, input_token, target_tensor, target_token
+
+
+def load_token_dict(input_dict_fn, target_dict_fn):
+    """
+    加载字典方法
+    :return:input_token, target_token
+    """
+    with open(input_dict_fn, 'r', encoding='utf-8') as file:
+        input_token = json.load(file)
+
+    with open(target_dict_fn, 'r', encoding='utf-8') as file:
+        target_token = json.load(file)
+
+    return input_token, target_token
 
 
 def load_dialogs(diag_fn, kb, groups_fn=None):

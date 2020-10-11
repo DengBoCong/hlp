@@ -21,7 +21,6 @@ class Chatter(object):
         Transformer聊天器初始化，用于加载模型
         """
         self.checkpoint_dir = checkpoint_dir
-        self.input_tensor, self.input_token, self.target_tensor, self.target_token = _data.load_dataset()
         self.beam_search_container = BeamSearch(
             beam_size=beam_size,
             max_length=_config.max_length_tar,
@@ -58,11 +57,11 @@ class Chatter(object):
         """
         pass
 
-    def train(self, checkpoint):
+    def train(self, checkpoint, input_dict_fn, target_dict_fn):
         """
         对模型进行训练
         """
-        dataset, checkpoint_prefix, steps_per_epoch = self._treat_dataset()
+        dataset, checkpoint_prefix, steps_per_epoch = self._treat_dataset(input_dict_fn, target_dict_fn)
 
         for epoch in range(_config.epochs):
             print('Epoch {}/{}'.format(epoch + 1, _config.epochs))
@@ -88,14 +87,15 @@ class Chatter(object):
 
         print('训练结束')
 
-    def respond(self, req):
+    def respond(self, req, input_dict_fn, target_dict_fn):
         # 对req进行初步处理
-        inputs, dec_input = self._pre_treat_inputs(req)
+        input_token, target_token = _data.load_token_dict(input_dict_fn=input_dict_fn, target_dict_fn=target_dict_fn)
+        inputs, dec_input = self._pre_treat_inputs(req, input_token, target_token)
         self.beam_search_container.init_variables(inputs=inputs, dec_input=dec_input)
         inputs, dec_input = self.beam_search_container.get_variables()
         for t in range(_config.max_length_tar):
             predictions = self._create_predictions(inputs, dec_input, t)
-            self.beam_search_container.add(predictions=predictions, end_sign=self.target_token.word_index.get('end'))
+            self.beam_search_container.add(predictions=predictions, end_sign=target_token.get('end'))
             if self.beam_search_container.beam_size == 0:
                 break
 
@@ -105,33 +105,35 @@ class Chatter(object):
         # 从容器中抽取序列，生成最终结果
         for i in range(len(beam_search_result)):
             temp = beam_search_result[i].numpy()
-            text = self.target_token.sequences_to_texts(temp)
+            text = _data.sequences_to_texts(temp, target_token)
             text[0] = text[0].replace('start', '').replace('end', '').replace(' ', '')
             result = '<' + text[0] + '>' + result
         return result
 
-    def _pre_treat_inputs(self, sentence):
+    def _pre_treat_inputs(self, sentence, input_token, target_token):
         # 分词
         sentence = " ".join(jieba.cut(sentence))
         # 添加首尾符号
         sentence = _data.preprocess_sentence(sentence)
         # 将句子转成token列表
-        inputs = [self.input_token.word_index.get(i, 3) for i in sentence.split(' ')]
+        inputs = [input_token.get(i, 3) for i in sentence.split(' ')]
         # 填充
         inputs = tf.keras.preprocessing.sequence.pad_sequences([inputs], maxlen=_config.max_length_inp, padding='post')
         # 转成Tensor
         inputs = tf.convert_to_tensor(inputs)
         # decoder的input就是开始符号
-        dec_input = tf.expand_dims([self.target_token.word_index['start']], 0)
+        dec_input = tf.expand_dims([target_token['start']], 0)
         return inputs, dec_input
 
-    def _treat_dataset(self):
-        dataset = tf.data.Dataset.from_tensor_slices((self.input_tensor, self.target_tensor)).cache().shuffle(
+    def _treat_dataset(self, input_dict_fn, target_dict_fn):
+        input_tensor, _, target_tensor, _ = \
+            _data.load_dataset(input_dict_fn=input_dict_fn, target_dict_fn=target_dict_fn)
+        dataset = tf.data.Dataset.from_tensor_slices((input_tensor, target_tensor)).cache().shuffle(
             _config.BUFFER_SIZE).prefetch(tf.data.experimental.AUTOTUNE)
         dataset = dataset.batch(_config.BATCH_SIZE, drop_remainder=True)
         checkpoint_prefix = os.path.join(self.checkpoint_dir, "ckpt")
         print('训练开始，正在准备数据中...')
-        step_per_epoch = len(self.input_tensor) // _config.BATCH_SIZE
+        step_per_epoch = len(input_tensor) // _config.BATCH_SIZE
 
         return dataset, checkpoint_prefix, step_per_epoch
 

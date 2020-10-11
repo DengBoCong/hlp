@@ -1,8 +1,6 @@
 import tensorflow as tf
 import common.layers as layers
 import common.data_utils as _data
-import config.get_config as _config
-from common.data_utils import load_dataset
 
 
 def encoder(vocab_size, num_layers, units, d_model,
@@ -145,58 +143,6 @@ class CustomSchedule(tf.keras.optimizers.schedules.LearningRateSchedule):
         return tf.math.rsqrt(self.d_model) * tf.math.minimum(arg1, arg2)
 
 
-def loss_function(real, pred):
-    real = tf.reshape(real, shape=(-1, _config.max_length_inp - 1))
-    loss = tf.keras.losses.SparseCategoricalCrossentropy(
-        from_logits=True, reduction='none')(real, pred)
-    mask = tf.cast(tf.not_equal(real, 0), tf.float32)
-    loss = tf.multiply(loss, mask)
-
-    return tf.reduce_mean(loss)
-
-
-learning_rate = CustomSchedule(_config.transformer_d_model)
-optimizer = tf.keras.optimizers.Adam(
-    learning_rate, beta_1=0.9, beta_2=0.98, epsilon=1e-9
-)
-
-
 def accuracy(real, pred):
     real = tf.reshape(real, shape=(-1, 40 - 1))
     return tf.keras.metrics.sparse_categorical_accuracy(real, pred)
-
-
-_, input_token, _, _ = load_dataset()
-
-model = transformer(
-    vocab_size=len(input_token.word_index) + 1,
-    num_layers=_config.transformer_num_layers,
-    units=_config.transformer_units,
-    d_model=_config.transformer_d_model,
-    num_heads=_config.transformer_num_heads,
-    dropout=_config.transformer_dropout
-)
-
-checkpoint = tf.train.Checkpoint(transformer=model, optimizer=optimizer)
-
-train_loss = tf.keras.metrics.Mean(name='train_loss')
-train_accuracy = tf.keras.metrics.SparseCategoricalAccuracy(name='train_accuracy')
-
-
-def train_step(inp, tar):
-    """
-    这里要多提一下的就是把target的end标志去掉，然后作为decoder的输入
-    :param inp:编码后的问句
-    :param tar:编码后的答句
-    :return:
-    """
-    tar_inp = tar[:, :-1]
-    tar_real = tar[:, 1:]
-    with tf.GradientTape() as tape:
-        predictions = model(inputs=[inp, tar_inp])
-        loss = loss_function(tar_real, predictions)
-    gradients = tape.gradient(loss, model.trainable_variables)
-    optimizer.apply_gradients(zip(gradients, model.trainable_variables))
-
-    train_loss(loss)
-    train_accuracy(tar_real, predictions)

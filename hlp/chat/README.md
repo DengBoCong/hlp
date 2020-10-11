@@ -58,11 +58,12 @@ Beam Search功能已经基本完成且完善，抽象完成并能够应用在不
 ![](https://img-blog.csdnimg.cn/20200922211722639.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L0RCQ18xMjE=,size_16,color_FFFFFF,t_70#pic_center)
 
 # 版本日志
-+ 2020-10-2：
-   + 数据集分类整合完毕
-   + 数据预处理完毕
-   + 整体模型结构形状完成
-   + DST模型编写中...
++ 2020-10-11：
+   + 闲聊和任务对话分离
+   + 完善字典加载
+   + 完成任务对话pre_treat模式，可使用
+   + 对命名空间中载入变量的部分代码进行重构
+   + 任务对话训练模式部分完成
 
 # 数据集
 + [MultiWOZ2](https://www.repository.cam.ac.uk/bitstream/handle/1810/280608/MULTIWOZ2.zip?sequence=3&isAllowed=y)
