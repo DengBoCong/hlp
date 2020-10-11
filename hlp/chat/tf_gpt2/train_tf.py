@@ -1,21 +1,14 @@
 import tensorflow as tf
-import transformers
 import os
-import random
 import numpy as np
-import argparse
-from datetime import datetime
 from tqdm import tqdm #可以在控制台显示进度条
-import logging
 from sklearn.model_selection import train_test_split
-from transformers import GPT2Config
-from transformers import GPT2Tokenizer, TFGPT2LMHeadModel
+from transformers import  TFGPT2LMHeadModel
 from transformers import BertTokenizer
-from itertools import zip_longest, chain
 #不能是一一对应 得是理解了之后的重新编写
-import train_args
-import predict_arg
-import preprocess_data
+import hlp.chat.tf_gpt2.train_args as train_args
+
+import hlp.chat.tf_gpt2.preprocess_data as preprocess_data
 #数据处理
 PAD='[PAD]'
 
@@ -116,7 +109,7 @@ def train(model,  train_list,  args,tokenizer):
     model.save_weights('model_weight')
     # model_name="Model_1/model"
     # model.save('saved_model/my_model')
-    #model.save('Model_1/my_model')#此方法适用于功能模型或者顺序模型 不适用于此种子类模型
+    #model.save('Model_1/my_model')#此方法适用于功能模型或者顺序模型 不适用于此种子类化模型
     # 调用 model = tf.saved_model.load("Model_1")
 def main():
     args = train_args.setup_train_args()
@@ -164,6 +157,7 @@ def main():
     optimizer = tf.keras.optimizers.Adam(learning_rate=0.1)
 
     checkpoint_dir = './dialogue_model'
+
     checkpoint_prefix = os.path.join(checkpoint_dir, "GPT2_1")
     checkpoint = tf.train.Checkpoint(optimizer=optimizer,
                                       model=model)

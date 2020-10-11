@@ -1,7 +1,5 @@
 from tqdm import tqdm #可以在控制台显示进度条
 
-
-
 def preprocess_raw_data(args, tokenizer, n_ctx):
     """
     对原始语料进行处理，将原始语料转换为用于train的token id，对于每个dialogue，将其处于成如下形式"[CLS]utterance1[SEP]utterance2[SEP]utterance3[SEP]"
@@ -35,12 +33,8 @@ def preprocess_raw_data(args, tokenizer, n_ctx):
             print('n_ctx={}'.format(n_ctx))
             ##将处理好的token写入文件
             for dialogue_id in dialogue_ids:  #对一段话中的每个字id 转换成str 后加 空格 隔开
-
                 f.write(str(dialogue_id) + ' ')
-
             # 最后一条记录不添加换行符----避免空行的产生
             if dialogue_index < len(train_data) - 1:
                 f.write("\n")
-
-
     f.close()
