@@ -1,5 +1,6 @@
 from tqdm import tqdm #可以在控制台显示进度条
 
+
 def preprocess_raw_data(args, tokenizer, n_ctx):
     """
     对原始语料进行处理，将原始语料转换为用于train的token id，对于每个dialogue，将其处于成如下形式"[CLS]utterance1[SEP]utterance2[SEP]utterance3[SEP]"
@@ -38,3 +39,27 @@ def preprocess_raw_data(args, tokenizer, n_ctx):
             if dialogue_index < len(train_data) - 1:
                 f.write("\n")
     f.close()
+
+
+def collate_fn(batch):#对齐input
+    """
+    计算该batch中的所有sample的最长的input，并且将其他input的长度向其对齐
+    :param batch:
+    :return:
+    """
+    global pad_id
+    input_ids = []
+    btc_size = len(batch)
+    max_input_len = 0  # 该batch中最长的input，用于该batch的数据对齐
+    # 计算该batch中input的最大长度
+    for btc_idx in range(btc_size):
+        if max_input_len < len(batch[btc_idx]):
+            max_input_len = len(batch[btc_idx])
+    # 使用pad_id对小于max_input_len的input_id进行补全
+    for btc_idx in range(btc_size):
+        input_len = len(batch[btc_idx])
+        input_ids.append(batch[btc_idx])
+        input_ids[btc_idx].extend(['0'] * (max_input_len - input_len))
+    # print(input_ids)
+    # print(input_ids.shape)
+    return input_ids, max_input_len
