@@ -12,6 +12,10 @@ import config
 from utils import text_to_int_sequence, wav_to_mfcc
 from char_set import Char_set
 
+#针对不同的文本文件进行的文本读取
+def text_process(str):
+    #当前数据文本的每行为'index string'
+    return str.split(" ",1)[1].strip().lower()
 
 def data_process(
     data_path,
@@ -38,8 +42,8 @@ def data_process(
         filepath = data_path +'/'+files[i]
         mfcc = wav_to_mfcc(n_mfcc=n_mfcc,wav_path=filepath)
         mfccs_list.append(mfcc)
-        #每一个text数据格式为"index_num test_str\n"，因此将第一个空格部分和最后一个回车符切分，并小写。
-        str=text_list[i].split(" ",1)[1].strip().lower()
+        #文本的读取
+        str=text_process(text_list[i])
         labels_str_list.append(str)
     mfccs_numpy = tf.keras.preprocessing.sequence.pad_sequences(mfccs_list,padding='post',dtype='float32')
     inputs = tf.convert_to_tensor(mfccs_numpy)

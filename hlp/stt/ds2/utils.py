@@ -30,18 +30,18 @@ def text_to_int_sequence(text,cs):
         if ch not in cs.index_map.values():
             cs.add_char(ch)
         if ch == ' ':
-            c = cs.char_map['<SPACE>']
+            i = cs.char_map['<space>']
         else:
-            c = cs.char_map[ch]
-        int_sequence.append(c)
+            i = cs.char_map[ch]
+        int_sequence.append(i)
     return int_sequence
 
 def int_to_text_sequence(seq,cs):
     #数字label list转成字符序列list,cs为字符集类对象
     text_sequence = []
-    for c in seq:
-        if c>=1 and c<=(len(cs.index_map)):
-            ch = cs.index_map[c]
+    for i in seq:
+        if i>=1 and i<=(len(cs.index_map)):
+            ch = cs.index_map[i]
         else:
             ch = ''
         text_sequence.append(ch)

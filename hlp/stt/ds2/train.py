@@ -8,6 +8,7 @@ import tensorflow as tf
 import config
 from data_process import data_process
 from model import DS2
+import time
 
 
 def train_sample(inputs,labels,label_length,optimizer, model):
@@ -39,11 +40,15 @@ def train(model, optimizer,inputs,labels,label_length, epochs):
         checkpoint.restore(manager.latest_checkpoint)
     #迭代训练
     for epoch in range(1,epochs+1):
+        start = time.time()
         loss = train_sample(inputs,labels,label_length,optimizer,model)
+        end = time.time()
+        te = end - start
         #5次保存一个检查点并输出一个loss
         if epoch%5==0:
             manager.save()
-            print('Epoch {}, Loss: {}'.format(epoch, loss))
+            print("Epoch %d/%d" % (epoch,epochs))
+            print("%d/%d [==============================] - %ds %dms/step - loss: %.4f" % (inputs.shape[0],inputs.shape[0],te,te*1000/inputs.shape[0],loss))
 
 
 if __name__ == "__main__":
