@@ -1,5 +1,4 @@
 import tensorflow as tf
-import numpy as np
 import argparse
 
 PAD = '[PAD]'
@@ -33,14 +32,14 @@ def top_k_top_p_filtering(logits, top_k=0, top_p=0.0, filter_value=-float('Inf')
         # Remove all tokens with a probability less than the last token of the top-k
         # topk()返回最后一维最大的top_k个元素，返回值为二维(values,indices)
         # ...表示其他维度由计算机自行推断
-        #indices_to_remove = logits < torch.topk(logits, top_k)[0][..., -1, None]#true就是概率不属于前八 要过滤掉
-        indices_to_remove = logits < tf.raw_ops.TopKV2(input=logits, k=top_k,sorted=True,name=None)[0][..., -1, None]#true就是概率不属于前八 要过滤掉
-        #print('排序')
-        promax_value,promax_index=tf.raw_ops.TopKV2(input=logits, k=top_k,sorted=True,name=None)
-        promax_value=promax_value.numpy()
-        promax_index=promax_index.numpy()
-        #print('promax_index={}'.format(promax_index))
-        logits=promax_value
+        # indices_to_remove = logits < torch.topk(logits, top_k)[0][..., -1, None]#true就是概率不属于前八 要过滤掉
+        indices_to_remove = logits < tf.raw_ops.TopKV2(input=logits, k=top_k, sorted=True,name=None)[0][..., -1, None] # true就是概率不属于前八 要过滤掉
+        # print('排序')
+        promax_value,promax_index = tf.raw_ops.TopKV2(input=logits, k=top_k, sorted=True,name=None)
+        promax_value = promax_value.numpy()
+        promax_index = promax_index.numpy()
+        # print('promax_index={}'.format(promax_index))
+        logits = promax_value
 
         # logits=np.array(logits)
         # logits[indices_to_remove] = filter_value  # 对于topk之外的其他元素的logits值设为负无穷
@@ -62,4 +61,4 @@ def top_k_top_p_filtering(logits, top_k=0, top_p=0.0, filter_value=-float('Inf')
     #
     #     indices_to_remove = sorted_indices[sorted_indices_to_remove]
     #     logits[indices_to_remove] = filter_value
-    return logits,promax_index
+    return logits , promax_index

@@ -3,9 +3,9 @@ import os
 import numpy as np
 from datetime import datetime
 from transformers import BertTokenizer
-import hlp.chat.tf_gpt2.train_args as train_args
-import hlp.chat.tf_gpt2.train_tf as train_tf
-import hlp.chat.tf_gpt2.interact_arg as interact_arg
+import hlp.chat.gpt2.train_args as train_args
+import hlp.chat.gpt2.train as train
+import hlp.chat.gpt2.interact_arg as interact_arg
 
 PAD = '[PAD]'
 pad_id = 0
@@ -22,9 +22,8 @@ def main():
 
     args_train = train_args.setup_train_args()
 
-    model, _ = train_tf.create_model(args_train, vocab_size)
-
-    model.load_weights('model_weight')
+    model, _ = train.create_model(args_train, vocab_size)
+    model.load_weights('./dialogue_model/model_weight').expect_partial()
     print("Model Restored..........................")
     print('加载完权重')
 
