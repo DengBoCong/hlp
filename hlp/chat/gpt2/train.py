@@ -161,7 +161,6 @@ def main():
 
     print('开始训练')
     train(model, train_list, args, tokenizer)
-    evaluate(model, test_list, args, tokenizer)
     print('训练结束')
 
 
