@@ -1,5 +1,7 @@
-import sys
-from chit.chatter import Chatter
+import tensorflow as tf
+import task.model as task
+from free.chatter import Chatter
+import common.data_utils as _data
 from common.common import CmdParser
 import config.get_config as _config
 from common.pre_treat import preprocess_raw_task_data
@@ -12,17 +14,33 @@ class TaskChatter(Chatter):
 
     def __init__(self, checkpoint_dir, beam_size):
         super().__init__(checkpoint_dir, beam_size)
+
+        self.optimizer = tf.keras.optimizers.RMSprop()
+        onto, onto_idx = _data.load_ontology(_config.ontology)
+        print(onto['area'])
+        print(len(onto['area']))
+        exit(0)
+        # task.gen_tracker_model_loss
         if self.ckpt:
             print('待完善')
 
-    def init_loss_accuracy(self):
+    def _init_loss_accuracy(self):
         print('待完善')
 
-    def train_step(self, inp, tar, step_loss):
+    def _train_step(self, inp, tar, step_loss):
         print('待完善')
 
-    def create_predictions(self, inputs, dec_input, t):
+    def _create_predictions(self, inputs, dec_input, t):
         print('待完善')
+
+    def train(self, checkpoint, dict_fn, data_fn, start_sign, end_sign, max_train_data_size):
+        input_tensor, target_tensor, lang_tokenizer = \
+            _data.load_dataset(dict_fn=dict_fn,
+                               data_fn=data_fn,
+                               start_sign=start_sign,
+                               end_sign=end_sign,
+                               max_train_data_size=max_train_data_size)
+        print('是的')
 
 
 def main():
@@ -35,7 +53,12 @@ def main():
     chatter = TaskChatter(checkpoint_dir=_config.task_train_data, beam_size=_config.beam_size)
 
     if options.type == 'train':
-        print('待完善')
+        chatter.train(checkpoint='',
+                      dict_fn='data/task_dict.json',
+                      data_fn=_config.dialogues_tokenized,
+                      start_sign='<sos>',
+                      end_sign='<eos>',
+                      max_train_data_size=0)
     elif options.type == 'chat':
         print('Agent: 你好！结束聊天请输入ESC。')
         while True:

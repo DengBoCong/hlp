@@ -57,11 +57,11 @@ class Chatter(object):
         """
         pass
 
-    def train(self, checkpoint, input_dict_fn, target_dict_fn):
+    def train(self, checkpoint, dict_fn, data_fn, start_sign, end_sign, max_train_data_size):
         """
         对模型进行训练
         """
-        dataset, checkpoint_prefix, steps_per_epoch = self._treat_dataset(input_dict_fn, target_dict_fn)
+        dataset, checkpoint_prefix, steps_per_epoch = self._treat_dataset(dict_fn, data_fn, start_sign, end_sign, max_train_data_size)
 
         for epoch in range(_config.epochs):
             print('Epoch {}/{}'.format(epoch + 1, _config.epochs))
@@ -87,15 +87,15 @@ class Chatter(object):
 
         print('训练结束')
 
-    def respond(self, req, input_dict_fn, target_dict_fn):
+    def respond(self, req, dict_fn):
         # 对req进行初步处理
-        input_token, target_token = _data.load_token_dict(input_dict_fn=input_dict_fn, target_dict_fn=target_dict_fn)
-        inputs, dec_input = self._pre_treat_inputs(req, input_token, target_token)
+        token = _data.load_token_dict(dict_fn=dict_fn)
+        inputs, dec_input = self._pre_treat_inputs(req, token)
         self.beam_search_container.init_variables(inputs=inputs, dec_input=dec_input)
         inputs, dec_input = self.beam_search_container.get_variables()
         for t in range(_config.max_length_tar):
             predictions = self._create_predictions(inputs, dec_input, t)
-            self.beam_search_container.add(predictions=predictions, end_sign=target_token.get('end'))
+            self.beam_search_container.add(predictions=predictions, end_sign=token.get('end'))
             if self.beam_search_container.beam_size == 0:
                 break
 
@@ -105,29 +105,32 @@ class Chatter(object):
         # 从容器中抽取序列，生成最终结果
         for i in range(len(beam_search_result)):
             temp = beam_search_result[i].numpy()
-            text = _data.sequences_to_texts(temp, target_token)
+            text = _data.sequences_to_texts(temp, token)
             text[0] = text[0].replace('start', '').replace('end', '').replace(' ', '')
             result = '<' + text[0] + '>' + result
         return result
 
-    def _pre_treat_inputs(self, sentence, input_token, target_token):
+    def _pre_treat_inputs(self, sentence, token):
         # 分词
         sentence = " ".join(jieba.cut(sentence))
         # 添加首尾符号
         sentence = _data.preprocess_sentence(sentence)
         # 将句子转成token列表
-        inputs = [input_token.get(i, 3) for i in sentence.split(' ')]
+        inputs = [token.get(i, 3) for i in sentence.split(' ')]
         # 填充
         inputs = tf.keras.preprocessing.sequence.pad_sequences([inputs], maxlen=_config.max_length_inp, padding='post')
         # 转成Tensor
         inputs = tf.convert_to_tensor(inputs)
         # decoder的input就是开始符号
-        dec_input = tf.expand_dims([target_token['start']], 0)
+        dec_input = tf.expand_dims([token['start']], 0)
         return inputs, dec_input
 
-    def _treat_dataset(self, input_dict_fn, target_dict_fn):
-        input_tensor, _, target_tensor, _ = \
-            _data.load_dataset(input_dict_fn=input_dict_fn, target_dict_fn=target_dict_fn)
+    def _treat_dataset(self, dict_fn, data_fn, start_sign, end_sign, max_train_data_size):
+        input_tensor, target_tensor, _ = _data.load_dataset(dict_fn=dict_fn,
+                                                            data_fn=data_fn,
+                                                            start_sign=start_sign,
+                                                            end_sign=end_sign,
+                                                            max_train_data_size=max_train_data_size)
         dataset = tf.data.Dataset.from_tensor_slices((input_tensor, target_tensor)).cache().shuffle(
             _config.BUFFER_SIZE).prefetch(tf.data.experimental.AUTOTUNE)
         dataset = dataset.batch(_config.BATCH_SIZE, drop_remainder=True)
