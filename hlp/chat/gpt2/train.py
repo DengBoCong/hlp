@@ -117,9 +117,7 @@ def train(model,  train_list,  args,tokenizer):
 
 def evaluate(model, test_list,  args, tokenizer):
 
-    # 记录tensorboardX
     test_dataset = train_args.collate_fn(test_list)
-    print(test_dataset)
     new_list = []
     for i in range(len(test_dataset)):
         s = list(map(int, test_dataset[i]))
@@ -144,7 +142,6 @@ def main():
     # tokenizer的字典大小
     vocab_size = len(tokenizer)
     #print('vocab_size{}'.format(vocab_size))
-
     global pad_id
     pad_id = tokenizer.convert_tokens_to_ids(PAD)
     #print('pad_id{}'.format(pad_id))
