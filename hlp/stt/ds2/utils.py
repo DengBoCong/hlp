@@ -12,7 +12,6 @@ import librosa
 import numpy as np
 import pyaudio
 import tensorflow as tf
-import char_index_map
 import config
 
 
@@ -24,24 +23,25 @@ def wav_to_mfcc(n_mfcc,wav_path):
     mfcc = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=n_mfcc).transpose(1,0).tolist()
     return mfcc
 
-def text_to_int_sequence(text):
-    #字符序列list转成数字label list
+def text_to_int_sequence(text,cs):
+    #字符序列list转成数字label list,cs为字符集类对象
     int_sequence = []
     for ch in text:
+        if ch not in cs.index_map.values():
+            cs.add_char(ch)
         if ch == ' ':
-            c = char_index_map.char_map['<SPACE>']
+            c = cs.char_map['<SPACE>']
         else:
-            c = char_index_map.char_map[ch]
+            c = cs.char_map[ch]
         int_sequence.append(c)
     return int_sequence
 
-
-def int_to_text_sequence(seq):
-    #数字label list转成字符序列list
+def int_to_text_sequence(seq,cs):
+    #数字label list转成字符序列list,cs为字符集类对象
     text_sequence = []
     for c in seq:
-        if c>=1 and c<=(len(char_index_map.index_map)):
-            ch = char_index_map.index_map[c]
+        if c>=1 and c<=(len(cs.index_map)):
+            ch = cs.index_map[c]
         else:
             ch = ''
         text_sequence.append(ch)
@@ -203,12 +203,12 @@ def _levenshtein(a,b):
     return current[n]
 
 #获取麦克风录音并保存在filepath中
-def record(file_path=config.configs_record["record_path"]):
+def record(file_path=config.configs_record()["record_path"]):
         CHUNK = 256
         FORMAT = pyaudio.paInt16
         CHANNELS = 1                # 声道数
         RATE = 16000               # 采样率
-        RECORD_SECONDS = config.configs_record["record_times"]        #录音时长
+        RECORD_SECONDS = config.configs_record()["record_times"]        #录音时长
         WAVE_OUTPUT_FILENAME = file_path
         p = pyaudio.PyAudio()
 
@@ -237,8 +237,9 @@ def record(file_path=config.configs_record["record_path"]):
         wf.writeframes(b''.join(frames))
         wf.close()
 
+
 if __name__ == "__main__":
-    #通过断言进行测试wer和ler
+    #通过断言进行测试
     originals1 = ["a bcde fghij kl"]
     results1 = ["a bcde fgh ijk l"]
     originals2 = ["我是中国人民"]

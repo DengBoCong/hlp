@@ -10,13 +10,14 @@ import random
 import tensorflow as tf
 import config
 from utils import text_to_int_sequence, wav_to_mfcc
+from char_set import Char_set
 
 
 def data_process(
     data_path,
     batch_size,
     if_train_or_test, #train和test的返回数据不一样
-    n_mfcc = config.configs_other["n_mfcc"]
+    n_mfcc = config.configs_other()["n_mfcc"]
     ):
     files = os.listdir(data_path) #得到文件夹下的所有文件名称
     #除去最后一个文本txt的所有音频文件
@@ -27,7 +28,8 @@ def data_process(
     file_list_num = random.sample(range(audio_nums),batch_size)
     #对应数据文件夹下的文本list
     text_index = len(files)-1
-    text_list=open(data_path+'/'+files[text_index],"r").readlines()
+    with open(data_path+'/'+files[text_index],"r") as f:
+        text_list = f.readlines()
 
     mfccs_list = []
     labels_str_list = []
@@ -46,13 +48,16 @@ def data_process(
     else:
         labels_list=[]
         label_length_list=[]
+        #构建数据集对象
+        cs = Char_set(config.configs_other()["char_set_path"])
         for i in range(len(labels_str_list)):
-            labels_list.append(text_to_int_sequence(labels_str_list[i]))
+            labels_list.append(text_to_int_sequence(labels_str_list[i],cs))
             label_length_list.append([len(labels_str_list[i])])
         labels_numpy = tf.keras.preprocessing.sequence.pad_sequences(labels_list,padding='post')
         labels = tf.convert_to_tensor(labels_numpy)
         label_length=tf.convert_to_tensor(label_length_list)
         return inputs,labels,label_length
+
 
 if __name__=="__main__":
     pass

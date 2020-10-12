@@ -10,6 +10,7 @@ import config
 from data_process import data_process
 from model import DS2
 from utils import int_to_text_sequence, wav_to_mfcc, wers, lers
+from char_set import Char_set
 
 if __name__=="__main__":
     #加载模型检查点
@@ -18,15 +19,15 @@ if __name__=="__main__":
     checkpoint = tf.train.Checkpoint(model=model)
     manager = tf.train.CheckpointManager(
         checkpoint,
-        directory=config.configs_checkpoint['directory'],
-        max_to_keep=config.configs_checkpoint['max_to_keep']
+        directory=config.configs_checkpoint()['directory'],
+        max_to_keep=config.configs_checkpoint()['max_to_keep']
         )
     if manager.latest_checkpoint:
         checkpoint.restore(manager.latest_checkpoint)
     
     #评价
-    test_data_path = config.configs_test["data_path"]
-    batch_size = config.configs_test['batch_size']
+    test_data_path = config.configs_test()["data_path"]
+    batch_size = config.configs_test()['batch_size']
     inputs,labels_list = data_process(
         data_path=test_data_path,
         batch_size=batch_size,
@@ -41,8 +42,11 @@ if __name__=="__main__":
     greedy=True
     )
     results_int_list=output[0][0].numpy().tolist()
+
+    #构建字符集对象
+    cs = Char_set(config.configs_other()["char_set_path"])
     for i in range(len(results_int_list)):
-        str = "".join(int_to_text_sequence(results_int_list[i])).strip()
+        str = "".join(int_to_text_sequence(results_int_list[i],cs)).strip()
         results.append(str)
     rates_wers,aver_wers=wers(originals,results)
     rates_lers,aver_lers,norm_rates_lers,norm_aver_lers=lers(originals,results)
@@ -54,5 +58,3 @@ if __name__=="__main__":
     print("aver_lers:",aver_lers)
     print("norm_rates_lers:",norm_rates_lers)
     print("norm_aver_lers:",norm_aver_lers)
-
- 

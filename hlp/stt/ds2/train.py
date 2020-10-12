@@ -32,8 +32,8 @@ def train(model, optimizer,inputs,labels,label_length, epochs):
     checkpoint = tf.train.Checkpoint(model=model)
     manager = tf.train.CheckpointManager(
         checkpoint,
-        directory=config.configs_checkpoint['directory'],
-        max_to_keep=config.configs_checkpoint['max_to_keep']
+        directory=config.configs_checkpoint()['directory'],
+        max_to_keep=config.configs_checkpoint()['max_to_keep']
         )
     if manager.latest_checkpoint:
         checkpoint.restore(manager.latest_checkpoint)
@@ -48,9 +48,9 @@ def train(model, optimizer,inputs,labels,label_length, epochs):
 
 if __name__ == "__main__":
     model=DS2()
-    epochs=config.configs_train["train_epochs"]
-    data_path=config.configs_train["data_path"]
-    batch_size=config.configs_train["batch_size"]
+    epochs=config.configs_train()["train_epochs"]
+    data_path=config.configs_train()["data_path"]
+    batch_size=config.configs_train()["batch_size"]
     inputs,labels,label_length=data_process(
         data_path=data_path,
         batch_size=batch_size,
