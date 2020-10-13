@@ -5,7 +5,7 @@ import tensorflow as tf
 from config import get_config as _config
 from common import self_attention
 from common import preprocess
-from model import network
+from utils import beamsearch
 
 
 def predict_index(inp_sentence, transformer, beam_search_container, input_tokenizer, target_tokenizer):
@@ -47,7 +47,7 @@ def predict_index(inp_sentence, transformer, beam_search_container, input_tokeni
 
 def translate(sentence, transformer, input_tokenizer, target_tokenizer, beam_size=_config.BEAM_SIZE):
     """对句子(经过预处理未经过编码)进行翻译,未进行检查点的判断"""
-    beam_search_container = network.BeamSearch(
+    beam_search_container = beamsearch.BeamSearch(
         beam_size=beam_size,
         max_length=_config.max_target_length,
         worst_score=0)
@@ -64,10 +64,3 @@ def translate(sentence, transformer, input_tokenizer, target_tokenizer, beam_siz
         predicted_sentences.append(predict_sentence)
     # predicted_sentence = preprocess.decode_sentence(predict_idx, target_tokenizer, _config.ch_tokenize_type)
     return predicted_sentences
-
-
-def main():
-    beam_search_container = network.BeamSearch(
-        beam_size=2,
-        max_length=_config.max_target_length,
-        worst_score=0)
