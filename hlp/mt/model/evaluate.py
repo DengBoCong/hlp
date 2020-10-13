@@ -19,7 +19,8 @@ def calc_bleu(path, transformer, tokenizer_en, tokenizer_ch):
     print('开始计算BLEU指标...')
     bleu_sum = 0
     for i in range(_config.num_eval):
-        candidate_sentence = translator.translate(en[i], transformer, tokenizer_en, tokenizer_ch)
+        candidate_sentence = translator.translate(en[i], transformer, tokenizer_en, tokenizer_ch
+                                                  , beam_size=1)[0]
         print('-' * 20)
         print('第%d个句子：' % (i + 1))
         print('英文句子:' + en[i])

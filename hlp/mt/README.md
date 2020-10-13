@@ -5,7 +5,7 @@
     - 指令格式：python nmt.py -t/--type [执行模式]
     - 可选模式：
         - train: 使用 ./data.en-ch.txt 进行训练
-        - eval : 使用 ./data.en-ch_eval.txt 对模型进行评价,需对指标类型进行选择
+        - eval : 使用 ./data.en-ch_eval.txt 对模型进行测试,需对指标类型进行选择
             - bleu指标
         - translate : 对输入句子进行翻译，输入0退出
 
@@ -17,6 +17,11 @@
         - TOKENIZE:使用字划分方法进行分词
 
 # 版本日志
+- 2020.10.13：version 1.3.0
+    - 加入Beam search
+    - 训练打印标准化
+    - 增加命令行帮助信息
+    
 - 2020.10.06：version 1.2.3
     - 评价与交互翻译时只加载字典而不加载处理数据集
     

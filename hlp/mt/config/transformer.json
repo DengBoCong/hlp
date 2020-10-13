@@ -17,9 +17,10 @@
   "dff": 512,
   "num_heads": 8,
   "dropout_rate" : 0.1,
-  "EPOCHS": 10,
+  "EPOCHS": 2,
   "max_target_length": 20,
   "start_word": "<start>",
   "end_word": "<end>",
-  "target_vocab_size": 8192
+  "target_vocab_size": 8192,
+  "BEAM_SIZE": 3
 }

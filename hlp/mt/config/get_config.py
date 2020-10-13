@@ -35,3 +35,4 @@ end_word = conf["end_word"]  # 句子结束标志
 en_bpe_tokenizer_path = conf["en_bpe_tokenizer_path"]  # 英文BPE字典保存路径
 en_tokenizer_path = conf["en_tokenizer_path"]  # 英文tokenize字典保存路径
 ch_tokenizer_path = conf["ch_tokenizer_path"]  # 中文tokenize字典保存路径
+BEAM_SIZE = conf["BEAM_SIZE"]  # BEAM_SIZE
