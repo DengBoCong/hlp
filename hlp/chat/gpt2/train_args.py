@@ -12,12 +12,12 @@ def setup_train_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--model_config', default='config/model_config_dialogue_small.json', type=str, required=False,
                         help='选择模型参数')
-    parser.add_argument('--vocab_path', default='vocab/vocab_small.txt', type=str, required=False, help='选择词库')
+    parser.add_argument('--vocab_path', default='vocab/vocab.txt', type=str, required=False, help='选择词库')
     parser.add_argument('--train_raw_path', default='data/data.txt', type=str, required=False, help='原始训练语料')
     parser.add_argument('--train_tokenized_path', default='data/train_tokenized.txt', type=str,required=False,
                         help='将原始训练语料tokenize之后的数据的存放位置')
     parser.add_argument('--raw', action='store_false', help='是否对原始训练语料做tokenize。若尚未对原始训练语料进行tokenize，则指定该参数')
-    parser.add_argument('--epochs', default=1, type=int, required=False, help='训练的轮次')
+    parser.add_argument('--epochs', default=500, type=int, required=False, help='训练的轮次')
     parser.add_argument('--batch_size', default=6, type=int, required=False, help='训练batch size')
     parser.add_argument('--lr', default=1.5e-4, type=float, required=False, help='学习率')
     parser.add_argument('--warmup_steps', default=2000, type=int, required=False, help='warm up步数')
@@ -33,6 +33,7 @@ def setup_train_args():
     # parser.add_argument('--max_history_len', type=int, default=4, help="dialogue history的最大长度")
     return parser.parse_args()
 
+
 def set_random_seed(args):
     """
     设置训练的随机种子
@@ -41,25 +42,3 @@ def set_random_seed(args):
     random.seed(args.seed)
     np.random.seed(args.seed)
 
-def collate_fn(batch):#对齐input
-    """
-    计算该batch中的所有sample的最长的input，并且将其他input的长度向其对齐
-    :param batch:
-    :return:
-    """
-    global pad_id
-    input_ids = []
-    btc_size = len(batch)
-    max_input_len = 0  # 该batch中最长的input，用于该batch的数据对齐
-    # 计算该batch中input的最大长度
-    for btc_idx in range(btc_size):
-        if max_input_len < len(batch[btc_idx]):
-            max_input_len = len(batch[btc_idx])
-    # 使用pad_id对小于max_input_len的input_id进行补全
-    for btc_idx in range(btc_size):
-        input_len = len(batch[btc_idx])
-        input_ids.append(batch[btc_idx])
-        input_ids[btc_idx].extend(['0'] * (max_input_len - input_len))
-    # print(input_ids)
-    # print(input_ids.shape)
-    return input_ids

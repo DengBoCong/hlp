@@ -36,7 +36,7 @@ def main():
             text = input("user:")
             if args.save_samples_path:
                 samples_file.write("user:{}\n".format(text))
-            history.append(tokenizer.encode(text))   #把输入的文本变成 token id
+            history.append(tokenizer.encode(text))   # 把输入的文本变成 token id
             input_ids = [tokenizer.cls_token_id]  # 每个input以[CLS]为开头
 
             for history_id, history_utr in enumerate(history[-args.max_history_len:]):##切片
@@ -57,8 +57,8 @@ def main():
                 next_token_logits = next_token_logits / args.temperature
                 # 对于[UNK]的概率设为无穷小，也就是说模型的预测结果不可能是[UNK]这个token
                 next_token_logits=np.array(next_token_logits)
-                next_token_logits[tokenizer.convert_tokens_to_ids('[UNK]')] = -float('Inf')##？？？
-                #print('next_token_logits[100]={}'.format(next_token_logits[100]))
+                next_token_logits[tokenizer.convert_tokens_to_ids('[UNK]')] = -float('Inf')
+                # print('next_token_logits[100]={}'.format(next_token_logits[100]))
                 next_token_logits=tf.convert_to_tensor(next_token_logits)
                 filtered_logits,promax_index = interact_arg.top_k_top_p_filtering(next_token_logits, top_k=args.topk, top_p=args.topp)
                 # multinomial表示从候选集合中无放回地进行抽取num_samples个元素，权重越高，抽到的几率越高，返回元素的下标
