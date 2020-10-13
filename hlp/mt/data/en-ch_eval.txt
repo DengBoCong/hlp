@@ -1,38 +1,630 @@
-Our new home has an elevator.	我們的新家有一臺電梯。	CC-BY 2.0 (France) Attribution: tatoeba.org #7770323 (sharris123) & #6020619 (xjjAstrus)
-Our supplies are running out.	我们的供给要用完了。	CC-BY 2.0 (France) Attribution: tatoeba.org #2254433 (_undertoad) & #5663583 (verdastelo9604)
-People from Madrid are weird.	从马德里来的人都很怪。	CC-BY 2.0 (France) Attribution: tatoeba.org #1558 (CK) & #334432 (fucongcong)
-People must love one another.	人要爱他人。	CC-BY 2.0 (France) Attribution: tatoeba.org #270456 (CK) & #5558525 (verdastelo9604)
-Please get me hotel security.	请帮我叫宾馆保安。	CC-BY 2.0 (France) Attribution: tatoeba.org #33362 (CM) & #794185 (fucongcong)
-Please knock before entering.	进来之前请敲门。	CC-BY 2.0 (France) Attribution: tatoeba.org #530050 (wma) & #504885 (fucongcong)
-She got married in her teens.	她十幾歲時就結婚了。	CC-BY 2.0 (France) Attribution: tatoeba.org #310061 (CK) & #802500 (Martha)
-If you do not have this program, you can download it now.	假如你没有这个程序，你现在就可以去下载。	CC-BY 2.0 (France) Attribution: tatoeba.org #2201 (kebukebu) & #478786 (biglion)
-If you would move over, there would be room for everyone.	如果您移過去一點, 每個人就可以有空間了。	CC-BY 2.0 (France) Attribution: tatoeba.org #272104 (CK) & #786045 (Martha)
-It is very expensive to keep up with the latest fashions.	跟上最近潮流时尚是件非常花钱的事儿。	CC-BY 2.0 (France) Attribution: tatoeba.org #244073 (CK) & #1235508 (sunnywqing)
-It's a hassle trying to decide what to wear to the party.	要决定在节日的时候穿什么是件累人的事。	CC-BY 2.0 (France) Attribution: tatoeba.org #35670 (CK) & #333988 (fucongcong)
-Mary isn't really sick. She's only pretending to be sick.	玛丽不是真病。她只是装病。	CC-BY 2.0 (France) Attribution: tatoeba.org #1356721 (CK) & #5663596 (verdastelo9604)
-No other mountain in the world is as tall as Mt. Everest.	世界上任何山峰都达不到珠穆朗瑪峰的高度。	CC-BY 2.0 (France) Attribution: tatoeba.org #388012 (Mouseneb) & #343363 (fucongcong)
-She helped him tie his tie because he didn't know how to.	她帮他系了领带，因为他不会。	CC-BY 2.0 (France) Attribution: tatoeba.org #887202 (CK) & #2317156 (slqqqq)
-She tried to lift the box, but found it impossible to do.	她試著舉起箱子，但發現不可能做到。	CC-BY 2.0 (France) Attribution: tatoeba.org #1327634 (CK) & #6119425 (verdastelo9604)
-She would often go to the theater when she was in London.	她在伦敦的时候，曾经常去剧院。	CC-BY 2.0 (France) Attribution: tatoeba.org #312447 (CK) & #863947 (kooler)
-Thanks very much for having me to dinner the other night.	谢谢那天晚上请我吃了饭。	CC-BY 2.0 (France) Attribution: tatoeba.org #59895 (CK) & #336725 (fucongcong)
-That was the most interesting novel that I had ever read.	这是我所读过的最有趣的小说。	CC-BY 2.0 (France) Attribution: tatoeba.org #67067 (CK) & #7768305 (jiangche)
-The company suffered a loss of one billion yen last year.	那家公司去年亏损了10亿日元。	CC-BY 2.0 (France) Attribution: tatoeba.org #49092 (CK) & #8832720 (crescat)
-The date of the festival coincides with that of the exam.	节日和考试碰巧在同一天。	CC-BY 2.0 (France) Attribution: tatoeba.org #64481 (CM) & #333834 (fucongcong)
-They are leaving in three days, that is to say June 10th.	他們將在三天後離開, 那也就是說在六月十日。	CC-BY 2.0 (France) Attribution: tatoeba.org #305431 (CK) & #780361 (Martha)
-They referred to Chaucer as the father of English poetry.	他們視喬叟為英詩之父。	CC-BY 2.0 (France) Attribution: tatoeba.org #305906 (CM) & #1229001 (tsayng)
-They were forced to kill and eat several of their horses.	他们被迫杀掉他们的几匹马来吃。	CC-BY 2.0 (France) Attribution: tatoeba.org #802731 (Source_VOA) & #1397116 (mtdot)
-This is the last time I'll ask you to do anything for me.	这是我最后一次让你为我做点事了。	CC-BY 2.0 (France) Attribution: tatoeba.org #246628 (CK) & #835590 (fucongcong)
-To tell you the truth, this is a little too spicy for me.	说实话，这对我来说有点太辣了。	CC-BY 2.0 (France) Attribution: tatoeba.org #3205137 (CK) & #8556491 (slo_oth)
-Tom did a good job predicting who would win the election.	汤姆预测胜选者做得好。	CC-BY 2.0 (France) Attribution: tatoeba.org #1094869 (CK) & #5549559 (verdastelo9604)
-Tom doesn't have any friends who are willing to help him.	汤姆没有愿意帮助他的朋友。	CC-BY 2.0 (France) Attribution: tatoeba.org #6225519 (CK) & #8739629 (slo_oth)
-Tom probably doesn't know how to do that as well as Mary.	湯姆可能不知道如何做得像瑪麗做得一样好。	CC-BY 2.0 (France) Attribution: tatoeba.org #6226598 (CK) & #8570959 (verdastelo9604)
-Tom used a fire extinguisher to try and put the fire out.	湯姆試著用滅火器把火撲滅。	CC-BY 2.0 (France) Attribution: tatoeba.org #4498691 (CK) & #4794681 (umidake)
-Tom was sitting alone at one of the tables near the door.	湯姆獨自坐在門邊一個桌子旁。	CC-BY 2.0 (France) Attribution: tatoeba.org #2958610 (CK) & #6633891 (verdastelo9604)
-Tsunamis swept through rice fields and flooded the towns.	海嘯席捲稻田, 淹沒了城鎮。	CC-BY 2.0 (France) Attribution: tatoeba.org #789369 (Martha) & #789357 (Martha)
-We are all looking forward to seeing you and your family.	我们都期待看到你和你的家人。	CC-BY 2.0 (France) Attribution: tatoeba.org #28816 (CK) & #332937 (fucongcong)
-We are here in the name of Jesus Christ and King Charles.	我們這裡以耶穌基督和查理斯國王之名。	CC-BY 2.0 (France) Attribution: tatoeba.org #247883 (CM) & #844520 (Martha)
-We need you to tell us why you were absent all last week.	我们要你告诉我们你为什么整个上周都缺勤。	CC-BY 2.0 (France) Attribution: tatoeba.org #3724399 (CM) & #5911690 (verdastelo9604)
-What have you done with my pen? It was here a minute ago.	你把我的鋼筆怎麼了? 一分鐘前它還在這裡。	CC-BY 2.0 (France) Attribution: tatoeba.org #33560 (CK) & #793606 (Martha)
-When he shouted, the veins in his neck stood out clearly.	当他咆哮时，他脖子上青筋暴起。	CC-BY 2.0 (France) Attribution: tatoeba.org #283541 (CM) & #5617162 (verdastelo9604)
-Would it be ethical to sacrifice one person to save many?	为了救许多人牺牲一个人是否道德？	CC-BY 2.0 (France) Attribution: tatoeba.org #652444 (darinmex) & #812366 (fucongcong)
-You cannot purchase this medicine without a prescription.	那个药的话没有处方是买不到的。	CC-BY 2.0 (France) Attribution: tatoeba.org #5992302 (AlanF_US) & #8700794 (crescat)
+I don't think that it's going to be easy to find Tom.	我认为，要找到汤姆可不容易。
+I don't understand why pepperoni pizza is so popular.	我不懂为何义式辣肠披萨如此受欢迎。
+I get the feeling you're trying to tell me something.	我感觉你想告诉我什么事。
+I had hardly left home when it began to rain heavily.	当雨开始下得很大的时候, 我几乎不能出门了。
+I hear you passed the entrance exam. Congratulations!	我听说你通过了入学考试。恭喜你了！
+I must think over the matter before giving my answer.	我在回答之前必须考虑周全。
+I was the second to last person to hear the bad news.	我是倒数第二个得知这个坏消息的。
+I worked in a post office during the summer vacation.	暑假期间，我在邮局工作。
+I'd like to try this on. Where are the fitting rooms?	我想试试这件。请问哪里是试衣间？
+I'll arrange for someone to pick you up at your home.	我会安排一下，叫个人去你家接你。
+I'm now rich enough to afford to get anything I want.	我现在富得能买我想要的任何东西。
+If you have a question, please raise your right hand.	如果有问题，请举起你的右手。
+If you need my advice, I'd be glad to give it to you.	如果你需要我的建议，我很愿意告诉你。
+If you pass this test, you could graduate next month.	如果你通过这个考试，你下个月就可以毕业了。
+In a crisis, you must get in touch with your teacher.	在危险的时候你必须跟你的老师联系。
+It is said that his father died in a foreign country.	据说他爸爸在外国去世了。
+It looks like Tom will do what we've asked him to do.	看来汤姆会按我们要求的去做。
+It makes no difference to me whether he comes or not.	他来不来对我来说没区别。
+It seems to me that she has a tendency to exaggerate.	在我看来，她有一种夸张的倾向。
+It was so still that you would have heard a pin drop.	安静到连针掉在地上的声音你都会听得到。
+It's absolutely impossible for me to go on like this.	让我像这样继续下去是绝对不可能的。
+Let me read the paper when you have finished with it.	报纸看完后借我看下。
+Mary is always saying that Tom isn't romantic enough.	玛丽总是说汤姆不够浪漫。
+Mary is not poor. On the contrary, she is quite rich.	玛丽不穷，相反，她相当富裕。
+My father has been in good shape since his operation.	自从手术后，我父亲一直处于良好的状态。
+My father insisted that I should go to see the place.	我爸爸坚持要我去那地方看看。
+My father will often read the newspaper during meals.	我父亲常在吃饭时看报纸。
+My uncle's company launched a new product last month.	舅舅的公司上个月推出了一项新产品。
+No matter how hard the training was, she never cried.	不管训练多么艰苦，她都没有哭过。
+People usually don't like what they don't understand.	人们通常不喜欢他们不理解的事物。
+Pigs share certain characteristics with human beings.	猪与人类的一些特性相同。
+She lost her way and on top of that it began to rain.	她迷路了，紧接着天开始下雨了。
+She ran very fast to catch up with the other members.	她跑得很快是为了赶上其他成员。
+She speaks English better than any of her classmates.	她的英语说得比班上任何人都好。
+She was a tall, thin girl with long, soft brown hair.	她是个又高又瘦, 留著一头又长又软的褐色头发的女孩。
+She will return home next Sunday, that is, the tenth.	她下周日回家，也就是10号。
+She's practicing English so she can get a better job.	她练习英语以找更好的工作。
+Since he didn't know what to say, he remained silent.	自从他不知道该说什么的时候，便一直沉默着。
+Since he is old, this task must be difficult for him.	他老了，所以这任务对他来说一定很难。
+The Tigers lost the game, which was a surprise to us.	我们觉得很惊讶老虎队竟然输掉了比赛。
+The bus stopped suddenly in the middle of the street.	公车突然在路中央停下来。
+The girl was sobbing in the corner of the schoolroom.	女孩在教室的角落啜泣。
+The last person I told my idea to thought I was nuts.	最后一个听我说我的主意的人认为我疯了。
+The police will put you behind bars for twenty years.	警方会把你关在牢里二十年。
+The prince fell in love with a woodcutter's daughter.	王子爱上了一个樵夫的女儿。
+The teacher demonstrated the idea with an experiment.	这位老师用试验论证了这个想法。
+The teacher lined the children up in order of height.	老师按照身高给孩子们排队。
+There are many beautiful castles in northern Germany.	在德国北部有很多美丽的城堡？
+There's nothing more painful than losing one's child.	没有比失去孩子更让人悲伤的事。
+They say she and her husband can't agree on anything.	他们说她和她的丈夫不可能对任何事达成协议。
+They will hold a meeting at 2 o'clock this afternoon.	他们今天下午2点会举行一个会议。
+This is where I want to live for the rest of my life.	这里是我余生想待的地方
+Tom and Mary even always wear the same color clothes.	汤姆和玛丽甚至经常穿同样颜色的衣服。
+Tom bought a camera at a store not too far from here.	Tom在离这里不远的一家商店里买了一台相机。
+Tom came a little earlier today than he usually does.	汤姆今天来得比往常要早一些。
+Tom cut down the tree that was in front of his house.	汤姆砍了他门前的树。
+Tom is already here, but Mary hasn't gotten here yet.	汤姆已经在这里了，但玛丽还没到。
+Tom ran out of matches so he couldn't light the fire.	汤姆用尽了火柴，不能点火了。
+Tom told me that he has no intention of marrying you.	Tom告诉我他们有想要娶你的想法。
+We are looking forward to seeing you and your family.	我们很期待见到您和您的家人。
+We just have to make sure Tom is planning to be here.	我们只是需要确认Tom有要来这。
+We looked out the window, but we didn't see anything.	我们看了窗外，但什么都没看见。
+We should have taken the schedule into consideration.	我们本该考虑一下行程。
+What I'm about to say is strictly between you and me.	我要说的只能是你知我知。
+What I'm about to say is strictly between you and me.	我要告诉你的只能你我知道。
+What is learned in the cradle is carried to the tomb.	摇篮里学的带到坟墓。
+What is learned in the cradle is carried to the tomb.	幼年时学的东西，一辈子不会忘记。
+Whether he comes or not, the result will be the same.	他来还是不来，结果是一样的。
+Whichever route you take, you will get there in time.	不管你选哪条路，你都能按时到那里。
+Why have you been late to school every day this week?	为什么你这个礼拜每天上学都迟到？
+You don't have to go to the party unless you want to.	除非你想去, 否则你不必去这个派对。
+You look tired. You ought to rest for an hour or two.	你看起来很累。你应该休息一两个小时。
+You should look after the children from time to time.	你应该偶尔照顾孩子。
+You're the one who suggested that we travel together.	你是那个建议我们一起旅行的人。
+A foreign language cannot be mastered in a year or so.	一个外国语言无法在一年左右就被掌握。
+After a couple of drinks, the guy was feeling no pain.	喝了几杯酒后，这个家伙就感觉不痛了。
+An argument may be logically sound without being true.	不正确的命题听起来可能符合逻辑。
+Apparently, there is nothing that cannot happen today.	显然，今天什么事都有可能发生。
+As we went around the corner, the lake came into view.	当我们走到转角处，湖就映入了眼帘。
+Back in high school, I got up at 6 a.m. every morning.	以前读高中的时候﹐我每天早上六点起床。
+Between you and me, I don't like our new team captain.	我就只告诉你，我不喜欢我们的新队长。
+Could you possibly suggest a way to solve the problem?	你能提出解决问题的方法吗？
+Do you have an extra English dictionary by any chance?	您碰巧有一本额外的英文字典吗？
+Don't throw away this magazine. I haven't read it yet.	这本杂志不要扔。我还没看呢。
+English is a very important language in today's world.	英语是当今世界上一种非常重要的语言。
+Facts are stubborn things, but statistics are pliable.	事实是倔强的，但统计是柔顺的。
+He had his sister help him paint the wall of his room.	他让妹妹帮他涂他房间的墙。
+He is doing very well considering he lacks experience.	考虑到他缺乏经验，他做得[已经]非常好了。
+He quickly made friends with the new boy on the block.	他很快便与小区里新来的男孩交上了朋友。
+He took care of the business after his father's death.	在他父亲死后，他接管了公司。
+How long does it take from here to your house on foot?	从这里步行到你家要多长时间？
+How long does it take to walk to your house from here?	从这里步行到你家要多长时间？
+I am convinced that things will change for the better.	我深信事情会往更好的方向转变。
+I didn't know who was going to meet me at the airport.	我不知道谁会在机场见我。
+I took him to the most expensive restaurant on campus.	我把他带到校区里最贵的餐馆去了。
+I was caught in a shower and got drenched to the skin.	我遇上了阵雨被淋得全身湿透。
+I was searched by the customs officers at the airport.	我在机场被海关人员搜查。
+I wish someone would help me with English composition.	我希望有人能教我英语作文。
+I wouldn't be too surprised if this song became a hit.	如果这歌成名，我不会太惊讶。
+I'll lend you the book as soon as I'm done reading it.	我一把这本书读完了就借给你。
+I'll never tell anyone where I've hidden the treasure.	我不会告诉任何人我藏宝的地方。
+I'm going to run a couple of errands. Wanna tag along?	我要去购物。你要跟着来吗？
+I'm sure you'll love what we have on the menu tonight.	我肯定你会喜欢我们今晚的菜肴。
+If I lost my key, I wouldn't be able to lock the door.	如果我弄丢了我的钥匙，我就无法锁门了。
+If I were invisible, I wouldn't have to wear anything.	若我是隐形的，就不用穿衣服了。
+If I were to tell you all I know, you would be amazed.	要是我告诉你我所知的一切，你会被惊呆的。
+If he is innocent, it follows that his wife is guilty.	如果他是清白的，那他妻子就有罪。
+Is there anything you want to add to what I just said?	我刚才说的内容，你想补充么？
+It is close to eleven. It's about time we went to bed.	快11点了。我们该上床睡觉了。
+It seems that most people only barbeque in the summer.	人们似乎只在夏天烤肉。
+It's quite difficult to master French in 2 or 3 years.	很难在2、3年内掌握法语。
+Make sure to turn off all the lights before going out.	出去之前确认一下所有的灯都关了。
+Mary has a bad back. It's hard for her to lift things.	玛丽的背不好, 她很难把东西举起来。
+Mary said that she loved me, but I didn't believe her.	玛丽说她爱我，但是我并不相信她所说的话。
+My husband reads the newspaper while eating breakfast.	我丈夫一边吃早餐一边读报纸。
+Once in a while, we should take a step back and think.	有时候，我们应该后退一步想一想。
+Philosophy is not a thing one can learn in six months.	哲学不是我们用六个月就能学的东西。
+Please replace the empty ink cartridge in the printer.	请把打印机里面的空的墨粉鼓换掉。
+Seen from the sky, the river looked like a huge snake.	从天上看下来，这条河像一条巨蛇。
+She gave birth to her first child at twenty years old.	她在二十岁的时候生下第一个孩子。
+That was the first time that a man walked on the moon.	那是人类第一次在月球上行走。
+The bus is full. You'll have to wait for the next one.	这班公车客满了。你必须等下一班。
+Their contract is to run out at the end of this month.	他们的合同在这个月底到期。
+There are subtle differences between the two pictures.	这两张图片之间有细致的差异。
+They supplied the soldiers with enough food and water.	他们给士兵提供了充足的食物和水。
+This is considered to be a matter of great importance.	这被认为是一件大事。
+Tom doesn't know the difference between Iraq and Iran.	汤姆不知道伊拉克和伊朗有什么区别。
+Tom got so absorbed in his work that he forgot to eat.	汤姆太专注于他的工作，以至于忘了吃饭。
+Tom poured cold water over himself to wake himself up.	汤姆给自己浇凉水以清醒过来。
+Tom probably doesn't know why the picnic was canceled.	汤姆大概不知道为什么野餐取消了。
+Tom told Mary he couldn't do what she asked him to do.	汤姆告诉玛丽他不能做她要他做的事。
+Tom was able to go to college thanks to a scholarship.	因为一份奖学金，Tom得以上大学。
+We will have learned English for five years next year.	到明年我们学英语就有5年了。
+We're out of tissue paper, so I've got to go buy some.	卫生纸用完了，我必须去买。
+Were you able to do everything you wanted to get done?	你是不是有能力做到你想要完成的所有事情呢？
+When I first came back to Boston, I was really lonely.	当我第一次回波士顿时，我真是孤独。
+Why don't you wait here while I finish what I'm doing?	为什么你不在这里等到我做完为止？
+With your approval, I would like to offer him the job.	如果您同意, 我想给他这份工作。
+Without the slightest hesitation, he sold his own car.	他毫不犹豫地把自己的车卖了。
+You continue making the same mistakes time after time.	你每次都继续犯同样的错误。
+You look pale. You had better lie down in bed at once.	你看上去很苍白。你最好立刻去床上躺会儿。
+You should've done it earlier. It can't be helped now.	你本应该早点做的。现在已经没有任何办法了。
+You're the one who suggested that we do that together.	你是那个建议我们一起做那件事的人。
+"He'd like to have a coffee after work." "I would too."	"他想在下班后喝杯咖啡。" "我也想。"
+According to TV news, there was a plane crash in India.	根据电视新闻，一架飞机在印度坠毁了。
+After I talked with my teacher, I decided to work hard.	跟我的老师谈过后，我决定认真努力。
+After reading his books I feel I can construct a house.	读完他的书后，我觉得我可以构建一栋房子。
+All horses are animals, but not all animals are horses.	所有的马都是动物，但并非所有的动物都是马。
+As far as I know, there is nothing wrong with his plan.	据我所知，他的计划没有出差错。
+Be sure to drop us a line as soon as you get to London.	别忘了一到伦敦就给我们留言啊。
+Because she is twenty-five years old, she gets married.	她25岁就结婚了。
+Blenders are nice for people who really like smoothies.	搅拌机对真的喜欢冰沙的人来说很不错。
+Books are for people who wish they were somewhere else.	书是为了那些希望自己在另一个地方的人。
+Did you remember that you were supposed to buy candles?	你记得自己该买蜡烛吗？
+Do you want to get married first or have a child first?	你想我们先结婚还是先生孩子？
+Don't be afraid to make mistakes when speaking English.	说英语的时候不要怕犯错。
+Don't be afraid to make mistakes when speaking English.	当你说英语的时候不要怕犯错。
+Finishing the report by tomorrow is next to impossible.	在明天前完成报告几乎是不可能的。
+From the look of the sky, it may rain in the afternoon.	从天色看起来，下午可能会下雨。
+Germany adopted a social security system in the 1880's.	德国在1880年代采取了一种社会保障制度。
+He doesn't have any knowledge about American democracy.	他一点都不知道美国的民主。
+He doesn't know the difference between right and wrong.	他好坏不分。
+He went on reading the book as if nothing had happened.	他继续读书，好像什么事也没有发生。
+His record is a new world record in the 100-meter dash.	他刷新了百米短跑的世界纪录。
+I don't know where my crutches are. Have you seen them?	我不知道把拐杖放哪去了，你有看到吗？
+I don't want to go there. He doesn't want to go either.	我不想去那儿，他也不想。
+I felt so sleepy that I could hardly keep my eyes open.	我感觉困得几乎不能睁开我的眼睛了。
+I found a good place to buy fruit a couple of days ago.	前几天我发现了一个买水果的好地方。
+I know that it is highly unlikely that anyone knows me.	我知道有人认识我的可能性微乎其微。
+I look forward to hearing your thoughts on this matter.	我期待听到你在这件事上的想法 。
+I lost my job and I have no money. I'm at my wit's end.	我失业又没钱。真不知该何去何从。
+I really look forward to your visit in the near future.	我很期待在不久的将来您的光临。
+I studied English for four years with a native speaker.	我跟英语母语者学了四年英语。
+I'm afraid I can't help you. You must ask someone else.	我担心可能帮不了你，你需要找其他人帮忙。
+I'm surprised that you don't know about their marriage.	我很惊讶，你竟然不知道他们结婚。
+If you are not going to the concert, then neither am I.	如果你不去音乐会, 我也不去。
+Instead of going to Europe, I decided to go to America.	我决定去美国，而不是欧洲。
+Iron the inside of collars first, and then the outside.	先熨烫领子的里面，然后是外面。
+It takes 165 years for Neptune to orbit around the sun.	海王星绕行太阳一周要花一百六十五年。
+It was not until I reached home that I missed my purse.	那是在我到家以后，我才不见了我的钱包。
+It would be wonderful if you could sing at our wedding.	你能在我们的婚礼上唱歌就太好了。
+It's easy to make friends, but hard to get rid of them.	交朋友很容易, 但摆脱他们很难。
+It's not that easy to learn a new language after fifty.	五十岁以后学一门新的语言不是那么容易。
+Judging from the look of the sky, it is likely to rain.	看看天的样子，要下雨了。
+Kissing a person who smokes is like licking an ashtray.	亲吻一个抽烟的人就像在舔烟灰缸。
+Lake Baikal in Russia is the deepest lake in the world.	在俄罗斯的贝加尔湖是世界上最深的湖泊。
+Lake Baikal in Russia is the deepest lake in the world.	俄罗斯的贝加尔湖是世界上最深的湖泊。
+Let's go out and eat dinner together from time to time.	让我们偶尔出去一起吃晚餐。
+Most people brush their teeth at least two times a day.	多数人每天至少刷两次牙。
+My wife's part-time job brings in a little extra money.	我太太兼职的工作赚进了一些额外的钱。
+Not knowing what to do, I asked the teacher for advice.	因为不知道做什么，所以我向老师寻求建议。
+One hundred and fifty people entered the marathon race.	150个人参加了马拉松比赛。
+Only one third of the members turned up at the meeting.	仅三分之一的成员出席了会议。
+Prince William is second in line to the English throne.	威廉王子是英国王位第二顺位继承人
+Several cottages have been isolated by the flood water.	好几间小屋被洪水孤立起来了。
+Several thousand people became victims of this disease.	数千人受此疾病所害。
+She came to Japan for the purpose of studying Japanese.	她为了学习日文来到日本。
+She was hit by a car while she was crossing the street.	她过马路的时候被车撞了。
+Some people felt that Tom's behavior was inappropriate.	一部分人感觉Tom的行为举止不太合适。
+Sorry, but can you show me the way to the next village?	能不能麻烦你告诉我去邻村怎么走？
+The Japanese military forces seemed too strong to stop.	日本军队看来强大得不可阻挡。
+The child had no overcoat on although it was very cold.	尽管天气很冷，孩子却没有大衣穿。
+The crane, unlike the dog, has never dreamed of flying.	不像狗, 这只鹤从来没有梦想过飞翔。
+The friend who I thought would pass the exam failed it.	那个我认为会通过考试的朋友失败了。
+The moment I held the baby in my arms, it began to cry.	我一把孩子抱在手里，他就开始哭了。
+The mother missed her daughter who was away at college.	妈妈想念她在读大学的女儿。
+The number of people who go abroad has been increasing.	出国的人数一直在增加。
+The opening ceremony of the Olympics has already begun.	奥运会已经开幕了。
+The police are investigating the cause of the accident.	警察调查事故的原因。
+The show was very interesting. You should have seen it.	演出真的很有意思，你该去看看的。
+The weather report says we'll get three inches of snow.	天气预报说会下三英寸雪。
+There is a certain amount of truth in what he's saying.	他说的话有一定的道理。
+There is a good chance that gasoline prices will go up.	油价上涨的可能性很高。
+There must be a way to arrive at a diplomatic solution.	必须有外交解决的途径。
+They answered their teacher's question with difficulty.	他们好不容易才回答了他们老师的问题。
+They had their houses destroyed by a strong earthquake.	他们的房屋被强烈地震摧毁了。
+They obtained a yield of 8 percent on their investment.	他们在这次的投资中得到百分之八的收益。
+This is the most beautiful sight that I have ever seen.	这是我见过最美的景色了。
+Tom needs to study more if he hopes to pass this class.	汤姆如果想通过这门课，就需要加劲学习。
+Tom seems to hardly ever get his homework done on time.	Tom似乎没办法准时完成他的作业。
+What do you make of his attitude towards us these days?	你做了什么让他这些日子用这种态度对待我们？
+When she saw that they had no schools, she started one.	当她发现他们还没有学校，她就办了一个。
+When we're children, everything around us looks so big.	我们小时候，所有的一切对我们来说都显得那么大。。。
+Whether you succeed or not depends on your own efforts.	你成功与否取决于你自身的努力。
+Will you help me give out the programs to those people?	你能帮我给这些人分发节目单吗？
+Women eat lighter meals when they're eating with a guy.	当女性跟一个男人吃饭时，女性会吃得比较少。
+Would you like to know how to prevent getting wrinkles?	你想要知道如何避免皱纹吗？
+You've got to set the alarm clock before you go to bed.	在你上床睡觉之前，你必须把闹钟设定好。
+A capital letter is used at the beginning of a sentence.	一个句子以一个大写字母开始。
+A capital letter is used at the beginning of a sentence.	一个大写字母被使用在一个句子的开头。
+A female friend of mine loves to go to gay bars with me.	我的一个女性朋友喜欢跟我一起去同志酒吧。
+A glass of cold water is very refreshing in hot weather.	一杯冷水在暑热的天气里十分提神。
+A lot of students around the world are studying English.	世界上许多学生正在学习英语。
+A slip of the tongue is sometimes fatal to a politician.	有时候口误对政治家来说是致命的。
+America likes to claim that it is a "classless" society.	美国是一个自称没有社会阶层的国家。
+Apart from on rainy days, I always ride my bike to work.	除了雨天，我都是骑车去上班的。
+Columbus argued that he could reach India by going west.	哥伦布提出，向西航行可以到达印度。
+Cosmetic surgery is not covered by most insurance plans.	大部份的保险计划不包含整容手术。
+Dad gave me a book, and my little brother gave me a pen.	爸爸给了我一本书, 弟弟给了我一枝笔。
+Do you keep in contact with your high school classmates?	你还和你的高中同学保持联系吗？
+Do you know how far it is from the station to city hall?	你知道从火车站到市政府有多远？
+Don't be afraid to make mistakes when you speak English.	说英语的时候不要怕犯错。
+Don't be afraid to make mistakes when you speak English.	当你说英语的时候不要怕犯错。
+Due to the worsening weather, the departure was delayed.	由于天气变差，出发延迟了。
+He always plans a thing out carefully before he does it.	他每件事做之前都会细心计划。
+He has just published an interesting series of articles.	他刚发表一系列有趣的文章。
+He visited his hometown for the first time in ten years.	他10年中第一次访问他的故乡。
+I told you not to talk about the matter in her presence.	我跟你说过她在的时候不要说这件事。
+I was surprised at his strong resemblance to his father.	他像极了他父亲，这让我震惊。
+I will only buy the car if they repair the brakes first.	除非他们事先修好刹车，我才会买车子。
+I'd be grateful to you if you could teach me to do that.	如果你能教我怎么做，我会很感激。
+I'm a stranger here myself. I'm afraid I can't help you.	我对这里不熟。恐怕我不能帮你。
+I've always wondered what it'd be like to have siblings.	我总是想有兄弟姐妹会怎么样。
+If you can't come, you should let me know ahead of time.	如果你不能来，你该让我提前知道。
+Industry as we know it today didn't exist in those days.	我们今天所认识的工业在那个时代不存在。
+It was before dawn that they got the fire under control.	他们在黎明前控制住了火势。
+It's a good thing to read good books when you are young.	年轻的时候多看点好书是件好事。
+It's hard to say what the weather will be like tomorrow.	很难说明天的天气将会怎样。
+Let me remind you again that March 31st is the due date.	让我再次提醒你3月31日是到期日。
+Let me tell you the reasons that I don't agree with you.	让我来告诉你我不赞成你的理由。
+Life would be so much better if you didn't care so much.	如果你不计较太多，生活会更容易些。
+Mastering a foreign language involves a lot of patience.	学好一门外语需要坚韧不拔的毅力。
+Much of London was destroyed in the seventeenth century.	伦敦许多部份在十七世纪时被摧毁。
+My brother would often stay up all night reading novels.	我哥哥经常熬夜看小说。
+My memory failed me. I just could not remember his name.	我的记性不好。我简直不记得他的名字了。
+My parents have gone to the airport to see my uncle off.	我父母去机场送我叔叔了。
+My sister is twenty-one years old and a college student.	我妹妹21岁，是个大学生。
+Please send me a reply as soon as you receive this mail.	收到此邮件后请尽快给我答复。
+She is wearing the same dress that she had on yesterday.	她穿著跟昨天相同的衣服。
+Some people do not like to deposit their money in banks.	有些人不喜欢把钱存银行。
+Thank you very much for the wonderful dinner last night.	非常感谢您昨晚美妙的晚餐。
+The audience was largely made up of very young children.	大部分观众是年幼的儿童。
+The bathtub was filled with hot water and flower petals.	浴缸里满是热水和花瓣。
+The captain is responsible for the safety of passengers.	船长要为乘客安全负责。
+The colors of the American flag are red, white and blue.	美国国旗的颜色是红白蓝。
+The only sound to be heard was the ticking of the clock.	唯一能听到的声音是钟的滴答声。
+The poor people were at the mercy of the cruel dictator.	可怜的人民任凭残暴的独裁者处置。
+The students were for the most part from the West Coast.	大部分的学生来自西海岸。
+The tourists were fascinated with the exquisite scenery.	观光客被独特的景致所吸引。
+There was only one warden on duty when the riot started.	暴动开始时只有一位监狱长值班。
+There's something I've been meaning to discuss with you.	有件事我一直想跟你商量。
+This is the house where I used to live when I was young.	这是我年轻时候住的房子。
+To be very honest with you, I don't think I can do that.	和你说句实话，我觉得我做不到。
+Tomorrow's weather should be sunny with occasional rain.	明天天气晴转阵雨。
+We all chipped in to buy our teacher a birthday present.	我们所有人凑份子给老师买生日礼物。
+We have to turn in our reports by the end of this month.	这个月底前，我们必须交报告。
+We're finding it difficult deciding on which one to buy.	我们觉得很难决定买哪一个。
+Which do you like better, rock music or classical music?	你比较喜欢哪一个，摇滚乐还是古典音乐？
+With just a little more effort, he would have succeeded.	如果他再努力一点，就可能已经成功了。
+You are old enough to know better than to act like that.	你够大了知道不要那样做。
+You should ask your father for his advice and follow it.	你应该问你父亲的忠告并遵守它。
+You'd better take an umbrella with you in case it rains.	以防下雨你最好带把伞。
+You'll never achieve anything if you don't study harder.	如果你不更加努力地学习, 你将永远不会有所成就。
+Your mother must have been beautiful when she was young.	你母亲年轻的时候一定很美。
+"When will you be back?" "It all depends on the weather."	“你什么时候回来？”“这都要看天气。”
+About how much will I have to pay for all the treatments?	所有的医药费我大概要付多少？
+Actinium was discovered by André-Louis Debierne in 1899.	锕在1899年被他发现。
+Action speaks louder than words, but not nearly as often.	行胜于言，但并不是所有情况都是这样。
+Almost everyone in our village is related to one another.	我们村里所有的村民几乎彼此都是亲戚。
+Banks charge higher interest on loans to risky customers.	银行对风险客户收取较高的贷款利息。
+Children should keep away from the river. It's dangerous.	儿童应该远离河流。有危险。
+English is spoken by more people than any other language.	说英语的人比说任何其他语言的人多。
+Every day I waited for her at the bookstore after school.	我每天放学后在书店那里等她。
+Half a million children still face malnutrition in Niger.	尼日尔仍然有50万孩子面临着营养不良。
+I came to this country for the purpose of studying music.	我来这个国家的目的是学习音乐。
+I told Tom that I thought his house needed to be painted.	我告诉汤姆我认为他的房子要刷漆。
+I tried very hard to put an end to their heated argument.	我努力地平息他们不断加温的争执。
+I want to move out of this cramped room as soon as I can.	我想尽快从这个不透气的屋子里出去。
+I would like to have a look at your collection of stamps.	我想看看您的邮票收藏。
+I'm not a university student, but I'm brighter than them.	我不是一个大学生, 但我比他们更聪明。
+If you do not have this program, you can download it now.	假如你没有这个程序，你现在就可以去下载。
+If you would move over, there would be room for everyone.	如果您移过去一点, 每个人就可以有空间了。
+It is very expensive to keep up with the latest fashions.	跟上最近潮流时尚是件非常花钱的事儿。
+It's a hassle trying to decide what to wear to the party.	要决定在节日的时候穿什么是件累人的事。
+Mary isn't really sick. She's only pretending to be sick.	玛丽不是真病。她只是装病。
+No other mountain in the world is as tall as Mt. Everest.	世界上任何山峰都达不到珠穆朗玛峰的高度。
+She helped him tie his tie because he didn't know how to.	她帮他系了领带，因为他不会。
+She tried to lift the box, but found it impossible to do.	她试著举起箱子，但发现不可能做到。
+She would often go to the theater when she was in London.	她在伦敦的时候，曾经常去剧院。
+Thanks very much for having me to dinner the other night.	谢谢那天晚上请我吃了饭。
+That was the most interesting novel that I had ever read.	这是我所读过的最有趣的小说。
+The date of the festival coincides with that of the exam.	节日和考试碰巧在同一天。
+They are leaving in three days, that is to say June 10th.	他们将在三天后离开, 那也就是说在六月十日。
+They referred to Chaucer as the father of English poetry.	他们视乔叟为英诗之父。
+They were forced to kill and eat several of their horses.	他们被迫杀掉他们的几匹马来吃。
+This is the last time I'll ask you to do anything for me.	这是我最后一次让你为我做点事了。
+Tom did a good job predicting who would win the election.	汤姆预测胜选者做得好。
+Tom used a fire extinguisher to try and put the fire out.	汤姆试著用灭火器把火扑灭。
+Tom was sitting alone at one of the tables near the door.	汤姆独自坐在门边一个桌子旁。
+Tsunamis swept through rice fields and flooded the towns.	海啸席卷稻田, 淹没了城镇。
+We are all looking forward to seeing you and your family.	我们都期待看到你和你的家人。
+We are here in the name of Jesus Christ and King Charles.	我们这里以耶稣基督和查理斯国王之名。
+We need you to tell us why you were absent all last week.	我们要你告诉我们你为什么整个上周都缺勤。
+What have you done with my pen? It was here a minute ago.	你把我的钢笔怎么了? 一分钟前它还在这里。
+When he shouted, the veins in his neck stood out clearly.	当他咆哮时，他脖子上青筋暴起。
+Would it be ethical to sacrifice one person to save many?	为了救许多人牺牲一个人是否道德？
+You have changed so much that I can hardly recognize you.	你变了那么多，以至于我几乎认不出你了。
+You have no right to interfere in other people's affairs.	你没有干涉他人事务的权力。
+You never get a second chance to make a first impression.	你永远没有第二次机会去打造第一印象。
+You should have done it earlier. It cannot be helped now.	你应该早点做的。现在没人可以帮你。
+You should have done it earlier. It cannot be helped now.	你本应该早点做的。现在已经没有任何办法了。
+You've both been very impressive today. I'm proud of you.	今天你们俩很让人印象深刻。我为你们感到骄傲。
+A little walk will give you a good appetite for breakfast.	散散步将会给你很好的食欲吃早餐。
+A true scientist would not approach the question this way.	真正的科学家不会这样去思考。
+After climbing Mt. Fuji, I got the inspiration for a poem.	攀登富士山后，我得到了一首诗的灵感。
+After running up the hill, I was completely out of breath.	跑上山后，我完全喘不过气来。
+Be careful not to drive the wrong way on a one-way street.	小心不要在单行道逆向行驶。
+Between you and me, I'm going to quit my present job soon.	我只跟你说，我很快就要辞掉我现在的工作了。
+Blondes earn 7% more than women with any other hair color.	金发女郎比其他颜色头发的女人多赚7％。
+Don't be afraid of making mistakes when you speak English.	说英语的时候不要怕犯错。
+Don't be afraid of making mistakes when you speak English.	当你说英语的时候不要怕犯错。
+Ebola spreads from person to person through bodily fluids.	埃博拉通过体液在人与人之间传播。
+France is running a welfare state it can no longer afford.	法国是一个福利国家，但它却不再能够负担得起了。
+He is a man of few words, but he always keeps his promise.	他这个人话不多，但总是遵守诺言。
+He owes his success both to working hard and to good luck.	他的成功要归结于他的辛勤工作和好运气。
+He was discovered unconscious on the floor of the kitchen.	他被人发现倒在厨房的地板上，不省人事。
+How long does it take to go from here to the Hilton Hotel?	从这里到希尔顿饭店要花多久时间？
+I got over the difficulty with my characteristic tenacity.	我凭韧性克服了困难。
+I had hoped that my mother would live until I got married.	我曾经希望我妈妈能活到我结婚的时候。
+I had to abstain from smoking while I was in the hospital.	在医院的时候，我不得不戒烟。
+I have so many clothes I don't know what to wear tomorrow.	我有那么多衣服，以至于我不知道明天穿什么了。
+I should be studying English, but I want to watch a movie.	我真的应该学英语, 但是我想看电影。
+I'd gladly pay more for something if it's of high quality.	如果它是高品质的东西我会很乐意多付一点钱。
+I'd like to have this meat dish with your best white wine.	我想在吃这肉喝你最好的白酒。
+I'm sorry I wasn't able to see you when you came by today.	我很抱歉今天您来的时候没能见您。
+I've never been to New York, and my sister hasn't, either.	我从没去过纽约，我妹妹也没有。
+If I had the money, I would immediately buy this computer.	我要是有钱，立马就买这台电脑。
+In the Edo period, moon-viewing parties were very popular.	在江户时代赏月的宴会非常受欢迎。
+It is up to you to decide whether we will go there or not.	该由你来决定我们去不去那儿。
+It is up to you to decide whether we will go there or not.	我们去不去那儿由你来决定。
+It says in the Bible, "Man shall not live on bread alone."	圣经里有一句话，叫做“人不能只靠面包生活”。
+It took me a little more time than usually to fall asleep.	我花了比平常多一点的时间入睡。
+It was difficult for him to hide his pride in his success.	他很难掩饰对自己成功的骄傲。
+My grandfather sometimes talks to himself when he's alone.	我祖父一个人的时候，有时会自言自语。
+Not only did he refuse to help me, but also he scolded me.	他不但没帮我，还骂了我。
+Some people like red wine and some people like white wine.	有人喜欢红酒，有人喜欢白酒。
+Step out of the car and place your hands behind your back.	下车，把手放在背后。
+That coat may have cost a lot of money, but it's worth it.	那大衣可能花了很多钱，但它值得。
+The Eiffel Tower is in the same city as the Louvre Museum.	埃菲尔铁塔和卢浮宫在同一座城市。
+The Oscar ceremonies are Hollywood's biggest extravaganza.	奥斯卡颁奖典礼，是好莱坞最盛大的活动。
+The bargain sale will run for three days, beginning today.	这场减价活动会持续三天，从今天开始。
+The contract is in the bag, so let's go out and celebrate.	合同已经到手了，那就出去庆祝一下吧。
+The simplest way is often the best way to solve a problem.	解决问题最简便的方法往往是最好的办法。
+The train will probably arrive at the station before noon.	火车大概会在中午前到站。
+The university was founded by his father twenty years ago.	大学在20年前由他的父亲建立。
+This is the place where the battle of Hastings took place.	这里是黑斯廷斯战役发生的地方。
+This place still looks the same as it did a long time ago.	这里就像在古时候一样。
+This was the most interesting book that she had ever read.	这是她读过最有趣的书。
+Three months is too short a time to finish the experiment.	要完成实验，三个月太短了。
+Tom can't come to work today because he doesn't feel well.	汤姆今天不舒服所以没来上班。
+Tom has no intention of asking Mary to the upcoming dance.	Tom没有意图去邀请Mary去即将来临的舞会。
+Tom spent most of the morning straightening up his office.	汤姆花了大半早晨整理他的办公室。
+Was this wall built to keep people out or to keep them in?	建造这堵墙是为了把人隔在外面还是把他们留在里面？
+We enjoyed watching the fireworks on a bridge last summer.	去年夏天，我们在桥上看焰火看得很过瘾。
+We should try to avoid imposing our own beliefs on others.	我们应该尽量避免把我们自己的信念强加在别人身上。
+We were disappointed to hear that Tom couldn't get a visa.	我们很遗憾地听说，汤姆没能拿到签证。
+When were you planning on telling Tom about what happened?	你准备啥时候告诉Tom发生了什么
+With the weather getting worse, the departure was put off.	由于天气变差，出发延迟了。
+Would you mind if I shut the window? I have a slight cold.	你不介意我关窗吧？我有点着凉了。
+Yesterday, an explosion occurred at the fireworks factory.	昨晚，烟花厂发生了爆炸。
+You may think those shoes are in fashion, but they aren't.	你可能认为那些鞋子很时髦, 但是他们不是。
+You speak so softly that I cannot quite hear what you say.	你说得太轻了，以至于我没办法听清楚你在说什么。
+You will exist but you will never know what it is to live.	你活着，但是却不知道为什么活着。
+"When will you come back?" "It all depends on the weather."	“你什么时候回来？”“这都要看天气。”
+According to my calculation, she should be in India by now.	根据我的估计，她现在应该在印度了。
+After I cleaned the window, I could see through it clearly.	清洁窗户后，我能很清楚的从窗户看出去。
+All of a sudden, the enemy bombs came down on us like rain.	突然间，敌人的炸弹像雨点一样落向我们。
+All subscriptions must be paid before the end of this year.	所有订购必须在今年年底前支付款项。
+Could you please talk a bit louder? I can't hear very well.	你能大声点讲吗？我听不太清。
+He amassed a fortune in stock trading during the last boom.	他在上个景气时期炒股攒下了一笔钱。
+How many times a day do you look at yourself in the mirror?	你一天照几次镜子？
+How to overcome the high value of the yen is a big problem.	如何克服日元升高是个大问题。
+I am in the habit of taking some exercise before breakfast.	我在吃早餐前有运动的习惯。
+I can't believe your parents let you come here by yourself.	我不敢相信你父母让你自己过来。
+I do not remember seeing the letter, but perhaps I read it.	我不记得我看过这封信, 但或许我读过它。
+I let Tom watch a little TV after he finished his homework.	我让Tom在做完作业后看一点电视。
+I slept a little during lunch break because I was so tired.	我在午休时间睡了一会儿，因为我太累了。
+I want to go and change into that shirt I bought yesterday.	我想去换我昨天买的这件衬衫。
+I would rather live by myself than do as he tells me to do.	我宁愿自己独立生活也不要他来指使我。
+I would really like to know why he did something like that.	我真的很想知道他为什么做了像那样的事。
+In the winter, many older people slip on ice and fall down.	在冬天，很多老人在冰上滑倒。
+Is it right for a doctor to decide when someone should die?	由医生来决定某人何时该死是对的吗？
+It's valid until March thirty-first, nineteen-ninety-seven.	有效期到1997年3月31日为止。
+Leaving something unfinished is the worst thing you can do.	半途而废是你所能做的最糟糕的事情。
+My father has been engaged in foreign trade for many years.	我父亲经营外贸多年。
+No less than three hundred dollars was needed for the work.	这个工作需要不低于300美金。
+Scientists can easily compute the distance between planets.	科学家们可以很容易地计算出行星之间的距离。
+The ambulances carried the injured to the nearest hospital.	救护车把伤者送往了最近的医院。
+The main problem with Tom is that he has no sense of humor.	汤姆的主要问题是他一点幽默感都没有
+The most logical place to keep your shoes is near the door.	最合逻辑的放鞋处是门口附近。
+The population of Japan is larger than that of New Zealand.	日本的人口比新西兰多。
+The show was wonderful, but the tickets were too expensive.	这场秀棒极了，但是门票太贵了。
+There are some misprints, but all in all, it's a good book.	虽然有一些印刷错误, 但大致上说来, 这是一本好书。
+They tried very hard to gain an advantage over one another.	他们很努力地超过对方获得优势。
+They wanted a wedding picture in front of the Eiffel Tower.	他们想在艾菲尔铁塔前面拍张结婚照。
+Tom didn't doubt that there would be a lot of people there.	汤姆确定那里会有很多人。
+Tom has been to this park with Mary at least a dozen times.	汤姆跟玛丽来这公园至少十二次。
+Tom has no idea what to do with all the junk in his garage.	汤姆不知道拿他车库的那些废物怎么办。
+Tom said he wouldn't be able to do what we asked him to do.	汤姆说他做不成我们要他做的事。
+Tom would never have let us go if Mary hadn't gone with us.	如果玛丽不跟着我们，汤姆不会让我们走。
+Tom wrote Mary a long letter, but he didn't send it to her.	汤姆给玛丽写了封长信，可是没有寄给她。
+We will continue the meeting after some light refreshments.	茶点过后我们接着开会。
+When I heard that song, it reminded me of when I was a kid.	我听到那首歌时，它让我想起了我小的时候。
+Will you please explain the meaning of this sentence to me?	您能为我解释这句句子的意思吗？
+A group of young men are playing handball in the playground.	一群年轻人在操场上打手球。
+According to the newspaper, there was a big fire last night.	根据报导，昨晚有一场很大的火灾。
+Afraid of hurting his feelings, I didn't tell him the truth.	怕伤害了他的感情，我没有告诉他真相。
+As far as the teacher was concerned, she was a joy to teach.	就一个老师而言，她教书教得很快乐。
+Even though she grew up in Japan, she speaks fluent English.	尽管她在日本长大，她说一口流利的英语。
+Every great writer seems to have been interested in English.	每一个伟大的作家似乎已经对英语感兴趣。
+Everyone in the room checked their watches at the same time.	房间里的所有人都同时看了看自己的手表。
+Father would often read detective stories in his spare time.	父亲常常在空闲时间读侦探小说。
+He asked me questions similar to those asked by many others.	他和许多其他人一样问了我同样的问题。
+He crashed his car because someone tampered with the brakes.	他撞车是因为有人在刹车上做了手脚。
+He left for Europe a week ago, that is, on the tenth of May.	他在一周前离开去往欧洲，就是说，是在五月十号。
+He was aware that I was around, but didn't come to greet me.	他注意到我在场，但是没向我打招呼。
+His bag is right here, so he cannot have gone to school yet.	他的包就在这儿，所以他不可能已经去了学校。
+I always enjoy listening to classical music in my free time.	有空的时候，我总喜欢听古典音乐。
+I had never seen a windmill until I visited the Netherlands.	在我去荷兰之前，我从没见过风车。
+I noticed a note on my desk, but I do not know who wrote it.	我发现了我办公桌上有张字条, 但是我不知道是谁写的。
+I think that our living together has influenced your habits.	我觉得我和你一起住影响了你生活的方式。
+I thought he loved you, but as it is, he loved another girl.	我以为他爱你，但事实上，他爱另一个女孩。
+I was just about to leave the house when the telephone rang.	我正要离开家的时候电话响了。
+I wish I could figure out how to delete my Facebook account.	我希望我能知道如何删除我的Facebook帐号。
+I would have liked to come with you, but I didn't have time.	我想和你一起去，但是我没有时间。
+I would rather stay at home than go out in this hot weather.	在这种暑天里我宁愿呆在家也不出去。
+If I had worked hard in my youth, I would be successful now.	如果我年轻的时候努力工作, 我现在就成功了。
+If I were you, I'd want to know what Tom is doing right now.	如果我是你，我不会想去知道Tom现在正在做什么。
+If you stay at a big hotel, you can use their swimming pool.	若你住到的是大的旅馆，就能使用他们的游泳池。
+It was heartless of him to say such a thing to the sick man.	他对一个生病的男人说这种事真是没良心。
+It's wrong to deceive people, but worse to deceive yourself.	欺骗别人是错的, 但更糟的欺骗自己。
+Looking at your Facebook friends' photos is a waste of time.	在Facebook上浏览朋友的照片是在浪费时间。
+My younger brother really likes to take photos of mountains.	我弟弟很喜欢拍山的照片。
+Pizza is the kind of food that fits into today's life style.	比萨是种适合现在的生活方式的食物。
+Some babies learn to swim even before they are one year old.	有些宝宝甚至在一岁之前就学习游泳了。
+The first thing you have to take into consideration is time.	你应该考虑的第一件事是时间。
+The number of traffic accidents seems to be on the increase.	交通事故的数量似乎在增长。
+The student handed the examination papers in to the teacher.	该学生把考试卷交给了老师。
+This book says that elephants live to be over 100 years old.	这本书上写，大象能活过一百岁。
+This town is quite different from what it was ten years ago.	这镇子跟十年前的它差别很大。
+Tom doesn't quite get it. Could you explain it to him again?	汤姆不大明白。你能再跟他解释一遍吗？
+Tom took Mary to the hospital on the back of his motorcycle.	汤姆把玛丽放到他的摩托车背上送到医院。
+We did not expect him to finish the task in so short a time.	我们没指望过他在那么短的时间里完成工作。
+We don't like our neighbors, and they don't like us, either.	我们不喜欢我们的邻居，而他们也不喜欢我们。
+We take it for granted that he will succeed in his business.	我们认为他的生意理所当然会获得成功。
+When I was a child, I spent most of my time indoors reading.	当我是个孩子的时候，我会把大部分时间都用于室内阅读。
+You can lie to everyone else, but you can't lie to yourself.	你可以向别人撒谎，但你不会向自己撒谎。
+You can't fight a good fight with such a defeatist attitude.	抱著失败主义的态度你无法打一场漂亮的仗。
+You should try to form the habit of using your dictionaries.	你们该养成使用字典的习惯。
+"Shall I have him call you when he gets back?" "Yes, please."	“等他回来，我要让他给你打电话吗？”“是的，谢谢。”
+"What's going on in the cave? I'm curious." "I have no idea."	“洞里发生了什么？我很好奇。”“我一点也不知道。”
+"What's going on in the cave? I'm curious." "I have no idea."	"山洞里发生了什么事?" 我很好奇。"我不知道。"
+A fire broke out last night and three houses were burnt down.	昨晚发生了一场火灾，三栋房屋被烧毁了。
+A new team was formed in order to take part in the boat race.	为了参加划船比赛，一支新的队伍组成了。
+After a long argument, I finally persuaded her to go camping.	经过长久的争论，我终于说服了她去露营。
+As soon as the bell rang the teacher came into the classroom.	钟声一响起，老师就走进了教室。
+Cancer can be cured easily if it is found in its first phase.	癌症如果在第一阶段被发现的话是很容易治愈的。
+He anonymously donated a large sum of money to the Red Cross.	他匿名向红十字捐了大笔钱。
+How long does it take to get from here to your house on foot?	从这里步行到你家要多长时间？
+I can't believe that you were the smartest kid in your class.	我不敢相信你是你们班里面最聪明的孩子。
+I do not like tea, so I generally drink coffee for breakfast.	我不喜欢茶，所以我早餐大致上都喝咖啡。
+I got a phone call from him just as I was about to go to bed.	我正要上床的时候接到了他打来的电话。
+I saw a group of foreigners on my way to school this morning.	今天早上在去学校的路上，我看到了一群外国人。
+I sometimes just don't want to get out of bed in the morning.	我有时早上不想下床。
+I wish I could figure out how to disable comments on my blog.	但愿我能找到在我的博客上屏蔽评论的办法。
+If he had taken his doctor's advice, he might still be alive.	如果他听了他医生的建议，他可能还活着。
+If her nose were a little shorter, she would be quite pretty.	若她的姿态能再低一点就更完美了。
+It took us a long time to decide what we really wanted to do.	我们花了很长时间决定我们真正想的事。
+Judging from the look of the sky, it may rain this afternoon.	从天色上判断，今天下午可能会下雨。
+Lots of companies have implemented an eight-hour working day.	很多公司实行8小时工作制。
+My fingers are so numb with cold that I can't play the piano.	我的手指冻僵了，以至于无法弹钢琴了。
+My grandfather is fond of taking a walk early in the morning.	我的爷爷喜欢大清早的散步。
+Plastics have taken the place of many conventional materials.	塑料代替了许多传统的原料。
+Problems that can be solved with money are not real problems.	钱可以解决的问题都不是问题。
+Several dozen young people participated in the demonstration.	几十个年轻人参加了示威游行。
+She has a real knack for getting people to do what she wants.	她真的有本事让别人做她想做的事。
+She tossed me grapes and I tried to catch them with my mouth.	她朝我丢葡萄，我试着用嘴接住它们。
+She visited the old man in the hospital every day but Sunday.	她每天都去探视在医院里的老人，除了星期天。
+Since I had met him once before, I recognized him right away.	由于我以前见过他一次，所以我马上就认出他了。
+The best way to lose weight is to eat less and exercise more.	最好的减肥方法就是少吃多运动。
+The house burned to the ground before the fire truck arrived.	消防车到达之前，房子就全烧了。
+The old church on the hill dates back to the twelfth century.	山上的老教堂的历史可以追溯到12世纪。
+The old houses were torn down to make room for a supermarket.	这栋老房子被拆除了，以腾出空间给超级市场。
+They fine you in Singapore if you throw trash in the streets.	在新加坡的街道上扔垃圾会被罚款。
+This airplane is capable of carrying 40 passengers at a time.	这架飞机一次可以携带40名乘客。
+Tom is still uncertain about whether to go to college or not.	汤姆还不清楚要不要上大学。
+Tom went into the kitchen and poured himself a cup of coffee.	汤姆进了厨房，给自己倒了杯咖啡。
+While we were discussing the problem, I hit upon a good idea.	在我们讨论问题的过程中，我想到了一个好主意。
+With the T.V. on, how can you keep your mind on your studies?	你开着电视怎么能安心学习呢？
+You must be careful of the traffic when you cross the street.	横穿马路时你要留心。
+A couple of flights were delayed on account of the earthquake.	一些航班由于地震被延误了。
+A little bit of luck sometimes leads to an unexpected success.	一点点的运气有时会导致意想不到的成功。
+A trip to America was equivalent to a two-year salary for her.	去美国旅行一次相当于她两年的工资。
+After they argued, they didn't speak to each other for a week.	他们争吵后，一周都没有再说话。
+After winning the Nobel prize, she remained as modest as ever.	获得诺贝尔奖后，她仍谦虚如昔。
+All you have to do is take advantage of this rare opportunity.	你所要做的便是好好把握这千载难逢的机会。
+An aging population will require more spending on health care.	老龄化的人口需要更多医疗保健支出。
+Between you and me, Tom's idea doesn't appeal to me very much.	汤姆的主意我不太感兴趣，这个我们之间说说就好。
+Do you know the concert schedule of London Symphony Orchestra?	你知道伦敦交响乐团的演奏会行程吗？
+Ever since she fell in the kitchen, she hasn't been all there.	自从她在厨房里摔倒后，她不曾再到那里。
+He told me that whatever might happen, he was prepared for it.	他告诉我不论发生什么，他都准备好了。
+He was disappointed that things didn't turn out as he'd hoped.	事情没能如他所愿让他感到失望。
+I don't know about the past, but now we have faxes and emails.	我不知道以前怎样，但现在我们有传真和电子邮件。
+I doubt that Tom will ever learn how to speak French properly.	我对汤姆要持之以恒地学习法语口语这件事很怀疑。
+I have not yet collected sufficient materials to write a book.	我还没有收集到足够的材料来写一本书。
+I heard someone in the crowd outside the station call my name.	我听到车站外的人群中有人在叫我的名字。
+I should have tried out this electric shaver before buying it.	我本该在买下这个电动剃须刀之前试一下的。
+I think to clearly distinguish opinion from fact is important.	我认为辨别清楚意见和事实很重要。
+I think you need to spend a little more time on your homework.	我觉得你应该多花点时间在作业上。
+Islam first reached China about the middle of the 7th century.	伊斯兰教大约在七世纪中传到中国。
+It is becoming important for us to know how to use a computer.	知道如何使用电脑对我们来说变得很重要。
+Language is the means by which people communicate with others.	语言是人们与他人交流的手段。
+Let me stop you right there. We don't want to hear about that.	让我在这打断你。我们不想听那个话题。
+My father participated in a cooking contest and came in first.	我爸爸参加了料理竞赛并得了第一名。
+Needless to say, fundamental human rights should be respected.	无须多言，基本人权应当被尊重。
+She doesn't have any friends or relatives to take care of her.	她没有任何亲戚朋友照顾她。
+Some of the bluest water in the world is found in Crater Lake.	一些世界上最蓝的水在火山湖。
+Suppose you had a thousand dollars, what would you do with it?	假如你有1000美元，你会用它做什么呢？
+The entire sales staff has worked around the clock for a week.	全体销售人员通宵达旦地工作了一周。
+The poet expressed his burning passion for the woman he loved.	诗人对他爱的女人表达了他火热的激情。
+The tree had been blown down by the typhoon of the day before.	昨天的台风把树刮倒了。
+There are a lot of things you don't know about my personality.	我的个性还有很多方面是你不了解的。
+They helped one another to make the school festival a success.	他们互帮互助，把校庆搞得很成功。
+Tom asked Mary some questions, but she refused to answer them.	汤姆问了玛丽一些问题，但是她拒绝回答。
+Tom would still be alive if he had been wearing his seat belt.	要是汤姆系上安全带的话，他就不会死的。
+We have less than five minutes to evacuate the whole building.	我们有不到五分钟来疏散整栋楼的人。
+We're on strike because the company hasn't improved our wages.	我们罢工是因为公司没有改善我们的工资。
+We're on strike because the company hasn't improved our wages.	我们之所以罢工是因为公司没有改善我们的工资。
+What I hate most of all is having to recite texts from memory.	我最讨厌背诵课文了。
+You may injure yourself if you don't follow safety procedures.	如果你不按照安全手续来的话，你可能会受伤的。
+You might not like this beer at first. It's an acquired taste.	刚开始的时候你可能不会喜欢这个啤酒。这是需要多次品尝去习惯它的口味。
+You must get this homework finished by the day after tomorrow.	你必须在后天以前完成回家作业。
+You shouldn't say that kind of thing when children are around.	孩子们在旁边的时候，你不应该说那种事。
+You told her that you had finished the work three days before.	你告诉她你已经在三天前完成这个工作了。
+As soon as she heard the bell ring, she answered the telephone.	她一听到铃响，就接了电话。
+As time went on, rules were added to the game to make it safer.	随着时间的推移，比赛增加了规则以使之更安全。
+By the year 2020, the population of our city will have doubled.	在2020年以前，我们的城市的人口将增加一倍。
+Declarations of variables are extremely important in C and C++.	变量的声明在C和C++中极其重要。
+English is a universal language and is used all over the world.	英语是一种世界性的语言，用于世界各地。
+English is by far the most widely-spoken language in the world.	英语是目前在世界上使用最广泛的语言。
+English is just one of over 2,700 languages in the world today.	今天，英语只是世界上超过2,700种语言的其中之一。
+Environmental pollution is causing abnormal weather conditions.	环境污染正造成异常的天气情况。
+For the time being, my sister is an assistant in a supermarket.	目前，我妹妹在一家超市当收银员。
+Go straight down this street and turn right at the third light.	沿着这条路直走，到第三个红绿灯的地方右转。
+He and his wife tried to work out their problems, but couldn't.	他和他的妻子试图解决他们的问题，但没有办法。
+He still remembers the day his mother found out he was smoking.	他还记得他妈妈发现他正在抽烟的那天。
+He told me that I looked pale and asked me what the matter was.	他跟我说我很苍白，并问我怎么了。
+I don't recommend eating in that restaurant. The food is awful.	我不推荐在那家餐馆吃饭。食物糟糕透了。
+I have no objection to paying a special fee if it is necessary.	如果必要的话，我不反对付特别费用。
+If Tom doesn't do what he's supposed to do, please let me know.	如果汤姆没有做他应当做的事，请让我知道。
+If he were a little younger, he would be eligible for the post.	如果他年轻一点，他将很适合这个职位。
+It cost me ten thousand yen to have my television set repaired.	把我的电视机修好花了我一万日元。
+It makes sense to pay off your credit card balance every month.	每个月还清信用卡负债很重要。
+Keep your eyes wide open before marriage, half shut afterwards.	婚前张开眼，婚后半闭眼。
+One thousand dollars will cover all the expenses for the party.	1000美元将负担聚会的全部费用。
+The economy of the island is dependent on the fishing industry.	这个岛的经济依靠的是渔业。
+The police think the burglar entered through a basement window.	警察认为窃贼从地下室窗口进入。
+The school is located within five minutes' walk of the station.	学校坐落于距离车站步行五分钟的地方。
+The senator was censured by the congressional ethics committee.	议员受到了议会道德委员会的谴责。
+The third quarter GNP growth was 1% over the preceding quarter.	第三季国民生产总值较上一季成长了1％。
+The warrior is conscious of both his strength and his weakness.	战士知道自己的力量和弱点。
+This year's fashions are completely different from last year's.	今年的时尚潮流完全不同于去年。
+Today our artificial satellites are revolving around the earth.	今天我们的人造卫星正在环绕地球运转。
+Tom didn't know exactly what it was that Mary wanted him to do.	汤姆不知道玛丽到底让他做什么。
+Would you ever consider dating your best friend's ex-boyfriend?	你有没有想过跟朋友的前男友约会？
+You'll get into trouble if your girlfriend finds out the truth.	如果你女朋友发现真相的话，你会有麻烦的。
+"Why are you going to Japan?" "To attend a conference in Tokyo."	“你去日本干嘛？”“去东京参加一个会议。”
+"Will you have some more coffee?" "No, thanks. I've had enough."	“你想再来点咖啡吗？”“不，谢谢。我够了。”
+Children depend on their parents for food, clothing and shelter.	孩子们的衣食住行靠的是他们的父母。
+Do you know the difference between a microscope and a telescope?	你知道显微镜和望远镜的差别吗？
+Everybody is supposed to know the law, but few people really do.	每一个人都应该知法懂法，但是真正能做到的人却很少。
+Excuse me, let me point out three mistakes in the above article.	不好意思，让我指出先前文章的三个错误。
+Have you ever seen Mt. Fuji? It is beautiful beyond description.	你看过富士山吗? 它美得无法形容。
+He's a very romantic boyfriend who brings me flowers each night.	他是个非常浪漫的男友，每晚都给我带花。
+His lie got him into trouble when his boss discovered the truth.	当他老板发现真相的时候，谎言给他带来了麻烦。
+Is it true that your family will travel in Hokkaido? I envy you.	你们家去北海道旅游是真的么？我羡慕你。
+It hasn't been easy for Tom to deal with Mary's health problems.	处理玛丽的健康问题对汤姆来说不容易。
+It is sometimes difficult to make yourself understood in public.	有时很难在公众场合表达你自己的意思。
+My father died of a subarachnoid hemorrhage when I was fourteen.	我十四岁的时候，父亲死于蛛网膜下出血。
+Nobody understood why the elephant suddenly turned on its owner.	没有人明白为什么大象突然攻击了它的主人。
+She employed a private detective to keep a watch on her husband.	她雇了一个私人侦探看守她的丈夫。
+She was very embarrassed when her child behaved badly in public.	当她的孩子在公共场合行为表现不好的时候，她觉得很尴尬。
+She wouldn't let up until I agreed to go to the movies with her.	她不愿松开我，直到我同意和她去电影院。
+Some scientists believe that the greenhouse effect is imaginary.	有的科学家认为温室效应是虚构的。
+The accident seemed to have something to do with the heavy snow.	事故似乎和厚厚的积雪有关。
+The conflict between blacks and whites in the city became worse.	在这个城市，白人和黑人间的争端愈演愈烈。
+This book is for students whose native language is not Japanese.	这本书是给母语不是日语的学生的。
+Thousands of candles illuminated the church during the ceremony.	数以千计的蜡烛点亮了仪式中的教堂。
+Tom told us this morning that he and Mary were moving to Boston.	汤姆告诉我今天上午他和玛丽要搬到波士顿。
+We're going to eat a lot tonight so I hope you're not on a diet.	我们今晚会吃很多，所以我希望你没有在节食。

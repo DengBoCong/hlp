@@ -4,6 +4,7 @@ from common import self_attention
 from config import get_config as _config
 import time
 from common import preprocess
+import sys
 
 
 def train_step(inp, tar, transformer, optimizer, train_loss, train_accuracy):
@@ -45,30 +46,30 @@ def train(input_tensor, target_tensor, transformer, optimizer, train_loss, train
 
     print("开始训练...")
     for epoch in range(_config.EPOCHS):
+        print('Epoch {}/{}'.format(epoch + 1, _config.EPOCHS))
         start = time.time()
 
         train_loss.reset_states()
         train_accuracy.reset_states()
 
-        # inp -> portuguese, tar -> english
+        batch_sum = 0
+        sample_sum = int(len(input_tensor) * (1 - _config.test_size))
+
+        # inp -> english, tar -> chinese
         for (batch, (inp, tar)) in enumerate(train_dataset):
             transformer, optimizer, train_loss, train_accuracy = \
                 train_step(inp, tar, transformer, optimizer, train_loss, train_accuracy)
+            batch_sum = batch_sum + len(inp)
+            print('\r{}/{} [==================================]'.format(batch_sum, sample_sum), end='')
 
-            if batch % 50 == 0:
-                print('Epoch {} Batch {} Loss {:.4f} Accuracy {:.4f}'.format(
-                    epoch + 1, batch, train_loss.result(), train_accuracy.result()))
+        step_time = (time.time() - start)
+        print(' - {:.4f}s/step - loss: {:.4f} - Accuracy {:.4f}\n'
+                         .format(step_time, train_loss.result(), train_accuracy.result()), end='\n')
 
         if (epoch + 1) % 5 == 0:
             ckpt_save_path = ckpt_manager.save()
             print('Saving checkpoint for epoch {} at {}'.format(epoch + 1,
                                                                 ckpt_save_path))
-
-        print('Epoch {} Loss {:.4f} Accuracy {:.4f}'.format(epoch + 1,
-                                                            train_loss.result(),
-                                                            train_accuracy.result()))
-
-        print('Time taken for 1 epoch: {} secs\n'.format(time.time() - start))
     print('训练完毕！')
 
 

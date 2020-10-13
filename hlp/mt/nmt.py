@@ -1,12 +1,14 @@
 import os
 import sys
+
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
-from model import evaluate,trainer,translator
+from model import evaluate, trainer, translator
 from optparse import OptionParser
 from model import evaluate as eval
 from common import preprocess as _pre
 from model import network
 from config import get_config as _config
+
 '''
 
 程序入口
@@ -25,9 +27,13 @@ cmd: python nml.py -t/--type [执行模式]
 def main():
     # 配置命令行参数
     parser = OptionParser(version='%prog V1.0')
+
     parser.add_option("-t", "--type", action="store", type="string",
                       dest="type", default="translate",
-                      help="可选择的模式: train/eval/translate")
+                      help="TYPE: train/eval/translate")
+    if len(sys.argv) > 1 and sys.argv[1] not in ['-t']:
+        print('Error:no option ' + sys.argv[1])
+        print(parser.format_option_help())
     (options, args) = parser.parse_args()
 
     if options.type == 'train':
@@ -38,9 +44,9 @@ def main():
         ch = _pre.preprocess_sentences_ch(ch, mode=_config.ch_tokenize_type)
         # 生成及保存字典
         tokenizer_en, vocab_size_en = _pre.create_tokenizer(sentences=en, mode=_config.en_tokenize_type
-                                             , save_path=_config.en_bpe_tokenizer_path)
+                                                            , save_path=_config.en_bpe_tokenizer_path)
         tokenizer_ch, vocab_size_ch = _pre.create_tokenizer(sentences=ch, mode=_config.ch_tokenize_type
-                                             , save_path=_config.ch_tokenizer_path)
+                                                            , save_path=_config.ch_tokenizer_path)
         print('vocab_size_en:%d' % vocab_size_en)
         print('vocab_size_ch:%d' % vocab_size_ch)
         # 编码句子
@@ -82,7 +88,7 @@ def main():
             elif options.type == 'translate':
                 # 翻译模式
                 while True:
-                    print('-'*30)
+                    print('-' * 30)
                     print('输入0可退出程序')
                     sentence = input('请输入要翻译的句子 :')
                     if sentence == '0':
@@ -91,9 +97,9 @@ def main():
                         print('翻译结果:', translator.translate(sentence, transformer, tokenizer_en, tokenizer_ch))
         else:
             print('请先训练才可使用其它功能...')
-    else:
-        print('未知模式：' + sys.argv[2])
-        print(parser.format_help())
+    elif len(sys.argv) > 2:
+        print('Error:no TYPE ' + sys.argv[2])
+        print(parser.format_option_help())
 
 
 if __name__ == '__main__':
