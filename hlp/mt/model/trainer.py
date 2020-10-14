@@ -4,7 +4,6 @@ from common import self_attention
 from config import get_config as _config
 import time
 from common import preprocess
-import sys
 
 
 def train_step(inp, tar, transformer, optimizer, train_loss, train_accuracy):

@@ -17,7 +17,7 @@
   "dff": 512,
   "num_heads": 8,
   "dropout_rate" : 0.1,
-  "EPOCHS": 2,
+  "EPOCHS": 10,
   "max_target_length": 20,
   "start_word": "<start>",
   "end_word": "<end>",
