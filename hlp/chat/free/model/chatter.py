@@ -61,7 +61,8 @@ class Chatter(object):
         """
         对模型进行训练
         """
-        dataset, checkpoint_prefix, steps_per_epoch = self._treat_dataset(dict_fn, data_fn, start_sign, end_sign, max_train_data_size)
+        dataset, checkpoint_prefix, steps_per_epoch = self._treat_dataset(dict_fn, data_fn, start_sign, end_sign,
+                                                                          max_train_data_size)
 
         for epoch in range(_config.epochs):
             print('Epoch {}/{}'.format(epoch + 1, _config.epochs))
@@ -87,10 +88,10 @@ class Chatter(object):
 
         print('训练结束')
 
-    def respond(self, req, dict_fn):
+    def respond(self, req, dict_fn, start_sign, end_sign):
         # 对req进行初步处理
         token = _data.load_token_dict(dict_fn=dict_fn)
-        inputs, dec_input = self._pre_treat_inputs(req, token)
+        inputs, dec_input = self._pre_treat_inputs(req, token, start_sign, end_sign)
         self.beam_search_container.init_variables(inputs=inputs, dec_input=dec_input)
         inputs, dec_input = self.beam_search_container.get_variables()
         for t in range(_config.max_length_tar):
@@ -110,11 +111,11 @@ class Chatter(object):
             result = '<' + text[0] + '>' + result
         return result
 
-    def _pre_treat_inputs(self, sentence, token):
+    def _pre_treat_inputs(self, sentence, token, start_sign, end_sign):
         # 分词
         sentence = " ".join(jieba.cut(sentence))
         # 添加首尾符号
-        sentence = _data.preprocess_sentence(sentence)
+        sentence = _data.preprocess_sentence(sentence, start_sign, end_sign)
         # 将句子转成token列表
         inputs = [token.get(i, 3) for i in sentence.split(' ')]
         # 填充

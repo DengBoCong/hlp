@@ -1,8 +1,8 @@
 import tensorflow as tf
-from free.chatter import Chatter
+from model.chatter import Chatter
 from common.common import CmdParser
 import config.get_config as _config
-import free.transformer.model as transformer
+import model.transformer as transformer
 from common.pre_treat import preprocess_raw_data
 
 
@@ -85,7 +85,7 @@ def main():
 
     if options.type == 'train':
         chatter.train(chatter.checkpoint,
-                      dict_fn='data/transformer_dict.json',
+                      dict_fn=_config.transformer_dict_fn,
                       data_fn=_config.data,
                       start_sign='start',
                       end_sign='end',
@@ -97,7 +97,9 @@ def main():
             if req == "ESC":
                 print("Agent: 再见！")
                 exit(0)
-            response = chatter.respond(req, dict_fn='data/transformer_dict.json')
+            response = chatter.respond(req, dict_fn=_config.transformer_dict_fn,
+                                       start_sign='start',
+                                       end_sign='end')
             print("Agent: ", response)
     elif options.type == 'pre_treat':
         preprocess_raw_data(raw_data=_config.resource_data, tokenized_data=_config.tokenized_data)

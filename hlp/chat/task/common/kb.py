@@ -50,5 +50,5 @@ class KnowledgeBase:
         :params kvs: key和value的列表，使用lambda表达式进行累积操作
         """
         ret = reduce(lambda y, x: y & set(self.index[x[0]][x[1]])
-                if y is not None else set(self.index[x[0]][x[1]]), kvs, None)
+        if y is not None else set(self.index[x[0]][x[1]]), kvs, None)
         return ret if ret is not None else set()
