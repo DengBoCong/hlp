@@ -9,13 +9,7 @@ import os
 import random
 import tensorflow as tf
 import config
-from utils import text_to_int_sequence, wav_to_mfcc
-from char_set import Char_set
-
-#针对不同的文本文件进行的文本读取
-def text_process(str):
-    #当前数据文本的每行为'index string'
-    return str.split(" ",1)[1].strip().lower()
+from utils import text_to_int_sequence, wav_to_mfcc, text_process, get_index_and_char_map
 
 def data_process(
     data_path,
@@ -53,9 +47,9 @@ def data_process(
         labels_list=[]
         label_length_list=[]
         #构建数据集对象
-        cs = Char_set(config.configs_other()["char_set_path"])
+        char_map = get_index_and_char_map()[1]
         for i in range(len(labels_str_list)):
-            labels_list.append(text_to_int_sequence(labels_str_list[i],cs))
+            labels_list.append(text_to_int_sequence(labels_str_list[i],char_map))
             label_length_list.append([len(labels_str_list[i])])
         labels_numpy = tf.keras.preprocessing.sequence.pad_sequences(labels_list,padding='post')
         labels = tf.convert_to_tensor(labels_numpy)

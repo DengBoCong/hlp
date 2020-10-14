@@ -8,6 +8,7 @@ Created on Tue Sep 15 16:50:12 2020
 #step1：1-3 Conv1D -> 1BN -> 1-3 bi_gru -> 1BN -> 1dense
 import tensorflow as tf
 import config
+from utils import get_index_and_char_map
 
 
 #函数式构建DS2模型
@@ -19,7 +20,7 @@ def DS2_func(
     strides=config.configs_model()["conv_strides"],
     bi_gru_layers=config.configs_model()["bi_gru_layers"],
     gru_units=config.configs_model()["gru_units"],
-    dense_units=config.configs_model()["dense_units"]
+    dense_units=len(get_index_and_char_map()[0])+2
     ):
     inputs=tf.keras.Input(shape=(None,None,n_mfcc))
     x=inputs
@@ -67,7 +68,7 @@ class DS2(tf.keras.Model):
         strides=config.configs_model()["conv_strides"],
         bi_gru_layers=config.configs_model()["bi_gru_layers"],
         gru_units=config.configs_model()["gru_units"],
-        dense_units=config.configs_model()["dense_units"]
+        dense_units=len(get_index_and_char_map()[0])+2
         ):
         super(DS2,self).__init__()
         self.conv_layers=conv_layers
