@@ -1,8 +1,8 @@
 import tensorflow as tf
-from chit.chatter import Chatter
+from model.chatter import Chatter
+import model.seq2seq as seq2seq
 from common.common import CmdParser
 import config.get_config as _config
-import chit.seq2seq.model as seq2seq
 from common.pre_treat import preprocess_raw_data
 
 
@@ -85,8 +85,11 @@ def main():
 
     if options.type == 'train':
         chatter.train(chatter.checkpoint,
-                      input_dict_fn='data/seq2seq_input_dict.json',
-                      target_dict_fn='data/seq2seq_target_dict.json')
+                      dict_fn=_config.seq2seq_dict_fn,
+                      data_fn=_config.data,
+                      start_sign='start',
+                      end_sign='end',
+                      max_train_data_size=_config.max_train_data_size)
     elif options.type == 'chat':
         print("Agent: 你好！结束聊天请输入ESC。")
         while True:
@@ -94,9 +97,9 @@ def main():
             if req == "ESC":
                 print("Agent: 再见！")
                 exit(0)
-            response = chatter.respond(req,
-                                       input_dict_fn='data/seq2seq_input_dict.json',
-                                       target_dict_fn='data/seq2seq_target_dict.json')
+            response = chatter.respond(req, dict_fn=_config.seq2seq_dict_fn,
+                                       start_sign='start',
+                                       end_sign='end')
             print("Agent: ", response)
     elif options.type == 'pre_treat':
         preprocess_raw_data(raw_data=_config.resource_data, tokenized_data=_config.tokenized_data)

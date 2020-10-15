@@ -1,26 +1,16 @@
 {
   "seq2seq": {
-    "train_data": "checkpoint\\seq2seq"
+    "train_data": "checkpoint\\seq2seq",
+    "dict_fn": "data\\seq2seq_dict.json"
   },
   "transformer": {
     "train_data": "checkpoint\\transformer",
+    "dict_fn": "data\\transformer_dict.json",
     "num_layers": 2,
     "d_model": 256,
     "num_heads": 8,
     "units": 512,
     "dropout": 0.1
-  },
-  "task": {
-    "train_data": "checkpoint\\task",
-    "state_tracker_hidden_size": 300,
-    "use_pretrained_embedding" : true,
-    "kb" : "data/kb.json",
-    "sent_groups": "data/groups.json",
-    "database": "data/database.json",
-    "ontology": "data/ontology.json",
-    "semi_dict": "data/semi_dict.json",
-    "dialogues_train": "data/dstc2_train_en.json",
-    "tokenized_data": "data\\dialogues_tokenized.txt"
   },
   "resource_data": "data\\train.txt",
   "tokenized_data": "data\\train_tokenized.txt",

@@ -19,8 +19,6 @@ conf = {}
 conf = config()
 
 # 公共配置
-# vocab_inp_size = conf['enc_vocab_size']
-# vocab_tar_size = conf['dec_vocab_size']
 embedding_dim = conf['embedding_dim']
 BATCH_SIZE = conf['batch_size']
 BUFFER_SIZE = conf['buffer_size']
@@ -37,6 +35,7 @@ epochs = conf['epochs']  # 训练轮次
 
 # seq2seq模型相关配置
 seq2seq_train_data = path + conf['seq2seq']['train_data']  # 训练结果保存位置
+seq2seq_dict_fn = path + conf['transformer']['dict_fn']  # 字典保存位置
 
 # transformer模型相关配置
 transformer_train_data = path + conf['transformer']['train_data']  # 训练结果保存位置
@@ -45,13 +44,4 @@ transformer_d_model = conf['transformer']['d_model']
 transformer_num_heads = conf['transformer']['num_heads']
 transformer_units = conf['transformer']['units']
 transformer_dropout = conf['transformer']['dropout']
-
-# task模型相关配置
-state_tracker_hidden_size = conf['task']['state_tracker_hidden_size']
-task_train_data = path + conf['task']['train_data']
-sent_groups = path + conf['task']['sent_groups']  # 含插槽的句子组合
-database = path + conf['task']['database']
-ontology = path + conf['task']['ontology']
-semi_dict = path + conf['task']['semi_dict']
-dialogues_train = path + conf['task']['dialogues_train']
-dialogues_tokenized = path + conf['task']['tokenized_data']
+transformer_dict_fn = path + conf['transformer']['dict_fn']  # 字典保存位置
