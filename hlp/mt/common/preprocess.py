@@ -18,6 +18,14 @@ import os
 import json
 
 
+def load_single_sentences(path, num_sentences, column):
+    """加载指定列文本，列计数从1开始"""
+    with open(path, encoding='UTF-8') as file:
+        lines = file.read().strip().split('\n')
+    sentences = [l.split('\t')[column - 1] for l in lines[:num_sentences]]
+    return sentences
+
+
 def load_sentences(path, num_sentences):
     """加载文本"""
     with open(path, encoding='UTF-8') as file:

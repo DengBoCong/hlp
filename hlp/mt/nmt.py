@@ -26,7 +26,7 @@ cmd: python nml.py -t/--type [执行模式]
 
 def main():
     # 配置命令行参数
-    parser = OptionParser(version='%prog V1.0')
+    parser = OptionParser(version='%prog V1.3.0')
 
     parser.add_option("-t", "--type", action="store", type="string",
                       dest="type", default="translate",
@@ -37,23 +37,37 @@ def main():
     (options, args) = parser.parse_args()
 
     if options.type == 'train':
+
         # 加载句子
-        en, ch = _pre.load_sentences(_config.path_to_train_file, _config.num_sentences)
+        print('正在加载、预处理数据...')
+        en = _pre.load_single_sentences(_config.path_to_train_file_en, _config.num_sentences, column=1)
+        ch = _pre.load_single_sentences(_config.path_to_train_file_zh, _config.num_sentences, column=1)
+        # en, ch = _pre.load_sentences(_config.path_to_train_file, _config.num_sentences)
         # 预处理句子
         en = _pre.preprocess_sentences_en(en, mode=_config.en_tokenize_type)
         ch = _pre.preprocess_sentences_ch(ch, mode=_config.ch_tokenize_type)
+        print('已加载句子数量:%d' % _config.num_sentences)
+        print('数据加载、预处理完毕！\n')
+
         # 生成及保存字典
+        print('正在生成、保存英文字典...')
         tokenizer_en, vocab_size_en = _pre.create_tokenizer(sentences=en, mode=_config.en_tokenize_type
                                                             , save_path=_config.en_bpe_tokenizer_path)
+        print('生成英文字典大小:%d' % vocab_size_en)
+        print('英文字典生成、保存完毕！\n')
+        print('正在生成、保存中文字典...')
         tokenizer_ch, vocab_size_ch = _pre.create_tokenizer(sentences=ch, mode=_config.ch_tokenize_type
                                                             , save_path=_config.ch_tokenizer_path)
-        print('vocab_size_en:%d' % vocab_size_en)
-        print('vocab_size_ch:%d' % vocab_size_ch)
+        print('生成中文字典大小:%d' % vocab_size_ch)
+        print('中文字典生成、保存完毕！\n')
+
         # 编码句子
+        print("正在编码句子...")
         tensor_en, max_sequence_length_en = _pre.encode_sentences(sentences=en, tokenizer=tokenizer_en
                                                                   , mode=_config.en_tokenize_type)
         tensor_ch, max_sequence_length_ch = _pre.encode_sentences(sentences=ch, tokenizer=tokenizer_ch
                                                                   , mode=_config.ch_tokenize_type)
+        print("句子编码完毕！\n")
 
         # 创建模型及相关变量
         optimizer, train_loss, train_accuracy, transformer = network.get_model(vocab_size_en, vocab_size_ch)

@@ -59,16 +59,21 @@ def train(input_tensor, target_tensor, transformer, optimizer, train_loss, train
             transformer, optimizer, train_loss, train_accuracy = \
                 train_step(inp, tar, transformer, optimizer, train_loss, train_accuracy)
             batch_sum = batch_sum + len(inp)
-            print('\r{}/{} [==================================]'.format(batch_sum, sample_sum), end='')
+            print('\r{}/{} [Batch {} Loss {:.4f} Accuracy {:.4f}]'.format(batch_sum, sample_sum, batch
+                                                                          , train_loss.result()
+                                                                          , train_accuracy.result()), end='')
 
         step_time = (time.time() - start)
         print(' - {:.4f}s/step - loss: {:.4f} - Accuracy {:.4f}\n'
-                         .format(step_time, train_loss.result(), train_accuracy.result()), end='\n')
+                         .format(step_time, train_loss.result(), train_accuracy.result()))
 
         if (epoch + 1) % 5 == 0:
             ckpt_save_path = ckpt_manager.save()
-            print('Saving checkpoint for epoch {} at {}'.format(epoch + 1,
-                                                                ckpt_save_path))
+            print('Saving checkpoint for epoch {} at {}'.format(epoch + 1, ckpt_save_path))
+
+    ckpt_save_path = ckpt_manager.save()
+    print('Saving checkpoint for epoch {} at {}'.format(epoch + 1, ckpt_save_path))
+
     print('训练完毕！')
 
 
