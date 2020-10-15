@@ -87,7 +87,7 @@ def main():
             print("正在加载中文字典...")
             tokenizer_ch, vocab_size_ch = _pre.get_tokenizer(path=_config.ch_tokenizer_path
                                                              , mode=_config.ch_tokenize_type)
-            print('中文字典大小:%d' % vocab_size_en)
+            print('中文字典大小:%d' % vocab_size_ch)
             print('中文字典加载完毕！\n')
 
             # 创建模型及相关变量
