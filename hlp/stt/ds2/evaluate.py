@@ -9,8 +9,7 @@ import tensorflow as tf
 import config
 from data_process import data_process
 from model import DS2
-from utils import int_to_text_sequence, wav_to_mfcc, wers, lers
-from char_set import Char_set
+from utils import int_to_text_sequence, wav_to_mfcc, wers, lers, get_index_and_char_map
 
 if __name__=="__main__":
     #加载模型检查点
@@ -44,9 +43,9 @@ if __name__=="__main__":
     results_int_list=output[0][0].numpy().tolist()
 
     #构建字符集对象
-    cs = Char_set(config.configs_other()["char_set_path"])
+    index_map = get_index_and_char_map()[0]
     for i in range(len(results_int_list)):
-        str = "".join(int_to_text_sequence(results_int_list[i],cs)).strip()
+        str = "".join(int_to_text_sequence(results_int_list[i],index_map)).strip()
         results.append(str)
     rates_wers,aver_wers=wers(originals,results)
     rates_lers,aver_lers,norm_rates_lers,norm_aver_lers=lers(originals,results)

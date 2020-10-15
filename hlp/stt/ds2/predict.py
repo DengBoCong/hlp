@@ -1,12 +1,11 @@
 import tensorflow as tf
 import config
 from model import DS2
-from utils import int_to_text_sequence, record, wav_to_mfcc
-from char_set import Char_set
+from utils import int_to_text_sequence, record, wav_to_mfcc, get_index_and_char_map
 
 if __name__=="__main__":
     #录音
-    record()
+    record(file_path = config.configs_record()["record_path"])
 
     #加载模型检查点
     model=DS2()
@@ -29,6 +28,6 @@ if __name__=="__main__":
         input_length=tf.constant([y_test_pred.shape[1]]),
         greedy=True
         )
-    cs = Char_set(config.configs_other()["char_set_path"])
-    str="".join(int_to_text_sequence(output[0][0].numpy()[0],cs))
+    index_map = get_index_and_char_map()[0]
+    str="".join(int_to_text_sequence(output[0][0].numpy()[0],index_map))
     print(str)

@@ -1,4 +1,4 @@
-from char_set import Char_set
+
 
 """----------------------model-------------------------------"""
 def configs_model():
@@ -10,7 +10,6 @@ def configs_model():
     configs_model["conv_strides"] = 2 #卷积核移动步数
     configs_model["bi_gru_layers"] = 1 #模型双向gru层数1-3
     configs_model["gru_units"] = 256 #gru的单元数
-    configs_model["dense_units"] = len(Char_set(configs_other()["char_set_path"]).index_map)+2
     return configs_model
 
 """----------------------train-------------------------------"""
@@ -47,6 +46,7 @@ def configs_other():
     configs_other={}
     configs_other["n_mfcc"] = 20 #声学模型里提取的mfcc特征数
     configs_other["char_set_path"] = "char_set.txt"
+    configs_other["text_preprocess_path"] = [configs_train()["data_path"],configs_test()["data_path"]]
     return configs_other
 
 if __name__ == "__main__":
