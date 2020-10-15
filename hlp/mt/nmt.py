@@ -78,12 +78,18 @@ def main():
         if_ckpt = _pre.check_point()  # 检测是否有检查点
         if if_ckpt:
             # 加载中英文字典
+            print("正在加载英文字典...")
             tokenizer_en, vocab_size_en = _pre.get_tokenizer(path=_config.en_bpe_tokenizer_path
                                                              , mode=_config.en_tokenize_type)
+            print('英文字典大小:%d' % vocab_size_en)
+            print('英文字典加载完毕！\n')
+
+            print("正在加载中文字典...")
             tokenizer_ch, vocab_size_ch = _pre.get_tokenizer(path=_config.ch_tokenizer_path
                                                              , mode=_config.ch_tokenize_type)
-            print('vocab_size_en:%d' % vocab_size_en)
-            print('vocab_size_ch:%d' % vocab_size_ch)
+            print('中文字典大小:%d' % vocab_size_en)
+            print('中文字典加载完毕！\n')
+
             # 创建模型及相关变量
             optimizer, _, _, transformer = network.get_model(vocab_size_en, vocab_size_ch)
             # 加载检查点
