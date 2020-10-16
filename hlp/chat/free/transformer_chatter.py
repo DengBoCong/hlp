@@ -1,9 +1,12 @@
+import sys
 import tensorflow as tf
+sys.path.append(sys.path[0][:-10])
 from model.chatter import Chatter
 from common.common import CmdParser
 import config.get_config as _config
 import model.transformer as transformer
 from common.pre_treat import preprocess_raw_data
+
 
 
 class TransformerChatter(Chatter):

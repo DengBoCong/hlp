@@ -1,7 +1,8 @@
-import json
 import tensorflow as tf
-import config.get_config as _config
 import model.tracker as tracker
+import warnings
+
+warnings.filterwarnings("ignore")
 
 
 def get_slots_tracker(onto, units):
@@ -32,28 +33,25 @@ def task_encoder(units, vocab_size, embedding_dim, name="task_encoder"):
     """
     inputs = tf.keras.Input(shape=(None,), name='task_encoder_inputs')
     embedding = tf.keras.layers.Embedding(vocab_size, embedding_dim)(inputs)
+    output, forward_state, backward_state = tf.keras.layers.Bidirectional(
+        tf.keras.layers.GRU(units=units, return_sequences=True,
+                            return_state=True, dropout=0.9), merge_mode='concat')(embedding)
 
-    forward = tf.keras.layers.GRU(units=units, return_sequences=True, return_state=True, dropout=0.9)
-    backward = tf.keras.layers.GRU(units=units, return_sequences=True, return_state=True, dropout=0.9,
-                                   go_backwards=True)
-    output, forward_state, backward_state = tf.keras.layers.Bidirectional(layer=forward, backward_layer=backward,
-                                                                          merge_mode='concat')(embedding)
     state = tf.concat([forward_state, backward_state], -1)
     return tf.keras.Model(inputs=inputs, outputs=[output, state], name=name)
 
 
-def task(units, onto, vocab_size, embedding_dim, max_sentence_len, hidden, name="task_model"):
+def task(units, onto, vocab_size, embedding_dim, max_sentence_len, name="task_model"):
     """
     Task-Orient模型，使用函数式API实现，将encoder和decoder封装
     :param vocab_size:token大小
     """
-    usr_utts = tf.keras.Input(shape=max_sentence_len, name="task_model_inputs")  # (None, 300)
-    kb_indicator = tf.keras.Input(shape=1)  # (None, 1)
+    usr_utts = tf.keras.Input(shape=max_sentence_len, name="task_model_inputs")
+    kb_indicator = tf.keras.Input(shape=1)
     _, encoder_hidden = task_encoder(units=units, vocab_size=vocab_size, embedding_dim=embedding_dim)(
-        usr_utts)  # (None, 300)
-    inputs = tf.concat([encoder_hidden, kb_indicator], -1)  # (None, 301)
-
-    _, state = tracker.state_tracker(units=units, vocab_size=vocab_size, embedding_dim=embedding_dim, hidden=hidden)(
+        usr_utts)
+    inputs = tf.concat([encoder_hidden, kb_indicator], -1)
+    _, state = tracker.state_tracker(units=units, vocab_size=vocab_size, embedding_dim=embedding_dim)(
         inputs)
     slot_trackers, slot_len_sum = get_slots_tracker(onto=onto, units=units)
     state_pred = {slot: slot_trackers[slot](state) for slot in onto}

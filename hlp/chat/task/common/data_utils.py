@@ -195,6 +195,9 @@ def load_dialogs(diag_fn, kb, groups_fn=None):
 
         # 这里就跳过第一个，因为一般系统第一个是空
         sys_utterances = sys_utterances[1:]
+        usr_utterances = usr_utterances[:-1]
+        kb_found = kb_found[:-1]
+        states = states[:-1]
 
         data.append({
             'usr_utterances': usr_utterances,
@@ -250,7 +253,8 @@ class DataLoader:
     对话数据加载工具类
     """
 
-    def __init__(self, dialogues, max_length, tokenizer, onto, onto_idx, kb_fonud_len=5, mode='train'):
+    def __init__(self, dialogues, max_length, tokenizer, onto, onto_idx, max_train_data_size, kb_fonud_len=5,
+                 mode='train'):
         self.dialogues = dialogues
         self.tokenizer = tokenizer
         self.max_length = max_length
@@ -258,6 +262,7 @@ class DataLoader:
         self.onto = onto
         self.onto_idx = onto_idx
         self.kb_found_len = kb_fonud_len
+        self.max_train_data_size = max_train_data_size
         self.mode = mode
 
     def get_vocabs(self):
@@ -273,6 +278,16 @@ class DataLoader:
             for s in dialogue['sys_utterances']:
                 sys_vocabs.extend(self._sent_normalize(s))
         return set(vocabs), set(sys_vocabs)
+
+    def __len__(self):
+        sum = 0
+        if self.max_train_data_size == 0:
+            for dialogue in self.dialogues:
+                sum += len(dialogue['usr_utterances'])
+        else:
+            for i in range(self.max_train_data_size):
+                sum += len(self.dialogues[i]['usr_utterances'])
+        return sum
 
     def _sent_normalize(self, sent):
         """
@@ -341,6 +356,8 @@ class DataLoader:
         ret = self._get(self.cur)
         self.cur += 1
         # 没运行完一个epoch，就直接乱进行下一个epoch
+        if self.cur > self.max_train_data_size and not self.max_train_data_size == 0:
+            self.cur = 0
         if self.cur == len(self.dialogues):
             if self.mode == 'test':
                 raise StopIteration()
@@ -350,7 +367,7 @@ class DataLoader:
         return ret
 
 
-def load_data(dialogues_train, max_length, kb_fn, ontology_fn, tokenizer, kb_indicator_len):
+def load_data(dialogues_train, max_length, kb_fn, ontology_fn, tokenizer, max_train_data_size, kb_indicator_len):
     """
     加载对原始数据、本体数据、database数据处理好的数据集
     :param dialogues_train: 原始对话数据路径
@@ -366,4 +383,4 @@ def load_data(dialogues_train, max_length, kb_fn, ontology_fn, tokenizer, kb_ind
     kb_found_len = kb_indicator_len - 2
 
     return DataLoader(dialogues=dialogue_data, max_length=max_length, tokenizer=tokenizer, onto=onto, onto_idx=onto_idx,
-                      kb_fonud_len=kb_found_len)
+                      max_train_data_size=max_train_data_size, kb_fonud_len=kb_found_len)
