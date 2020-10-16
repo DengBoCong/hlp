@@ -339,6 +339,8 @@ class DataLoader:
         state_vectors = {slot: tf.cast(tf.zeros(len(states)), dtype=tf.float32).numpy() for slot in self.onto}
         for t, states_at_time_t in enumerate(states):
             for s, v in states_at_time_t:
+                if v == 'center':
+                    v = 'centre'
                 state_vectors[s][t] = self.onto_idx[s][v]
         return state_vectors
 
