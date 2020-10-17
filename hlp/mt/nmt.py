@@ -40,9 +40,9 @@ def main():
 
         # 加载句子
         print('正在加载、预处理数据...')
-        en = _pre.load_single_sentences(_config.path_to_train_file_en, _config.num_sentences, column=1)
-        ch = _pre.load_single_sentences(_config.path_to_train_file_zh, _config.num_sentences, column=1)
-        # en, ch = _pre.load_sentences(_config.path_to_train_file, _config.num_sentences)
+        # en = _pre.load_single_sentences(_config.path_to_train_file_en, _config.num_sentences, column=1)
+        # ch = _pre.load_single_sentences(_config.path_to_train_file_zh, _config.num_sentences, column=1)
+        en, ch = _pre.load_sentences(_config.path_to_train_file, _config.num_sentences)
         # 预处理句子
         en = _pre.preprocess_sentences_en(en, mode=_config.en_tokenize_type)
         ch = _pre.preprocess_sentences_ch(ch, mode=_config.ch_tokenize_type)
@@ -63,16 +63,21 @@ def main():
 
         # 编码句子
         print("正在编码句子...")
-        tensor_en, max_sequence_length_en = _pre.encode_sentences(sentences=en, tokenizer=tokenizer_en
-                                                                  , mode=_config.en_tokenize_type)
-        tensor_ch, max_sequence_length_ch = _pre.encode_sentences(sentences=ch, tokenizer=tokenizer_ch
-                                                                  , mode=_config.ch_tokenize_type)
+        max_sequence_length_en = _pre.create_encoded_sentences(sentences=en, tokenizer=tokenizer_en
+                                                                  , mode=_config.en_tokenize_type
+                                                                  , path=_config.path_temp_encoded_sequences_en)
+        max_sequence_length_ch = _pre.create_encoded_sentences(sentences=ch, tokenizer=tokenizer_ch
+                                                                  , mode=_config.ch_tokenize_type
+                                                                  , path=_config.path_temp_encoded_sequences_zh)
+        print('最大中文句子长度:%d' % max_sequence_length_ch)
+        print('最大英文句子长度:%d' % max_sequence_length_en)
         print("句子编码完毕！\n")
 
         # 创建模型及相关变量
         optimizer, train_loss, train_accuracy, transformer = network.get_model(vocab_size_en, vocab_size_ch)
         # 开始训练
-        trainer.train(tensor_en, tensor_ch, transformer, optimizer, train_loss, train_accuracy)
+        trainer.train(_config.path_temp_encoded_sequences_en, _config.path_temp_encoded_sequences_zh
+                      , transformer, optimizer, train_loss, train_accuracy)
 
     elif options.type == 'eval' or options.type == 'translate':
         if_ckpt = _pre.check_point()  # 检测是否有检查点

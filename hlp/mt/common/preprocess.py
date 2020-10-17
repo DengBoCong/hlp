@@ -16,6 +16,7 @@ from sklearn.model_selection import train_test_split
 from pathlib import Path
 import os
 import json
+import numpy
 
 
 def load_single_sentences(path, num_sentences, column):
@@ -162,6 +163,20 @@ def get_tokenized_tensor_bpe(sentences, tokenizer):
     return sequences, max_sequence_length
 
 
+def create_encoded_sentences_bpe(sentences, tokenizer, path):
+    """
+    Args:
+        sentences: 需要编码的句子列表
+        tokenizer: 字典
+
+    Returns:编码好的句子， 字典
+    """
+    sequences = [tokenizer.encode(s) for s in sentences]
+    sequences = tf.keras.preprocessing.sequence.pad_sequences(sequences, padding='post')
+    max_sequence_length = len(sequences[0])
+    numpy.savetxt(path, sequences)
+    return max_sequence_length
+
 def encode_sentences_bpe(sentences, tokenizer):
     """
     Args:
@@ -199,6 +214,30 @@ def encode_sentences(sentences, tokenizer, mode):
         return False
 
 
+def create_encoded_sentences_tokenize(sentences, tokenizer, path):
+    """
+    Args:
+        sentences: 需要编码的句子
+        tokenizer: 字典
+
+    Returns:编码好的句子， 字典
+    """
+    sequences = tokenizer.texts_to_sequences(sentences)
+    sequences = tf.keras.preprocessing.sequence.pad_sequences(sequences, padding='post')
+    max_sequence_length = len(sequences[0])
+    numpy.savetxt(path, sequences)
+    return max_sequence_length
+
+
+def create_encoded_sentences(sentences, tokenizer, mode, path):
+    if mode == 'BPE':
+        return create_encoded_sentences_bpe(sentences, tokenizer, path)
+    elif mode == 'TOKENIZE':
+        return create_encoded_sentences_tokenize(sentences, tokenizer, path)
+    else:
+        return False
+
+
 def decode_sentence_bpe(sequence, tokenizer):
     return tokenizer.decode(sequence)
 
@@ -219,10 +258,14 @@ def decode_sentence(sentences, tokenizer, mode):
         return False
 
 
-def split_batch(input_tensor, target_tensor):
+def split_batch(path_en, path_zh):
     """
     将输入输出句子进行训练集及验证集的划分,返回张量
+    path_en:英文编码句子路径
+    path_zh:中文编码句子路径
     """
+    input_tensor = numpy.loadtxt(path_en, dtype='int32')
+    target_tensor = numpy.loadtxt(path_zh, dtype='int32')
     x_train, x_test, y_train, y_test = train_test_split(input_tensor, target_tensor, test_size=_config.test_size)
     train_dataset = tf.data.Dataset.from_tensor_slices((x_train, y_train))
     train_dataset = train_dataset.shuffle(_config.BUFFER_SIZE).batch(_config.BATCH_SIZE, drop_remainder=True)

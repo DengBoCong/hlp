@@ -17,6 +17,11 @@
         - TOKENIZE:使用字划分方法进行分词
 
 # 版本日志
+- 2020.10.17：version 1.3.1
+    - 将编码后的数据集保存文本，以优化内存使用
+    - 训练打印标准化
+    - 更改模型配置
+    
 - 2020.10.13：version 1.3.0
     - 加入Beam search
     - 训练打印标准化
@@ -56,3 +61,13 @@
 交互式翻译
 
 ![](./image/test_translate.png)
+
+# 数据集
+
+github上传为测试数据集
+
+若需完整数据集请自行下载：
+
+链接：https://pan.baidu.com/s/1cXPHJXFtMLJSJv-_Qn9cQA
+提取码：mt66 
+复制这段内容后打开百度网盘手机App，操作更方便哦
