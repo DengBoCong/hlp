@@ -7,16 +7,27 @@ Created on Tue Sep 15 16:50:12 2020
 #模型搭建
 #step1：1-3 Conv1D -> 1BN -> 1-3 bi_gru -> 1BN -> 1dense
 import tensorflow as tf
-import char_index_map
+import config
+from utils import get_index_and_char_map
+
 
 #函数式构建DS2模型
-def DS2_func(n_mfcc=20,conv_layers=1,filters=256,kernel_size=11,strides=2,bi_gru_layers=1,gru_units=256, dense_units=len(char_index_map.index_map)+2):
+def DS2_func(
+    n_mfcc=config.configs_other()["n_mfcc"],
+    conv_layers=config.configs_model()["conv_layers"],
+    filters=config.configs_model()["conv_filters"],
+    kernel_size=config.configs_model()["conv_kernel_size"],
+    strides=config.configs_model()["conv_strides"],
+    bi_gru_layers=config.configs_model()["bi_gru_layers"],
+    gru_units=config.configs_model()["gru_units"],
+    dense_units=len(get_index_and_char_map()[0])+2
+    ):
     inputs=tf.keras.Input(shape=(None,None,n_mfcc))
     x=inputs
-    for l in range(conv_layers):
+    for _ in range(conv_layers):
         x = tf.keras.layers.Conv1D(
                 filters=filters,
-                name="conv{}".format(l+1),
+                name="conv{}".format(_+1),
                 kernel_size=kernel_size,
                 padding="same",
                 activation="relu",
@@ -27,11 +38,11 @@ def DS2_func(n_mfcc=20,conv_layers=1,filters=256,kernel_size=11,strides=2,bi_gru
                 momentum=0.99,
                 epsilon=0.001
                 )(x)
-    for l in range(bi_gru_layers):
+    for _ in range(bi_gru_layers):
         x = tf.keras.layers.Bidirectional(
                 tf.keras.layers.GRU(
                         gru_units,
-                        name="bi_gru{}".format(l+1),
+                        name="bi_gru{}".format(_+1),
                         return_sequences=True,
                         activation="relu"
                         ),
@@ -48,7 +59,17 @@ def DS2_func(n_mfcc=20,conv_layers=1,filters=256,kernel_size=11,strides=2,bi_gru
 #子类化构建DS2模型
 class DS2(tf.keras.Model):
     #dense_units=num_classes
-    def __init__(self,n_mfcc=20,conv_layers=1,filters=256,kernel_size=11,strides=2,bi_gru_layers=1,gru_units=256,dense_units=len(char_index_map.index_map)+2):
+    def __init__(
+        self,
+        n_mfcc=config.configs_other()["n_mfcc"],
+        conv_layers=config.configs_model()["conv_layers"],
+        filters=config.configs_model()["conv_filters"],
+        kernel_size=config.configs_model()["conv_kernel_size"],
+        strides=config.configs_model()["conv_strides"],
+        bi_gru_layers=config.configs_model()["bi_gru_layers"],
+        gru_units=config.configs_model()["gru_units"],
+        dense_units=len(get_index_and_char_map()[0])+2
+        ):
         super(DS2,self).__init__()
         self.conv_layers=conv_layers
         self.conv = tf.keras.layers.Conv1D(
@@ -77,11 +98,14 @@ class DS2(tf.keras.Model):
     
     def call(self,inputs):
         x=inputs
-        for i in range(self.conv_layers):
+        for _ in range(self.conv_layers):
             x = self.conv(x)
         x = self.bn(x)
-        for i in range(self.bi_gru_layers):
+        for _ in range(self.bi_gru_layers):
             x = self.bi_gru(x)
         x = self.bn(x)
         x = self.ds(x)
         return x
+
+if __name__ == "__main__":
+    pass

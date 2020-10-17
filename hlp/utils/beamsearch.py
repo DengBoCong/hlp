@@ -19,7 +19,7 @@ class BeamSearch(object):
         self.remain_beam_size = beam_size
         self.max_length = max_length - 1
         self.remain_worst_score = worst_score
-        self._reset_variables()
+        self._reset_all_inner_variables()
 
     def __len__(self):
         """
@@ -27,7 +27,7 @@ class BeamSearch(object):
         """
         return len(self.container)
 
-    def init_variables(self, inputs, dec_input):
+    def init_container_inputs(self, inputs, dec_input):
         """
         用来初始化输入
         :param inputs: 已经序列化的输入句子
@@ -38,7 +38,7 @@ class BeamSearch(object):
         self.inputs = inputs
         self.dec_inputs = dec_input
 
-    def get_variables(self):
+    def expand_beam_size_inputs(self):
         """
         用来动态的更新模型的inputs和dec_inputs，以适配随着Beam Search
         结果的得出而变化的beam_size
@@ -68,7 +68,7 @@ class BeamSearch(object):
                 del self.container[idx]
                 self.beam_size -= 1
 
-    def _reset_variables(self):
+    def _reset_all_inner_variables(self):
         """
         重置相关变量
         :return: 无返回值
@@ -94,7 +94,6 @@ class BeamSearch(object):
                 # 计算分数
                 score = remain[i][0] * predictions[i][k]
                 # 判断容器容量以及分数比较
-
                 if len(self) < self.beam_size or score > self.worst_score:
                     self.container.append((score, tf.concat([remain[i][1], tf.constant([[k]], shape=(1, 1))], axis=-1)))
                     if len(self) > self.beam_size:
@@ -113,5 +112,5 @@ class BeamSearch(object):
         result = self.result
 
         # 每轮回答之后，需要重置容器内部的相关变量值
-        self._reset_variables()
+        self._reset_all_inner_variables()
         return result

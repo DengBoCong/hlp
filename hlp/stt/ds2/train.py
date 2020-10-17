@@ -4,9 +4,11 @@ Created on Tue Sep 15 17:47:11 2020
 
 @author: 彭康
 """
-import data_process
 import tensorflow as tf
+import config
+from data_process import data_process
 from model import DS2
+import time
 
 
 def train_sample(inputs,labels,label_length,optimizer, model):
@@ -15,44 +17,49 @@ def train_sample(inputs,labels,label_length,optimizer, model):
         y_pred=model(inputs)
         y_true=labels
         input_length=tf.fill([y_pred.shape[0],1],y_pred.shape[1])
-        loss=tf.keras.backend.ctc_batch_cost(y_true=y_true, y_pred=y_pred, input_length=input_length, label_length=label_length)
+        loss=tf.keras.backend.ctc_batch_cost(
+            y_true=y_true,
+            y_pred=y_pred,
+            input_length=input_length,
+            label_length=label_length
+            )
         loss = tf.reduce_mean(loss)
     grads = tape.gradient(loss, model.trainable_variables)
     optimizer.apply_gradients(zip(grads, model.trainable_variables))
     return loss
 
 def train(model, optimizer,inputs,labels,label_length, epochs):
-    #trian的迭代
+    #加载检查点
+    checkpoint = tf.train.Checkpoint(model=model)
+    manager = tf.train.CheckpointManager(
+        checkpoint,
+        directory=config.configs_checkpoint()['directory'],
+        max_to_keep=config.configs_checkpoint()['max_to_keep']
+        )
+    if manager.latest_checkpoint:
+        checkpoint.restore(manager.latest_checkpoint)
+    #迭代训练
     for epoch in range(1,epochs+1):
+        start = time.time()
         loss = train_sample(inputs,labels,label_length,optimizer,model)
+        end = time.time()
+        te = end - start
         #5次保存一个检查点并输出一个loss
         if epoch%5==0:
-            checkpoint = tf.train.Checkpoint(model=model)
-            manager = tf.train.CheckpointManager(checkpoint, directory='./checkpoint',max_to_keep=5)
             manager.save()
-            print('Epoch {}, Loss: {}'.format(epoch, loss))
+            print("Epoch %d/%d" % (epoch,epochs))
+            print("%d/%d [==============================] - %ds %dms/step - loss: %.4f" % (inputs.shape[0],inputs.shape[0],te,te*1000/inputs.shape[0],loss))
 
 
 if __name__ == "__main__":
-    #是否为初次训练
-    is_first_train=False
-    if is_first_train:
-        model=DS2()
-        
-    else:
-        model=DS2()
-        #加载检查点
-        checkpoint = tf.train.Checkpoint(model=model)
-        manager = tf.train.CheckpointManager(checkpoint, directory='./checkpoint',max_to_keep=5)
-        checkpoint.restore(manager.latest_checkpoint)
-    
-    epochs=10
-    data_path="./data/train_data"
-    inputs,labels,label_length=data_process.data_process1(data_path=data_path)
+    model=DS2()
+    epochs=config.configs_train()["train_epochs"]
+    data_path=config.configs_train()["data_path"]
+    batch_size=config.configs_train()["batch_size"]
+    inputs,labels,label_length=data_process(
+        data_path=data_path,
+        batch_size=batch_size,
+        if_train_or_test='train'
+        )
     optimizer = tf.keras.optimizers.Adam()
     train(model, optimizer, inputs, labels,label_length, epochs)
-    
-    #保存检查点
-    checkpoint = tf.train.Checkpoint(model=model)
-    manager = tf.train.CheckpointManager(checkpoint, directory='./checkpoint',max_to_keep=5)
-    manager.save()
