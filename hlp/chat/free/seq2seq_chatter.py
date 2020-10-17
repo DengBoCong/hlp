@@ -1,4 +1,6 @@
+import sys
 import tensorflow as tf
+sys.path.append(sys.path[0][:-10])
 from model.chatter import Chatter
 import model.seq2seq as seq2seq
 from common.common import CmdParser

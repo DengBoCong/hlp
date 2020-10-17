@@ -30,12 +30,3 @@
    + [DSTC5](http://workshop.colips.org/dstc5/tasks.html)
    + [DSTC6](http://workshop.colips.org/dstc6/)
    + [Stanford Dialog Dataset](http://nlp.stanford.edu/projects/kvret/kvret_dataset_public.zip)
-
-
-# 版本日志
-+ 2020-10-11：
-   + 闲聊和任务对话分离
-   + 完善字典加载
-   + 完成任务对话pre_treat模式，可使用
-   + 对命名空间中载入变量的部分代码进行重构
-   + 任务对话训练模式部分完成

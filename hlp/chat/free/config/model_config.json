@@ -23,5 +23,5 @@
   "batch_size": 64,
   "buffer_size": 20000,
   "beam_size": 3,
-  "epochs": 20
+  "epochs": 100
 }

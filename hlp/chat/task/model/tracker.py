@@ -27,11 +27,11 @@ def request_slot_tracker(units, name="request_slot_tracker"):
     return tf.keras.Model(inputs=inputs, outputs=outputs, name=name)
 
 
-def state_tracker(units, vocab_size, embedding_dim, hidden, name="state_tracker"):
-    inputs = tf.keras.Input(shape=(None,), name="state_tracker_inputs")  # (None, 301)
+def state_tracker(units, vocab_size, embedding_dim, name="state_tracker"):
+    inputs = tf.keras.Input(shape=(None,), name="state_tracker_inputs")
     embedding = tf.keras.layers.Embedding(vocab_size, embedding_dim)(inputs)
     output, state = tf.keras.layers.GRU(units=units,
                                         return_sequences=True,
                                         return_state=True,
-                                        dropout=0.9)(inputs=embedding, initial_state=hidden)
+                                        dropout=0.9)(inputs=embedding)
     return tf.keras.Model(inputs=[inputs], outputs=[output, state], name=name)

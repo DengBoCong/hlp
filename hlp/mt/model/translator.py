@@ -18,8 +18,8 @@ def predict_index(inp_sentence, transformer, beam_search_container, input_tokeni
     decoder_input = [target_tokenizer.word_index[_config.start_word]]
     decoder_input = tf.expand_dims(decoder_input, 0)
 
-    beam_search_container.init_variables(inputs=inp_sequence, dec_input=decoder_input)
-    inputs, decoder_input = beam_search_container.get_variables()
+    beam_search_container.init_container_inputs(inputs=inp_sequence, dec_input=decoder_input)
+    inputs, decoder_input = beam_search_container.expand_beam_size_inputs()
     for i in range(_config.max_target_length):
         enc_padding_mask, combined_mask, dec_padding_mask = self_attention.create_masks(
             inputs, decoder_input)
@@ -39,7 +39,7 @@ def predict_index(inp_sentence, transformer, beam_search_container, input_tokeni
         if beam_search_container.beam_size == 0:
             break
         # predicted_id = tf.cast(tf.argmax(predictions, axis=-1), tf.int32)
-        inputs, decoder_input = beam_search_container.get_variables()
+        inputs, decoder_input = beam_search_container.expand_beam_size_inputs()
     beam_search_result = beam_search_container.get_result()
 
     return beam_search_result
