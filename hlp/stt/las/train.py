@@ -7,10 +7,10 @@ Created on Wed Sep 16 10:34:04 2020
 # coding=utf-8
 
 from __future__ import absolute_import, division, print_function, unicode_literals
-from hlp.stt.las.model import minilas
+from hlp.stt.las.model import las
 from hlp.stt.las import recognition_evaluate
 from hlp.stt.las.data_processing import preprocess_ch
-from hlp.stt.las.data_processing import mfcc_extract
+from hlp.stt.las.data_processing import librosa_mfcc
 import tensorflow as tf
 import numpy as np
 import os
@@ -123,7 +123,7 @@ if __name__ == "__main__":
 
     #尝试实验不同大小的数据集
     num_examples = 100
-    input_tensor = mfcc_extract.wav_to_mfcc(path)
+    input_tensor = librosa_mfcc.wav_to_mfcc(path)
     target_tensor, targ_lang_tokenizer = preprocess_ch.load_dataset(path_to_file, num_examples)
     targ_lang_tokenizer.word_index
     target_tensor.shape
@@ -133,7 +133,7 @@ if __name__ == "__main__":
     max_length_inp = preprocess_ch.max_length(input_tensor)
     steps_per_epoch, dataset = create_dataset(input_tensor, target_tensor)    
     optimizer = tf.keras.optimizers.Adam()
-    model = minilas.LAS(256, 39, len(targ_lang_tokenizer.word_index) + 1)
+    model = las.LAS(256, 20, len(targ_lang_tokenizer.word_index) + 1)
     checkpoint_dir = './lastraining_checkpoints'
     checkpoint_prefix = os.path.join(checkpoint_dir, "ckpt")
     checkpoint = tf.train.Checkpoint(optimizer=optimizer, model=model)
