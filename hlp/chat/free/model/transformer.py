@@ -121,7 +121,7 @@ def transformer(vocab_size, num_layers, units, d_model,
         d_model=d_model, num_heads=num_heads, dropout=dropout
     )(inputs=[dec_inputs, enc_outputs, look_ahead_mask, dec_padding_mask])
 
-    outputs = tf.keras.layers.Dense(units=vocab_size, name="outputs")(dec_outputs)
+    outputs = tf.keras.layers.Dense(units=vocab_size, activation='softmax', name="outputs")(dec_outputs)
     return tf.keras.Model(inputs=[inputs, dec_inputs], outputs=outputs, name=name)
 
 
