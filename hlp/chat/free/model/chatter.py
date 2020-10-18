@@ -77,7 +77,8 @@ class Chatter(object):
                 self._train_step(inp, tar, step_loss)
                 batch_sum = batch_sum + len(inp)
                 sample_sum = steps_per_epoch * len(inp)
-                print('\r', '{}/{} [==================================]'.format(batch_sum, sample_sum), end='', flush=True)
+                print('\r', '{}/{} [==================================]'.format(batch_sum, sample_sum), end='',
+                      flush=True)
 
             step_time = (time.time() - start_time)
             sys.stdout.write(' - {:.4f}s/step - loss: {:.4f}\n'

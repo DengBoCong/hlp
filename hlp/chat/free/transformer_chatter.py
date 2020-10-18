@@ -8,7 +8,6 @@ import model.transformer as transformer
 from common.pre_treat import preprocess_raw_data
 
 
-
 class TransformerChatter(Chatter):
     """
     Transformer模型的聊天类
