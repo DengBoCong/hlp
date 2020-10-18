@@ -28,9 +28,9 @@ def train_step(inp, tar, transformer, optimizer, train_loss, train_accuracy):
     return transformer, optimizer, train_loss, train_accuracy
 
 
-def train(input_tensor, target_tensor, transformer, optimizer, train_loss, train_accuracy):
+def train(path_en, path_zh, transformer, optimizer, train_loss, train_accuracy):
 
-    train_dataset, val_dataset = preprocess.split_batch(input_tensor, target_tensor)
+    train_dataset, val_dataset = preprocess.split_batch(path_en, path_zh)
     checkpoint_path = _config.checkpoint_path
 
     ckpt = tf.train.Checkpoint(transformer=transformer,
@@ -52,7 +52,7 @@ def train(input_tensor, target_tensor, transformer, optimizer, train_loss, train
         train_accuracy.reset_states()
 
         batch_sum = 0
-        sample_sum = int(len(input_tensor) * (1 - _config.test_size))
+        sample_sum = int((_config.num_sentences * (1 - _config.test_size)) // _config.BATCH_SIZE * _config.BATCH_SIZE)
 
         # inp -> english, tar -> chinese
         for (batch, (inp, tar)) in enumerate(train_dataset):
@@ -63,9 +63,11 @@ def train(input_tensor, target_tensor, transformer, optimizer, train_loss, train
                                                                           , train_loss.result()
                                                                           , train_accuracy.result()), end='')
 
-        step_time = (time.time() - start)
-        print(' - {:.4f}s/step - loss: {:.4f} - Accuracy {:.4f}\n'
-                         .format(step_time, train_loss.result(), train_accuracy.result()))
+        epoch_time = (time.time() - start)
+        step_time = epoch_time * _config.BATCH_SIZE / sample_sum
+        print(' - {:.0f}s - {:.0f}ms/step - loss: {:.4f} - Accuracy {:.4f}'.format(epoch_time, step_time * 1000
+                                                                                   , train_loss.result()
+                                                                                   , train_accuracy.result()))
 
         if (epoch + 1) % 5 == 0:
             ckpt_save_path = ckpt_manager.save()
