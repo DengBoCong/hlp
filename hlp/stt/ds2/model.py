@@ -11,52 +11,6 @@ import tensorflow as tf
 from utils import get_index_and_char_map
 
 
-# 函数式构建DS2模型
-def DS2_func(
-        n_mfcc=config.configs_other()["n_mfcc"],
-        conv_layers=config.configs_model()["conv_layers"],
-        filters=config.configs_model()["conv_filters"],
-        kernel_size=config.configs_model()["conv_kernel_size"],
-        strides=config.configs_model()["conv_strides"],
-        bi_gru_layers=config.configs_model()["bi_gru_layers"],
-        gru_units=config.configs_model()["gru_units"],
-        dense_units=len(get_index_and_char_map()[0]) + 2
-):
-    inputs = tf.keras.Input(shape=(None, None, n_mfcc))
-    x = inputs
-    for _ in range(conv_layers):
-        x = tf.keras.layers.Conv1D(
-            filters=filters,
-            name="conv{}".format(_ + 1),
-            kernel_size=kernel_size,
-            padding="same",
-            activation="relu",
-            strides=strides
-        )(x)
-    x = tf.keras.layers.BatchNormalization(
-        axis=-1,
-        momentum=0.99,
-        epsilon=0.001
-    )(x)
-    for _ in range(bi_gru_layers):
-        x = tf.keras.layers.Bidirectional(
-            tf.keras.layers.GRU(
-                gru_units,
-                name="bi_gru{}".format(_ + 1),
-                return_sequences=True,
-                activation="relu"
-            ),
-            merge_mode="sum"
-        )(x)
-    x = tf.keras.layers.BatchNormalization(
-        axis=-1,
-        momentum=0.99,
-        epsilon=0.001
-    )(x)
-    outputs = tf.keras.layers.Dense(dense_units, activation="softmax")(x)
-    return tf.keras.Model(inputs, outputs)
-
-
 # 子类化构建DS2模型
 class DS2(tf.keras.Model):
     # dense_units=num_classes
