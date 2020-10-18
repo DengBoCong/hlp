@@ -97,7 +97,8 @@ class BeamSearch(object):
                 predictions[i][token_index] = 0
                 # 判断容器容量以及分数比较
                 if len(self) < self.beam_size or score > self.worst_score:
-                    self.container.append((score, tf.concat([remain[i][1], tf.constant([[token_index.numpy()]], shape=(1, 1))], axis=-1)))
+                    self.container.append(
+                        (score, tf.concat([remain[i][1], tf.constant([[token_index.numpy()]], shape=(1, 1))], axis=-1)))
                     if len(self) > self.beam_size:
                         sorted_scores = sorted([(s, idx) for idx, (s, _) in enumerate(self.container)])
                         del self.container[sorted_scores[0][1]]
