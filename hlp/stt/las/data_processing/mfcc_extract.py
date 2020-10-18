@@ -6,11 +6,11 @@ Created on Tue Sep 15 10:20:05 2020
 提取音频文件mfcc特征
 """
 import os
+
 import numpy as np
-from matplotlib import pyplot as plt
-from scipy.fftpack import dct
 import scipy.io.wavfile
 import tensorflow as tf
+from scipy.fftpack import dct
 
 
 def MFCC(sample_rate, signal):

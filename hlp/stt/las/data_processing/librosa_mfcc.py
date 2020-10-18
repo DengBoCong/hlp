@@ -6,9 +6,11 @@ Created on Fri Oct 16 19:15:23 2020
 librosa提取mfcc
 """
 
-import librosa
 import os
+
+import librosa
 import tensorflow as tf
+
 
 def mfcc_extract(path):
     y, sr = librosa.load(path=path)
@@ -23,13 +25,12 @@ def wav_to_mfcc(path):
 
     for file in files:  # 遍历文件夹
         position = path + '\\' + file  # 构造绝对路径，"\\"，其中一个'\'为转义符
-        mfcc = mfcc_extract(position)        
+        mfcc = mfcc_extract(position)
         mfccs.append(mfcc)
 
     mfccs = tf.keras.preprocessing.sequence.pad_sequences(mfccs, padding='post', dtype=float)
     print('====mfccs.shape = {}'.format(mfccs.shape))  # (100, 93, 39)
     return mfccs
-
 
 
 '''
@@ -45,6 +46,3 @@ y,sr = librosa.load(path=path)
 mfccs = librosa.feature.mfcc(y=y,n_mfcc=20)
 print(mfccs.shape)
 '''
-
-
-

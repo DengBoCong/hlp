@@ -7,16 +7,16 @@ Created on Wed Sep 16 10:34:04 2020
 # coding=utf-8
 
 from __future__ import absolute_import, division, print_function, unicode_literals
-from hlp.stt.las.model import las
-from hlp.stt.las import recognition_evaluate
-from hlp.stt.las.data_processing import preprocess_ch
-from hlp.stt.las.data_processing import librosa_mfcc
-import tensorflow as tf
-import numpy as np
+
 import os
 import time
 
+import numpy as np
+import tensorflow as tf
 
+from hlp.stt.las.data_processing import librosa_mfcc
+from hlp.stt.las.data_processing import preprocess_ch
+from hlp.stt.las.model import las
 
 
 # 创建一个 tf.data 数据集
@@ -29,7 +29,7 @@ def create_dataset(input_x, target_y):
     return steps_per_epoch, dataset
 
 
-def loss_function(real, pred,targ_tokenizer):
+def loss_function(real, pred, targ_tokenizer):
     loss_object = tf.keras.losses.CategoricalCrossentropy(from_logits=True, reduction='none')
     mask = tf.math.logical_not(
         tf.math.equal(tf.argmax(real[0]).numpy(), len(targ_tokenizer.word_index)))  # 填充位，掩蔽
@@ -42,10 +42,8 @@ def loss_function(real, pred,targ_tokenizer):
     return tf.reduce_mean(loss_)
 
 
-
-
 # @tf.function
-def train_step(inputx_1, targetx_2,targ_tokenizer,las_model,las_optimizer):
+def train_step(inputx_1, targetx_2, targ_tokenizer, las_model, las_optimizer):
     loss = 0
 
     with tf.GradientTape() as tape:
@@ -94,7 +92,7 @@ def train_step(inputx_1, targetx_2,targ_tokenizer,las_model,las_optimizer):
 
             # print('predictions = {}'.format(predictions.shape))#(1, 1, 456)
             # print('targetx_2[:,:,t].shape = {}'.format(targetx_2[:, t].shape))#(1, 456)
-            loss += loss_function(targetx_2[:, t], predictions,targ_tokenizer)  # 根据预测计算损失
+            loss += loss_function(targetx_2[:, t], predictions, targ_tokenizer)  # 根据预测计算损失
             # 使用教师强制，下一步输入符号是训练集中对应目标符号
             dec_input = targetx_2[:, t]
 
@@ -110,18 +108,17 @@ def train_step(inputx_1, targetx_2,targ_tokenizer,las_model,las_optimizer):
     # print('gradients = {}')
     las_optimizer.apply_gradients(zip(gradients, variables))  # 优化器反向传播更新参数
 
-    return batch_loss,las_optimizer
-
+    return batch_loss, las_optimizer
 
 
 if __name__ == "__main__":
     # wav文件
     path = ".\\data\\wav"
 
-    #中文语音识别语料文件
+    # 中文语音识别语料文件
     path_to_file = ".\\data\\text.txt"
 
-    #尝试实验不同大小的数据集
+    # 尝试实验不同大小的数据集
     num_examples = 100
     input_tensor = librosa_mfcc.wav_to_mfcc(path)
     target_tensor, targ_lang_tokenizer = preprocess_ch.load_dataset(path_to_file, num_examples)
@@ -131,7 +128,7 @@ if __name__ == "__main__":
     # 计算目标张量的最大长度 （max_length）
     max_length_targ = preprocess_ch.max_length(target_tensor)
     max_length_inp = preprocess_ch.max_length(input_tensor)
-    steps_per_epoch, dataset = create_dataset(input_tensor, target_tensor)    
+    steps_per_epoch, dataset = create_dataset(input_tensor, target_tensor)
     optimizer = tf.keras.optimizers.Adam()
     model = las.LAS(256, 20, len(targ_lang_tokenizer.word_index) + 1)
     checkpoint_dir = './lastraining_checkpoints'
@@ -141,7 +138,6 @@ if __name__ == "__main__":
     # 恢复检查点目录 （checkpoint_dir） 中最新的检查点
     checkpoint.restore(tf.train.latest_checkpoint(checkpoint_dir))
 
-    
     EPOCHS = 500
 
     for epoch in range(EPOCHS):
@@ -155,7 +151,7 @@ if __name__ == "__main__":
             # print('x_1.shape = {}'.format(x_1.shape))#(1, 93, 39)
             # print('x_2.shape = {}'.format(x_2.shape))#(1, 26, 456)
 
-            batch_loss,optimizer = train_step(x_1, x_2,targ_lang_tokenizer,model,optimizer)  # 训练一个批次，返回批损失
+            batch_loss, optimizer = train_step(x_1, x_2, targ_lang_tokenizer, model, optimizer)  # 训练一个批次，返回批损失
 
             total_loss += batch_loss
 
