@@ -55,8 +55,10 @@ def get_highway_output(highway_input, nb_layers, activation="tanh", bias=-3):
 
 def encode_CBHG(input_data, K_CBHG):
     t = conv1dbank(K_CBHG, input_data)
+
     t = MaxPooling1D(pool_size=2, strides=1,
                               padding='same')(t)
+
     t = Conv1D(filters=128, kernel_size=3,
                         strides=1, padding='same')(t)
     t = BatchNormalization()(t)
@@ -147,7 +149,6 @@ def get_tacotron_model(n_mels, r, k1, k2, nb_char_max,
     attention_rnn_output = get_attention_RNN()(prenet_decoding)
     attention_rnn_output_repeated = RepeatVector(
         nb_char_max)(attention_rnn_output)
-
     attention_context = get_attention_context(cbhg_encoding,
                                               attention_rnn_output_repeated)  # 得到上下文向量
 
