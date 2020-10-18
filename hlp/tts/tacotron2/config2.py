@@ -1,59 +1,59 @@
 class Tacotron2Config(object):
     """Initialize Tacotron-2 Config."""
+
     def __init__(
-        self,
-        dataset='ljspeech',
-        #vocab_size=len(lj_symbols),
-        embedding_hidden_size=512,
-        initializer_range=0.02,
-        layer_norm_eps=1e-6,
-        embedding_dropout_prob=0.1,
-        n_speakers=5,
-        n_conv_encoder=3,
-        encoder_conv_filters=512,
-        encoder_conv_kernel_sizes=5,
-        encoder_conv_activation="mish",
-        encoder_conv_dropout_rate=0.5,
-        encoder_lstm_units=256,
-        decoder_dim=256,
-        decoder_lstm_dim=1024,
-        decoder_lstm_rate=0.1,
+            self,
+            dataset='ljspeech',
+            # vocab_size=len(lj_symbols),
+            embedding_hidden_size=512,
+            initializer_range=0.02,
+            layer_norm_eps=1e-6,
+            embedding_dropout_prob=0.1,
+            n_speakers=5,
+            n_conv_encoder=3,
+            encoder_conv_filters=512,
+            encoder_conv_kernel_sizes=5,
+            encoder_conv_activation="mish",
+            encoder_conv_dropout_rate=0.5,
+            encoder_lstm_units=256,
+            decoder_dim=256,
+            decoder_lstm_dim=1024,
+            decoder_lstm_rate=0.1,
 
-        # Attention parameters
-        attention_dim=128,
+            # Attention parameters
+            attention_dim=128,
 
-        # Location Layer parameters
-        attention_filters=56,
-        attention_kernel=31,
+            # Location Layer parameters
+            attention_filters=56,
+            attention_kernel=31,
 
-        # Mel-post processing network parameters
-        # postnet_embedding_dim=512,
-        # postnet_kernel_size=5,
-        # postnet_n_convolutions=5,
+            # Mel-post processing network parameters
+            # postnet_embedding_dim=512,
+            # postnet_kernel_size=5,
+            # postnet_n_convolutions=5,
 
+            reduction_factor=5,
+            n_prenet_layers=2,
+            prenet_units=256,
+            prenet_activation="mish",
+            prenet_dropout_rate=0.5,
+            n_lstm_decoder=1,
+            decoder_lstm_units=1024,
+            attention_type="lsa",
 
-        reduction_factor=5,
-        n_prenet_layers=2,
-        prenet_units=256,
-        prenet_activation="mish",
-        prenet_dropout_rate=0.5,
-        n_lstm_decoder=1,
-        decoder_lstm_units=1024,
-        attention_type="lsa",
-
-        gate_threshold=0.5,
-        n_mels=80,
-        n_conv_postnet=5,
-        postnet_conv_filters=512,
-        postnet_conv_kernel_sizes=5,
-        postnet_dropout_rate=0.1,
-        #path
-        text_train_path=r".\text\text_train\wenzi.txt",
-        wave_train_path= r"./wavs/wave_train/",
-        text_test_path= r".\text\text_test\wenzi.txt",
-        wave_test_path = r"./wavs/wave_test/",
-        #一些参数
-        batch_size=2
+            gate_threshold=0.5,
+            n_mels=80,
+            n_conv_postnet=5,
+            postnet_conv_filters=512,
+            postnet_conv_kernel_sizes=5,
+            postnet_dropout_rate=0.1,
+            # path
+            text_train_path=r".\text\text_train\wenzi.txt",
+            wave_train_path=r"./wavs/wave_train/",
+            text_test_path=r".\text\text_test\wenzi.txt",
+            wave_test_path=r"./wavs/wave_test/",
+            # 一些参数
+            batch_size=2
 
     ):
         """Init parameters for Tacotron-2 model."""
@@ -82,9 +82,9 @@ class Tacotron2Config(object):
         self.attention_filters = attention_filters
         self.attention_kernel = attention_kernel
         self.n_mels = n_mels
-        self.decoder_dim=decoder_dim
-        self.decoder_lstm_dim=decoder_lstm_dim
-        self.decoder_lstm_rate=decoder_lstm_rate
+        self.decoder_dim = decoder_dim
+        self.decoder_lstm_dim = decoder_lstm_dim
+        self.decoder_lstm_rate = decoder_lstm_rate
         self.gate_threshold = gate_threshold
         # postnet
         self.n_conv_postnet = n_conv_postnet
@@ -92,14 +92,18 @@ class Tacotron2Config(object):
         self.postnet_conv_kernel_sizes = postnet_conv_kernel_sizes
         self.postnet_dropout_rate = postnet_dropout_rate
         # path
-        self.text_train_path=text_train_path
+        self.text_train_path = text_train_path
         self.wave_train_path = wave_train_path
         self.text_test_path = text_test_path
         self.wave_test_path = wave_test_path
-        self.batch_size=batch_size
+        self.batch_size = batch_size
+
+
 """----------------------checkpoint--------------------------"""
+
+
 def configs_checkpoint():
-    configs_checkpoint={}
-    configs_checkpoint["directory"] = "./checkpoint" #检查点保存路径
-    configs_checkpoint["max_to_keep"] = 5 #保存的最近的检查点的最多个数
+    configs_checkpoint = {}
+    configs_checkpoint["directory"] = "./checkpoint"  # 检查点保存路径
+    configs_checkpoint["max_to_keep"] = 5  # 保存的最近的检查点的最多个数
     return configs_checkpoint

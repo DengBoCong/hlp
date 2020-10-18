@@ -1,26 +1,25 @@
-sr = 22050 # Sample rate.
-n_fft = 2048 # fft points (samples)
-frame_shift = 0.0125 # seconds
-frame_length = 0.05 # seconds
-hop_length = int(sr*frame_shift) # samples.
-win_length = int(sr*frame_length) # samples.
-n_mels =80# Number of Mel banks to generate
-power = 1.2 # Exponent for amplifying the predicted magnitude
-n_iter = 100 # Number of inversion iterations
-preemphasis = .97 # or None
+sr = 22050  # Sample rate.
+n_fft = 2048  # fft points (samples)
+frame_shift = 0.0125  # seconds
+frame_length = 0.05  # seconds
+hop_length = int(sr * frame_shift)  # samples.
+win_length = int(sr * frame_length)  # samples.
+n_mels = 80  # Number of Mel banks to generate
+power = 1.2  # Exponent for amplifying the predicted magnitude
+n_iter = 100  # Number of inversion iterations
+preemphasis = .97  # or None
 max_db = 100
 ref_db = 20
 top_db = 15
-import matplotlib.pyplot as plt
+import copy
+
 import librosa
 import librosa.display
-import librosa
+import matplotlib.pyplot as plt
 import numpy as np
-import scipy.io.wavfile as wave
-import copy
 import scipy
 
-import tensorflow as tf
+
 def get_spectrograms(fpath):
     '''Returns normalized log(melspectrogram) and log(magnitude) from `sound_file`.
     Args:
@@ -90,12 +89,14 @@ def melspectrogram2wav(mel):
 
     return wav.astype(np.float32)
 
+
 def _mel_to_linear_matrix(sr, n_fft, n_mels):
     m = librosa.filters.mel(sr, n_fft, n_mels)
     m_t = np.transpose(m)
     p = np.matmul(m, m_t)
     d = [1.0 / x if np.abs(x) > 1.0e-8 else x for x in np.sum(p, axis=0)]
     return np.matmul(m_t, np.diag(d))
+
 
 def griffin_lim(spectrogram):
     '''Applies Griffin-Lim's raw.
@@ -119,7 +120,6 @@ def invert_spectrogram(spectrogram):
     return librosa.istft(spectrogram, hop_length, win_length=win_length, window="hann")
 
 
-
 def plot_spectrogram_to_numpy(spectrogram):
     fig, ax = plt.subplots(figsize=(12, 3))
     im = ax.imshow(spectrogram, aspect="auto", origin="lower",
@@ -141,16 +141,15 @@ def save_figure_to_numpy(fig):
     data = data.reshape(fig.canvas.get_width_height()[::-1] + (3,))
     return data
 
-
-#x,y=get_spectrograms('1.wav')
-#print("x:",type(x))
+# x,y=get_spectrograms('1.wav')
+# print("x:",type(x))
 # print("x:",x.shape)
-#print("mel", x)
-#wav=melspectrogram2wav(x)
+# print("mel", x)
+# wav=melspectrogram2wav(x)
 ##wave.write('4.wav', rate=sr, data=wav)
-#plt.figure()
+# plt.figure()
 # plt.subplot(3, 1, 1)
 # plt.imshow(plot_spectrogram_to_numpy(mel))
-#plt.subplot(1,1,1)
-#plt.imshow(plot_spectrogram_to_numpy (x))
-#plt.show()
+# plt.subplot(1,1,1)
+# plt.imshow(plot_spectrogram_to_numpy (x))
+# plt.show()

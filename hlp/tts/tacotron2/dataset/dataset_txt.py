@@ -1,7 +1,10 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
-import tensorflow as tf
-import re
+
 import io
+import re
+
+import tensorflow as tf
+
 
 def preprocess_en_sentence(s):
     s = s.lower().strip()
@@ -18,12 +21,14 @@ def preprocess_en_sentence(s):
     s = '<start> ' + s + ' <end>'
     return s
 
+
 def create_dataset(path, num_examples):
     # lines = io.open(path, encoding='UTF-8').read().strip().split('\n')
     lines = io.open(path, encoding='UTF-8').read().strip().split('\n')
     en_sentences = [l.split('\t')[0] for l in lines[:num_examples]]
     en_sentences = [preprocess_en_sentence(s) for s in en_sentences]
     return en_sentences
+
 
 def tokenize(texts):
     tokenizer = tf.keras.preprocessing.text.Tokenizer(filters='')  # 无过滤字符
@@ -37,4 +42,4 @@ def tokenize(texts):
 def Dataset_txt(path_to_file):
     en = create_dataset(path_to_file, None)
     en_seqs, en_tokenizer = tokenize(en)
-    return en_seqs,en_tokenizer
+    return en_seqs, en_tokenizer

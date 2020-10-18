@@ -1,22 +1,24 @@
-import tensorflow as tf
 import os
-sr = 22050 # Sample rate.
-n_fft = 2048 # fft points (samples)
-frame_shift = 0.0125 # seconds
-frame_length = 0.05 # seconds
-hop_length = int(sr*frame_shift) # samples.
-win_length = int(sr*frame_length) # samples.
-n_mels =80# Number of Mel banks to generate
-power = 1.2 # Exponent for amplifying the predicted magnitude
-n_iter = 100 # Number of inversion iterations
-preemphasis = .97 # or None
+
+import tensorflow as tf
+
+sr = 22050  # Sample rate.
+n_fft = 2048  # fft points (samples)
+frame_shift = 0.0125  # seconds
+frame_length = 0.05  # seconds
+hop_length = int(sr * frame_shift)  # samples.
+win_length = int(sr * frame_length)  # samples.
+n_mels = 80  # Number of Mel banks to generate
+power = 1.2  # Exponent for amplifying the predicted magnitude
+n_iter = 100  # Number of inversion iterations
+preemphasis = .97  # or None
 max_db = 100
 ref_db = 20
 top_db = 15
 import librosa
 import numpy as np
 from model.plot import plot_mel
-import scipy.io.wavfile as wave
+
 
 def get_spectrograms(fpath):
     '''Returns normalized log(melspectrogram) and log(magnitude) from `sound_file`.
@@ -65,19 +67,21 @@ def get_spectrograms(fpath):
 
 
 mel_list = []
+
+
 def Dataset_wave(path):
     x = tf.constant(0, shape=(1, 500, 80))
     dirs = os.listdir(path)
     for file in dirs:
-        #y, sr = librosa.load(path+file, sr=None)
-        #melspec = librosa.feature.melspectrogram(y, sr, n_fft=1024, hop_length=512, n_mels=80)
-        #logmelspec = librosa.power_to_db(melspec)
-        logmelspec,sr= get_spectrograms(path+file)
-        #logmelspec = np.exp(logmelspec)
-        #logmelspec = 10*logmelspec
+        # y, sr = librosa.load(path+file, sr=None)
+        # melspec = librosa.feature.melspectrogram(y, sr, n_fft=1024, hop_length=512, n_mels=80)
+        # logmelspec = librosa.power_to_db(melspec)
+        logmelspec, sr = get_spectrograms(path + file)
+        # logmelspec = np.exp(logmelspec)
+        # logmelspec = 10*logmelspec
 
-        #print("logmelspec::",logmelspec.shape)
-        #logmelspec = tf.transpose(logmelspec, [1, 0])
+        # print("logmelspec::",logmelspec.shape)
+        # logmelspec = tf.transpose(logmelspec, [1, 0])
         print(logmelspec)
         # if i==0:
         #     print(logmelspec)
@@ -92,13 +96,14 @@ def Dataset_wave(path):
         #     x = logmelspec
         #     i = i + 1
         #     continue
-        #x = tf.concat([x, logmelspec], 0)
-        #print("logmelspec",logmelspec.shape)
-    #print(mel_list)
-    mel_numpy = tf.keras.preprocessing.sequence.pad_sequences(mel_list,maxlen=1000,padding='post', value=0.0,dtype='float32')
+        # x = tf.concat([x, logmelspec], 0)
+        # print("logmelspec",logmelspec.shape)
+    # print(mel_list)
+    mel_numpy = tf.keras.preprocessing.sequence.pad_sequences(mel_list, maxlen=1000, padding='post', value=0.0,
+                                                              dtype='float32')
     print(mel_numpy)
     inputs = tf.convert_to_tensor(mel_numpy)
-    #print(inputs)
+    # print(inputs)
     plot_mel(inputs)
     return inputs
 
