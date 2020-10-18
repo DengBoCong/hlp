@@ -47,6 +47,14 @@ class Tacotron2Config(object):
         postnet_conv_filters=512,
         postnet_conv_kernel_sizes=5,
         postnet_dropout_rate=0.1,
+        #path
+        text_train_path=r".\text\text_train\wenzi.txt",
+        wave_train_path= r"./wavs/wave_train/",
+        text_test_path= r".\text\text_test\wenzi.txt",
+        wave_test_path = r"./wavs/wave_test/",
+        #一些参数
+        batch_size=2
+
     ):
         """Init parameters for Tacotron-2 model."""
         self.embedding_hidden_size = embedding_hidden_size
@@ -83,3 +91,15 @@ class Tacotron2Config(object):
         self.postnet_conv_filters = postnet_conv_filters
         self.postnet_conv_kernel_sizes = postnet_conv_kernel_sizes
         self.postnet_dropout_rate = postnet_dropout_rate
+        # path
+        self.text_train_path=text_train_path
+        self.wave_train_path = wave_train_path
+        self.text_test_path = text_test_path
+        self.wave_test_path = wave_test_path
+        self.batch_size=batch_size
+"""----------------------checkpoint--------------------------"""
+def configs_checkpoint():
+    configs_checkpoint={}
+    configs_checkpoint["directory"] = "./checkpoint" #检查点保存路径
+    configs_checkpoint["max_to_keep"] = 5 #保存的最近的检查点的最多个数
+    return configs_checkpoint
