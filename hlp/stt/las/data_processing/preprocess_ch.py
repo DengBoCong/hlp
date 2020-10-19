@@ -6,10 +6,11 @@ Created on Tue Sep 29 10:20:05 2020
 
 中文语料预处理
 """
-import re
 import io
-import tensorflow as tf
+import re
+
 import numpy as np
+import tensorflow as tf
 
 
 def preprocess_ch_sentence(s):
@@ -71,5 +72,3 @@ def load_dataset(path, num_examples=None):
     # target_tensor = tf.convert_to_tensor(target_tensor)
     target_tensor = tensor_to_onehot(target_tensor, targ_lang_tokenizer)
     return target_tensor, targ_lang_tokenizer
-
-

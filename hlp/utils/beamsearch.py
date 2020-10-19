@@ -87,15 +87,18 @@ class BeamSearch(object):
         :return: 无返回值
         """
         remain = copy.deepcopy(self.container)
+        self.container.clear()
+        predictions = predictions.numpy()
         for i in range(self.dec_inputs.shape[0]):
-            for k in range(predictions.shape[-1]):
-                if predictions[i][k] <= 0:
-                    continue
+            for _ in range(self.beam_size):
+                token_index = tf.argmax(input=predictions[i], axis=0)
                 # 计算分数
-                score = remain[i][0] * predictions[i][k]
+                score = remain[i][0] * predictions[i][token_index]
+                predictions[i][token_index] = 0
                 # 判断容器容量以及分数比较
                 if len(self) < self.beam_size or score > self.worst_score:
-                    self.container.append((score, tf.concat([remain[i][1], tf.constant([[k]], shape=(1, 1))], axis=-1)))
+                    self.container.append(
+                        (score, tf.concat([remain[i][1], tf.constant([[token_index.numpy()]], shape=(1, 1))], axis=-1)))
                     if len(self) > self.beam_size:
                         sorted_scores = sorted([(s, idx) for idx, (s, _) in enumerate(self.container)])
                         del self.container[sorted_scores[0][1]]

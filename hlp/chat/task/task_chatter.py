@@ -4,6 +4,7 @@ import time
 import tensorflow as tf
 import model.model as task
 from common.kb import load_kb
+
 sys.path.append(sys.path[0][:-10])
 from model.chatter import Chatter
 import common.data_utils as _data
