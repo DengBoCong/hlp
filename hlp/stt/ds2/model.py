@@ -4,55 +4,54 @@ Created on Tue Sep 15 16:50:12 2020
 @author: 彭康
 """
 
-import config
-# 模型搭建
-# step1：1-3 Conv1D -> 1BN -> 1-3 bi_gru -> 1BN -> 1dense
+#模型搭建
+#step1：1-3 Conv1D -> 1BN -> 1-3 bi_gru -> 1BN -> 1dense
 import tensorflow as tf
-from utils import get_index_and_char_map
+import config
 
 
-# 子类化构建DS2模型
+#子类化构建DS2模型
 class DS2(tf.keras.Model):
-    # dense_units=num_classes
+    #dense_units=num_classes
     def __init__(
-            self,
-            n_mfcc=config.configs_other()["n_mfcc"],
-            conv_layers=config.configs_model()["conv_layers"],
-            filters=config.configs_model()["conv_filters"],
-            kernel_size=config.configs_model()["conv_kernel_size"],
-            strides=config.configs_model()["conv_strides"],
-            bi_gru_layers=config.configs_model()["bi_gru_layers"],
-            gru_units=config.configs_model()["gru_units"],
-            dense_units=len(get_index_and_char_map()[0]) + 2
-    ):
-        super(DS2, self).__init__()
-        self.conv_layers = conv_layers
+        self,
+        dense_units,
+        n_mfcc=config.configs_other()["n_mfcc"],
+        conv_layers=config.configs_model()["conv_layers"],
+        filters=config.configs_model()["conv_filters"],
+        kernel_size=config.configs_model()["conv_kernel_size"],
+        strides=config.configs_model()["conv_strides"],
+        bi_gru_layers=config.configs_model()["bi_gru_layers"],
+        gru_units=config.configs_model()["gru_units"]
+        ):
+        super(DS2,self).__init__()
+        self.conv_layers=conv_layers
         self.conv = tf.keras.layers.Conv1D(
-            filters=filters,
-            kernel_size=kernel_size,
-            strides=strides,
-            padding="same",
-            activation="relu",
-            input_shape=(None, None, n_mfcc)
-        )
-        self.bi_gru_layers = bi_gru_layers
-        self.bi_gru = tf.keras.layers.Bidirectional(
-            tf.keras.layers.GRU(
-                gru_units,
+                filters=filters,
+                kernel_size=kernel_size,
+                strides=strides,
+                padding="valid",
                 activation="relu",
-                return_sequences=True
-            ),
-            merge_mode="sum"
-        )
+                input_shape=(None,None,n_mfcc)
+                )
+        self.bi_gru_layers=bi_gru_layers
+        self.bi_gru = tf.keras.layers.Bidirectional(
+                tf.keras.layers.GRU(
+                        gru_units,
+                        activation="relu",
+                        return_sequences=True
+                        ),
+                merge_mode="sum"
+                )
         self.bn = tf.keras.layers.BatchNormalization(
-            axis=-1,
-            momentum=0.99,
-            epsilon=0.001
-        )
-        self.ds = tf.keras.layers.Dense(dense_units, activation="softmax")
-
-    def call(self, inputs):
-        x = inputs
+                axis=-1,
+                momentum=0.99,
+                epsilon=0.001
+                )
+        self.ds = tf.keras.layers.Dense(dense_units,activation="softmax")
+    
+    def call(self,inputs):
+        x=inputs
         for _ in range(self.conv_layers):
             x = self.conv(x)
         x = self.bn(x)
@@ -61,7 +60,6 @@ class DS2(tf.keras.Model):
         x = self.bn(x)
         x = self.ds(x)
         return x
-
 
 if __name__ == "__main__":
     pass
