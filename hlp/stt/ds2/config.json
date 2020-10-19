@@ -1,12 +1,12 @@
 {
     "train": {
-        "train_epochs": 2,
-        "data_path": "./data/train_data",
-        "batch_size": 19,
+        "train_epochs": 4,
+        "data_path": "./number/train",
+        "batch_size": 36,
         "num_examples": null
     },
     "test": {
-        "data_path": "./data/test_data",
+        "data_path": "./number/dev",
         "batch_size": 24,
         "num_examples": null
     },
@@ -17,7 +17,7 @@
         "conv_strides": 2,
         "bi_gru_layers": 1,
         "gru_units": 256,
-        "dense_units": 521
+        "dense_units": 14
     },
     "checkpoint": {
         "directory": "./checkpoint",
@@ -33,7 +33,9 @@
         "index_word_json_path": "index_word_json.json"
     },
     "preprocess": {
-        "text_raw_style": 1,
-        "text_process_mode": "en_word"
+        "text_raw_style(文本数据集每行的格式：1是'index string',2是'string',3...)": "",
+        "text_raw_style": 2,
+        "text_process_mode(文本处理的方法：en_word(英文单词)或者cn(中文或不带中午的单字符)、en_char(英文字符))": "",
+        "text_process_mode": "cn"
     }
 }

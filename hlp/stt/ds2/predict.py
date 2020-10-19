@@ -21,8 +21,8 @@ if __name__ == "__main__":
     if manager.latest_checkpoint:
         checkpoint.restore(manager.latest_checkpoint)
 
-    audio_path = "./199/19-198-0000.flac"
-    #audio_path = configs["record"]["record_path"]
+    #audio_path = "./number/dev/0_jackson_0.wav"
+    audio_path = configs["record"]["record_path"]
     x_test = wav_to_mfcc(audio_path)
     x_test_input = tf.keras.preprocessing.sequence.pad_sequences(
             [x_test],
