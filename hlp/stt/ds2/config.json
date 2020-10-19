@@ -1,12 +1,12 @@
 {
     "train": {
         "train_epochs": 2,
-        "data_path": "./198",
+        "data_path": "./data/train_data",
         "batch_size": 19,
         "num_examples": null
     },
     "test": {
-        "data_path": "./train-clean-5/LibriSpeech/train-clean-5/32/21631",
+        "data_path": "./data/test_data",
         "batch_size": 24,
         "num_examples": null
     },
@@ -34,7 +34,6 @@
     },
     "preprocess": {
         "text_raw_style": 1,
-        "text_process_mode": "en_word",
-        "max_inputs_len": 520
+        "text_process_mode": "en_word"
     }
 }
