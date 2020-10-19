@@ -2,14 +2,28 @@ import io
 import os
 import re
 import tensorflow as tf
-import config
 import librosa
 import numpy as np
-from model import DS2
 import json
 import pyaudio
 import wave
 
+
+#获取配置文件
+def get_config():
+    with open("config.json","r",encoding="utf-8") as f:
+        configs = json.load(f)
+    return configs
+
+def set_config(config_class,key,value):
+    configs = get_config()
+    configs[config_class][key]=value
+    with open("config.json",'w',encoding="utf-8") as f:
+        json.dump(configs, f, ensure_ascii=False, indent=4)
+
+def get_config_model():
+    configs = get_config()
+    return configs["other"]["n_mfcc"],configs["model"]["conv_layers"],configs["model"]["conv_filters"],configs["model"]["conv_kernel_size"],configs["model"]["conv_strides"],configs["model"]["bi_gru_layers"],configs["model"]["gru_units"],configs["model"]["dense_units"]
 
 #根据数据文件夹名获取所有的文件名，包括文本文件名和音频文件名列表
 def get_all_data_path(data_path):
@@ -61,7 +75,8 @@ def preprocess_ch_sentence(s):
 
 #此方法依据文本是中文文本还是英文文本，且英文文本是按字符切分还是按单词切分
 def preprocess_sentence(str):
-    mode = config.configs_preprocess()["text_process_mode"]
+    configs = get_config()
+    mode = configs["preprocess"]["text_process_mode"]
     if mode == "cn":
         return preprocess_ch_sentence(str)
     elif mode == "en_word":
@@ -71,7 +86,8 @@ def preprocess_sentence(str):
 
 #基于数据文本规则的行获取
 def text_row_process(str):
-    style = config.configs_preprocess()["text_raw_style"]
+    configs = get_config()
+    style = configs["preprocess"]["text_raw_style"]
     if style == 1:
         #当前数据文本的每行为'index string\n',且依据英文单词切分
         return str.strip().split(" ",1)[1].lower()
@@ -90,7 +106,8 @@ def get_text_data(data_path,text_data_path,num_examples):
 
 #音频的处理
 def wav_to_mfcc(wav_path):
-    n_mfcc = config.configs_other()["n_mfcc"]
+    configs = get_config()
+    n_mfcc = configs["other"]["n_mfcc"]
     #加载音频
     y, sr = librosa.load(wav_path,sr=None)
     #提取mfcc(返回list(timestep,n_mfcc))
@@ -121,7 +138,8 @@ def tokenize(texts):
     return sequences,sequences_length,tokenizer
 
 def get_index_word():
-    index_word_json_path = config.configs_other()["index_word_json_path"]
+    configs = get_config()
+    index_word_json_path = configs["other"]["index_word_json_path"]
     with open(index_word_json_path,"r",encoding="utf-8") as f:
         index_word = json.load(f)
     return index_word
@@ -137,7 +155,8 @@ def record(file_path):
     FORMAT = pyaudio.paInt16
     CHANNELS = 1  # 声道数
     RATE = 16000  # 采样率
-    RECORD_SECONDS = config.configs_record()["record_times"]  # 录音时长
+    configs = get_config()
+    RECORD_SECONDS = configs["record"]["record_times"]  # 录音时长
     WAVE_OUTPUT_FILENAME = file_path
     p = pyaudio.PyAudio()
 
@@ -241,7 +260,8 @@ def _levenshtein(a, b):
     return current[n]
 
 def decode_output(seq,index_word):
-    mode = config.configs_preprocess()["text_process_mode"]
+    configs = get_config()
+    mode = configs["preprocess"]["text_process_mode"]
     if mode == "cn":
         return decode_output_ch_sentence(seq,index_word)
     elif mode == "en_word":

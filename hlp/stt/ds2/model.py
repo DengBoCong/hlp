@@ -7,7 +7,7 @@ Created on Tue Sep 15 16:50:12 2020
 #模型搭建
 #step1：1-3 Conv1D -> 1BN -> 1-3 bi_gru -> 1BN -> 1dense
 import tensorflow as tf
-import config
+from utils import get_config_model
 
 
 #子类化构建DS2模型
@@ -15,14 +15,14 @@ class DS2(tf.keras.Model):
     #dense_units=num_classes
     def __init__(
         self,
-        dense_units,
-        n_mfcc=config.configs_other()["n_mfcc"],
-        conv_layers=config.configs_model()["conv_layers"],
-        filters=config.configs_model()["conv_filters"],
-        kernel_size=config.configs_model()["conv_kernel_size"],
-        strides=config.configs_model()["conv_strides"],
-        bi_gru_layers=config.configs_model()["bi_gru_layers"],
-        gru_units=config.configs_model()["gru_units"]
+        n_mfcc,
+        conv_layers,
+        filters,
+        kernel_size,
+        strides,
+        bi_gru_layers,
+        gru_units,
+        dense_units
         ):
         super(DS2,self).__init__()
         self.conv_layers=conv_layers
@@ -60,6 +60,19 @@ class DS2(tf.keras.Model):
         x = self.bn(x)
         x = self.ds(x)
         return x
+
+def init_ds2():
+    configs_model = get_config_model()
+    n_mfcc=configs_model[0]
+    conv_layers=configs_model[1]
+    filters=configs_model[2]
+    kernel_size=configs_model[3]
+    strides=configs_model[4]
+    bi_gru_layers=configs_model[5]
+    gru_units=configs_model[6]
+    dense_units=configs_model[7]
+    return DS2(n_mfcc,conv_layers,filters,kernel_size,strides,bi_gru_layers,gru_units,dense_units)
+
 
 if __name__ == "__main__":
     pass

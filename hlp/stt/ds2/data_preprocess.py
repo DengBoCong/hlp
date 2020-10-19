@@ -2,12 +2,11 @@ import io
 import os
 import re
 import tensorflow as tf
-import config
 import librosa
 import numpy as np
 from model import DS2
 import json
-from utils import get_all_data_path,create_dataset,tokenize,get_audio_feature,text_row_process
+from utils import get_all_data_path,create_dataset,tokenize,get_audio_feature,text_row_process,get_config,set_config
 
 
 #基于数据文件夹来进行加载数据(可以是一个文件夹列表也可以是单个文件夹)
@@ -31,9 +30,12 @@ def load_dataset_train(data_path, num_examples=None):
         target_tensor = tf.convert_to_tensor(target_sequence)
         target_length = tf.convert_to_tensor(sentences_length_list)
         #保存index_word到json文件
-        index_word_json_path = config.configs_other()["index_word_json_path"]
+        configs = get_config()
+        index_word_json_path = configs["other"]["index_word_json_path"]
         with open(index_word_json_path,'w',encoding="utf-8") as f:
             json.dump(target_tokenizer.index_word, f, ensure_ascii=False)
+        set_config("preprocess","max_inputs_len",input_tensor.shape[1])
+        set_config("model","dense_units",len(target_tokenizer.index_word)+2)
         return input_tensor,target_tensor,target_length
     else:
         #若data_path是多个数据文件夹路径组成的list
@@ -52,12 +54,16 @@ def load_dataset_train(data_path, num_examples=None):
         target_tensor = tf.convert_to_tensor(target_sequence)
         target_length = tf.convert_to_tensor(sentences_length_list)
         #保存index_word到json文件
-        index_word_json_path = config.configs_other()["index_word_json_path"]
+        configs = get_config()
+        index_word_json_path = configs["other"]["index_word_json_path"]
         with open(index_word_json_path,'w',encoding="utf-8") as f:
             json.dump(target_tokenizer.index_word, f, ensure_ascii=False)
+        set_config("preprocess","max_inputs_len",input_tensor.shape[1])
+        set_config("model","dense_units",len(target_tokenizer.index_word)+2)
         return input_tensor,target_tensor,target_length
 
 def load_dataset_test(data_path, num_examples=None):
+    configs = get_config()
     text_data_path,audio_data_path_list = get_all_data_path(data_path)
     mfccs_list = get_audio_feature(data_path,audio_data_path_list,num_examples)
     labels_list = []
@@ -69,6 +75,7 @@ def load_dataset_test(data_path, num_examples=None):
     labels_list = labels_list[:num_examples]
     mfccs_numpy = tf.keras.preprocessing.sequence.pad_sequences(
             mfccs_list,
+            maxlen=configs["preprocess"]["max_inputs_len"],
             padding='post',
             dtype='float32'
             )

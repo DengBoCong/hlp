@@ -5,11 +5,11 @@ Created on Tue Sep 15 17:47:11 2020
 @author: 彭康
 """
 import tensorflow as tf
-import config
-from model import DS2
 import time
 from data_preprocess import load_dataset_train
 import json
+from utils import get_index_word,get_config
+from model import init_ds2
 
 
 def train_step(inputs,labels,label_length,optimizer,model):
@@ -40,19 +40,20 @@ def train_step(inputs,labels,label_length,optimizer,model):
 
 def train(model,optimizer,inputs,labels,label_length,epochs):
     #加载检查点
+    configs = get_config()
     checkpoint = tf.train.Checkpoint(model=model)
     manager = tf.train.CheckpointManager(
         checkpoint,
-        directory=config.configs_checkpoint()['directory'],
-        max_to_keep=config.configs_checkpoint()['max_to_keep']
+        directory=configs["checkpoint"]['directory'],
+        max_to_keep=configs["checkpoint"]['max_to_keep']
         )
-    save_interval = config.configs_checkpoint()["save_interval"]
+    save_interval = configs["checkpoint"]["save_interval"]
     if manager.latest_checkpoint:
         checkpoint.restore(manager.latest_checkpoint)
     
     #迭代训练
     BUFFER_SIZE = len(inputs)
-    BATCH_SIZE = config.configs_train()["batch_size"]
+    BATCH_SIZE = configs["train"]["batch_size"]
     batchs = BUFFER_SIZE//BATCH_SIZE
     dataset = tf.data.Dataset.from_tensor_slices((inputs,labels,label_length)).shuffle(BUFFER_SIZE)
     dataset = dataset.batch(BATCH_SIZE, drop_remainder=True)
@@ -77,14 +78,14 @@ def train(model,optimizer,inputs,labels,label_length,epochs):
 
 
 if __name__ == "__main__":
-    epochs=config.configs_train()["train_epochs"]
-    data_path=config.configs_train()["data_path"]
-    num_examples = config.configs_train()["train_num_examples"]
+    configs = get_config()
+    epochs=configs["train"]["train_epochs"]
+    data_path=configs["train"]["data_path"]
+    num_examples = configs["train"]["num_examples"]
     input_tensor,target_tensor,target_length = load_dataset_train(data_path,num_examples)
-    index_word_json_path = config.configs_other()["index_word_json_path"]
-    with open(index_word_json_path,"r",encoding="utf-8") as f:
-        index_word = json.load(f)
-    model=DS2(len(index_word)+2)
+    print(input_tensor.shape)
+    index_word = get_index_word()
+    model=init_ds2()
     """
     # 采用 90 - 10 的比例切分训练集和验证集
     input_tensor_train, input_tensor_val, target_tensor_train, target_tensor_val = train_test_split(input_tensor, target_tensor, test_size=0.1)

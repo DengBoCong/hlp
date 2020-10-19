@@ -1,0 +1,40 @@
+{
+    "train": {
+        "train_epochs": 2,
+        "data_path": "./198",
+        "batch_size": 19,
+        "num_examples": null
+    },
+    "test": {
+        "data_path": "./train-clean-5/LibriSpeech/train-clean-5/32/21631",
+        "batch_size": 24,
+        "num_examples": null
+    },
+    "model": {
+        "conv_layers": 1,
+        "conv_filters": 256,
+        "conv_kernel_size": 11,
+        "conv_strides": 2,
+        "bi_gru_layers": 1,
+        "gru_units": 256,
+        "dense_units": 521
+    },
+    "checkpoint": {
+        "directory": "./checkpoint",
+        "max_to_keep": 5,
+        "save_interval": 2
+    },
+    "record": {
+        "record_path": "./record/record.wav",
+        "record_times": 4
+    },
+    "other": {
+        "n_mfcc": 20,
+        "index_word_json_path": "index_word_json.json"
+    },
+    "preprocess": {
+        "text_raw_style": 1,
+        "text_process_mode": "en_word",
+        "max_inputs_len": 520
+    }
+}
