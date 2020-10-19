@@ -15,6 +15,7 @@ PAD = '[PAD]'
 pad_id = 0
 BATCH_SIZE = 3
 
+
 def create_model(args, vocab_size):
     """
     :param args:
@@ -34,26 +35,26 @@ def create_model(args, vocab_size):
         model = TFGPT2LMHeadModel(config=model_config)
         print('构造好模型')
         # 根据tokenizer的vocabulary调整GPT2模型的voca的大小
-    #model.resize_token_embeddings(vocab_size)
+    # model.resize_token_embeddings(vocab_size)
 
     # model = TFGPT2LMHeadModel.from_pretrained()#实例化一个类
     return model, model.config.to_dict().get("n_ctx")
 
 
-def change_tpye(outputs,labels):
-    logits = outputs[0]  #(batch,len,vocab)
+def change_tpye(outputs, labels):
+    logits = outputs[0]  # (batch,len,vocab)
 
-    shift_labels = labels[:,1:]# (batch,len)
-    shift_logits = logits[:, :-1, ]#(batch,len,vocab)
+    shift_labels = labels[:, 1:]  # (batch,len)
+    shift_logits = logits[:, :-1, ]  # (batch,len,vocab)
 
     shift_labels = tf.convert_to_tensor(shift_labels)
-    shift_logits = tf.reshape(shift_logits, [-1, tf.convert_to_tensor(shift_logits).shape[-1]])#(batch*len,vocab)
-    shift_labels = tf.reshape(shift_labels, [-1])#(batch*len,)
+    shift_logits = tf.reshape(shift_logits, [-1, tf.convert_to_tensor(shift_logits).shape[-1]])  # (batch*len,vocab)
+    shift_labels = tf.reshape(shift_labels, [-1])  # (batch*len,)
 
-    return shift_logits,shift_labels
+    return shift_logits, shift_labels
 
 
-def loss_function(shift_logits,shift_labels, tokenizer):
+def loss_function(shift_logits, shift_labels, tokenizer):
     mask = tf.math.logical_not(tf.math.equal(shift_labels, 0))
     loss_object = tf.keras.losses.SparseCategoricalCrossentropy(
         from_logits=True, reduction='none')
@@ -74,36 +75,35 @@ def loss_function(shift_logits,shift_labels, tokenizer):
         # text = tokenizer.convert_ids_to_tokens(preds[i])
         # print('text={}'.format(text))
         # print('shift_labels={}'.format(shift_labels[i]))
-        if ( preds[i] == shift_labels[i] ):
+        if (preds[i] == shift_labels[i]):
             correct += 1
     print('correct={}'.format(correct))
     accuracy = correct / len(preds)
     return loss, accuracy
 
 
-def load_checkpoint(model, optimizer,args):
+def load_checkpoint(model, optimizer, args):
     # 加载检查点
     checkpoint_path = args.dialogue_model_output_path
-    ckpt = tf.train.Checkpoint(model=model,optimizer=optimizer)
+    ckpt = tf.train.Checkpoint(model=model, optimizer=optimizer)
     ckpt_manager = tf.train.CheckpointManager(ckpt, checkpoint_path, max_to_keep=5)
     if ckpt_manager.latest_checkpoint:
         ckpt.restore(ckpt_manager.latest_checkpoint)
         print('已恢复至最新的检查点！')
 
 
-def train_step(model,input_ids,optimizer, tokenizer):
-
+def train_step(model, input_ids, optimizer, tokenizer):
     with tf.GradientTape() as t:
         outputs = model(inputs=input_ids)
-        shift_logits,shift_labels=change_tpye(outputs,input_ids)
-        loss, accuracy = loss_function(shift_logits,shift_labels, tokenizer)
+        shift_logits, shift_labels = change_tpye(outputs, input_ids)
+        loss, accuracy = loss_function(shift_logits, shift_labels, tokenizer)
         print('loss={}'.format(loss))
     gradients = t.gradient(loss, model.trainable_variables)
     optimizer.apply_gradients(zip(gradients, model.trainable_variables))
     return loss, accuracy
 
 
-def train(model, train_list, args, tokenizer,optimizer):
+def train(model, train_list, args, tokenizer, optimizer):
     train_dataset, max_input_len = preprocess_data.collate_fn(train_list)
     new_list = []
     for i in range(len(train_dataset)):
@@ -117,7 +117,7 @@ def train(model, train_list, args, tokenizer,optimizer):
 
     checkpoint_path = args.dialogue_model_output_path
 
-    ckpt = tf.train.Checkpoint(model=model,optimizer=optimizer)
+    ckpt = tf.train.Checkpoint(model=model, optimizer=optimizer)
 
     ckpt_manager = tf.train.CheckpointManager(ckpt, checkpoint_path, max_to_keep=5)
     if ckpt_manager.latest_checkpoint:
@@ -128,14 +128,14 @@ def train(model, train_list, args, tokenizer,optimizer):
     optimizer = tf.keras.optimizers.Adam(learning_rate=0.1)
     # # 开始训练
     for epoch in range(args.epochs):
-        for batch_idx,  input_ids in enumerate(dataset):
-            loss,accuracy=train_step(model,input_ids,optimizer, tokenizer)
+        for batch_idx, input_ids in enumerate(dataset):
+            loss, accuracy = train_step(model, input_ids, optimizer, tokenizer)
         batch_loss = (loss / max_input_len)
         print('epoch={} loss={} accuracy={} '.format(epoch, batch_loss, accuracy))
-    #if (epoch + 1) % 5 == 0:
+    # if (epoch + 1) % 5 == 0:
     ckpt_save_path = ckpt_manager.save()
     print('已保存 训练 ckpt_save_path={}'.format(ckpt_save_path))
-    #print('Saving checkpoint for epoch {} at {}'.format(epoch + 1,
+    # print('Saving checkpoint for epoch {} at {}'.format(epoch + 1,
     #                                                       ckpt_save_path))
 
 
@@ -149,7 +149,7 @@ def main():
     vocab_size = len(tokenizer)
     # print('vocab_size{}'.format(vocab_size))
     global pad_id
-    #pad_id = tokenizer.convert_tokens_to_ids(PAD)
+    # pad_id = tokenizer.convert_tokens_to_ids(PAD)
 
     # 创建对话模型的输出目录
     if not os.path.exists(args.dialogue_model_output_path):
@@ -162,7 +162,7 @@ def main():
     # 如果当前是要训练对话生成模型
     print('开始产生token')
     # 不修改数据集的情况下，没必要每次训练都运行preprocess_raw_data 因为 生成的data是一样的
-    #preprocess_data.preprocess_raw_data(args, tokenizer, n_ctx)
+    # preprocess_data.preprocess_raw_data(args, tokenizer, n_ctx)
     # 进行数据类型变换
     with open(args.train_tokenized_path, "r", encoding="utf8") as f:
         data_list = []
@@ -176,7 +176,7 @@ def main():
     train_list, test_list = train_test_split(data_list, test_size=0.1, random_state=1)
 
     print('开始训练')
-    train(model, train_list, args, tokenizer,optimizer)
+    train(model, train_list, args, tokenizer, optimizer)
     print('训练结束')
 
 

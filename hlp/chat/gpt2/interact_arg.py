@@ -29,7 +29,6 @@ def set_interact_args():
 
 
 def top_k_top_p_filtering(logits, top_k=0, top_p=0.0, filter_value=-float('Inf')):
-
     assert len(logits.shape) == 1  # batch size 1 for now - could be updated for more but the code would be less clear
     top_k = min(top_k, len(logits))  # Safety check
     if top_k > 0:
@@ -37,9 +36,10 @@ def top_k_top_p_filtering(logits, top_k=0, top_p=0.0, filter_value=-float('Inf')
         # topk()返回最后一维最大的top_k个元素，返回值为二维(values,indices)
         # ...表示其他维度由计算机自行推断
         # indices_to_remove = logits < torch.topk(logits, top_k)[0][..., -1, None]#true就是概率不属于前八 要过滤掉
-        indices_to_remove = logits < tf.raw_ops.TopKV2(input=logits, k=top_k, sorted=True,name=None)[0][..., -1, None] # true就是概率不属于前八 要过滤掉
+        indices_to_remove = logits < tf.raw_ops.TopKV2(input=logits, k=top_k, sorted=True, name=None)[0][
+            ..., -1, None]  # true就是概率不属于前八 要过滤掉
         # print('排序')
-        promax_value,promax_index = tf.raw_ops.TopKV2(input=logits, k=top_k, sorted=True,name=None)
+        promax_value, promax_index = tf.raw_ops.TopKV2(input=logits, k=top_k, sorted=True, name=None)
         promax_value = promax_value.numpy()
         promax_index = promax_index.numpy()
         # print('promax_index={}'.format(promax_index))
@@ -65,4 +65,4 @@ def top_k_top_p_filtering(logits, top_k=0, top_p=0.0, filter_value=-float('Inf')
     #
     #     indices_to_remove = sorted_indices[sorted_indices_to_remove]
     #     logits[indices_to_remove] = filter_value
-    return logits , promax_index
+    return logits, promax_index

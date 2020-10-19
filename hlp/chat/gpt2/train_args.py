@@ -5,6 +5,7 @@ import argparse
 
 pad_id = 0
 
+
 def setup_train_args():
     """
     设置训练参数
@@ -14,7 +15,7 @@ def setup_train_args():
                         help='选择模型参数')
     parser.add_argument('--vocab_path', default='vocab/vocab.txt', type=str, required=False, help='选择词库')
     parser.add_argument('--train_raw_path', default='data/data.txt', type=str, required=False, help='原始训练语料')
-    parser.add_argument('--train_tokenized_path', default='data/train_tokenized.txt', type=str,required=False,
+    parser.add_argument('--train_tokenized_path', default='data/train_tokenized.txt', type=str, required=False,
                         help='将原始训练语料tokenize之后的数据的存放位置')
     parser.add_argument('--raw', action='store_false', help='是否对原始训练语料做tokenize。若尚未对原始训练语料进行tokenize，则指定该参数')
     parser.add_argument('--epochs', default=1, type=int, required=False, help='训练的轮次')
@@ -41,4 +42,3 @@ def set_random_seed(args):
     tf.manual_seed(args.seed)
     random.seed(args.seed)
     np.random.seed(args.seed)
-
