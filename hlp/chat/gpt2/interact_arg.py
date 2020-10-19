@@ -15,13 +15,15 @@ def set_interact_args():
     parser.add_argument('--topp', default=0, type=float, required=False, help='最高积累概率')
     parser.add_argument('--model_config', default='config/model_config_dialogue_small.json', type=str, required=False,
                         help='模型参数')
+    parser.add_argument('--dialogue_model_output_path', default='dialogue_model/checkpoints/', type=str, required=False,
+                        help='对话模型输出路径')
     parser.add_argument('--log_path', default='data/interacting.log', type=str, required=False, help='interact日志存放位置')
     parser.add_argument('--voca_path', default='vocab/vocab.txt', type=str, required=False, help='选择词库')
     parser.add_argument('--save_samples_path', default="sample/", type=str, required=False, help="保存聊天记录的文件路径")
     parser.add_argument('--repetition_penalty', default=1.0, type=float, required=False,
                         help="重复惩罚参数，若生成的对话重复性较高，可适当提高该参数")
     parser.add_argument('--seed', type=int, default=None, help='设置种子用于生成随机数，以使得训练的结果是确定的')
-    parser.add_argument('--max_len', type=int, default=25, help='每个utterance的最大长度,超过指定长度则进行截断')
+    parser.add_argument('--max_len', type=int, default=10, help='每个utterance的最大长度,超过指定长度则进行截断')
     parser.add_argument('--max_history_len', type=int, default=5, help="dialogue history的最大长度")
     return parser.parse_args()
 

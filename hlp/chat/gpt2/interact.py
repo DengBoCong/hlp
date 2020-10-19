@@ -3,9 +3,9 @@ import os
 import numpy as np
 from datetime import datetime
 from transformers import BertTokenizer
-import hlp.chat.gpt2.train_args as train_args
-import hlp.chat.gpt2.train as train
-import hlp.chat.gpt2.interact_arg as interact_arg
+import train_args as train_args
+import train as train
+import interact_arg as interact_arg
 
 PAD = '[PAD]'
 pad_id = 0
@@ -21,9 +21,10 @@ def main():
     vocab_size = len(tokenizer)
 
     args_train = train_args.setup_train_args()
-
+    optimizer = tf.keras.optimizers.Adam(learning_rate=0.1)
     model, _ = train.create_model(args_train, vocab_size)
-    model.load_weights('./dialogue_model/model_weight').expect_partial()
+    train.load_checkpoint(model, optimizer,args)
+    #model.load_weights('./dialogue_model/model_weight').expect_partial()
     print("Model Restored..........................")
     print('加载完权重')
 
@@ -48,13 +49,14 @@ def main():
             generated = []
             # 最多生成max_len个token
             for _ in range(args.max_len):
+                print('现在的输入为={}'.format(curr_input_tensor))
                 outputs = model(inputs=curr_input_tensor)
-                next_token_logits = outputs[0][-1, :]
+                next_token_logits = outputs[0][-1, :]#（vocab,)
                 # 对于已生成的结果generated中的每个token添加一个重复惩罚项，降低其生成概率--减少重复
                 # for id in set(generated):
                 #     print('id = {}'.format(id))
-                #     next_token_logits[id] = next_token_logits[id]/args.repetition_penalty
-                next_token_logits = next_token_logits / args.temperature
+                #     next_token_logits[id] = tf.divide(next_token_logits[id],args.repetition_penalty)
+                # next_token_logits = tf.divide(next_token_logits , args.temperature)
                 # 对于[UNK]的概率设为无穷小，也就是说模型的预测结果不可能是[UNK]这个token
                 next_token_logits=np.array(next_token_logits)
                 next_token_logits[tokenizer.convert_tokens_to_ids('[UNK]')] = -float('Inf')
@@ -62,17 +64,18 @@ def main():
                 next_token_logits=tf.convert_to_tensor(next_token_logits)
                 filtered_logits,promax_index = interact_arg.top_k_top_p_filtering(next_token_logits, top_k=args.topk, top_p=args.topp)
                 # multinomial表示从候选集合中无放回地进行抽取num_samples个元素，权重越高，抽到的几率越高，返回元素的下标
-
-                #print('filtered_logits={}'.format(filtered_logits))
-                next_token_id = tf.raw_ops.Multinomial(logits=[tf.nn.softmax(filtered_logits, -1)], num_samples=1)
+                print('promax_index={}'.format(promax_index))
+                logit_token=tf.convert_to_tensor(tf.nn.softmax(filtered_logits, -1)).numpy()
+                next_token_id = tf.math.argmax(logit_token)
+                print(next_token_id.numpy())
                 next_token=promax_index[next_token_id]
-                #print('next_token={}'.format(next_token))
+                print('next_token={}'.format(next_token))
                 if next_token == tokenizer.sep_token_id:  # 遇到[SEP]则表明response生成结束
                     break
                 #print('next_token={}'.format(next_token))
-                generated.append(next_token[0])
+                generated.append(next_token)
                 #print('generated=============={}'.format(generated))
-                curr_input_tensor = tf.concat([curr_input_tensor, next_token], 0)
+                curr_input_tensor = tf.concat([curr_input_tensor, [next_token]], 0)
                 # his_text = tokenizer.convert_ids_to_tokens(curr_input_tensor.tolist())
                 # print("his_text:{}".format(his_text))
             history.append(generated)
