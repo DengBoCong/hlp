@@ -1,37 +1,27 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Fri Sep 25 16:42:28 2020
-
-@author: 彭康
-"""
-
-import config
 import tensorflow as tf
-from data_process import data_process
-from model import DS2
-from utils import int_to_text_sequence, wers, lers, get_index_and_char_map
+from model import init_ds2
+from utils import wers,lers,get_index_word,decode_output,get_config,get_config_model
+from data_preprocess import load_dataset_test
 
 if __name__ == "__main__":
+    configs = get_config()
     # 加载模型检查点
-    model = DS2()
+    model = init_ds2()
     # 加载检查点
     checkpoint = tf.train.Checkpoint(model=model)
     manager = tf.train.CheckpointManager(
         checkpoint,
-        directory=config.configs_checkpoint()['directory'],
-        max_to_keep=config.configs_checkpoint()['max_to_keep']
+        directory=configs["checkpoint"]['directory'],
+        max_to_keep=configs["checkpoint"]['max_to_keep']
     )
     if manager.latest_checkpoint:
         checkpoint.restore(manager.latest_checkpoint)
 
     # 评价
-    test_data_path = config.configs_test()["data_path"]
-    batch_size = config.configs_test()['batch_size']
-    inputs, labels_list = data_process(
-        data_path=test_data_path,
-        batch_size=batch_size,
-        if_train_or_test='test'
-    )
+    test_data_path = configs["test"]["data_path"]
+    num_examples = configs["test"]["num_examples"]
+
+    inputs, labels_list = load_dataset_test(test_data_path,num_examples)
     originals = labels_list
     results = []
     y_pred = model(inputs)
@@ -43,17 +33,17 @@ if __name__ == "__main__":
     results_int_list = output[0][0].numpy().tolist()
 
     # 构建字符集对象
-    index_map = get_index_and_char_map()[0]
+    index_word = get_index_word()
     for i in range(len(results_int_list)):
-        str = "".join(int_to_text_sequence(results_int_list[i], index_map)).strip()
+        str = decode_output(results_int_list[i], index_word).strip()
         results.append(str)
     rates_wers, aver_wers = wers(originals, results)
     rates_lers, aver_lers, norm_rates_lers, norm_aver_lers = lers(originals, results)
-    print("wers:")
-    print("rates_wers:", rates_wers)
-    print("aver_wers:", aver_wers)
-    print("lers:")
-    print("rates_lers:", rates_lers)
-    print("aver_lers:", aver_lers)
-    print("norm_rates_lers:", norm_rates_lers)
-    print("norm_aver_lers:", norm_aver_lers)
+    print("WER:")
+    print("rates", rates_wers)
+    print("aver:", aver_wers)
+    print("LER:")
+    print("rates:", rates_lers)
+    print("aver:", aver_lers)
+    print("norm_rates:", norm_rates_lers)
+    print("norm_aver:", norm_aver_lers)
