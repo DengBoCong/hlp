@@ -59,7 +59,7 @@ def preprocess_sentences_en(sentences, mode='BPE', start_word=_config.start_word
     if mode == 'BPE':
         sentences = [preprocess_sentence_en_bpe(s, start_word, end_word) for s in sentences]
         return sentences
-    elif mode == 'TOKENIZE':
+    elif mode == 'WORD':
         sentences = [preprocess_sentence_en_tokenize(s, start_word, end_word) for s in sentences]
         return sentences
     else:
@@ -77,7 +77,7 @@ def preprocess_sentence_ch_tokenize(sentence, start_word=_config.start_word, end
 
 def preprocess_sentences_ch(sentences, mode='TOKENIZE', start_word=_config.start_word
                                , end_word=_config.end_word):
-    if mode == 'TOKENIZE':
+    if mode == 'WORD':
         sentences = [preprocess_sentence_ch_tokenize(s, start_word, end_word) for s in sentences]
         return sentences
     else:
@@ -121,7 +121,7 @@ def create_tokenizer(sentences, mode, save_path):
     if mode == 'BPE':
         return create_tokenizer_bpe(sentences, save_path=save_path, start_word=_config.start_word
                              , end_word=_config.end_word, target_vocab_size=_config.target_vocab_size)
-    elif mode == 'TOKENIZE':
+    elif mode == 'WORD':
         return create_tokenizer_tokenize(sentences, save_path)
 
 
@@ -144,7 +144,7 @@ def get_tokenizer_tokenize(path):
 def get_tokenizer(path, mode):
     if mode == 'BPE':
         return get_tokenizer_bpe(path)
-    elif mode == 'TOKENIZE':
+    elif mode == 'WORD':
         return get_tokenizer_tokenize(path)
 
 
@@ -162,20 +162,6 @@ def get_tokenized_tensor_bpe(sentences, tokenizer):
     max_sequence_length = len(sequences[0])
     return sequences, max_sequence_length
 
-
-def create_encoded_sentences_bpe(sentences, tokenizer, path):
-    """
-    Args:
-        sentences: 需要编码的句子列表
-        tokenizer: 字典
-
-    Returns:编码好的句子， 字典
-    """
-    sequences = [tokenizer.encode(s) for s in sentences]
-    sequences = tf.keras.preprocessing.sequence.pad_sequences(sequences, padding='post')
-    max_sequence_length = len(sequences[0])
-    numpy.savetxt(path, sequences)
-    return max_sequence_length
 
 def encode_sentences_bpe(sentences, tokenizer):
     """
@@ -208,19 +194,37 @@ def encode_sentences_tokenize(sentences, tokenizer):
 def encode_sentences(sentences, tokenizer, mode):
     if mode == 'BPE':
         return encode_sentences_bpe(sentences, tokenizer)
-    elif mode == 'TOKENIZE':
+    elif mode == 'WORD':
         return encode_sentences_tokenize(sentences, tokenizer)
     else:
         return False
 
 
+def create_encoded_sentences_bpe(sentences, tokenizer, path):
+    """
+    将编码好的句子保存至文件，返回最大句子长度
+    Args:
+        sentences: 需要编码的句子
+        tokenizer: 字典
+        path:文件保存路径
+
+    Returns:最大句子长度
+    """
+    sequences = [tokenizer.encode(s) for s in sentences]
+    sequences = tf.keras.preprocessing.sequence.pad_sequences(sequences, padding='post')
+    max_sequence_length = len(sequences[0])
+    numpy.savetxt(path, sequences)
+    return max_sequence_length
+
+
 def create_encoded_sentences_tokenize(sentences, tokenizer, path):
     """
+    将编码好的句子保存至文件，返回最大句子长度
     Args:
         sentences: 需要编码的句子
         tokenizer: 字典
 
-    Returns:编码好的句子， 字典
+    Returns:最大句子长度
     """
     sequences = tokenizer.texts_to_sequences(sentences)
     sequences = tf.keras.preprocessing.sequence.pad_sequences(sequences, padding='post')
@@ -230,9 +234,19 @@ def create_encoded_sentences_tokenize(sentences, tokenizer, path):
 
 
 def create_encoded_sentences(sentences, tokenizer, mode, path):
+    """
+    将编码好的句子保存至文件，返回最大句子长度
+    Args:
+        sentences: 需要编码的句子
+        tokenizer: 字典
+        mode:编码模式
+        path:文件保存路径
+
+    Returns:最大句子长度
+    """
     if mode == 'BPE':
         return create_encoded_sentences_bpe(sentences, tokenizer, path)
-    elif mode == 'TOKENIZE':
+    elif mode == 'WORD':
         return create_encoded_sentences_tokenize(sentences, tokenizer, path)
     else:
         return False
@@ -252,7 +266,7 @@ def decode_sentence_tokenize(sequence, tokenizer):
 def decode_sentence(sentences, tokenizer, mode):
     if mode == 'BPE':
         return decode_sentence_bpe(sentences, tokenizer)
-    elif mode == 'TOKENIZE':
+    elif mode == 'WORD':
         return decode_sentence_tokenize(sentences, tokenizer)
     else:
         return False
@@ -271,6 +285,7 @@ def split_batch(path_en, path_zh):
     train_dataset = train_dataset.shuffle(_config.BUFFER_SIZE).batch(_config.BATCH_SIZE, drop_remainder=True)
     val_dataset = tf.data.Dataset.from_tensor_slices((x_test, y_test))
     val_dataset = val_dataset.shuffle(_config.BUFFER_SIZE).batch(_config.BATCH_SIZE, drop_remainder=True)
+    train_dataset.cache()
     return train_dataset, val_dataset
 
 
@@ -301,7 +316,7 @@ def main():
     ch = '今天天气真好啊。'
     # 预处理句子
     en = preprocess_sentences_en([en], mode='BPE')
-    ch = preprocess_sentences_ch([ch], mode='TOKENIZE')
+    ch = preprocess_sentences_ch([ch], mode='WORD')
     print("预处理后的句子")
     print(en)
     print(ch)
@@ -309,7 +324,7 @@ def main():
     print("编码后的句子")
     en, _ = encode_sentences(en, tokenizer_en, mode='BPE')
 
-    ch, _ = encode_sentences(ch, tokenizer_ch, mode='TOKENIZE')
+    ch, _ = encode_sentences(ch, tokenizer_ch, mode='WORD')
     print(en)
     for ts in en[0]:
         print('{} ----> {}'.format(ts, tokenizer_en.decode([ts])))
