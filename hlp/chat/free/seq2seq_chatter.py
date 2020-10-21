@@ -1,9 +1,11 @@
 import sys
 import tensorflow as tf
+import common.data_utils as _data
+
 sys.path.append(sys.path[0][:-10])
 from model.chatter import Chatter
 import model.seq2seq as seq2seq
-from common.common import CmdParser
+from common.utils import CmdParser
 import config.get_config as _config
 from common.pre_treat import preprocess_raw_data
 
@@ -13,18 +15,25 @@ class Seq2SeqChatter(Chatter):
     Seq2Seq模型的聊天类
     """
 
-    def __init__(self, checkpoint_dir, beam_size, vocab_size):
+    def __init__(self, model, checkpoint_dir, beam_size, vocab_size):
         """
         Seq2Seq聊天器初始化，用于加载模型
         """
-        super().__init__(checkpoint_dir, beam_size)
+        super().__init__(model, checkpoint_dir, beam_size)
         self.encoder = seq2seq.Encoder(vocab_size, _config.embedding_dim, _config.units, _config.BATCH_SIZE)
         self.decoder = seq2seq.Decoder(vocab_size, _config.embedding_dim, _config.units, _config.BATCH_SIZE)
         self.optimizer = tf.keras.optimizers.Adam()
         self.loss_object = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True, reduction='none')
         self.checkpoint = tf.train.Checkpoint(optimizer=self.optimizer, encoder=self.encoder, decoder=self.decoder)
+
+        print('正在检查是否存在检查点...')
         if self.ckpt:
+            print('存在检查点，正在从{}中加载检查点'.format(checkpoint_dir))
             self.checkpoint.restore(tf.train.latest_checkpoint(checkpoint_dir)).expect_partial()
+        else:
+            print('不存在检查点，请先执行train模式，再进入chat模式')
+            if model == 'chat':
+                exit(0)
 
     def _train_step(self, inp, tar, step_loss):
         loss = 0
@@ -81,16 +90,16 @@ def main():
     (options, args) = parser.parse_args()
 
     # 初始化要使用的聊天器
-    chatter = Seq2SeqChatter(checkpoint_dir=_config.seq2seq_train_data,
+    chatter = Seq2SeqChatter(model=options.type,
+                             checkpoint_dir=_config.seq2seq_train_data,
                              beam_size=_config.beam_size,
-                             vocab_size=_config.vocab_size)
+                             vocab_size=_config.vocab_size,
+                             dict_fn=_config.seq2seq_dict_fn)
 
     if options.type == 'train':
         chatter.train(chatter.checkpoint,
                       dict_fn=_config.seq2seq_dict_fn,
                       data_fn=_config.data,
-                      start_sign='start',
-                      end_sign='end',
                       max_train_data_size=_config.max_train_data_size)
     elif options.type == 'chat':
         print("Agent: 你好！结束聊天请输入ESC。")
@@ -99,9 +108,7 @@ def main():
             if req == "ESC":
                 print("Agent: 再见！")
                 exit(0)
-            response = chatter.respond(req, dict_fn=_config.seq2seq_dict_fn,
-                                       start_sign='start',
-                                       end_sign='end')
+            response = chatter.respond(req=req)
             print("Agent: ", response)
     elif options.type == 'pre_treat':
         preprocess_raw_data(raw_data=_config.resource_data, tokenized_data=_config.tokenized_data)

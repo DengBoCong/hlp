@@ -1,8 +1,10 @@
 import sys
 import tensorflow as tf
+import common.data_utils as _data
+
 sys.path.append(sys.path[0][:-10])
 from model.chatter import Chatter
-from common.common import CmdParser
+from common.utils import CmdParser
 import config.get_config as _config
 import model.transformer as transformer
 from common.pre_treat import preprocess_raw_data
@@ -13,11 +15,11 @@ class TransformerChatter(Chatter):
     Transformer模型的聊天类
     """
 
-    def __init__(self, checkpoint_dir, beam_size, vocab_size):
+    def __init__(self, model, checkpoint_dir, beam_size, vocab_size, dict_fn):
         """
         Transformer聊天器初始化，用于加载模型
         """
-        super().__init__(checkpoint_dir, beam_size)
+        super().__init__(model, checkpoint_dir, beam_size, dict_fn)
 
         self.model = transformer.transformer(
             vocab_size=vocab_size,
@@ -27,16 +29,23 @@ class TransformerChatter(Chatter):
             num_heads=_config.transformer_num_heads,
             dropout=_config.transformer_dropout
         )
+
         self.learning_rate = transformer.CustomSchedule(_config.transformer_d_model)
         self.optimizer = tf.keras.optimizers.Adam(
             self.learning_rate, beta_1=0.9, beta_2=0.98, epsilon=1e-9
         )
         self.train_loss = tf.keras.metrics.Mean(name='train_loss')
         self.train_accuracy = tf.keras.metrics.SparseCategoricalAccuracy(name='train_accuracy')
-        self.checkpoint = tf.train.Checkpoint(transformer=self.model, optimizer=self.optimizer)
 
+        self.checkpoint = tf.train.Checkpoint(transformer=self.model, optimizer=self.optimizer)
+        print('正在检查是否存在检查点...')
         if self.ckpt:
+            print('存在检查点，正在从“{}”中加载检查点...'.format(checkpoint_dir))
             self.checkpoint.restore(tf.train.latest_checkpoint(checkpoint_dir)).expect_partial()
+        else:
+            print('不存在检查点，请先执行train模式，再进入chat模式')
+            if model == 'chat':
+                exit(0)
 
     def _init_loss_accuracy(self):
         self.train_loss.reset_states()
@@ -81,16 +90,16 @@ def main():
     (options, args) = parser.parse_args()
 
     # 初始化要使用的聊天器
-    chatter = TransformerChatter(checkpoint_dir=_config.transformer_train_data,
+    chatter = TransformerChatter(model=options.type,
+                                 checkpoint_dir=_config.transformer_train_data,
                                  beam_size=_config.beam_size,
-                                 vocab_size=_config.vocab_size)
+                                 vocab_size=_config.vocab_size,
+                                 dict_fn=_config.transformer_dict_fn)
 
     if options.type == 'train':
         chatter.train(chatter.checkpoint,
                       dict_fn=_config.transformer_dict_fn,
                       data_fn=_config.data,
-                      start_sign='start',
-                      end_sign='end',
                       max_train_data_size=_config.max_train_data_size)
     elif options.type == 'chat':
         print("Agent: 你好！结束聊天请输入ESC。")
@@ -99,9 +108,7 @@ def main():
             if req == "ESC":
                 print("Agent: 再见！")
                 exit(0)
-            response = chatter.respond(req, dict_fn=_config.transformer_dict_fn,
-                                       start_sign='start',
-                                       end_sign='end')
+            response = chatter.respond(req=req)
             print("Agent: ", response)
     elif options.type == 'pre_treat':
         preprocess_raw_data(raw_data=_config.resource_data, tokenized_data=_config.tokenized_data)

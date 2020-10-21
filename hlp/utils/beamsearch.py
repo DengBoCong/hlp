@@ -16,10 +16,9 @@ class BeamSearch(object):
         """
         初始化BeamSearch的序列容器
         """
-        self.remain_beam_size = beam_size
+        self.remain_beam_size = beam_size  # 保存原始beam大小，用于重置
         self.max_length = max_length - 1
-        self.remain_worst_score = worst_score
-        self._reset_all_inner_variables()
+        self.remain_worst_score = worst_score  # 保留原始worst_score，用于重置
 
     def __len__(self):
         """
@@ -27,16 +26,20 @@ class BeamSearch(object):
         """
         return len(self.container)
 
-    def init_container_inputs(self, inputs, dec_input):
+    def init_all_inner_variables(self, inputs, dec_input):
         """
         用来初始化输入
         :param inputs: 已经序列化的输入句子
         :param dec_input: 编码器输入序列
         :return: 无返回值
         """
+        self.container = []  # 保存中间状态序列的容器，元素格式为(score, sequence)类型为(float, [])
         self.container.append((1, dec_input))
         self.inputs = inputs
         self.dec_inputs = dec_input
+        self.beam_size = self.remain_beam_size  # 新一轮中，将beam_size重置为原beam大小
+        self.worst_score = self.remain_worst_score  # 新一轮中，worst_score重置
+        self.result = []  # 用来保存已经遇到结束符的序列
 
     def expand_beam_size_inputs(self):
         """
@@ -67,18 +70,6 @@ class BeamSearch(object):
                 self.result.append(self.container[idx][1])
                 del self.container[idx]
                 self.beam_size -= 1
-
-    def _reset_all_inner_variables(self):
-        """
-        重置相关变量
-        :return: 无返回值
-        """
-        self.beam_size = self.remain_beam_size
-        self.worst_score = self.remain_worst_score
-        self.container = []  # 保存中间状态序列的容器，元素格式为(score, sequence)类型为(float, [])
-        self.result = []  # 用来保存已经遇到结束符的序列
-        self.inputs = tf.constant(0, shape=(1, 1))
-        self.dec_inputs = tf.constant(0, shape=(1, 1))  # 处理后的的编码器输入
 
     def add(self, predictions, end_sign):
         """
@@ -115,5 +106,4 @@ class BeamSearch(object):
         result = self.result
 
         # 每轮回答之后，需要重置容器内部的相关变量值
-        self._reset_all_inner_variables()
         return result

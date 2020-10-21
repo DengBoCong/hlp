@@ -1,6 +1,7 @@
 import io
 import os
 import json
+import jieba
 import numpy as np
 import tensorflow as tf
 from pathlib import Path
@@ -15,6 +16,17 @@ def preprocess_sentence(start_sign, end_sign, w):
     """
     w = start_sign + ' ' + w + ' ' + end_sign
     return w
+
+
+def preprocess_request(sentence, token):
+    sentence = " ".join(jieba.cut(sentence))
+    sentence = preprocess_sentence(sentence, _config.start_sign, _config.end_sign)
+    inputs = [token.get(i, 3) for i in sentence.split(' ')]
+    inputs = tf.keras.preprocessing.sequence.pad_sequences([inputs], maxlen=_config.max_length_inp, padding='post')
+    inputs = tf.convert_to_tensor(inputs)
+    dec_input = tf.expand_dims([token[_config.start_sign]], 0)
+
+    return inputs, dec_input
 
 
 def create_dataset(path, num_examples, start_sign, end_sign):
@@ -97,7 +109,7 @@ def create_look_ahead_mask(input):
     return tf.maximum(look_ahead_mask, padding_mask)
 
 
-def load_dataset(dict_fn, data_fn, start_sign, end_sign, max_train_data_size=0):
+def load_data(dict_fn, data_fn, start_sign, end_sign, checkpoint_dir, max_train_data_size=0):
     """
     数据加载方法，含四个元素的元组，包括如下：
     :return:input_tensor, input_token, target_tensor, target_token
@@ -107,7 +119,13 @@ def load_dataset(dict_fn, data_fn, start_sign, end_sign, max_train_data_size=0):
     with open(dict_fn, 'w', encoding='utf-8') as file:
         file.write(json.dumps(lang_tokenizer.word_index, indent=4, ensure_ascii=False))
 
-    return input_tensor, target_tensor, lang_tokenizer
+    dataset = tf.data.Dataset.from_tensor_slices((input_tensor, target_tensor)).cache().shuffle(
+        _config.BUFFER_SIZE).prefetch(tf.data.experimental.AUTOTUNE)
+    dataset = dataset.batch(_config.BATCH_SIZE, drop_remainder=True)
+    checkpoint_prefix = os.path.join(checkpoint_dir, "ckpt")
+    steps_per_epoch = len(input_tensor) // _config.BATCH_SIZE
+
+    return input_tensor, target_tensor, lang_tokenizer, dataset, steps_per_epoch, checkpoint_prefix
 
 
 def load_token_dict(dict_fn):

@@ -32,6 +32,8 @@ resource_data = path + conf['resource_data']  # 原始数据位置
 tokenized_data = path + conf['tokenized_data']  # 预处理之后数据位置
 beam_size = conf['beam_size']  # beam_search大小
 epochs = conf['epochs']  # 训练轮次
+start_sign = conf['start_sign']
+end_sign = conf['end_sign']
 
 # seq2seq模型相关配置
 seq2seq_train_data = path + conf['seq2seq']['train_data']  # 训练结果保存位置

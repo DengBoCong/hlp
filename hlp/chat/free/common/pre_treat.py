@@ -1,5 +1,6 @@
 import os
 import jieba
+import numpy as np
 
 '''
 对话数据集预处理模块
@@ -23,6 +24,10 @@ def preprocess_raw_data(raw_data, tokenized_data):
         exit()
 
     pairs = []
+    max_len = 0
+    min_len = 10000
+    sentence_len = []
+
 
     # 对每一轮对话上下文进行配对，形成一问一答两个部分，如果遇到
     # 下一轮对话，直接跳过
@@ -47,6 +52,11 @@ def preprocess_raw_data(raw_data, tokenized_data):
             else:
                 one_pair.append(line)
 
+            length = len(line)
+            max_len = max(max_len, length)
+            min_len = min(min_len, length)
+            sentence_len.append(length)
+
     print('读取完毕，处理中...')
     results = []
     # 接下来，我们把上面的对话内容进行分词，并存入train_tokenized文本中
@@ -67,3 +77,5 @@ def preprocess_raw_data(raw_data, tokenized_data):
             print(len(range(len(results))), '处理进度：', i)
 
     train_tokenized.close()
+
+    print("数据处理完毕，数据信息统计：语句最大长度：{}，语句最短长度{}，语句平均长度{:.3f}".format(max_len, min_len, np.mean(sentence_len)))
