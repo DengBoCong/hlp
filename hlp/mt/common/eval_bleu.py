@@ -3,11 +3,10 @@
 """
 
 
-import sys
-sys.path.append('..')
 import numpy as np
 import re
 import math
+import nltk
 
 
 def calculate_average(precisions, weights):
@@ -40,7 +39,7 @@ def calculate_reference(gram_list, references):
     return gram_count  # 返回列表，为每个 n-gram 在参考句子中数量
 
 
-def sentence_bleu(candidate_sentence, reference_sentences, max_gram = 4, weights=(0.25, 0.25, 0.25, 0.25), ch = False):
+def sentence_bleu(candidate_sentence, reference_sentences, max_gram = 4, weights=(0.25, 0.25, 0.25, 0.25), ch=True):
     """
     :param candidate_sentence:机翻句子
     :param reference_sentence:参考句子列表
@@ -95,7 +94,6 @@ def sentence_bleu(candidate_sentence, reference_sentences, max_gram = 4, weights
     # print('所有n-gram精确度：')
     # print(gram_precisions)
 
-
     # 其次对多元组合(n-gram)的precision 进行加权取平均作为最终的bleu评估指标
     # 一般选择的做法是计算几何加权平均 exp(sum(w*logP))
     average_res = calculate_average(gram_precisions, weights)
@@ -119,16 +117,39 @@ def sentence_bleu(candidate_sentence, reference_sentences, max_gram = 4, weights
     return bp * average_res
 
 
+def sentence_bleu_nltk(candidate_sentence, reference_sentences):
+    """
+        :param candidate_sentence:机翻句子
+        :param reference_sentences:参考句子列表
+
+    """
+    candidate_sentence = [w for w in candidate_sentence]
+    reference_sentences_sum = []
+    for sentence in reference_sentences:
+        reference_sentences_sum.append([w for w in sentence])
+    smooth_function = nltk.translate.bleu_score.SmoothingFunction()
+    score = nltk.translate.bleu_score.sentence_bleu(reference_sentences_sum, candidate_sentence
+                                                    , smoothing_function=smooth_function.method1)
+    return score*100
+
+
 def main():
     """
     方法测试
     Returns:返回BLEU指数
     """
+    # 测试语句
     candidate_sentence = '今天的天气真好啊。'
     reference_sentence = '今天可真是个好天气啊。'
+
+    # 自己写的bleu计算
     bleu = sentence_bleu(candidate_sentence, [reference_sentence], max_gram=4
                          , weights=(0.25, 0.25, 0.25, 0.25), ch=True)
     print(bleu)
+
+    # nltk bleu计算
+    bleu_nltk = sentence_bleu_nltk(candidate_sentence, [reference_sentence])
+    print(bleu_nltk)
 
 
 if __name__ == '__main__':

@@ -43,6 +43,7 @@ def main():
         # en = _pre.load_single_sentences(_config.path_to_train_file_en, _config.num_sentences, column=1)
         # ch = _pre.load_single_sentences(_config.path_to_train_file_zh, _config.num_sentences, column=1)
         en, ch = _pre.load_sentences(_config.path_to_train_file, _config.num_sentences)
+
         # 预处理句子
         en = _pre.preprocess_sentences_en(en, mode=_config.en_tokenize_type)
         ch = _pre.preprocess_sentences_ch(ch, mode=_config.ch_tokenize_type)
@@ -75,6 +76,7 @@ def main():
 
         # 创建模型及相关变量
         optimizer, train_loss, train_accuracy, transformer = network.get_model(vocab_size_en, vocab_size_ch)
+
         # 开始训练
         trainer.train(_config.path_temp_encoded_sequences_en, _config.path_temp_encoded_sequences_zh
                       , transformer, optimizer, train_loss, train_accuracy)

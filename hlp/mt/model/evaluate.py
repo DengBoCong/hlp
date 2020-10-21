@@ -26,7 +26,7 @@ def calc_bleu(path, transformer, tokenizer_en, tokenizer_ch):
         print('英文句子:' + en[i])
         print('机翻句子:' + candidate_sentence)
         print('参考句子:' + ch[i])
-        bleu_i = eval_bleu.sentence_bleu(candidate_sentence, [ch[i]], ch=True)
+        bleu_i = eval_bleu.sentence_bleu_nltk(candidate_sentence, [ch[i]])
         print('此句子BLEU指标:%.2f' % bleu_i)
         bleu_sum += bleu_i
     bleu = bleu_sum / _config.num_eval
