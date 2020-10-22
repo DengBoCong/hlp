@@ -1,14 +1,13 @@
 ﻿# -*- coding: utf-8 -*-
 """
 Created on Tue Sep 29 10:20:05 2020
-
+formatted
 @author: 九童
 
-中文语料预处理
+文字语料预处理
 """
 import io
 import re
-
 import numpy as np
 import tensorflow as tf
 
@@ -17,36 +16,49 @@ def preprocess_ch_sentence(s):
     s = [c for c in s]
     s = ' '.join(s)
     s = re.sub(r'[" "]+', " ", s)  # 合并多个空格
+    s = s.strip()
+
+    # 给句子加上开始和结束标记
+    # 以便模型知道何时开始和结束预测
+    s = '<start> ' + s + ' <end>'
+
+    return s
+
+
+# 对英文句子：小写化，切分句子，添加开始和结束标记
+def preprocess_en_sentence(s):
+    s = s.lower().strip()
+    s = ' '.join(s)
+    s = re.sub(r"([?.!,])", r" \1 ", s)  # 切分断句的标点符号
+    s = re.sub(r'[" "]+', " ", s)  # 合并多个空格
+
+    # 除了 (a-z, A-Z, ".", "?", "!", ",")，将所有字符替换为空格
+    s = re.sub(r"[^a-zA-Z?.!,]+", " ", s)
 
     s = s.strip()
 
     # 给句子加上开始和结束标记
     # 以便模型知道何时开始和结束预测
     s = '<start> ' + s + ' <end>'
+
     return s
 
 
 def create_input_dataset(path, num_examples):
     lines = io.open(path, encoding='UTF-8').read().strip().split('\n')
+    en_sentences = [l.split('\t')[0] for l in lines[:num_examples]]
+    en_sentences = [preprocess_en_sentence(s) for s in en_sentences]
 
-    ch_sentences = [l.split(' ')[1:] for l in lines[:num_examples]]
-    ch_sentences = [''.join(word) for word in ch_sentences]
-
-    ch_sentences = [preprocess_ch_sentence(s) for s in ch_sentences]
-    return ch_sentences
+    return en_sentences
 
 
 def tokenize(texts):
     tokenizer = tf.keras.preprocessing.text.Tokenizer(
         filters='')  # 无过滤字符
     tokenizer.fit_on_texts(texts)
-
     sequences = tokenizer.texts_to_sequences(texts)  # 文本数字序列
-
     sequences = tf.keras.preprocessing.sequence.pad_sequences(sequences,
-                                                              padding='post', value=len(tokenizer.word_index) + 1)
-
-    print('=====len(tokenizer.word_index) = {}'.format(len(tokenizer.word_index)))
+                                                              padding='post')
     return sequences, tokenizer
 
 
@@ -67,8 +79,5 @@ def tensor_to_onehot(tensor, tokenizer):
 def load_dataset(path, num_examples=None):
     # 创建清理过的输入输出对
     targ_lang = create_input_dataset(path, num_examples)
-
     target_tensor, targ_lang_tokenizer = tokenize(targ_lang)
-    # target_tensor = tf.convert_to_tensor(target_tensor)
-    target_tensor = tensor_to_onehot(target_tensor, targ_lang_tokenizer)
     return target_tensor, targ_lang_tokenizer
