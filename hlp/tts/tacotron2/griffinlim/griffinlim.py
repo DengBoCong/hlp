@@ -19,57 +19,13 @@ import numpy as np
 import scipy.io.wavfile as wave
 import copy
 import scipy
-
+from prepocesses import get_spectrograms
 import tensorflow as tf
-def get_spectrograms(fpath):
-    '''Returns normalized log(melspectrogram) and log(magnitude) from `sound_file`.
-    Args:
-      sound_file: A string. The full path of a sound file.
-
-    Returns:
-      mel: A 2d array of shape (T, n_mels) <- Transposed
-      mag: A 2d array of shape (T, 1+n_fft/2) <- Transposed
- '''
-    # Loading sound file
-    y, sr = librosa.load(fpath, sr=None)
-
-    # Trimming
-    y, _ = librosa.effects.trim(y, top_db=top_db)
-
-    # Preemphasis
-    y = np.append(y[0], y[1:] - preemphasis * y[:-1])
-
-    # stft
-    linear = librosa.stft(y=y,
-                          n_fft=n_fft,
-                          hop_length=hop_length,
-                          win_length=win_length)
-
-    # magnitude spectrogram
-    mag = np.abs(linear)  # (1+n_fft//2, T)
-
-    # mel spectrogram
-    mel_basis = librosa.filters.mel(sr, n_fft, n_mels)  # (n_mels, 1+n_fft//2)
-    mel = np.dot(mel_basis, mag)  # (n_mels, t)
-    # to decibel
-    mel = 20 * np.log10(np.maximum(1e-5, mel))
-    mag = 20 * np.log10(np.maximum(1e-5, mag))
-
-    # normalize
-    mel = np.clip((mel - ref_db + max_db) / max_db, 1e-8, 1)
-    mag = np.clip((mag - ref_db + max_db) / max_db, 1e-8, 1)
-
-    # Transpose
-    mel = mel.T.astype(np.float32)  # (T, n_mels)
-    mag = mag.T.astype(np.float32)  # (T, 1+n_fft//2)
-
-    return mel, mag
-
 
 def melspectrogram2wav(mel):
     '''# Generate wave file from spectrogram'''
     # transpose
-    mel = mel.T
+    #mel = mel.T
 
     # de-noramlize
     mel = (np.clip(mel, 0, 1) * max_db) - max_db + ref_db
@@ -143,8 +99,8 @@ def save_figure_to_numpy(fig):
 
 
 #x,y=get_spectrograms('1.wav')
-#print("x:",type(x))
-# print("x:",x.shape)
+##print("x:",type(x))
+#print("x:",x.shape)
 #print("mel", x)
 #wav=melspectrogram2wav(x)
 ##wave.write('4.wav', rate=sr, data=wav)

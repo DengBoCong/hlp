@@ -2,8 +2,7 @@ class Tacotron2Config(object):
     """Initialize Tacotron-2 Config."""
     def __init__(
         self,
-        dataset='ljspeech',
-        #vocab_size=len(lj_symbols),
+        vocab_size=5,
         embedding_hidden_size=512,
         initializer_range=0.02,
         layer_norm_eps=1e-6,
@@ -23,7 +22,7 @@ class Tacotron2Config(object):
         attention_dim=128,
 
         # Location Layer parameters
-        attention_filters=56,
+        attention_filters=32,
         attention_kernel=31,
 
         # Mel-post processing network parameters
@@ -42,17 +41,31 @@ class Tacotron2Config(object):
         attention_type="lsa",
 
         gate_threshold=0.5,
-        n_mels=80,
         n_conv_postnet=5,
         postnet_conv_filters=512,
         postnet_conv_kernel_sizes=5,
         postnet_dropout_rate=0.1,
         #path
-        text_train_path=r".\text\text_train\wenzi.txt",
-        wave_train_path= r"./wavs/wave_train/",
-        text_test_path= r".\text\text_test\wenzi.txt",
-        wave_test_path = r"./wavs/wave_test/",
-        #一些参数
+        text_train_path=r"./number/train/text/wenzi.txt",
+        wave_train_path= r"./number/train/wave/",
+        #text_test_path= r".\text\text_test\wenzi.txt",
+        #wave_test_path = r"./wavs/wave_test/",
+        #关于音频的参数
+        sr=22050,# Sample rate.
+        n_fft = 2048,  # fft points (samples)
+        frame_shift = 0.0125,  # seconds
+        frame_length = 0.05,  # seconds
+        #hop_length = int(sr*frame_shift),  # samples.
+        hop_length=275,
+        #win_length = int(sr*frame_length),  # samples.
+        win_length = 1102,
+        n_mels = 80,  # Number of Mel banks to generate
+        power = 1.2,  # Exponent for amplifying the predicted magnitude
+        n_iter = 100,  # Number of inversion iterations
+        preemphasis = .97,  # or None
+        max_db = 100,
+        ref_db = 20,
+        top_db = 15,
         batch_size=2
 
     ):
@@ -68,6 +81,7 @@ class Tacotron2Config(object):
         self.encoder_conv_activation = encoder_conv_activation
         self.encoder_conv_dropout_rate = encoder_conv_dropout_rate
         self.encoder_lstm_units = encoder_lstm_units
+        self.vocab_size=vocab_size
 
         # decoder param
         self.reduction_factor = reduction_factor
@@ -94,12 +108,21 @@ class Tacotron2Config(object):
         # path
         self.text_train_path=text_train_path
         self.wave_train_path = wave_train_path
-        self.text_test_path = text_test_path
-        self.wave_test_path = wave_test_path
+#        self.text_test_path = text_test_path
+ #       self.wave_test_path = wave_test_path
         self.batch_size=batch_size
-"""----------------------checkpoint--------------------------"""
-def configs_checkpoint():
-    configs_checkpoint={}
-    configs_checkpoint["directory"] = "./checkpoint" #检查点保存路径
-    configs_checkpoint["max_to_keep"] = 5 #保存的最近的检查点的最多个数
-    return configs_checkpoint
+        # 声音参数
+        self.sr=sr
+        self.n_fft=n_fft
+        self.frame_shift=frame_shift
+        self.frame_length=frame_length
+        self.hop_length=hop_length
+        self.win_length=win_length
+        self.n_mels=n_mels
+        self.power=power
+        self.n_iter=n_iter
+        self.preemphasis=preemphasis
+        self.max_db=max_db
+        self.ref_db=ref_db
+        self.top_db=top_db
+
