@@ -13,7 +13,7 @@ import numpy as np
 
 
 def shape_list(x):
-    static = x.shape.as_list() # as_list() 得到list数据
+    static = x.shape.as_list()  # as_list() 得到list数据
     dynamic = tf.shape(x)  # 把 x的形状 装入numpy
     return [dynamic[i] if s is None else s for i, s in enumerate(static)]
 
@@ -22,7 +22,7 @@ class TFSharedEmbeddings(tf.keras.layers.Layer):
     def __init__(self, vocab_size, hidden_size, initializer_range=None, **kwargs):
         super().__init__(**kwargs)
         self.vocab_size = vocab_size
-        self.hidden_size = hidden_size  #（维度）
+        self.hidden_size = hidden_size  # （维度）
         self.initializer_range = hidden_size ** -0.5 if initializer_range is None else initializer_range
 
     def build(self, input_shape):
@@ -52,13 +52,14 @@ class TFSharedEmbeddings(tf.keras.layers.Layer):
 
 
 def get_initializer(initializer_range=0.02):
-    return tf.keras.initializers.TruncatedNormal(stddev=initializer_range)#截断正态分布
+    return tf.keras.initializers.TruncatedNormal(stddev=initializer_range)  # 截断正态分布
 
 
 class TFGPT2Model(tf.keras.Model):
     def __init__(self, config, *inputs, **kwargs):
         super().__init__(config, *inputs, **kwargs)
         self.transformer = TFGPT2MainLayer(config, name="transformer")
+
     def call(self, inputs, **kwargs):
         outputs = self.transformer(inputs, **kwargs)
         return outputs
@@ -82,9 +83,11 @@ class TFGPT2MainLayer(tf.keras.layers.Layer):
             name="wpe",
         )
         self.drop = tf.keras.layers.Dropout(config.embd_pdrop)
+        # 将子模块储存在一个List中
         self.h = [TFBlock(config.n_ctx, config, scale=True, name="h_._{}".format(i)) for i in range(config.n_layer)]
         self.ln_f = tf.keras.layers.LayerNormalization(epsilon=config.layer_norm_epsilon, name="ln_f")
         self.dense_layer = tf.keras.layers.Dense(self.vocab_size)
+
     def get_input_embeddings(self):
         return self.wte
 
@@ -98,15 +101,15 @@ class TFGPT2MainLayer(tf.keras.layers.Layer):
         raise NotImplementedError
 
     def call(
-        self,
-        inputs,
-        past=None,
-        attention_mask=None,
-        token_type_ids=None,
-        position_ids=None,
-        head_mask=None,
-        inputs_embeds=None,
-        training=False,
+            self,
+            inputs,
+            past=None,
+            attention_mask=None,
+            token_type_ids=None,
+            position_ids=None,
+            head_mask=None,
+            inputs_embeds=None,
+            training=False,
     ):
         if isinstance(inputs, (tuple, list)):
             input_ids = inputs[0]
@@ -198,7 +201,7 @@ class TFGPT2MainLayer(tf.keras.layers.Layer):
         all_hidden_states = ()
 
         for i in range(self.num_hidden_layers):
-            block = self.h[i]
+            block = self.h[i]  ##将子模块储存在一个List中
             layer_past = past[i]
             if self.output_hidden_states:
                 all_hidden_states = all_hidden_states + (tf.reshape(hidden_states, output_shape),)
