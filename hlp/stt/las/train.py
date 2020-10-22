@@ -51,8 +51,11 @@ def train_step(inputx_1, targetx_2, enc_hidden, targ_tokenizer, encoder, decoder
         for t in range(1, targetx_2.shape[1]):
             # 将编码器输出 （enc_output） 传送至解码器，解码
             predictions, dec_hidden, _ = decoder(dec_input, dec_hidden, enc_output)
-            predicted_id = tf.argmax(predictions[0]).numpy()  # 贪婪解码，取最大
-            result = targ_tokenizer.index_word[predicted_id] + ' '  # 目标句子
+            predicted_id = tf.argmax(predictions[0]).numpy()  # 贪婪解码，取最大      
+            if predicted_id == 0:
+                result = ' '  # 目标句子
+            else:
+                result = targ_tokenizer.index_word[predicted_id] + ' '  # 目标句子
             predicted_result += result
             target_id = targetx_2[:, t].numpy()
             # 如果是填充位0
@@ -74,9 +77,9 @@ def train_step(inputx_1, targetx_2, enc_hidden, targ_tokenizer, encoder, decoder
 
 if __name__ == "__main__":
     # wav文件
-    path = "..\\..\\number\\number\\train"
+    path = ".\\data\\wav_train"
     # 语音识别语料文件
-    path_to_file = "..\\..\\number\\number\\text\\data1.txt"
+    path_to_file = ".\\data\\data_train.txt"
     # 尝试实验不同大小的数据集
     num_examples = 1928
     # 每一步mfcc所取得特征数
@@ -131,9 +134,9 @@ if __name__ == "__main__":
     # 训练和测试还没有分开
     # 用测试集wav文件语音识别出中文 
     # 测试集wav文件
-    test_path = "..\\..\\number\\number\\dev"
+    test_path = ".\\data\\wav_test"
     # 测试集文本标签
-    test_path_to_file = "..\\..\\number\\number\\text\\dev_data1.txt"
+    test_path_to_file = ".\\data\\data_test.txt"
     # 尝试实验不同大小的数据集
     test_num = 80
     test_input_tensor = librosa_mfcc.wav_to_mfcc(test_path, n_mfcc)

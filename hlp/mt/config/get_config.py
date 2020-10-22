@@ -13,7 +13,8 @@ conf = get_config_json(json_path)
 
 # 对各变量赋值
 en_tokenize_type = conf['en_tokenize_type']  # 英文分词类型，可选：BPE/TOKENIZE
-path_to_file = conf['path_to_file']  # 用于训练的文本路径
+ch_tokenize_type = conf['ch_tokenize_type']  # 中文分词类型，可选：TOKENIZE
+path_to_train_file = conf['path_to_train_file']  # 用于训练的文本路径
 path_to_eval_file = conf['path_to_eval_file']  # 用于评估计算指标的文本路径
 num_eval = conf['num_eval']  # 用于计算指标的句子对数量
 checkpoint_path = conf["checkpoint_path"]   # 检查点路径
@@ -31,3 +32,11 @@ max_target_length = conf['max_target_length']  # 最大生成目标句子长度
 target_vocab_size = conf["target_vocab_size"]  # 英语分词target_vocab_size
 start_word = conf["start_word"]  # 句子开始标志
 end_word = conf["end_word"]  # 句子结束标志
+en_bpe_tokenizer_path = conf["en_bpe_tokenizer_path"]  # 英文BPE字典保存路径
+en_tokenizer_path = conf["en_tokenizer_path"]  # 英文tokenize字典保存路径
+ch_tokenizer_path = conf["ch_tokenizer_path"]  # 中文tokenize字典保存路径
+BEAM_SIZE = conf["BEAM_SIZE"]  # BEAM_SIZE
+path_to_train_file_en = conf["path_to_train_file_en"]
+path_to_train_file_zh = conf["path_to_train_file_zh"]
+path_temp_encoded_sequences_en = conf['path_temp_encoded_sequences_en']
+path_temp_encoded_sequences_zh = conf['path_temp_encoded_sequences_zh']

@@ -6,35 +6,35 @@ import time
 from common import preprocess
 
 
-def train_step(inp, tar):
+def train_step(inp, tar, transformer, optimizer, train_loss, train_accuracy):
     tar_inp = tar[:, :-1]
     tar_real = tar[:, 1:]
 
     enc_padding_mask, combined_mask, dec_padding_mask = self_attention.create_masks(inp, tar_inp)
 
     with tf.GradientTape() as tape:
-        predictions, _ = network.transformer(inp, tar_inp,
+        predictions, _ = transformer(inp, tar_inp,
                                      True,
                                      enc_padding_mask,
                                      combined_mask,
                                      dec_padding_mask)
         loss = network.loss_function(tar_real, predictions)
 
-    gradients = tape.gradient(loss, network.transformer.trainable_variables)
-    network.optimizer.apply_gradients(zip(gradients, network.transformer.trainable_variables))
+    gradients = tape.gradient(loss, transformer.trainable_variables)
+    optimizer.apply_gradients(zip(gradients, transformer.trainable_variables))
 
-    network.train_loss(loss)
-    network.train_accuracy(tar_real, predictions)
+    train_loss(loss)
+    train_accuracy(tar_real, predictions)
+    return transformer, optimizer, train_loss, train_accuracy
 
 
-def train():
-    print('开始处理数据集...')
-    train_dataset, val_dataset = preprocess.split_batch(network.input_pre.sequences, network.target_pre.sequences)
-    print('数据集处理完毕！')
+def train(path_en, path_zh, transformer, optimizer, train_loss, train_accuracy):
+
+    train_dataset, val_dataset = preprocess.split_batch(path_en, path_zh)
     checkpoint_path = _config.checkpoint_path
 
-    ckpt = tf.train.Checkpoint(transformer=network.transformer,
-                               optimizer=network.optimizer)
+    ckpt = tf.train.Checkpoint(transformer=transformer,
+                               optimizer=optimizer)
 
     ckpt_manager = tf.train.CheckpointManager(ckpt, checkpoint_path, max_to_keep=5)
 
@@ -45,31 +45,40 @@ def train():
 
     print("开始训练...")
     for epoch in range(_config.EPOCHS):
+        print('Epoch {}/{}'.format(epoch + 1, _config.EPOCHS))
         start = time.time()
 
-        network.train_loss.reset_states()
-        network.train_accuracy.reset_states()
+        train_loss.reset_states()
+        train_accuracy.reset_states()
 
-        # inp -> portuguese, tar -> english
+        batch_sum = 0
+        sample_sum = int((_config.num_sentences * (1 - _config.test_size)) // _config.BATCH_SIZE * _config.BATCH_SIZE)
+
+        # inp -> english, tar -> chinese
         for (batch, (inp, tar)) in enumerate(train_dataset):
-            train_step(inp, tar)
+            transformer, optimizer, train_loss, train_accuracy = \
+                train_step(inp, tar, transformer, optimizer, train_loss, train_accuracy)
+            batch_sum = batch_sum + len(inp)
+            print('\r{}/{} [Batch {} Loss {:.4f} Accuracy {:.4f}]'.format(batch_sum, sample_sum, batch
+                                                                          , train_loss.result()
+                                                                          , train_accuracy.result()), end='')
 
-            if batch % 50 == 0:
-                print('Epoch {} Batch {} Loss {:.4f} Accuracy {:.4f}'.format(
-                    epoch + 1, batch, network.train_loss.result(), network.train_accuracy.result()))
+        epoch_time = (time.time() - start)
+        step_time = epoch_time * _config.BATCH_SIZE / sample_sum
+        print(' - {:.0f}s - {:.0f}ms/step - loss: {:.4f} - Accuracy {:.4f}'.format(epoch_time, step_time * 1000
+                                                                                   , train_loss.result()
+                                                                                   , train_accuracy.result()))
 
         if (epoch + 1) % 5 == 0:
             ckpt_save_path = ckpt_manager.save()
-            print('Saving checkpoint for epoch {} at {}'.format(epoch + 1,
-                                                                ckpt_save_path))
+            print('Saving checkpoint for epoch {} at {}'.format(epoch + 1, ckpt_save_path))
 
-        print('Epoch {} Loss {:.4f} Accuracy {:.4f}'.format(epoch + 1,
-                                                            network.train_loss.result(),
-                                                            network.train_accuracy.result()))
+    ckpt_save_path = ckpt_manager.save()
+    print('Saving checkpoint for epoch {} at {}'.format(epoch + 1, ckpt_save_path))
 
-        print('Time taken for 1 epoch: {} secs\n'.format(time.time() - start))
     print('训练完毕！')
 
 
-if __name__ == '__main__':
-    train()
+
+
+
