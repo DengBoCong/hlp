@@ -1,17 +1,17 @@
 import tensorflow as tf
-from model import init_ds2
-from utils import wav_to_mfcc,decode_output,record,get_index_word,get_config,get_config_model
-import json
+from model import get_ds2_model
+from utils import get_index_word, get_config
+from model import decode_output
+from audio_process import record, wav_to_mfcc
 
 
 if __name__ == "__main__":
     configs = get_config()
     # 录音
-    record(file_path=configs["record"]["record_path"])
+    record(file_path = configs["record"]["record_path"])
     index_word = get_index_word()
     # 加载模型检查点
-    model=init_ds2()
-    # 加载检查点
+    model=get_ds2_model()
     checkpoint = tf.train.Checkpoint(model=model)
     manager = tf.train.CheckpointManager(
         checkpoint,
@@ -21,8 +21,8 @@ if __name__ == "__main__":
     if manager.latest_checkpoint:
         checkpoint.restore(manager.latest_checkpoint)
 
-    #audio_path = "./number/dev/0_jackson_0.wav"
-    audio_path = configs["record"]["record_path"]
+    audio_path = "./number/dev/1_nicolas_0.wav"
+    #audio_path = configs["record"]["record_path"]
     x_test = wav_to_mfcc(audio_path)
     x_test_input = tf.keras.preprocessing.sequence.pad_sequences(
             [x_test],

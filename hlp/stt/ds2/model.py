@@ -7,7 +7,7 @@ Created on Tue Sep 15 16:50:12 2020
 #模型搭建
 #step1：1-3 Conv1D -> 1BN -> 1-3 bi_gru -> 1BN -> 1dense
 import tensorflow as tf
-from utils import get_config_model
+from utils import get_config
 
 
 #子类化构建DS2模型
@@ -61,17 +61,67 @@ class DS2(tf.keras.Model):
         x = self.ds(x)
         return x
 
-def init_ds2():
-    configs_model = get_config_model()
-    n_mfcc=configs_model[0]
-    conv_layers=configs_model[1]
-    filters=configs_model[2]
-    kernel_size=configs_model[3]
-    strides=configs_model[4]
-    bi_gru_layers=configs_model[5]
-    gru_units=configs_model[6]
-    dense_units=configs_model[7]
+def get_ds2_model():
+    configs = get_config()
+    n_mfcc = configs["other"]["n_mfcc"]
+    conv_layers = configs["model"]["conv_layers"]
+    filters = configs["model"]["conv_filters"]
+    kernel_size = configs["model"]["conv_kernel_size"]
+    strides = configs["model"]["conv_strides"]
+    bi_gru_layers = configs["model"]["bi_gru_layers"]
+    gru_units = configs["model"]["gru_units"]
+    dense_units = configs["model"]["dense_units"]
     return DS2(n_mfcc,conv_layers,filters,kernel_size,strides,bi_gru_layers,gru_units,dense_units)
+
+#基于模型预测得到的序列list并通过字典集来进行解码处理
+def decode_output(seq, index_word):
+    configs = get_config()
+    mode = configs["preprocess"]["text_process_mode"]
+    if mode == "cn":
+        return decode_output_ch_sentence(seq, index_word)
+    elif mode == "en_word":
+        return decode_output_en_sentence_word(seq, index_word)
+    else:
+        return decode_output_en_sentence_char(seq, index_word)
+
+def decode_output_ch_sentence(seq, index_word):
+    result = ""
+    for i in seq:
+        if i >= 1 and i <= len(index_word):
+            word = index_word[str(i)]
+            if word != "<start>":
+                if word != "<end>":
+                    result += word
+                else:
+                    return result
+    return result
+
+def decode_output_en_sentence_word(seq,index_word):
+    result = ""
+    for i in seq:
+        if i >= 1 and i <= (len(index_word)):
+            word = index_word[str(i)]
+            if word != "<start>":
+                if word != "<end>":
+                    result += word+" "
+                else:
+                    return result
+    return result
+
+def decode_output_en_sentence_char(seq,index_word):
+    result = ""
+    for i in seq:
+        if i >= 1 and i <= (len(index_word)):
+            word = index_word[str(i)]
+            if word != "<start>":
+                if word != "<end>":
+                    if word !="<space>":
+                        result += word
+                    else:
+                        word += " "
+                else:
+                    return result
+    return result
 
 
 if __name__ == "__main__":
