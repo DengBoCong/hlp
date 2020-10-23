@@ -38,5 +38,5 @@ ch_tokenizer_path = conf["ch_tokenizer_path"]  # 中文tokenize字典保存路�
 BEAM_SIZE = conf["BEAM_SIZE"]  # BEAM_SIZE
 path_to_train_file_en = conf["path_to_train_file_en"]
 path_to_train_file_zh = conf["path_to_train_file_zh"]
-path_temp_encoded_sequences_en = conf['path_temp_encoded_sequences_en']
-path_temp_encoded_sequences_zh = conf['path_temp_encoded_sequences_zh']
+path_encoded_sequences_en = conf['path_encoded_sequences_en']
+path_encoded_sequences_zh = conf['path_encoded_sequences_zh']

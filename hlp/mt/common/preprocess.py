@@ -21,18 +21,23 @@ import numpy
 
 def load_single_sentences(path, num_sentences, column):
     """加载指定列文本，列计数从1开始"""
+    sentences = []
     with open(path, encoding='UTF-8') as file:
-        lines = file.read().strip().split('\n')
-    sentences = [l.split('\t')[column - 1] for l in lines[:num_sentences]]
+        for i in range(num_sentences):
+            line = file.readline()
+            sentences.append(line.split('\t')[column - 1])
     return sentences
 
 
 def load_sentences(path, num_sentences):
     """加载文本"""
+    en_sentences = []
+    ch_sentences = []
     with open(path, encoding='UTF-8') as file:
-        lines = file.read().strip().split('\n')
-    en_sentences = [l.split('\t')[0] for l in lines[:num_sentences]]
-    ch_sentences = [l.split('\t')[1] for l in lines[:num_sentences]]
+        for i in range(num_sentences):
+            line = file.readline()
+            en_sentences.append(line.split('\t')[0])
+            ch_sentences.append(line.split('\t')[1])
     return en_sentences, ch_sentences
 
 
@@ -287,6 +292,74 @@ def split_batch(path_en, path_zh):
     val_dataset = val_dataset.shuffle(_config.BUFFER_SIZE).batch(_config.BATCH_SIZE, drop_remainder=True)
     train_dataset.cache()
     return train_dataset, val_dataset
+
+
+def generate_batch_from_file(path_en, path_zh, num_steps, batch_size):
+    """
+    从编码文件中分batch读入数据集
+
+    path_en：英文编码句子路径
+    path_zh：中文编码句子路径
+    num_steps：整个训练集的step数，即数据集中包含多少个batch
+    batch_size:batch大小
+
+    return:input_tensor shape=(batch_size, sentence_length), dtype=tf.int32
+           , target_tensor shape=(batch_size, sentence_length), dtype=tf.int32
+    """
+    step = 0
+    while step < num_steps:
+        input_tensor = numpy.loadtxt(path_en, dtype='int32', skiprows=0 + step*batch_size, max_rows=batch_size)
+        target_tensor = numpy.loadtxt(path_zh, dtype='int32', skiprows=0 + step*batch_size, max_rows=batch_size)
+        step += 1
+        yield tf.cast(input_tensor, tf.int32), tf.cast(target_tensor, tf.int32)
+
+
+def train_preprocess():
+    """
+    模型训练所需要的文本预处理
+    - 加载句子
+    - 预处理句子
+    - 生成及保存字典
+    - 编码句子
+
+    """
+    # 加载句子
+    print('正在加载、预处理数据...')
+    # en = _pre.load_single_sentences(_config.path_to_train_file_en, _config.num_sentences, column=1)
+    # ch = _pre.load_single_sentences(_config.path_to_train_file_zh, _config.num_sentences, column=1)
+    en, ch = load_sentences(_config.path_to_train_file, _config.num_sentences)
+
+    # 预处理句子
+    en = preprocess_sentences_en(en, mode=_config.en_tokenize_type)
+    ch = preprocess_sentences_ch(ch, mode=_config.ch_tokenize_type)
+    print('已加载句子数量:%d' % _config.num_sentences)
+    print('数据加载、预处理完毕！\n')
+
+    # 生成及保存字典
+    print('正在生成、保存英文字典(分词方式:%s)...' % _config.en_tokenize_type)
+    tokenizer_en, vocab_size_en = create_tokenizer(sentences=en, mode=_config.en_tokenize_type
+                                                   , save_path=_config.en_bpe_tokenizer_path)
+    print('生成英文字典大小:%d' % vocab_size_en)
+    print('英文字典生成、保存完毕！\n')
+    print('正在生成、保存中文字典(分词方式:%s)...' % _config.ch_tokenize_type)
+    tokenizer_ch, vocab_size_ch = create_tokenizer(sentences=ch, mode=_config.ch_tokenize_type
+                                                   , save_path=_config.ch_tokenizer_path)
+    print('生成中文字典大小:%d' % vocab_size_ch)
+    print('中文字典生成、保存完毕！\n')
+
+    # 编码句子
+    print("正在编码句子...")
+    max_sequence_length_en = create_encoded_sentences(sentences=en, tokenizer=tokenizer_en
+                                                      , mode=_config.en_tokenize_type
+                                                      , path=_config.path_encoded_sequences_en)
+    max_sequence_length_ch = create_encoded_sentences(sentences=ch, tokenizer=tokenizer_ch
+                                                      , mode=_config.ch_tokenize_type
+                                                      , path=_config.path_encoded_sequences_zh)
+    print('最大中文句子长度:%d' % max_sequence_length_ch)
+    print('最大英文句子长度:%d' % max_sequence_length_en)
+    print("句子编码完毕！\n")
+
+    return vocab_size_en, vocab_size_ch
 
 
 def check_point():
