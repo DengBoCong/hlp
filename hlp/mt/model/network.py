@@ -326,7 +326,7 @@ def load_checkpoint(transformer, optimizer):
     checkpoint_path = _config.checkpoint_path
     ckpt = tf.train.Checkpoint(transformer=transformer,
                                optimizer=optimizer)
-    ckpt_manager = tf.train.CheckpointManager(ckpt, checkpoint_path, max_to_keep=5)
+    ckpt_manager = tf.train.CheckpointManager(ckpt, checkpoint_path, max_to_keep=100)
     if ckpt_manager.latest_checkpoint:
         ckpt.restore(ckpt_manager.latest_checkpoint)
         # ckpt.restore('./checkpoints/train/ckpt-20')
