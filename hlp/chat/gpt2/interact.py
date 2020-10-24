@@ -27,7 +27,6 @@ def main():
     train.load_checkpoint(model, optimizer, args)
     # model.load_weights('./dialogue_model/model_weight').expect_partial()
     print("Model Restored..........................")
-    print('加载完权重')
 
     # 存储聊天记录，每个utterance以token的id的形式进行存储
     history = []

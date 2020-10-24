@@ -26,7 +26,6 @@ def create_model(args, config):
         beta_1=0.9,
         beta_2=0.98,
         epsilon=1e-9)
-    print(config.vocab_size)
 
     return model, config.n_ctx, optimizer
 
@@ -124,11 +123,10 @@ def train(model, train_list, args, tokenizer, optimizer):
             loss, accuracy = train_step(model, input_ids, optimizer, tokenizer)
         batch_loss = (loss / max_input_len)
         print('epoch={} loss={} accuracy={} '.format(epoch, batch_loss, accuracy))
-    if (epoch + 1) % 5 == 0:
-        ckpt_save_path = ckpt_manager.save()
-    # print('已保存 训练 ckpt_save_path={}'.format(ckpt_save_path))
-    print('Saving checkpoint for epoch {} at {}'.format(epoch + 1,
-                                                        ckpt_save_path))
+        if (epoch + 1) % 5 == 0:
+            ckpt_save_path = ckpt_manager.save()
+            print('Saving checkpoint for epoch {} at {}'.format(epoch + 1,
+                                                            ckpt_save_path))
 
 
 def main():
