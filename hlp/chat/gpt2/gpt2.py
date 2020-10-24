@@ -13,12 +13,12 @@ import numpy as np
 
 
 def shape_list(x):
-    static = x.shape.as_list()  # as_list() 得到list数据
-    dynamic = tf.shape(x)  # 把 x的形状 装入numpy
+    static = x.shape.as_list()  # as_list() 得到list数据    --static 保存 数据形状 shape []
+    dynamic = tf.shape(x)  # 把 x的形状 装入numpy  返回一个tensor
     return [dynamic[i] if s is None else s for i, s in enumerate(static)]
 
 
-class TFSharedEmbeddings(tf.keras.layers.Layer):
+class TFSharedEmbeddings(tf.keras.layers.Layer):  #继承了 layers  就会debug进入 base_layer
     def __init__(self, vocab_size, hidden_size, initializer_range=None, **kwargs):
         super().__init__(**kwargs)
         self.vocab_size = vocab_size
@@ -32,7 +32,7 @@ class TFSharedEmbeddings(tf.keras.layers.Layer):
 
     def call(self, inputs, mode="embedding"):
         if mode == "embedding":
-            return self._embedding(inputs)
+            return self._embedding(inputs)  #shape=(6, 64, 128)
         elif mode == "linear":
             return self._linear(inputs)
         else:
@@ -61,7 +61,7 @@ class TFGPT2Model(tf.keras.Model):
         self.transformer = TFGPT2MainLayer(config, name="transformer")
 
     def call(self, inputs, **kwargs):
-        outputs = self.transformer(inputs, **kwargs)
+        outputs = self.transformer(inputs, **kwargs)  #要进入base_layer
         return outputs
 
 
@@ -130,15 +130,15 @@ class TFGPT2MainLayer(tf.keras.layers.Layer):
             inputs_embeds = inputs.get("inputs_embeds", inputs_embeds)
             assert len(inputs) <= 7, "Too many inputs."
         else:
-            input_ids = inputs
-
+            input_ids = inputs  #(batch,len)
         if input_ids is not None and inputs_embeds is not None:
             raise ValueError("You cannot specify both input_ids and inputs_embeds at the same time")
         elif input_ids is not None:
-            input_shape = shape_list(input_ids)
-            input_ids = tf.reshape(input_ids, [-1, input_shape[-1]])
+            input_shape = shape_list(input_ids)#返回输入数据的形状
+            input_ids = tf.reshape(input_ids, [-1, input_shape[-1]]) #  ？？感觉没有做改变
         elif inputs_embeds is not None:
             input_shape = shape_list(inputs_embeds)[:-1]
+
         else:
             raise ValueError("You have to specify either input_ids or inputs_embeds")
 
@@ -148,8 +148,8 @@ class TFGPT2MainLayer(tf.keras.layers.Layer):
         else:
             past = tf.unstack(past, axis=1)
             past_length = shape_list(past[0][0])[-2]
-        if position_ids is None:
-            position_ids = tf.range(past_length, input_shape[-1] + past_length, dtype=tf.int32)[tf.newaxis, :]
+        if position_ids is None:  #得到位置编码
+            position_ids = tf.range(past_length, input_shape[-1] + past_length, dtype=tf.int32)[tf.newaxis, :]#（1，len)
 
         if attention_mask is not None:
             # We create a 3D attention mask from a 2D tensor mask.
@@ -169,7 +169,6 @@ class TFGPT2MainLayer(tf.keras.layers.Layer):
             attention_mask = (1.0 - attention_mask) * -10000.0
         else:
             attention_mask = None
-
         # Prepare head mask if needed
         # 1.0 in head_mask indicate we keep the head
         # attention_probs has shape bsz x n_heads x N x N
@@ -181,20 +180,18 @@ class TFGPT2MainLayer(tf.keras.layers.Layer):
             head_mask = [None] * self.num_hidden_layers
             # head_mask = tf.constant([0] * self.num_hidden_layers)
 
-        position_ids = tf.reshape(position_ids, [-1, shape_list(position_ids)[-1]])
-
+        position_ids = tf.reshape(position_ids, [-1, shape_list(position_ids)[-1]])  #[[0,1,2……63]]
         if inputs_embeds is None:
-            inputs_embeds = self.wte(input_ids, mode="embedding")
-        position_embeds = self.wpe(position_ids)
+            inputs_embeds = self.wte(input_ids, mode="embedding") #wte处理之后的 输入向量 （batch,len,dim)
+        position_embeds = self.wpe(position_ids)  #将简单的 0--len位置id 进行变化 得到位置矩阵
         if token_type_ids is not None:
             token_type_ids = tf.reshape(token_type_ids, [-1, shape_list(token_type_ids)[-1]])
             token_type_embeds = self.wte(token_type_ids, mode="embedding")
         else:
             token_type_embeds = 0
-        hidden_states = inputs_embeds + position_embeds + token_type_embeds
+        hidden_states = inputs_embeds + position_embeds + token_type_embeds  #(batch,len,dim)
         hidden_states = self.drop(hidden_states, training=training)
-
-        output_shape = input_shape + [shape_list(hidden_states)[-1]]
+        output_shape = input_shape + [shape_list(hidden_states)[-1]]  #(batch,len,dim)
 
         presents = ()
         all_attentions = []
@@ -207,7 +204,6 @@ class TFGPT2MainLayer(tf.keras.layers.Layer):
                 all_hidden_states = all_hidden_states + (tf.reshape(hidden_states, output_shape),)
 
             outputs = block([hidden_states, layer_past, attention_mask, head_mask[i]], training=training)
-
             hidden_states, present = outputs[:2]
             presents = presents + (present,)
 
@@ -246,6 +242,7 @@ class TFBlock(tf.keras.layers.Layer):
         x, layer_past, attention_mask, head_mask = inputs
 
         a = self.ln_1(x)
+
         output_attn = self.attn([a, layer_past, attention_mask, head_mask], training=training)
         a = output_attn[0]  # output_attn: a, present, (attentions)
         x = x + a
@@ -253,7 +250,6 @@ class TFBlock(tf.keras.layers.Layer):
         m = self.ln_2(x)
         m = self.mlp(m, training=training)
         x = x + m
-
         outputs = [x] + output_attn[1:]
         return outputs  # x, present, (attentions)
 
@@ -265,7 +261,7 @@ class TFConv1D(tf.keras.layers.Layer):
         self.nx = nx
         self.initializer_range = initializer_range
 
-    def build(self, input_shape):
+    def build(self, input_shape):#建立起参数
         self.weight = self.add_weight(
             "weight", shape=[self.nx, self.nf], initializer=get_initializer(self.initializer_range)
         )
@@ -273,13 +269,11 @@ class TFConv1D(tf.keras.layers.Layer):
 
     def call(self, x):
         bz, sl = shape_list(x)[:2]
-
         x = tf.reshape(x, [-1, self.nx])
         x = tf.matmul(x, self.weight) + self.bias
 
         x = tf.reshape(x, [bz, sl, self.nf])
-
-        return x
+        return x   #返回一个矩阵 （bz,sl,nf)
 
 
 class TFAttention(tf.keras.layers.Layer):
@@ -316,16 +310,17 @@ class TFAttention(tf.keras.layers.Layer):
 
     def _attn(self, inputs, training=False):
         q, k, v, attention_mask, head_mask = inputs
-        # q, k, v 形状 [batch, heads, sequence, features]
         w = tf.matmul(q, k, transpose_b=True)
-        if self.scale:
-            dk = tf.cast(shape_list(k)[-1], tf.float32)  # scale attention_scores
+        if self.scale: ##此时的shape_list是 不相同的x
+            dk = tf.cast(shape_list(k)[-1], tf.float32)  # 缩放 w
             w = w / tf.math.sqrt(dk)
 
         # w 维度 [batch, heads, dst_sequence, src_sequence], where information flows from src to dst.
-        _, _, nd, ns = shape_list(w)
-        b = self.causal_attention_mask(nd, ns, dtype=w.dtype)
-        b = tf.reshape(b, [1, 1, nd, ns])
+        _, _, nd, ns = shape_list(w)  #此时的 shape_list是相同的了
+
+        b = self.causal_attention_mask(nd, ns, dtype=w.dtype)#对角矩阵
+        b = tf.reshape(b, [1, 1, nd, ns])  #变成了4维
+
         w = w * b - 1e4 * (1 - b)
 
         if attention_mask is not None:
@@ -334,7 +329,6 @@ class TFAttention(tf.keras.layers.Layer):
 
         w = tf.nn.softmax(w, axis=-1)
         w = self.attn_dropout(w, training=training)
-
         # Mask heads if we want to
         if head_mask is not None:
             w = w * head_mask
@@ -358,7 +352,6 @@ class TFAttention(tf.keras.layers.Layer):
 
     def call(self, inputs, training=False):
         x, layer_past, attention_mask, head_mask = inputs
-
         x = self.c_attn(x)
         query, key, value = tf.split(x, 3, axis=2)
         query = self.split_heads(query)

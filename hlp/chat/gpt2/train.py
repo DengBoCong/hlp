@@ -11,7 +11,6 @@ from gpt2_config import GPT2Config
 # 数据处理
 PAD = '[PAD]'
 pad_id = 0
-BATCH_SIZE = 32
 
 
 def create_model(args, config):
@@ -27,8 +26,7 @@ def create_model(args, config):
         beta_1=0.9,
         beta_2=0.98,
         epsilon=1e-9)
-    print('config.n_positions={}'.format(config.n_positions))
-    print('n_embd={}'.format(config.n_embd))
+    print(config.vocab_size)
 
     return model, config.n_ctx, optimizer
 
@@ -86,29 +84,29 @@ def load_checkpoint(model, optimizer, args):
 
 def train_step(model, input_ids, optimizer, tokenizer):
     with tf.GradientTape() as t:
-        print('input_ids={}'.format(input_ids.shape))
-        outputs = model(
-            inputs=input_ids)  # input_ids  (bantch_size,dim)   outputs : [(batch_size, dim, vocab),(batch,2,head,4,dim,32)]  第二个？
+        outputs = model(inputs=input_ids)  # input_ids  (bantch_size,dim)   outputs : [(batch_size, dim, vocab),(batch,2,head,4,dim,32)]  第二个？
         shift_logits, shift_labels, output_logits = change_tpye(outputs, input_ids)
         # shift_logits:[batch*(dim-1),vocab]; shift_labels:[(dim-1),] ; output_logits：(batch_size, dim-1, vocab)
         loss, accuracy = loss_function(shift_logits, shift_labels, tokenizer, output_logits)
         print('loss={}'.format(loss))
     gradients = t.gradient(loss, model.trainable_variables)
     optimizer.apply_gradients(zip(gradients, model.trainable_variables))
+
+
     return loss, accuracy
 
 
 def train(model, train_list, args, tokenizer, optimizer):
     train_dataset, max_input_len = preprocess_data.collate_fn(train_list)
-    print('max_input_len={}'.format(max_input_len))
     new_list = []
     for i in range(len(train_dataset)):
         s = list(map(int, train_dataset[i]))
         new_list.append(s)
     dd = tf.convert_to_tensor(new_list)
     train_dataset = tf.data.Dataset.from_tensor_slices(dd)
-    dataset = train_dataset.batch(BATCH_SIZE,
+    dataset = train_dataset.batch(args.batch_size,
                                   drop_remainder=True)  # drop_remainder 忽略最后一个不足数量的batch  #[batchsize, ? ]  32,64
+
     # 数据读取
     checkpoint_path = args.dialogue_model_output_path
 

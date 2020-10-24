@@ -1,12 +1,12 @@
 class GPT2Config():
     def __init__(
         self,
-        vocab_size=6390,
-        n_positions=64,
-        n_ctx=64,
-        n_embd=128,
-        n_layer=2,
-        n_head=4,
+        vocab_size=15,
+        n_positions=300,
+        n_ctx=300,
+        n_embd=768,
+        n_layer=10,
+        n_head=12,
         resid_pdrop=0.1,
         embd_pdrop=0.1,
         attn_pdrop=0.1,
