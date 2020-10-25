@@ -11,15 +11,13 @@ def setup_train_args():
     设置训练参数
     """
     parser = argparse.ArgumentParser()
-    parser.add_argument('--model_config', default='config/model_config_dialogue_small.json', type=str, required=False,
-                        help='选择模型参数')
-    parser.add_argument('--vocab_path', default='vocab/vocab_middle.txt', type=str, required=False, help='选择词库')
+    parser.add_argument('--vocab_path', default='vocab/vocab.txt', type=str, required=False, help='选择词库')
     parser.add_argument('--train_raw_path', default='data/data.txt', type=str, required=False, help='原始训练语料')
     parser.add_argument('--train_tokenized_path', default='data/train_tokenized.txt', type=str, required=False,
                         help='将原始训练语料tokenize之后的数据的存放位置')
     parser.add_argument('--raw', action='store_false', help='是否对原始训练语料做tokenize。若尚未对原始训练语料进行tokenize，则指定该参数')
-    parser.add_argument('--epochs', default=5, type=int, required=False, help='训练的轮次')
-    parser.add_argument('--batch_size', default=6, type=int, required=False, help='训练batch size')
+    parser.add_argument('--epochs', default=50, type=int, required=False, help='训练的轮次')
+    parser.add_argument('--batch_size', default=3, type=int, required=False, help='训练batch size')
     parser.add_argument('--lr', default=1.5e-4, type=float, required=False, help='学习率')
     parser.add_argument('--warmup_steps', default=2000, type=int, required=False, help='warm up步数')
     parser.add_argument('--log_step', default=1, type=int, required=False, help='多少步汇报一次loss')
