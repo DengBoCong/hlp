@@ -67,7 +67,6 @@ def train(path_en, path_zh, transformer, optimizer, train_loss, train_accuracy, 
                 print('\r{}/{} [Batch {} Loss {:.4f} Accuracy {:.4f}]'.format(batch_sum, sample_sum, batch
                                                                               , train_loss.result()
                                                                               , train_accuracy.result()), end='')
-
         else:
             # cache为True,从生成器中train_dataset取batch进行训练
             generator = preprocess.generate_batch_from_file(path_en, path_zh, steps, _config.BATCH_SIZE)
