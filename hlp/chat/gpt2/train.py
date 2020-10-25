@@ -166,6 +166,7 @@ def main():
 
     train_list, test_list = train_test_split(data_list, test_size=0.1, random_state=1)
 
+
     print('开始训练')
     train(model, train_list, args, tokenizer, optimizer)
     print('训练结束')
