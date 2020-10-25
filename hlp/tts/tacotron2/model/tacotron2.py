@@ -1,4 +1,5 @@
 import os
+
 import tensorflow as tf
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
@@ -72,13 +73,9 @@ class LocationLayer(tf.keras.Model):
         )
 
     def call(self, attention_weights_cat):
-        #print("attention_weights_cat:", attention_weights_cat.shape)
         processed_attention = self.location_convolution(attention_weights_cat)
-        #print("attention_weights_cat:", processed_attention.shape)
         processed_attention = tf.transpose(processed_attention, [0, 2, 1])
-        #print("attention_weights_cat:", processed_attention.shape)
         processed_attention = self.location_layer1(processed_attention)
-        #print("attention_weights_cat:", processed_attention.shape)
         # processed_attention = tf.transpose(processed_attention, [0, 2, 1])
         # processed_attention = self.location_layer2(processed_attention)
         # processed_attention = tf.transpose(processed_attention, [0, 2, 1])
@@ -111,19 +108,10 @@ class Attention(tf.keras.Model):
         -------
         alignment (batch, max_time)
         """
-        #print("query:", query.shape)
         processed_query = self.query_layer(tf.expand_dims(query, axis=1))
         processed_memory = self.memory_layer(memory)
-
         processed_attention_weights = self.location_layer(attention_weights_cat)
-        #print("processed_query:", processed_query.shape)
-        #print("processed_memory:", processed_memory.shape)
-        #print("processed_attention_weights:", processed_attention_weights.shape)
-        d = processed_query + processed_memory
-        for i in range(processed_attention_weights.shape[1]):
-            d = d + processed_attention_weights[:, i:i + 1, :]
-
-        energies = tf.squeeze(self.V(tf.nn.tanh(d)), -1)
+        energies = tf.squeeze(self.V(tf.nn.tanh(processed_query + processed_memory + processed_attention_weights)), -1)
         return energies
 
     def __call__(self, attention_hidden_state, memory, attention_weights_cat):
@@ -223,7 +211,7 @@ class Postnet(tf.keras.Model):
         )
         self.norm5 = tf.keras.layers.experimental.SyncBatchNormalization(axis=-1)
         self.dropout5 = tf.keras.layers.Dropout(rate=config.postnet_dropout_rate)
-        self.fc = tf.keras.layers.Dense(units=17, activation=None, name="frame_projection1")
+        self.fc = tf.keras.layers.Dense(units=1000, activation=None, name="frame_projection1")
 
     def call(self, inputs):
         x = inputs
