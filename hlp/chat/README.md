@@ -1,35 +1,32 @@
-# 运行说明
-+ execute.py主入口文件：指令需要附带运行参数
-+ cmd：python execute.py -t/--type [模型类别] -k/--kind [执行模式]
-+ 模型类别：seq2seq(默认)/gpt2
-+ 执行类别：pre_treat(默认)/train/chat
-+ 执行指令示例：
-   + python execute.py
-   + python execute.py -t seq2seq -k pre_treat
-+ pre_treat模式为文本预处理模式，如果在没有分词结果集的情况下，需要先运行pre_treat模式
-+ train模式为训练模式
-+ chat模式为对话模式。chat模式下运行时，输入exit即退出对话。
+# 目录
++ [闲聊对话](#闲聊对话)
++ [任务对话](#任务对话)
++ [数据集汇总](#数据集汇总)
++ [版本日志](#版本日志)
 
-**正常执行顺序为pre_treat->train->chat**
+# 闲聊对话
++ seq2seq
++ transformer
 
-### 部分配置参数说明
-配置文件中的max_train_data_size用来设置训练用的最大数据量，目前设置的是100个问答对，在运行了100epoch之后的测试结果如下：
+# 任务对话
++ An End-to-End Trainable Neural Network Model with Belief Tracking for Task-Oriented Dialog
++ A Network-based End-to-End Trainable Task-oriented Dialogue System
 
-![](https://img-blog.csdnimg.cn/20200911224136498.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L0RCQ18xMjE=,size_16,color_FFFFFF,t_70#pic_center)
-
-# 版本日志：
-
-
-
-# 数据集
-data目录中的语料为缩减版，是原版语料的六分之一，需要原版语料可以自取
-
-链接：https://pan.baidu.com/s/1qAIrdX-mv-Bzq1Y7MDjmLg 
-
-提取码：r6da
-
-# Seq2Seq
-
-# GPT-2
-
-# ALBert
+# 数据集汇总
++ 闲聊对话语料
+   + free中data目录中的语料为缩减版，是原版语料的六分之一，需要[原版语料](https://pan.baidu.com/s/1qAIrdX-mv-Bzq1Y7MDjmLg)可以自取，提取码：r6da
+   + [小黄鸡语料](https://github.com/candlewill/Dialog_Corpus)
+   + [PTT八卦语料](https://github.com/zake7749/Gossiping-Chinese-Corpus)
+   + [豆瓣多轮](https://github.com/MarkWuNLP/MultiTurnResponseSelection)
+   + [电视剧对白语料](https://github.com/fateleak/dgk_lost_conv)
+   + [贴吧论坛回帖语料](https://pan.baidu.com/s/1mUknfwy1nhSM7XzH8xi7gQ)，密码:i4si
++ 任务对话语料
+   + [MultiWOZ1.0](https://www.repository.cam.ac.uk/bitstream/handle/1810/278720/MultiWOZ_1.0.zip?sequence=1&isAllowed=y)
+   + [MultiWOZ2.0](https://www.repository.cam.ac.uk/bitstream/handle/1810/280608/MULTIWOZ2.zip?sequence=3&isAllowed=y)
+   + [MultiWOZ2.1](https://www.repository.cam.ac.uk/bitstream/handle/1810/294507/MULTIWOZ2.1.zip?sequence=1&isAllowed=y)
+   + [MultiWOZ2.2](https://github.com/budzianowski/multiwoz/blob/master/data/MultiWOZ_2.2.zip)
+   + [CrossWOZ](https://github.com/thu-coai/CrossWOZ)
+   + [DSTC4](http://www.colips.org/workshop/dstc4/)
+   + [DSTC5](http://workshop.colips.org/dstc5/tasks.html)
+   + [DSTC6](http://workshop.colips.org/dstc6/)
+   + [Stanford Dialog Dataset](http://nlp.stanford.edu/projects/kvret/kvret_dataset_public.zip)
