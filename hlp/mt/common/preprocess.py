@@ -314,6 +314,15 @@ def generate_batch_from_file(path_en, path_zh, num_steps, batch_size):
         yield tf.cast(input_tensor, tf.int32), tf.cast(target_tensor, tf.int32)
 
 
+def count_word(sentences):
+    """输入句子列表，使用空格分隔返回单词数"""
+    count = 0
+    for s in sentences:
+        s = re.split(r' +', s)
+        count += len(s)
+    return count
+
+
 def train_preprocess():
     """
     模型训练所需要的文本预处理
@@ -328,6 +337,10 @@ def train_preprocess():
     # en = _pre.load_single_sentences(_config.path_to_train_file_en, _config.num_sentences, column=1)
     # ch = _pre.load_single_sentences(_config.path_to_train_file_zh, _config.num_sentences, column=1)
     en, ch = load_sentences(_config.path_to_train_file, _config.num_sentences)
+
+    # 计算语料词数
+    num_words = count_word(en)
+    print('英文语料单词数：%d' % num_words)
 
     # 预处理句子
     en = preprocess_sentences_en(en, mode=_config.en_tokenize_type)
@@ -385,7 +398,7 @@ def main():
                                                      , mode=_config.ch_tokenize_type)
     print(vocab_size_en)
     print(vocab_size_ch)
-    en = 'Transformer is good.'
+    en = ['Transformer is good.', 'I am gg', 'q a a a']
     ch = '今天天气真好啊。'
     # 预处理句子
     en = preprocess_sentences_en([en], mode='BPE')
