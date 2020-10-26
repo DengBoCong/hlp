@@ -1,13 +1,11 @@
 import sys
 import tensorflow as tf
-import common.data_utils as _data
-
 sys.path.append(sys.path[0][:-10])
 from model.chatter import Chatter
 import model.seq2seq as seq2seq
 from common.utils import CmdParser
 import config.get_config as _config
-from common.pre_treat import preprocess_raw_data
+from common.pre_treat import preprocess_raw_lccc_data
 
 
 class Seq2SeqChatter(Chatter):
@@ -82,6 +80,16 @@ class Seq2SeqChatter(Chatter):
         return tf.reduce_mean(loss_)
 
 
+def get_chatter(model):
+    # 初始化要使用的聊天器
+    chatter = Seq2SeqChatter(model=model,
+                             checkpoint_dir=_config.seq2seq_train_data,
+                             beam_size=_config.beam_size,
+                             vocab_size=_config.vocab_size,
+                             dict_fn=_config.seq2seq_dict_fn)
+    return chatter
+
+
 def main():
     parser = CmdParser(version='%seq2seq chatbot V1.0')
     parser.add_option("-t", "--type", action="store", type="string",
@@ -89,19 +97,14 @@ def main():
                       help="execute type, pre_treat/train/chat")
     (options, args) = parser.parse_args()
 
-    # 初始化要使用的聊天器
-    chatter = Seq2SeqChatter(model=options.type,
-                             checkpoint_dir=_config.seq2seq_train_data,
-                             beam_size=_config.beam_size,
-                             vocab_size=_config.vocab_size,
-                             dict_fn=_config.seq2seq_dict_fn)
-
     if options.type == 'train':
+        chatter = get_chatter(options.type)
         chatter.train(chatter.checkpoint,
                       dict_fn=_config.seq2seq_dict_fn,
                       data_fn=_config.data,
                       max_train_data_size=_config.max_train_data_size)
     elif options.type == 'chat':
+        chatter = get_chatter(options.type)
         print("Agent: 你好！结束聊天请输入ESC。")
         while True:
             req = input("User: ")
@@ -111,7 +114,9 @@ def main():
             response = chatter.respond(req=req)
             print("Agent: ", response)
     elif options.type == 'pre_treat':
-        preprocess_raw_data(raw_data=_config.resource_data, tokenized_data=_config.tokenized_data)
+        preprocess_raw_lccc_data(raw_data=_config.transformer_lccc_data,
+                                 tokenized_data=_config.transformer_lccc_tokenized_data)
+        # preprocess_raw_data(raw_data=_config.resource_data, tokenized_data=_config.tokenized_data)
     else:
         parser.error(msg='')
 
