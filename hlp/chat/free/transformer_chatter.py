@@ -51,12 +51,12 @@ class TransformerChatter(Chatter):
         self.train_loss.reset_states()
         self.train_accuracy.reset_states()
 
-    def _train_step(self, inp, tar, step_loss):
+    def _train_step(self, inp, tar, weight, step_loss):
         tar_inp = tar[:, :-1]
         tar_real = tar[:, 1:]
         with tf.GradientTape() as tape:
             predictions = self.model(inputs=[inp, tar_inp])
-            loss = self._loss_function(tar_real, predictions)
+            loss = self._loss_function(tar_real, predictions, weight)
         gradients = tape.gradient(loss, self.model.trainable_variables)
         self.optimizer.apply_gradients(zip(gradients, self.model.trainable_variables))
 
@@ -68,12 +68,15 @@ class TransformerChatter(Chatter):
     def _create_predictions(self, inputs, dec_input, t):
         # 获取目前已经保存在容器中的序列
         predictions = self.model(inputs=[inputs, dec_input], training=False)
+        predictions = tf.nn.softmax(predictions, axis=-1)
         predictions = predictions[:, -1:, :]
         predictions = tf.squeeze(predictions, axis=1)
         return predictions
 
-    def _loss_function(self, real, pred):
+    def _loss_function(self, real, pred, weights):
         real = tf.reshape(real, shape=(-1, _config.max_length_inp - 1))
+        # for weight in weights:
+        #     # pred最后一维度和weight进行混合计算
         loss = tf.keras.losses.SparseCategoricalCrossentropy(
             from_logits=True, reduction='none')(real, pred)
         mask = tf.cast(tf.not_equal(real, 0), tf.float32)

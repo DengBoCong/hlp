@@ -43,13 +43,26 @@ def create_dataset(path, num_examples, start_sign, end_sign):
         file.close()
     size = os.path.getsize(path)
     lines = io.open(path, encoding='utf-8').read().strip().split('\n')
+    diag_weight = []
+    word_pairs = []
     if num_examples == 0:
-        word_pairs = [[preprocess_sentence(start_sign, end_sign, w) for w in l.split('\t')] for l in lines]
+        for l in lines:
+            word_pairs.append([preprocess_sentence(start_sign, end_sign, w) for w in l.split('\t')])
+            temp = l.split("=")
+            if len(temp) == 1:
+                diag_weight.append(0)
+            else:
+                diag_weight.append(temp[1])
     else:
-        word_pairs = [[preprocess_sentence(start_sign, end_sign, w) for w in l.split('\t')] for l in
-                      lines[:num_examples]]
+        for l in lines[:num_examples]:
+            word_pairs.append([preprocess_sentence(start_sign, end_sign, w) for w in l.split('\t')])
+            temp = l.split("=")
+            if len(temp) == 1:
+                diag_weight.append(0)
+            else:
+                diag_weight.append(temp[1])
 
-    return zip(*word_pairs)
+    return zip(*word_pairs), diag_weight
 
 
 def max_length(tensor):
@@ -67,9 +80,9 @@ def read_data(path, num_examples, start_sign, end_sign):
     :param num_examples: 最大序列长度
     :return: input_tensor, target_tensor, lang_tokenizer
     """
-    input_lang, target_lang = create_dataset(path, num_examples, start_sign, end_sign)
+    (input_lang, target_lang), diag_weight = create_dataset(path, num_examples, start_sign, end_sign)
     input_tensor, target_tensor, lang_tokenizer = tokenize(input_lang, target_lang)
-    return input_tensor, target_tensor, lang_tokenizer
+    return input_tensor, target_tensor, lang_tokenizer, diag_weight
 
 
 def tokenize(input_lang, target_lang):
@@ -114,12 +127,12 @@ def load_data(dict_fn, data_fn, start_sign, end_sign, checkpoint_dir, max_train_
     数据加载方法，含四个元素的元组，包括如下：
     :return:input_tensor, input_token, target_tensor, target_token
     """
-    input_tensor, target_tensor, lang_tokenizer = read_data(data_fn, max_train_data_size, start_sign, end_sign)
+    input_tensor, target_tensor, lang_tokenizer, diag_weight = read_data(data_fn, max_train_data_size, start_sign, end_sign)
 
     with open(dict_fn, 'w', encoding='utf-8') as file:
         file.write(json.dumps(lang_tokenizer.word_index, indent=4, ensure_ascii=False))
 
-    dataset = tf.data.Dataset.from_tensor_slices((input_tensor, target_tensor)).cache().shuffle(
+    dataset = tf.data.Dataset.from_tensor_slices((input_tensor, target_tensor, diag_weight)).cache().shuffle(
         _config.BUFFER_SIZE).prefetch(tf.data.experimental.AUTOTUNE)
     dataset = dataset.batch(_config.BATCH_SIZE, drop_remainder=True)
     checkpoint_prefix = os.path.join(checkpoint_dir, "ckpt")

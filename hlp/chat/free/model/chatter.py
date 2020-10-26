@@ -81,8 +81,8 @@ class Chatter(object):
             batch_sum = 0
             sample_sum = 0
 
-            for (batch, (inp, tar)) in enumerate(dataset.take(steps_per_epoch)):
-                self._train_step(inp, tar, step_loss)
+            for (batch, (inp, tar, weight)) in enumerate(dataset.take(steps_per_epoch)):
+                self._train_step(inp, tar, weight, step_loss)
                 batch_sum = batch_sum + len(inp)
                 sample_sum = steps_per_epoch * len(inp)
                 print('\r', '{}/{} [==================================]'.format(batch_sum, sample_sum), end='',

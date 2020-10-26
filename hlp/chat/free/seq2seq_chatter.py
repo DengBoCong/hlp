@@ -33,7 +33,7 @@ class Seq2SeqChatter(Chatter):
             if model == 'chat':
                 exit(0)
 
-    def _train_step(self, inp, tar, step_loss):
+    def _train_step(self, inp, tar, weight, step_loss):
         loss = 0
         enc_hidden = self.encoder.initialize_hidden_state()
 
@@ -45,7 +45,7 @@ class Seq2SeqChatter(Chatter):
             # 这里针对每个训练出来的结果进行损失计算
             for t in range(1, tar.shape[1]):
                 predictions, dec_hidden, _ = self.decoder(dec_input, dec_hidden, enc_output)
-                loss += self._loss_function(tar[:, t], predictions)
+                loss += self._loss_function(tar[:, t], predictions, weight)
                 # 这一步使用teacher forcing
                 dec_input = tf.expand_dims(tar[:, t], 1)
 
@@ -64,7 +64,7 @@ class Seq2SeqChatter(Chatter):
         predictions, _, _ = self.decoder(dec_input, dec_hidden, enc_out)
         return predictions
 
-    def _loss_function(self, real, pred):
+    def _loss_function(self, real, pred, weight):
         """
         :param real:
         :param pred:
