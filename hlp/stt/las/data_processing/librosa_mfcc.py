@@ -24,9 +24,11 @@ def wav_to_mfcc(path, n_mfcc):
     mfccs = []
 
     for file in files:  # 遍历文件夹
-        position = path + '\\' + file
-        mfcc = mfcc_extract(position, n_mfcc)
-        mfccs.append(mfcc)
+        position = path + '\\' + file        
+        bool = file.endswith(".wav")
+        if bool:
+            mfcc = mfcc_extract(position, n_mfcc)
+            mfccs.append(mfcc)
 
     mfccs = tf.keras.preprocessing.sequence.pad_sequences(mfccs, padding='post', dtype='float32')
     return mfccs
