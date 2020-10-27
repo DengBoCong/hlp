@@ -8,6 +8,7 @@ import train_args as train_args
 from gpt2 import TFGPT2Model
 from gpt2_config import GPT2Config
 import poem_proprocess_raw_data as preprocess_data
+import time
 
 
 # 数据处理
@@ -57,18 +58,15 @@ def loss_function(shift_logits, shift_labels, tokenizer, output_logits):
 
     preds = np.argmax(output_logits[0],
                       axis=1)  # preds表示对应的prediction_score预测出的token在voca中的id。维度为[batch_size,token_len]
-    print('预测id={}'.format(preds.shape))
 
     correct = 0  # 计算model预测正确的token的个数，排除pad的tokne
     text = tokenizer.convert_ids_to_tokens(preds)
-    print('预测的文本序列：={}'.format(text))
     for i in range(len(preds)):
         # text = tokenizer.convert_ids_to_tokens(preds[i])
         # print('text={}'.format(text))
         # print('shift_labels={}'.format(shift_labels[i]))
         if (preds[i] == shift_labels[i]):
             correct += 1
-    print('correct={}'.format(correct))
     accuracy = correct / len(preds)
     return loss, accuracy
 
@@ -89,7 +87,6 @@ def train_step(model, input_ids, optimizer, tokenizer):
         shift_logits, shift_labels, output_logits = change_tpye(outputs, input_ids)
         # shift_logits:[batch*(dim-1),vocab]; shift_labels:[(dim-1),] ; output_logits：(batch_size, dim-1, vocab)
         loss, accuracy = loss_function(shift_logits, shift_labels, tokenizer, output_logits)
-        print('loss={}'.format(loss))
     gradients = t.gradient(loss, model.trainable_variables)
     optimizer.apply_gradients(zip(gradients, model.trainable_variables))
 
@@ -97,17 +94,8 @@ def train_step(model, input_ids, optimizer, tokenizer):
     return loss, accuracy
 
 
-def train(model, train_list, args, tokenizer, optimizer):
-    train_dataset, max_input_len = preprocess_data.collate_fn(train_list)
-    new_list = []
-    for i in range(len(train_dataset)):
-        s = list(map(int, train_dataset[i]))
-        new_list.append(s)
-    dd = tf.convert_to_tensor(new_list)
-    train_dataset = tf.data.Dataset.from_tensor_slices(dd)
-    dataset = train_dataset.batch(args.batch_size,
-                                  drop_remainder=True)  # drop_remainder 忽略最后一个不足数量的batch  #[batchsize, ? ]  32,64
-
+def train(model, args, tokenizer, optimizer):
+    train_list, dataset, max_input_len = data_process(args)
     # 数据读取
     checkpoint_path = args.dialogue_model_output_path
 
@@ -118,19 +106,50 @@ def train(model, train_list, args, tokenizer, optimizer):
         ckpt.restore(ckpt_manager.latest_checkpoint)
         print('已恢复至最新检查点！')
     print("开始训练...")
-    print('data={}'.format(dataset))
 
     # # 开始训练
     for epoch in range(args.epochs):
+        print('Epoch {}/{}'.format(epoch + 1, args.epochs))
+        start = time.time()
+        sample_sum = int(args.data_size * 0.9)
+        batch_sum = 0
         for batch_idx, input_ids in enumerate(dataset):
-            print('input_ids={}'.format(input_ids))
             loss, accuracy = train_step(model, input_ids, optimizer, tokenizer)
-        batch_loss = (loss / max_input_len)
-        print('epoch={} loss={} accuracy={} '.format(epoch, batch_loss, accuracy))
+            batch_sum = batch_sum + len(input_ids)
+            print('\r [Batch {} Loss {:.4f} Accuracy {:.4f}]'.format( batch_idx, loss, accuracy), end='')
+        epoch_time = (time.time() - start)
+        step_time = epoch_time * args.batch_size / sample_sum
+        print(' - {:.0f}s - {:.0f}ms/step - loss: {:.4f} - Accuracy {:.4f}'.format(epoch_time, step_time * 1000
+                                                                                   , loss
+                                                                                   , accuracy))
         if (epoch + 1) % 5 == 0:
             ckpt_save_path = ckpt_manager.save()
             print('Saving checkpoint for epoch {} at {}'.format(epoch + 1,
-                                                            ckpt_save_path))
+                                                                ckpt_save_path))
+
+
+def data_process(args, ):
+    # 进行数据类型变换
+    with open(args.train_tokenized_path, "r", encoding="utf8") as f:
+        data_list = []
+        # 一行行地读取 str类型的data  然后转换为list形式
+        # data_list  最终形状 [  [],[],……,[]  ]
+        for line in f.readlines():
+            data = line.strip()
+            data = data.split(' ')
+            data_list.append(data)
+
+    train_list, test_list = train_test_split(data_list, test_size=0.1, random_state=1)
+    train_dataset, max_input_len = preprocess_data.collate_fn(train_list)
+    new_list = []
+    for i in range(len(train_dataset)):
+        s = list(map(int, train_dataset[i]))
+        new_list.append(s)
+    dd = tf.convert_to_tensor(new_list)
+    train_dataset = tf.data.Dataset.from_tensor_slices(dd)
+    dataset = train_dataset.batch(args.batch_size,
+                                  drop_remainder=True)  # drop_remainder 忽略最后一个不足数量的batch  #[batchsize, ? ]  32,64
+    return train_list, dataset, max_input_len
 
 
 def main():
@@ -151,28 +170,17 @@ def main():
     config = GPT2Config()
     model, n_ctx, optimizer = create_model(args, config)
 
-    # model, n_ctx ,optimizer= create_model(args, vocab_size)
-    # print('n_ctx={}'.format(n_ctx))
     # 对原始数据进行预处理,将原始语料转换成对应的token_id
     # 如果当前是要训练对话生成模型
     print('开始产生token')
     # 不修改数据集的情况下，没必要每次训练都运行preprocess_raw_data 因为 生成的data是一样的
+    if not os.path.exists(args.train_tokenized_path):
+        file = open(args.train_tokenized_path, 'w')
+
     preprocess_data.preprocess_raw_data(args, tokenizer, n_ctx)
-    # 进行数据类型变换
-    with open(args.train_tokenized_path, "r", encoding="utf8") as f:
-        data_list = []
-        # 一行行地读取 str类型的data  然后转换为list形式
-        # data_list  最终形状 [  [],[],……,[]  ]
-        for line in f.readlines():
-            data = line.strip()
-            data = data.split(' ')
-            data_list.append(data)
-
-    train_list, test_list = train_test_split(data_list, test_size=0.1, random_state=1)
-
 
     print('开始训练')
-    train(model, train_list, args, tokenizer, optimizer)
+    train(model, args, tokenizer, optimizer)
     print('训练结束')
 
 
