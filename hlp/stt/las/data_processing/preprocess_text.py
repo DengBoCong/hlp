@@ -46,7 +46,7 @@ def preprocess_en_sentence(s):
 
 def create_input_dataset(path, num_examples):
     lines = io.open(path, encoding='UTF-8').read().strip().split('\n')
-    en_sentences = [l.split('\t')[0] for l in lines[:num_examples]]
+    en_sentences = [l.split('\t')[1] for l in lines[:num_examples]]
     en_sentences = [preprocess_en_sentence(s) for s in en_sentences]
 
     return en_sentences

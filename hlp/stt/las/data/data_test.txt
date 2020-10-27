@@ -1,80 +1,80 @@
-zero
-zero
-zero
-zero
-zero
-zero
-zero
-zero
-one
-one
-one
-one
-one
-one
-one
-one
-two
-two
-two
-two
-two
-two
-two
-two
-three
-three
-three
-three
-three
-three
-three
-three
-four
-four
-four
-four
-four
-four
-four
-four
-five
-five
-five
-five
-five
-five
-five
-five
-six
-six
-six
-six
-six
-six
-six
-six
-seven
-seven
-seven
-seven
-seven
-seven
-seven
-seven
-eight
-eight
-eight
-eight
-eight
-eight
-eight
-eight
-nine
-nine
-nine
-nine
-nine
-nine
-nine
-nine
+0_jackson_0	zero
+0_jackson_1	zero
+0_nicolas_0	zero
+0_nicolas_1	zero
+0_theo_0	zero
+0_theo_1	zero
+0_yweweler_0	zero
+0_yweweler_1	zero
+1_jackson_0	one
+1_jackson_1	one
+1_nicolas_0	one
+1_nicolas_1	one
+1_theo_0	one
+1_theo_1	one
+1_yweweler_0	one
+1_yweweler_1	one
+2_jackson_0	two
+2_jackson_1	two
+2_nicolas_0	two
+2_nicolas_1	two
+2_theo_0	two
+2_theo_1	two
+2_yweweler_0	two
+2_yweweler_1	two
+3_jackson_0	three
+3_jackson_1	three
+3_nicolas_0	three
+3_nicolas_1	three
+3_theo_0	three
+3_theo_1	three
+3_yweweler_0	three
+3_yweweler_1	three
+4_jackson_0	four
+4_jackson_1	four
+4_nicolas_0	four
+4_nicolas_1	four
+4_theo_0	four
+4_theo_1	four
+4_yweweler_0	four
+4_yweweler_1	four
+5_jackson_0	five
+5_jackson_1	five
+5_nicolas_0	five
+5_nicolas_1	five
+5_theo_0	five
+5_theo_1	five
+5_yweweler_0	five
+5_yweweler_1	five
+6_jackson_0	six
+6_jackson_1	six
+6_nicolas_0	six
+6_nicolas_1	six
+6_theo_0	six
+6_theo_1	six
+6_yweweler_0	six
+6_yweweler_1	six
+7_jackson_0	seven
+7_jackson_1	seven
+7_nicolas_0	seven
+7_nicolas_1	seven
+7_theo_0	seven
+7_theo_1	seven
+7_yweweler_0	seven
+7_yweweler_1	seven
+8_jackson_0	eight
+8_jackson_1	eight
+8_nicolas_0	eight
+8_nicolas_1	eight
+8_theo_0	eight
+8_theo_1	eight
+8_yweweler_0	eight
+8_yweweler_1	eight
+9_jackson_0	nine
+9_jackson_1	nine
+9_nicolas_0	nine
+9_nicolas_1	nine
+9_theo_0	nine
+9_theo_1	nine
+9_yweweler_0	nine
+9_yweweler_1	nine
