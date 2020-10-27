@@ -13,7 +13,8 @@ import time
 import tensorflow as tf
 from hlp.stt.las.data_processing import librosa_mfcc
 from hlp.stt.las.data_processing import preprocess_text
-from hlp.stt.las.model import model_encoder, model_decoder
+from hlp.stt.las.model import encoder, decoder
+
 
 
 # 创建一个 tf.data 数据集
@@ -95,8 +96,8 @@ if __name__ == "__main__":
     max_length_inp = preprocess_text.max_length(input_tensor)
     steps_per_epoch, dataset = create_dataset(input_tensor, target_tensor, BATCH_SIZE)
     optimizer = tf.keras.optimizers.Adam()
-    encoder = model_encoder.Encoder(n_mfcc, embedding_dim, units, BATCH_SIZE)
-    decoder = model_decoder.Decoder(vocab_tar_size, embedding_dim, units, BATCH_SIZE)
+    encoder = encoder.Encoder(n_mfcc, embedding_dim, units, BATCH_SIZE)
+    decoder = decoder.Decoder(vocab_tar_size, embedding_dim, units, BATCH_SIZE)
     # 检查点
     checkpoint_dir = './lastraining_checkpoints'
     checkpoint_prefix = os.path.join(checkpoint_dir, "ckpt")
@@ -105,7 +106,7 @@ if __name__ == "__main__":
     # 恢复检查点目录 （checkpoint_dir） 中最新的检查点
     checkpoint.restore(tf.train.latest_checkpoint(checkpoint_dir))
 
-    EPOCHS = 10
+    EPOCHS = 12
 
     for epoch in range(EPOCHS):
         start = time.time()
@@ -125,54 +126,9 @@ if __name__ == "__main__":
                                                              batch_loss.numpy()))
                 print('Time taken for 20 batches {} sec\n'.format(time.time() - batch_start))
 
-        # 每 10 个周期（epoch），保存（检查点）一次模型
-        if (epoch + 1) % 10 == 0:
+        # 每 2 个周期（epoch），保存（检查点）一次模型
+        if (epoch + 1) % 2 == 0:
             checkpoint.save(file_prefix=checkpoint_prefix)
         print('Epoch {} Loss {:.4f}'.format(epoch + 1, total_loss / steps_per_epoch))
         print('Time taken for 1 epoch {} sec\n'.format(time.time() - start))
     
-    # 训练和测试还没有分开
-    # 用测试集wav文件语音识别出中文 
-    # 测试集wav文件
-    test_path = ".\\data\\wav_test"
-    # 测试集文本标签
-    test_path_to_file = ".\\data\\data_test.txt"
-    # 尝试实验不同大小的数据集
-    test_num = 80
-    test_input_tensor = librosa_mfcc.wav_to_mfcc(test_path, n_mfcc)
-    test_target_tensor, test_targ_tokenizer = preprocess_text.load_dataset(test_path_to_file, test_num)
-    test_target_tensor.shape  # (80, 7)
-    test_input_tensor.shape  # (80, 36, 20)
-    test_vocab_tar_size = len(test_targ_tokenizer.word_index) + 1  # 含填充的0
-    # 计算目标张量的最大长度 （max_length）
-    test_max_length_targ = preprocess_text.max_length(test_target_tensor)  # 7
-    test_max_length_inp = preprocess_text.max_length(test_input_tensor)  # 36
-    steps_per_epoch, dataset = create_dataset(test_input_tensor, test_target_tensor, 1)
-    # 恢复检查点目录 （checkpoint_dir） 中最新的检查点
-    checkpoint.restore(tf.train.latest_checkpoint(checkpoint_dir))
-    for (batch, (inp, targ)) in enumerate(dataset.take(steps_per_epoch)):
-        hidden = tf.zeros((1, units))
-        enc_out, enc_hidden = encoder(inp, hidden)  # 对源语音编码
-        dec_hidden = enc_hidden
-        dec_input = tf.expand_dims([test_targ_tokenizer.word_index['<start>']], 0)
-        result = ''  # 识别结果字符串
-        
-        for t in range(test_max_length_targ):  # 逐步解码或预测
-            predictions, dec_hidden, _ = decoder(dec_input, dec_hidden, enc_out)
-            predicted_id = tf.argmax(predictions[0]).numpy()  # 贪婪解码，取最大
-            result += test_targ_tokenizer.index_word[predicted_id] + ' '  # 目标句子
-            if test_targ_tokenizer.index_word[predicted_id] == '<end>':
-                break
-            # 预测的 ID 被输送回模型
-            dec_input = tf.expand_dims([predicted_id], 0)
-
-        tar_result = ''
-        for target_id in targ[0]:
-            target_id = target_id.numpy()
-            if target_id == 0 or target_id == 1:
-                tar_result += ''  # 目标句子
-            else:
-                tar_result += test_targ_tokenizer.index_word[target_id] + ' '  # 目标句子
-
-        print('====tar_result = {}'.format(tar_result))
-        print('====pre_result = {}'.format(result))
