@@ -12,7 +12,7 @@ def preprocess_sentence(s):
     s = re.sub(r'[" "]+', " ", s)  # 合并多个空格
     s = re.sub(r"[^a-zA-Z?.!,]+", " ", s)
     s = s.strip()
-    s = '<start> ' + s + ' <end>'
+    s = '<start>'+s+'<end>'
     return s
 
 def process_text(text_data_path):
