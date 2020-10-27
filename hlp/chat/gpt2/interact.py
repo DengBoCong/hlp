@@ -20,12 +20,11 @@ def main():
         samples_file = open(args.save_samples_path + '/samples.txt', 'a', encoding='utf8')
         samples_file.write("聊天记录{}:\n".format(datetime.now()))
     tokenizer = BertTokenizer(vocab_file=args.voca_path)
-    vocab_size = len(tokenizer)
     config = GPT2Config()
     args_train = train_args.setup_train_args()
     model, n_ctx, optimizer = train.create_model(args_train, config)
     train.load_checkpoint(model, optimizer, args)
-    # model.load_weights('./dialogue_model/model_weight').expect_partial()
+    # model.load_weights('./chat_checkpoints/model_weight').expect_partial()
     print("Model Restored..........................")
 
     # 存储聊天记录，每个utterance以token的id的形式进行存储
@@ -43,9 +42,7 @@ def main():
             for history_id, history_utr in enumerate(history[-args.max_history_len:]):  ##切片
                 input_ids.extend(history_utr)
                 input_ids.append(tokenizer.sep_token_id)  # 加分割ID
-                # print('input_ids={}'.format(input_ids))
             curr_input_tensor = tf.convert_to_tensor(input_ids, tf.int64)  # 完整的输入id
-            # print('curr_input_tensor={}'.format(curr_input_tensor))
             generated = []
             # 最多生成max_len个token
             for _ in range(args.max_len):
@@ -69,15 +66,9 @@ def main():
                 next_token = promax_index[next_token_id]
                 if next_token == tokenizer.sep_token_id:  # 遇到[SEP]则表明response生成结束
                     break
-                # print('next_token={}'.format(next_token))
                 generated.append(next_token)
-                # print('generated=============={}'.format(generated))
                 curr_input_tensor = tf.concat([curr_input_tensor, [next_token]], 0)
-                # his_text = tokenizer.convert_ids_to_tokens(curr_input_tensor.tolist())
-                # print("his_text:{}".format(his_text))
             history.append(generated)
-            # print("history:{}".format(history))
-            # print(tokenizer.word_index)
             text = tokenizer.convert_ids_to_tokens(generated)
             print("chatbot:" + "".join(text))
             if args.save_samples_path:

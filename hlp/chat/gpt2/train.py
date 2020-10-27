@@ -4,9 +4,11 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 from transformers import BertTokenizer
 import train_args as train_args
-import preprocess_data as preprocess_data
+#import preprocess_data as preprocess_data
 from gpt2 import TFGPT2Model
 from gpt2_config import GPT2Config
+import poem_proprocess_raw_data as preprocess_data
+
 
 # 数据处理
 PAD = '[PAD]'
@@ -33,7 +35,7 @@ def create_model(args, config):
 def change_tpye(outputs, labels):
     logits = outputs[0]  # (batch,len,vocab)
 
-    shift_labels = labels[:, 1:]  # (batch,len)
+    shift_labels = labels[:, 1:]  # (batch,len,vocab)
     output_logits = logits[:, :-1, ]  # (batch,len,vocab)
 
     shift_labels = tf.convert_to_tensor(shift_labels)
@@ -116,10 +118,12 @@ def train(model, train_list, args, tokenizer, optimizer):
         ckpt.restore(ckpt_manager.latest_checkpoint)
         print('已恢复至最新检查点！')
     print("开始训练...")
+    print('data={}'.format(dataset))
 
     # # 开始训练
     for epoch in range(args.epochs):
         for batch_idx, input_ids in enumerate(dataset):
+            print('input_ids={}'.format(input_ids))
             loss, accuracy = train_step(model, input_ids, optimizer, tokenizer)
         batch_loss = (loss / max_input_len)
         print('epoch={} loss={} accuracy={} '.format(epoch, batch_loss, accuracy))
