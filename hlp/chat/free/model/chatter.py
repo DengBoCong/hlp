@@ -81,8 +81,8 @@ class Chatter(object):
             batch_sum = 0
             sample_sum = 0
 
-            for (batch, (inp, tar)) in enumerate(dataset.take(steps_per_epoch)):
-                self._train_step(inp, tar, step_loss)
+            for (batch, (inp, tar, weight)) in enumerate(dataset.take(steps_per_epoch)):
+                self._train_step(inp, tar, weight, step_loss)
                 batch_sum = batch_sum + len(inp)
                 sample_sum = steps_per_epoch * len(inp)
                 print('\r', '{}/{} [==================================]'.format(batch_sum, sample_sum), end='',
@@ -98,7 +98,7 @@ class Chatter(object):
 
     def respond(self, req):
         # 对req进行初步处理
-        inputs, dec_input = _data.preprocess_request(req=req, token=self.token)
+        inputs, dec_input = _data.preprocess_request(sentence=req, token=self.token)
 
         self.beam_search_container.init_all_inner_variables(inputs=inputs, dec_input=dec_input)
         inputs, dec_input = self.beam_search_container.expand_beam_size_inputs()

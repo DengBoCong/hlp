@@ -1,12 +1,12 @@
 import sys
 import tensorflow as tf
-import common.data_utils as _data
 
 sys.path.append(sys.path[0][:-10])
 from model.chatter import Chatter
 from common.utils import CmdParser
 import config.get_config as _config
 import model.transformer as transformer
+from common.pre_treat import preprocess_raw_lccc_data
 from common.pre_treat import preprocess_raw_data
 
 
@@ -51,12 +51,12 @@ class TransformerChatter(Chatter):
         self.train_loss.reset_states()
         self.train_accuracy.reset_states()
 
-    def _train_step(self, inp, tar, step_loss):
+    def _train_step(self, inp, tar, weight, step_loss):
         tar_inp = tar[:, :-1]
         tar_real = tar[:, 1:]
         with tf.GradientTape() as tape:
             predictions = self.model(inputs=[inp, tar_inp])
-            loss = self._loss_function(tar_real, predictions)
+            loss = self._loss_function(tar_real, predictions, weight)
         gradients = tape.gradient(loss, self.model.trainable_variables)
         self.optimizer.apply_gradients(zip(gradients, self.model.trainable_variables))
 
@@ -68,18 +68,31 @@ class TransformerChatter(Chatter):
     def _create_predictions(self, inputs, dec_input, t):
         # 获取目前已经保存在容器中的序列
         predictions = self.model(inputs=[inputs, dec_input], training=False)
+        predictions = tf.nn.softmax(predictions, axis=-1)
         predictions = predictions[:, -1:, :]
         predictions = tf.squeeze(predictions, axis=1)
         return predictions
 
-    def _loss_function(self, real, pred):
+    def _loss_function(self, real, pred, weights):
         real = tf.reshape(real, shape=(-1, _config.max_length_inp - 1))
+        # for weight in weights:
+        #     # pred最后一维度和weight进行混合计算
         loss = tf.keras.losses.SparseCategoricalCrossentropy(
             from_logits=True, reduction='none')(real, pred)
         mask = tf.cast(tf.not_equal(real, 0), tf.float32)
         loss = tf.multiply(loss, mask)
 
         return tf.reduce_mean(loss)
+
+
+def get_chatter(model):
+    # 初始化要使用的聊天器
+    chatter = TransformerChatter(model=model,
+                                 checkpoint_dir=_config.transformer_train_data,
+                                 beam_size=_config.beam_size,
+                                 vocab_size=_config.vocab_size,
+                                 dict_fn=_config.transformer_dict_fn)
+    return chatter
 
 
 def main():
@@ -89,19 +102,14 @@ def main():
                       help="execute type, pre_treat/train/chat")
     (options, args) = parser.parse_args()
 
-    # 初始化要使用的聊天器
-    chatter = TransformerChatter(model=options.type,
-                                 checkpoint_dir=_config.transformer_train_data,
-                                 beam_size=_config.beam_size,
-                                 vocab_size=_config.vocab_size,
-                                 dict_fn=_config.transformer_dict_fn)
-
     if options.type == 'train':
+        chatter = get_chatter(options.type)
         chatter.train(chatter.checkpoint,
                       dict_fn=_config.transformer_dict_fn,
                       data_fn=_config.data,
                       max_train_data_size=_config.max_train_data_size)
     elif options.type == 'chat':
+        chatter = get_chatter(options.type)
         print("Agent: 你好！结束聊天请输入ESC。")
         while True:
             req = input("User: ")
@@ -111,7 +119,9 @@ def main():
             response = chatter.respond(req=req)
             print("Agent: ", response)
     elif options.type == 'pre_treat':
-        preprocess_raw_data(raw_data=_config.resource_data, tokenized_data=_config.tokenized_data)
+        preprocess_raw_lccc_data(raw_data=_config.transformer_lccc_data,
+                                 tokenized_data=_config.transformer_lccc_tokenized_data)
+        # preprocess_raw_data(raw_data=_config.resource_data, tokenized_data=_config.tokenized_data)
     else:
         parser.error(msg='')
 

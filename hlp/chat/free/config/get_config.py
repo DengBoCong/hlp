@@ -47,3 +47,5 @@ transformer_num_heads = conf['transformer']['num_heads']
 transformer_units = conf['transformer']['units']
 transformer_dropout = conf['transformer']['dropout']
 transformer_dict_fn = path + conf['transformer']['dict_fn']  # 字典保存位置
+transformer_lccc_data = conf['transformer']['lccc_data']
+transformer_lccc_tokenized_data = conf['transformer']['lccc_tokenized_data']
