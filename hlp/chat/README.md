@@ -14,6 +14,8 @@
 
 # 数据集汇总
 + 闲聊对话语料
+   + [LCCC_base](https://cloud.tsinghua.edu.cn/f/f131a4d259184566a29c/)
+   + [LCCC_large](https://cloud.tsinghua.edu.cn/f/8424e7b9454c4e628c24/)
    + free中data目录中的语料为缩减版，是原版语料的六分之一，需要[原版语料](https://pan.baidu.com/s/1qAIrdX-mv-Bzq1Y7MDjmLg)可以自取，提取码：r6da
    + [小黄鸡语料](https://github.com/candlewill/Dialog_Corpus)
    + [PTT八卦语料](https://github.com/zake7749/Gossiping-Chinese-Corpus)

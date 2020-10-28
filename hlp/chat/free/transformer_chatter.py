@@ -75,10 +75,8 @@ class TransformerChatter(Chatter):
 
     def _loss_function(self, real, pred, weights):
         real = tf.reshape(real, shape=(-1, _config.max_length_inp - 1))
-        # for weight in weights:
-        #     # pred最后一维度和weight进行混合计算
         loss = tf.keras.losses.SparseCategoricalCrossentropy(
-            from_logits=True, reduction='none')(real, pred)
+            from_logits=True, reduction='none')(real, pred, sample_weight=weights)
         mask = tf.cast(tf.not_equal(real, 0), tf.float32)
         loss = tf.multiply(loss, mask)
 

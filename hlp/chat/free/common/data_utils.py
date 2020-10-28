@@ -47,20 +47,20 @@ def create_dataset(path, num_examples, start_sign, end_sign):
     word_pairs = []
     if num_examples == 0:
         for l in lines:
-            word_pairs.append([preprocess_sentence(start_sign, end_sign, w) for w in l.split('\t')])
             temp = l.split("=")
+            word_pairs.append([preprocess_sentence(start_sign, end_sign, w) for w in temp[0].split('\t')])
             if len(temp) == 1:
-                diag_weight.append(0)
+                diag_weight.append(float(1))
             else:
-                diag_weight.append(temp[1])
+                diag_weight.append(float(temp[1]))
     else:
         for l in lines[:num_examples]:
-            word_pairs.append([preprocess_sentence(start_sign, end_sign, w) for w in l.split('\t')])
             temp = l.split("=")
+            word_pairs.append([preprocess_sentence(start_sign, end_sign, w) for w in temp[0].split('\t')])
             if len(temp) == 1:
-                diag_weight.append(0)
+                diag_weight.append(float(1))
             else:
-                diag_weight.append(temp[1])
+                diag_weight.append(float(temp[1]))
 
     return zip(*word_pairs), diag_weight
 
@@ -127,7 +127,8 @@ def load_data(dict_fn, data_fn, start_sign, end_sign, checkpoint_dir, max_train_
     数据加载方法，含四个元素的元组，包括如下：
     :return:input_tensor, input_token, target_tensor, target_token
     """
-    input_tensor, target_tensor, lang_tokenizer, diag_weight = read_data(data_fn, max_train_data_size, start_sign, end_sign)
+    input_tensor, target_tensor, lang_tokenizer, diag_weight = read_data(data_fn, max_train_data_size, start_sign,
+                                                                         end_sign)
 
     with open(dict_fn, 'w', encoding='utf-8') as file:
         file.write(json.dumps(lang_tokenizer.word_index, indent=4, ensure_ascii=False))

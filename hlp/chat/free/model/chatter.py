@@ -109,7 +109,7 @@ class Chatter(object):
                 break
 
             inputs, dec_input = self.beam_search_container.expand_beam_size_inputs()
-        beam_search_result = self.beam_search_container.get_result()
+        beam_search_result = self.beam_search_container.get_result(top_k=3)
         result = ''
         # 从容器中抽取序列，生成最终结果
         for i in range(len(beam_search_result)):
