@@ -48,8 +48,8 @@ class Tacotron2Config(object):
         #path
         text_train_path=r"./number/train/text/wenzi.txt",
         wave_train_path= r"./number/train/wave/",
-        #text_test_path= r".\text\text_test\wenzi.txt",
-        #wave_test_path = r"./wavs/wave_test/",
+        text_test_path= r"./number/test/ceshi.txt",
+        #wave_test_path = r"./number/test/",
         #关于音频的参数
         sr=22050,# Sample rate.
         n_fft = 2048,  # fft points (samples)
@@ -108,7 +108,7 @@ class Tacotron2Config(object):
         # path
         self.text_train_path=text_train_path
         self.wave_train_path = wave_train_path
-#        self.text_test_path = text_test_path
+        self.text_test_path = text_test_path
  #       self.wave_test_path = wave_test_path
         self.batch_size=batch_size
         # 声音参数
