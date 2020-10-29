@@ -67,7 +67,7 @@ class BeamSearch(object):
         for idx, (s, dec) in enumerate(self.container):
             temp = dec.numpy()
             if temp[0][-1] == end_sign:
-                self.result.append(self.container[idx][1])
+                self.result.append((self.container[idx][0], self.container[idx][1]))
                 del self.container[idx]
                 self.beam_size -= 1
 
@@ -98,12 +98,12 @@ class BeamSearch(object):
                         self.worst_score = min(score, self.worst_score)
         self._reduce_end(end_sign=end_sign)
 
-    def get_result(self):
+    def get_result(self, top_k=1):
         """
         获取最终beam个序列
         :return: beam个序列
         """
-        result = self.result
+        results = [element[1] for element in sorted(self.result)[-top_k:]]
 
         # 每轮回答之后，需要重置容器内部的相关变量值
-        return result
+        return results

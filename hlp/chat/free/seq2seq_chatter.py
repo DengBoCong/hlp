@@ -64,7 +64,7 @@ class Seq2SeqChatter(Chatter):
         predictions, _, _ = self.decoder(dec_input, dec_hidden, enc_out)
         return predictions
 
-    def _loss_function(self, real, pred, weight):
+    def _loss_function(self, real, pred, weights):
         """
         :param real:
         :param pred:
@@ -72,7 +72,7 @@ class Seq2SeqChatter(Chatter):
         """
         # 这里进来的real和pred的shape为（128,）
         mask = tf.math.logical_not(tf.math.equal(real, 0))
-        loss_ = self.loss_object(real, pred)
+        loss_ = self.loss_object(real, pred, sample_weight=weights)
         # 这里要注意了，因为前面我们对于短的句子进行了填充，所
         # 以对于填充的部分，我们不能用于计算损失，所以要mask
         mask = tf.cast(mask, dtype=loss_.dtype)

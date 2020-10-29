@@ -125,6 +125,92 @@ def transformer(vocab_size, num_layers, units, d_model,
     return tf.keras.Model(inputs=[inputs, dec_inputs], outputs=outputs, name=name)
 
 
+def decoder_scheduled_sample(vocab_size, num_layers, units, d_model, num_heads, dropout, name="decoder"):
+    """
+    Transformer应用Scheduled Sample的decoder
+    :param vocab_size:token大小
+    :param num_layers:编码解码的层数量
+    :param units:单元大小
+    :param d_model:深度
+    :param num_heads:多头注意力的头部层数量
+    :param dropout:dropout的权重
+    :param name:
+    :return:
+    """
+    inputs = tf.keras.Input(shape=(None, d_model), name="inputs")
+    enc_outputs = tf.keras.Input(shape=(None, d_model), name="encoder_outputs")
+    look_ahead_mask = tf.keras.Input(shape=(1, None, None), name="look_ahead_mask")
+    padding_mask = tf.keras.Input(shape=(1, 1, None), name='padding_mask')
+
+    embeddings = inputs * tf.math.sqrt(tf.cast(d_model, tf.float32))
+    embeddings = layers.PositionalEncoding(vocab_size, d_model)(embeddings)
+
+    outputs = tf.keras.layers.Dropout(rate=dropout)(embeddings)
+
+    for i in range(num_layers):
+        outputs = layers.transformer_decoder_layer(
+            units=units, d_model=d_model, num_heads=num_heads,
+            dropout=dropout, name="transformer_decoder_layer_{}".format(i),
+        )(inputs=[outputs, enc_outputs, look_ahead_mask, padding_mask])
+
+    return tf.keras.Model(inputs=[inputs, enc_outputs, look_ahead_mask, padding_mask],
+                          outputs=outputs, name=name)
+
+
+def transformer_scheduled_sample(vocab_size, num_layers, units, d_model,
+                                 num_heads, dropout, name="transformer_scheduled_sample"):
+    """
+    Transformer应用Scheduled Sample
+    Args:
+        vocab_size:token大小
+        num_layers:编码解码层的数量
+        units:单元大小
+        d_model:深度
+        num_heads:多头注意力的头部层数量
+        dropout:dropout的权重
+        name:
+    Returns:
+    """
+    inputs = tf.keras.Input(shape=(None,), name="inputs")
+    dec_inputs = tf.keras.Input(shape=(None,), name="dec_inputs")
+
+    # 使用了Lambda将方法包装成层，为的是满足函数式API的需要
+    enc_padding_mask = tf.keras.layers.Lambda(
+        _data.create_padding_mask, output_shape=(1, 1, None),
+        name="enc_padding_mask"
+    )(inputs)
+
+    look_ahead_mask = tf.keras.layers.Lambda(
+        _data.create_look_ahead_mask, output_shape=(1, None, None),
+        name="look_ahead_mask"
+    )(dec_inputs)
+
+    dec_padding_mask = tf.keras.layers.Lambda(
+        _data.create_padding_mask, output_shape=(1, 1, None),
+        name="dec_padding_mask"
+    )(inputs)
+
+    enc_outputs = encoder(
+        vocab_size=vocab_size, num_layers=num_layers, units=units,
+        d_model=d_model, num_heads=num_heads, dropout=dropout
+    )(inputs=[inputs, enc_padding_mask])
+
+    dec_outputs = decoder(
+        vocab_size=vocab_size, num_layers=num_layers, units=units,
+        d_model=d_model, num_heads=num_heads, dropout=dropout
+    )(inputs=[dec_inputs, enc_outputs, look_ahead_mask, dec_padding_mask])
+
+    # dec_outputs的几种方式
+    # 1. dec_outputs = tf.argmax(dec_outputs, axis=-1)  # 使用这个方式的话，就是直接返回最大的概率用来作为decoder的inputs
+    outputs = decoder_scheduled_sample(
+        vocab_size=vocab_size, num_layers=num_layers, units=units,
+        d_model=d_model, num_heads=num_heads, dropout=dropout
+    )(inputs=[dec_outputs, enc_outputs, look_ahead_mask, dec_padding_mask])
+
+    outputs = tf.keras.layers.Dense(units=vocab_size, name="outputs")(dec_outputs)
+    return tf.keras.Model(inputs=[inputs, dec_inputs], outputs=outputs, name=name)
+
+
 class CustomSchedule(tf.keras.optimizers.schedules.LearningRateSchedule):
     """
     优化器将 Adam 优化器与自定义的学习速率调度程序配合使用，这里直接参考了官网的实现
