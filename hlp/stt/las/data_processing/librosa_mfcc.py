@@ -20,6 +20,7 @@ def mfcc_extract(path, n_mfcc):
 
 
 def wav_to_mfcc(path, n_mfcc):
+    print("开始处理语音数据......")
     files = os.listdir(path)  # 得到文件夹下的所有文件名称
     mfccs = []
 
