@@ -125,40 +125,33 @@ def transformer(vocab_size, num_layers, units, d_model,
     return tf.keras.Model(inputs=[inputs, dec_inputs], outputs=outputs, name=name)
 
 
-def decoder_scheduled_sample(vocab_size, num_layers, units, d_model, num_heads, dropout, name="decoder"):
+def gumbel_softmax(inputs, alpha):
     """
-    Transformer应用Scheduled Sample的decoder
-    :param vocab_size:token大小
-    :param num_layers:编码解码的层数量
-    :param units:单元大小
-    :param d_model:深度
-    :param num_heads:多头注意力的头部层数量
-    :param dropout:dropout的权重
-    :param name:
-    :return:
+    按照论文中的公式，实现GumbelSoftmax，具体见论文公式
+    Args:
+        inputs: 输入
+        alpha: 温度
+    Returns:混合Gumbel噪音后，做softmax以及argmax之后的输出
     """
-    inputs = tf.keras.Input(shape=(None, d_model), name="inputs")
-    enc_outputs = tf.keras.Input(shape=(None, d_model), name="encoder_outputs")
-    look_ahead_mask = tf.keras.Input(shape=(1, None, None), name="look_ahead_mask")
-    padding_mask = tf.keras.Input(shape=(1, 1, None), name='padding_mask')
-
-    embeddings = inputs * tf.math.sqrt(tf.cast(d_model, tf.float32))
-    embeddings = layers.PositionalEncoding(vocab_size, d_model)(embeddings)
-
-    outputs = tf.keras.layers.Dropout(rate=dropout)(embeddings)
-
-    for i in range(num_layers):
-        outputs = layers.transformer_decoder_layer(
-            units=units, d_model=d_model, num_heads=num_heads,
-            dropout=dropout, name="transformer_decoder_layer_{}".format(i),
-        )(inputs=[outputs, enc_outputs, look_ahead_mask, padding_mask])
-
-    return tf.keras.Model(inputs=[inputs, enc_outputs, look_ahead_mask, padding_mask],
-                          outputs=outputs, name=name)
+    uniform = tf.random.uniform(shape=tf.shape(inputs), maxval=1, minval=0)
+    # 以给定输入的形状采样Gumbel噪声
+    gumbel_noise = -tf.math.log(-tf.math.log(uniform))
+    # 将Gumbel噪声添加到输入中，输入第三维就是分数
+    gumbel_outputs = inputs + gumbel_noise
+    gumbel_outputs = tf.cast(gumbel_outputs, dtype=tf.float32)
+    # 在给定温度下，进行softmax并返回
+    gumbel_outputs = tf.nn.softmax(alpha * gumbel_outputs)
+    gumbel_outputs = tf.argmax(gumbel_outputs, axis=-1)
+    return tf.cast(gumbel_outputs, dtype=tf.float32)
 
 
-def transformer_scheduled_sample(vocab_size, num_layers, units, d_model,
-                                 num_heads, dropout, name="transformer_scheduled_sample"):
+def embedding_mix(gumbel_inputs, inputs):
+    probability = tf.random.uniform(shape=tf.shape(inputs), maxval=1, minval=0, dtype=tf.float32)
+    return tf.where(probability < 0.3, x=gumbel_inputs, y=inputs)
+
+
+def transformer_scheduled_sample(vocab_size, num_layers, units, d_model, num_heads,
+                                 dropout, alpha=1.0, name="transformer_scheduled_sample"):
     """
     Transformer应用Scheduled Sample
     Args:
@@ -195,19 +188,24 @@ def transformer_scheduled_sample(vocab_size, num_layers, units, d_model,
         d_model=d_model, num_heads=num_heads, dropout=dropout
     )(inputs=[inputs, enc_padding_mask])
 
-    dec_outputs = decoder(
+    transformer_decoder = decoder(
         vocab_size=vocab_size, num_layers=num_layers, units=units,
         d_model=d_model, num_heads=num_heads, dropout=dropout
-    )(inputs=[dec_inputs, enc_outputs, look_ahead_mask, dec_padding_mask])
+    )
+
+    dec_first_outputs = transformer_decoder(inputs=[dec_inputs, enc_outputs, look_ahead_mask, dec_padding_mask])
 
     # dec_outputs的几种方式
     # 1. dec_outputs = tf.argmax(dec_outputs, axis=-1)  # 使用这个方式的话，就是直接返回最大的概率用来作为decoder的inputs
-    outputs = decoder_scheduled_sample(
-        vocab_size=vocab_size, num_layers=num_layers, units=units,
-        d_model=d_model, num_heads=num_heads, dropout=dropout
-    )(inputs=[dec_outputs, enc_outputs, look_ahead_mask, dec_padding_mask])
+    # 2. tf.layers.Sparsemax(axis=-1)(dec_outputs) # 使用Sparsemax的方法，具体公式参考论文
+    # 3. tf.math.top_k() # 混合top-k嵌入，使用得分最高的5个词汇词嵌入的加权平均值。
+    # 4. 使用GumbelSoftmax的方法，具体公式参考论文，下面就用GumbelSoftmax方法
+    # 这里使用论文的第四种方法：GumbelSoftmax
+    gumbel_outputs = gumbel_softmax(dec_first_outputs, alpha=alpha)
+    dec_first_outputs = embedding_mix(gumbel_outputs, dec_inputs)
 
-    outputs = tf.keras.layers.Dense(units=vocab_size, name="outputs")(dec_outputs)
+    dec_second_outputs = transformer_decoder(inputs=[dec_first_outputs, enc_outputs, look_ahead_mask, dec_padding_mask])
+    outputs = tf.keras.layers.Dense(units=vocab_size, name="outputs")(dec_second_outputs)
     return tf.keras.Model(inputs=[inputs, dec_inputs], outputs=outputs, name=name)
 
 

@@ -21,13 +21,14 @@ class TransformerChatter(Chatter):
         """
         super().__init__(model, checkpoint_dir, beam_size, dict_fn)
 
-        self.model = transformer.transformer(
+        self.model = transformer.transformer_scheduled_sample(
             vocab_size=vocab_size,
             num_layers=_config.transformer_num_layers,
             units=_config.transformer_units,
             d_model=_config.transformer_d_model,
             num_heads=_config.transformer_num_heads,
-            dropout=_config.transformer_dropout
+            dropout=_config.transformer_dropout,
+            alpha=1.
         )
 
         self.learning_rate = transformer.CustomSchedule(_config.transformer_d_model)
