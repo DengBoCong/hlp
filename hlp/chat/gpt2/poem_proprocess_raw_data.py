@@ -9,9 +9,6 @@ def preprocess_raw_data(args, tokenizer, n_ctx):
     :param n_ctx:GPT2模型的上下文窗口大小,对于超过n_ctx(n_ctx包括了特殊字符)的dialogue进行截断
     :return:
     """
-    from tensorflow.keras import layers
-    layer1 = layers.Dense(2, activation="relu", name="layer1")
-
     with open(args.train_raw_path, 'rb') as f:
         data = f.read().decode("utf-8")  # 整体未切分的数据
         # 数据的结构是 一段话最后一段话的回复不同 这样的前同后不同 会持续好几个 大概 6次吧
