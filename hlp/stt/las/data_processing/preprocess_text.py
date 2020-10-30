@@ -77,7 +77,8 @@ def tensor_to_onehot(tensor, tokenizer):
 
 
 def load_dataset(path, num_examples=None):
-    # 创建清理过的输入输出对
+    # 创建清理过的输入输出对    
+    print("开始处理文本标签数据......")
     targ_lang = create_input_dataset(path, num_examples)
     target_tensor, targ_lang_tokenizer = tokenize(targ_lang)
     return target_tensor, targ_lang_tokenizer
