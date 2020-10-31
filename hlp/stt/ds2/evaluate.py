@@ -1,8 +1,10 @@
 import tensorflow as tf
 from load_dataset import load_data
+from generator import data_generator
 from metric import lers, wers
 from model import decode_output, get_ds2_model
 from utils import get_config, get_index_word
+from math import ceil
 
 if __name__ == "__main__":
     configs = get_config()
@@ -20,15 +22,19 @@ if __name__ == "__main__":
 
     test_data_path = configs["test"]["data_path"]
     num_examples = configs["test"]["num_examples"]
-    
-    #加载测试集数据生成器
-    test_data_generator = load_data(test_data_path, "test", num_examples)
+    dataset_name = configs["preprocess"]["dataset_name"]
+    batch_size = configs["test"]["batch_size"]
+
+    # 加载测试集数据生成器
+    test_data = load_data(dataset_name, test_data_path, "test", num_examples)
+    batchs = ceil(len(test_data[0]) / batch_size)
+    test_data_generator = data_generator(test_data, "test", batchs, batch_size)
 
     aver_wers = 0
     aver_lers = 0
     aver_norm_lers = 0
     
-    for batchs, (input_tensor, labels_list) in test_data_generator:
+    for batch, (input_tensor, labels_list) in zip(range(1,batchs+1), test_data_generator):
         originals = labels_list
         results = []
         y_pred = model(input_tensor)

@@ -2,8 +2,9 @@
     "train": {
         "train_epochs": 2,
         "data_path": "./number/train",
-        "batch_size": 48,
-        "num_examples": null
+        "batch_size": 256,
+        "num_examples": null,
+        "if_is_first_train": true
     },
     "test": {
         "data_path": "./number/dev",
@@ -38,8 +39,6 @@
         "text_raw_style是指文本数据集每行的格式：1是'index string',2是'index\tstring',3是'string')": "",
         "text_raw_style": 3,
         "text_process_mode是指文本处理和序列解码的基准：en_word(英文单词)或者cn(中文或不带空格的单字符)、en_char(英文字符))": "",
-        "text_process_mode": "en_char",
-        "max_inputs_len": 36,
-        "max_targets_len": 1
+        "text_process_mode": "en_char"
     }
 }

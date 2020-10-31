@@ -13,33 +13,29 @@ def wav_to_mfcc(wav_path, n_mfcc):
     mfcc = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=n_mfcc).transpose(1,0).tolist()
     return mfcc
 
-#获取音频输入向量
-def get_audio_feature(data_path, audio_data_path_list):
-    configs = get_config()
-    n_mfcc = configs["other"]["n_mfcc"]
-    max_inputs_len = configs["preprocess"]["max_inputs_len"]
+# 基于语音路径序列，处理成模型的输入tensor
+def get_input_tensor(audio_data_path_list, n_mfcc, maxlen):
     mfccs_list = []
     for audio_path in audio_data_path_list:
-        mfcc = wav_to_mfcc(data_path + "/" + audio_path, n_mfcc)
+        mfcc = wav_to_mfcc(audio_path, n_mfcc)
         mfccs_list.append(mfcc)
 
     mfccs_numpy = tf.keras.preprocessing.sequence.pad_sequences(
         mfccs_list,
-        maxlen=max_inputs_len,
+        maxlen=maxlen,
         padding='post',
         dtype='float32'
         )
     input_tensor = tf.convert_to_tensor(mfccs_numpy)
+
     return input_tensor
 
 #获取最长的音频length(timesteps)
-def get_max_audio_length(folder_path, audio_data_path_list, num_examples):
-    configs = get_config()
-    n_mfcc = configs["other"]["n_mfcc"]
+def get_max_audio_length(audio_data_path_list, n_mfcc):
 
     max_audio_length = 0
-    for audio_path in audio_data_path_list[:num_examples]:
-        mfcc = wav_to_mfcc(folder_path + "/" + audio_path, n_mfcc)
+    for audio_path in audio_data_path_list:
+        mfcc = wav_to_mfcc(audio_path, n_mfcc)
         max_audio_length = max(max_audio_length, len(mfcc))
     
     return max_audio_length

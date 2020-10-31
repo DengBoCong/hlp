@@ -10,6 +10,7 @@ import tensorflow as tf
 from load_dataset import load_data
 from model import get_ds2_model
 from utils import get_config
+from generator import data_generator
 
 
 def train_step(input_tensor, target_tensor, target_length, optimizer, model):
@@ -38,7 +39,7 @@ def train_step(input_tensor, target_tensor, target_length, optimizer, model):
     optimizer.apply_gradients(zip(grads, model.trainable_variables))
     return loss
 
-def train(model, optimizer, train_data_generator, epochs):
+def train(model, optimizer, train_data_generator, batchs, epochs):
     #加载检查点
     configs = get_config()
     checkpoint = tf.train.Checkpoint(model=model)
@@ -57,8 +58,7 @@ def train(model, optimizer, train_data_generator, epochs):
         total_loss = 0
         epoch_start = time.time()
         print("Epoch %d/%d" % (epoch, epochs))
-        batch = 1
-        for batchs, (input_tensor, target_tensor, target_length) in train_data_generator:
+        for batch, (input_tensor, target_tensor, target_length) in zip(range(1,batchs+1), train_data_generator):
             batch_start = time.time()
             batch_loss = train_step(input_tensor, target_tensor, target_length, optimizer, model)
             total_loss += batch_loss
@@ -67,10 +67,6 @@ def train(model, optimizer, train_data_generator, epochs):
             # 打印批处理的信息
             print("Batch %d/%d" % (batch, batchs))
             print("batch_time: %dms - batch_loss: %.4f" % ((batch_end - batch_start)*1000, batch_loss))
-            if batch < batchs:
-                batch += 1
-            else:
-                break
 
         epoch_end = time.time()
         # 打印epoch的信息
@@ -83,13 +79,20 @@ def train(model, optimizer, train_data_generator, epochs):
 
 if __name__ == "__main__":
     configs = get_config()
+
     epochs = configs["train"]["train_epochs"]
     data_path = configs["train"]["data_path"]
     num_examples = configs["train"]["num_examples"]
+    dataset_name = configs["preprocess"]["dataset_name"]
+    batch_size = configs["train"]["batch_size"]
+
     #加载数据生成器
-    train_data_generator = load_data(data_path, "train", num_examples)
-    
+    train_data = load_data(dataset_name, data_path, "train", num_examples)
+    batchs = ceil(len(train_data[0]) / batch_size)
+    train_data_generator = data_generator(train_data, "train", batchs, batch_size)
+
+    # 加载模型
     model = get_ds2_model()
     optimizer = tf.keras.optimizers.Adam()
     #训练
-    train(model, optimizer, train_data_generator, epochs)
+    train(model, optimizer, train_data_generator, batchs, epochs)

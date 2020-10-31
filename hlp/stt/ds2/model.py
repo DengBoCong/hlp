@@ -96,7 +96,7 @@ def decode_output_ch_sentence(seq, index_word):
                     return result
     return result
 
-def decode_output_en_sentence_word(seq,index_word):
+def decode_output_en_sentence_word(seq, index_word):
     result = ""
     for i in seq:
         if i >= 1 and i <= (len(index_word)):
@@ -108,7 +108,7 @@ def decode_output_en_sentence_word(seq,index_word):
                     return result
     return result
 
-def decode_output_en_sentence_char(seq,index_word):
+def decode_output_en_sentence_char(seq, index_word):
     result = ""
     for i in seq:
         if i >= 1 and i <= (len(index_word)):
