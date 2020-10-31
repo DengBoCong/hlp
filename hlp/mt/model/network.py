@@ -15,10 +15,11 @@ transformer中网络层的部分
 
 """
 
+import sys
+sys.path.append('..')
 import tensorflow as tf
 from common import self_attention
 from config import get_config as _config
-from common import preprocess
 
 
 # 多头注意力层
@@ -84,8 +85,8 @@ def point_wise_feed_forward_network(d_model, dff):
 
     """
     return tf.keras.Sequential([
-      tf.keras.layers.Dense(dff, activation='relu'),  # (batch_size, seq_len, dff)
-      tf.keras.layers.Dense(d_model)  # (batch_size, seq_len, d_model)
+        tf.keras.layers.Dense(dff, activation='relu'),  # (batch_size, seq_len, dff)
+        tf.keras.layers.Dense(d_model)  # (batch_size, seq_len, d_model)
     ])
 
 
@@ -163,6 +164,7 @@ class Encoder(tf.keras.layers.Layer):
     输入经过嵌入（embedding）后，该嵌入与位置编码相加。该加法结果的输出是编码器层的输入。编码器的输出是解码器的输入。
 
     """
+
     def __init__(self, num_layers, d_model, num_heads, dff, input_vocab_size,
                  maximum_position_encoding, rate=0.1):
         super(Encoder, self).__init__()
@@ -172,7 +174,7 @@ class Encoder(tf.keras.layers.Layer):
 
         self.embedding = tf.keras.layers.Embedding(input_vocab_size, d_model)
         self.pos_encoding = self_attention.positional_encoding(maximum_position_encoding,
-                                                self.d_model)
+                                                               self.d_model)
 
         self.enc_layers = [EncoderLayer(d_model, num_heads, dff, rate)
                            for _ in range(num_layers)]
@@ -204,6 +206,7 @@ class Decoder(tf.keras.layers.Layer):
     - N 个解码器层（decoder layers）
     目标（target）经过一个嵌入后，该嵌入和位置编码相加。该加法结果是解码器层的输入。解码器的输出是最后的线性层的输入。
     """
+
     def __init__(self, num_layers, d_model, num_heads, dff, target_vocab_size,
                  maximum_position_encoding, rate=0.1):
         super(Decoder, self).__init__()
@@ -245,6 +248,7 @@ class Transformer(tf.keras.Model):
     """
     Transformer 包括编码器，解码器和最后的线性层。解码器的输出是线性层的输入，返回线性层的输出。
     """
+
     def __init__(self, num_layers, d_model, num_heads, dff, input_vocab_size,
                  target_vocab_size, pe_input, pe_target, rate=0.1):
         super(Transformer, self).__init__()
@@ -270,19 +274,6 @@ class Transformer(tf.keras.Model):
         return final_output, attention_weights
 
 
-# 数据预处理,创建预处理对象
-# 判断所选择的类型，EnPreprocessTokenize
-print('正在加载数据...')
-if _config.en_tokenize_type == 'BPE':
-    input_pre = preprocess.EnPreprocessBpe(_config.path_to_file,
-                                           _config.num_sentences, _config.start_word, _config.end_word)
-else:
-    input_pre = preprocess.EnPreprocessTokenize(_config.path_to_file,
-                                           _config.num_sentences, _config.start_word, _config.end_word)
-
-target_pre = preprocess.ChPreprocessTokenize(_config.path_to_file, _config.num_sentences, _config.start_word, _config.end_word)
-
-
 # 自定义优化器（Optimizer）
 class CustomSchedule(tf.keras.optimizers.schedules.LearningRateSchedule):
     def __init__(self, d_model, warmup_steps=4000):
@@ -300,12 +291,6 @@ class CustomSchedule(tf.keras.optimizers.schedules.LearningRateSchedule):
         return tf.math.rsqrt(self.d_model) * tf.math.minimum(arg1, arg2)
 
 
-learning_rate = CustomSchedule(_config.d_model)
-
-optimizer = tf.keras.optimizers.Adam(learning_rate, beta_1=0.9, beta_2=0.98,
-                                     epsilon=1e-9)
-
-
 def loss_function(real, pred):
     mask = tf.math.logical_not(tf.math.equal(real, 0))
     loss_object = tf.keras.losses.SparseCategoricalCrossentropy(
@@ -318,14 +303,22 @@ def loss_function(real, pred):
     return tf.reduce_mean(loss_)
 
 
-train_loss = tf.keras.metrics.Mean(name='train_loss')
-train_accuracy = tf.keras.metrics.SparseCategoricalAccuracy(
-    name='train_accuracy')
-transformer = Transformer(_config.num_layers, _config.d_model, _config.num_heads, _config.dff,
-                          input_pre.vocab_size + 1, target_pre.vocab_size + 1,
-                          pe_input=input_pre.vocab_size + 1,
-                          pe_target=target_pre.vocab_size + 1,
-                          rate=_config.dropout_rate)
+def get_model(input_vocab_size, target_vocab_size):
+    """获取模型相关变量"""
+    learning_rate = CustomSchedule(_config.d_model)
+
+    optimizer = tf.keras.optimizers.Adam(learning_rate, beta_1=0.9, beta_2=0.98,
+                                         epsilon=1e-9)
+
+    train_loss = tf.keras.metrics.Mean(name='train_loss')
+    train_accuracy = tf.keras.metrics.SparseCategoricalAccuracy(
+        name='train_accuracy')
+    transformer = Transformer(_config.num_layers, _config.d_model, _config.num_heads, _config.dff,
+                              input_vocab_size + 1, target_vocab_size + 1,
+                              pe_input=input_vocab_size + 1,
+                              pe_target=target_vocab_size + 1,
+                              rate=_config.dropout_rate)
+    return optimizer, train_loss, train_accuracy, transformer
 
 
 def load_checkpoint(transformer, optimizer):
@@ -333,10 +326,44 @@ def load_checkpoint(transformer, optimizer):
     checkpoint_path = _config.checkpoint_path
     ckpt = tf.train.Checkpoint(transformer=transformer,
                                optimizer=optimizer)
-    ckpt_manager = tf.train.CheckpointManager(ckpt, checkpoint_path, max_to_keep=5)
+    ckpt_manager = tf.train.CheckpointManager(ckpt, checkpoint_path, max_to_keep=100)
     if ckpt_manager.latest_checkpoint:
         ckpt.restore(ckpt_manager.latest_checkpoint)
+        # ckpt.restore('./checkpoints/train/ckpt-22')
         print('已恢复至最新的检查点！')
 
 
+def main():
+    """
+    忽略
 
+    测试部分，用来测试实现schedule sampling
+    需要完成：
+    1.Embedding Mix 设置混合词向量算法
+    2.增加decoder 使得模型训练经过两层decoder，两个decoder参数相同
+    3.Weights update 只反向传播第二个decoder
+
+    """
+    # 模拟输入输出
+    inp = tf.ones([64, 30])
+    tar = tf.ones([64, 20])
+    tar_inp = tar[:, :-1]
+    tar_real = tar[:, 1:]
+    enc_padding_mask, combined_mask, dec_padding_mask = self_attention.create_masks(inp, tar_inp)
+    # 模型创建
+    transformer = Transformer(_config.num_layers, _config.d_model, _config.num_heads, _config.dff,
+                              666, 666,
+                              pe_input=666,
+                              pe_target=666,
+                              rate=_config.dropout_rate)
+    transformer(inp, tar_inp,
+                True,
+                enc_padding_mask,
+                combined_mask,
+                dec_padding_mask)
+    transformer.summary()
+    pass
+
+
+if __name__ == '__main__':
+    main()

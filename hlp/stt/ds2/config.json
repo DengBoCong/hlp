@@ -1,0 +1,44 @@
+{
+    "train": {
+        "train_epochs": 2,
+        "data_path": "./number/train",
+        "batch_size": 256,
+        "num_examples": null,
+        "if_is_first_train": true
+    },
+    "test": {
+        "data_path": "./number/dev",
+        "batch_size": 24,
+        "num_examples": null
+    },
+    "model": {
+        "conv_layers": 1,
+        "conv_filters": 256,
+        "conv_kernel_size": 11,
+        "conv_strides": 2,
+        "bi_gru_layers": 1,
+        "gru_units": 256,
+        "dense_units": 12
+    },
+    "checkpoint": {
+        "directory": "./checkpoint",
+        "max_to_keep": 5,
+        "save_interval": 2
+    },
+    "record": {
+        "record_path": "./record/record.wav"
+    },
+    "other": {
+        "n_mfcc": 20,
+        "index_word_path": "index_word.json",
+        "word_index_path": "word_index.json"
+    },
+    "preprocess": {
+        "dataset_name是指不同的语料集的数据预处理方法": "",
+        "dataset_name": "number",
+        "text_raw_style是指文本数据集每行的格式：1是'index string',2是'index\tstring',3是'string')": "",
+        "text_raw_style": 3,
+        "text_process_mode是指文本处理和序列解码的基准：en_word(英文单词)或者cn(中文或不带空格的单字符)、en_char(英文字符))": "",
+        "text_process_mode": "en_char"
+    }
+}
