@@ -1,73 +1,81 @@
-from utils import get_config, get_all_data_path, get_word_index, set_config
+from utils import get_config, get_all_data_path, set_config
 import os
-import numpy as np
-from audio_process import get_audio_feature
-from text_process import get_text_label, get_lables_list
-from math import ceil
-from data_preprocess import data_preprocess
-
+from text_process import get_text_list, get_process_text_list, tokenize, get_text_int_sequences, get_max_label_length
+import json
+from audio_process import get_max_audio_length
 
 #加载数据
-def load_data(data_path, train_or_test, num_examples):
-    configs = get_config()
-    dataset_name = configs["preprocess"]["dataset_name"]
+def load_data(dataset_name, data_path, train_or_test, num_examples):
+    # number语料
     if dataset_name == "number":
         if train_or_test == "train":
-            # input_tensor, target_tensor, label_length的训练数据集生成器
-            train_data_generator = load_dataset_number(data_path, train_or_test, num_examples)
-            return train_data_generator
+            # input_tensor, target_tensor, label_length的训练数据集
+            return load_dataset_number(data_path, train_or_test, num_examples)
         else:
-            # input_tensor, labels_list的测试数据集生成器
-            test_data_generator = load_dataset_number(data_path, train_or_test, num_examples)
-            return test_data_generator
+            # input_tensor, labels_list的测试数据集
+            return load_dataset_number(data_path, train_or_test, num_examples)
 
-#对number语料构建的数据加载方法
+# 加载number语料，返回语音文件list和对应文本字符串list
 def load_dataset_number(data_path, train_or_test, num_examples = None):
-    #加载配置文件
+    # 获取配置文件
     configs = get_config()
 
-    #number语料里没有文本集，故先通过文件名构建文本集
-    if not os.path.exists(data_path + "/data.txt"):
+    # number语料里没有文本集，故先通过audio文件名构建文本文件
+    if not os.path.exists(data_path + "/text.txt"):
         files = os.listdir(data_path)
-        with open(data_path + "/data.txt", "a") as f:
+        with open(data_path + "/text.txt", "a") as f:
             for path in files:
                 f.write(path[0] + "\n")
-    
+
     if train_or_test == "train":
-        #获取word_index
-        word_index = get_word_index()
+        # 获取number语料中训练集语音路径和文本的列表
+        text_data_path, audio_path_list = get_all_data_path(data_path)
 
-        text_data_path, audio_data_path_list = get_all_data_path(data_path)
+        audio_data_path_list = [data_path + "/" + audio_path for audio_path in audio_path_list[:num_examples]]
+        text_list = get_text_list(data_path + "/" + text_data_path, configs["preprocess"]["text_raw_style"])[:num_examples]
         
-        BATCH_SIZE = configs["train"]["batch_size"]
-        BUFFER_SIZE = len(audio_data_path_list[:num_examples])
-        BATCHS = ceil(BUFFER_SIZE / BATCH_SIZE)
-        
-        #训练轮数一般较多
-        while True:
-            #batch序列打散
-            order = np.arange(BATCHS)
-            np.random.shuffle(order)
-            for i in order:
-                yield BATCHS, get_train_data_generator(data_path, text_data_path, audio_data_path_list, i, BATCH_SIZE, word_index)
+        # 基于文本风格和切分方式进行文本处理
+        mode = configs["preprocess"]["text_process_mode"]
+        process_text_list = get_process_text_list(text_list, mode)
+
+        if configs["train"]["if_is_first_train"]:
+            text_int_sequences, tokenizer = tokenize(process_text_list)
+            label_length_list = [[len(text_int)] for text_int in text_int_sequences]
+            max_input_length = get_max_audio_length(audio_data_path_list, configs["other"]["n_mfcc"])
+            max_label_length = get_max_label_length(text_int_sequences)
+
+            # 若为初次训练则将构建的字典集合写入json文件
+            index_word_path = configs["other"]["index_word_path"]
+            with open(index_word_path, 'w', encoding="utf-8") as f:
+                json.dump(tokenizer.index_word, f, ensure_ascii=False, indent=4)
+            word_index_path = configs["other"]["word_index_path"]
+            with open(word_index_path, 'w', encoding="utf-8") as f:
+                json.dump(tokenizer.word_index, f, ensure_ascii=False, indent=4)
+            
+            # 将是否为初次加载设为false
+            set_config("train", "if_is_first_train", False)
+            set_config("model", "dense_units", len(tokenizer.index_word)+2 )
+            set_config("preprocess", "max_input_length", max_input_length)
+            set_config("preprocess", "max_label_length", max_label_length)
+
+            return audio_data_path_list, text_int_sequences, label_length_list
+        else:
+            # 不是初次训练就基于初次训练时写的word_index构建文本
+            text_int_sequences = get_text_int_sequences(process_text_list)
+            label_length_list = [[len(text_int)] for text_int in text_int_sequences]
+            
+            return audio_data_path_list, text_int_sequences, label_length_list
     else:
-        text_data_path, audio_data_path_list = get_all_data_path(data_path)
+        # 获取number语料中测试集语音路径和文本的列表
+        text_data_path, audio_path_list = get_all_data_path(data_path)
+        
+        audio_data_path_list = [data_path + "/" + audio_path for audio_path in audio_path_list[:num_examples]]
+        text_list = get_text_list(data_path + "/" + text_data_path, configs["preprocess"]["text_raw_style"])[:num_examples]
+        
+        # 测试模块只需要文本字符串list即可
+        return audio_data_path_list, text_list
 
-        BATCH_SIZE = configs["test"]["batch_size"]
-        BUFFER_SIZE = len(audio_data_path_list[:num_examples])
-        BATCHS = ceil(BUFFER_SIZE / BATCH_SIZE)
 
-        order = np.arange(BATCHS)
-        np.random.shuffle(order)
-        for i in order:
-            yield BATCHS, get_test_data_generator(data_path, text_data_path, audio_data_path_list, i, BATCH_SIZE)
 
-def get_train_data_generator(data_path, text_data_path, audio_data_path_list, i, BATCH_SIZE, word_index):
-    input_tensor = get_audio_feature(data_path, audio_data_path_list[i*BATCH_SIZE : (i+1)*BATCH_SIZE])
-    target_tensor, target_length = get_text_label(data_path, text_data_path, i, BATCH_SIZE, word_index)
-    return input_tensor, target_tensor, target_length
-
-def get_test_data_generator(data_path, text_data_path, audio_data_path_list, i, BATCH_SIZE):
-    input_tensor = get_audio_feature(data_path, audio_data_path_list[i*BATCH_SIZE : (i+1)*BATCH_SIZE])
-    labels_list = get_lables_list(data_path, text_data_path, i, BATCH_SIZE)
-    return input_tensor, labels_list
+if __name__ == "__main__":
+    pass
