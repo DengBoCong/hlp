@@ -1,23 +1,17 @@
 import os
 import tensorflow as tf
-
 os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
-
 
 # 自己的模型
 class Encoder(tf.keras.Model):
     def __init__(self, vocab_size, config):
-        # self.num_filters=512,kernel_size=5,rate=0.5,self.lstm_unit=256
         super(Encoder, self).__init__()
-        # self.batch_sz = batch_sz
-        # self.enc_units = enc_units
         self.num_filters = config.encoder_conv_filters
         self.kernel_size = config.encoder_conv_kernel_sizes
         self.lstm_unit = config.encoder_lstm_units
         self.rate = config.encoder_conv_dropout_rate
         self.vocab_size = vocab_size
         self.embedding_dim = config.embedding_hidden_size
-
         # 定义嵌入层
         self.embedding = tf.keras.layers.Embedding(self.vocab_size, self.embedding_dim, mask_zero=True)
         # 定义三层卷积层
@@ -40,9 +34,7 @@ class Encoder(tf.keras.Model):
                                                    backward_layer=self.backward_layer)
 
     def call(self, x):
-        #print(1)
         x = self.embedding(x)
-        #print(2)
         x = self.conv1d1(x)
         x = self.dropout1(x)
         x = self.output1(x)
@@ -72,14 +64,8 @@ class LocationLayer(tf.keras.Model):
         )
 
     def call(self, attention_weights_cat):
-        #print("attention_weights_cat:", attention_weights_cat.shape)
         processed_attention = self.location_convolution(attention_weights_cat)
-        #processed_attention = tf.transpose(processed_attention, [0, 2, 1])
         processed_attention = self.location_layer1(processed_attention)
-        #print("attention_weights_cat:", processed_attention.shape)
-        # processed_attention = tf.transpose(processed_attention, [0, 2, 1])
-        # processed_attention = self.location_layer2(processed_attention)
-        # processed_attention = tf.transpose(processed_attention, [0, 2, 1])
         return processed_attention
 
 
@@ -95,7 +81,6 @@ class Attention(tf.keras.Model):
         self.V = tf.keras.layers.Dense(1, use_bias=False)
         self.location_layer = LocationLayer(self.attention_location_n_filters, self.attention_location_kernel_size,
                                             self.attention_rnn_dim)
-
         self.score_mask_value = -float("inf")
 
     def get_alignment_energies(self, query, memory, attention_weights_cat):
@@ -115,14 +100,7 @@ class Attention(tf.keras.Model):
 
         attention_weights_cat = tf.transpose(attention_weights_cat,(0,2,1))
         processed_attention_weights = self.location_layer(attention_weights_cat)
-        #print("processed_query:", processed_query.shape)
-        #print("processed_memory:", processed_memory.shape)
-        #print("processed_attention_weights:", processed_attention_weights.shape)
-        # d = processed_query + processed_memory
-        # for i in range(processed_attention_weights.shape[1]):
-        #     d = d + processed_attention_weights[:, i:i + 1, :]
         energies = tf.squeeze(self.V(tf.nn.tanh( processed_query + processed_attention_weights + processed_memory)), -1)
-        #energies = tf.squeeze(self.V(tf.nn.tanh(d)), -1)
         return energies
 
     def __call__(self, attention_hidden_state, memory, attention_weights_cat):
@@ -135,15 +113,12 @@ class Attention(tf.keras.Model):
    attention_weights_cat: previous and cummulative attention weights
    mask: binary mask for padded data
    """
-
         alignment = self.get_alignment_energies(
             attention_hidden_state, memory, attention_weights_cat)
 
-        # if mask is not None:
-        #     alignment += (mask * -1e9)
-
         attention_weights = tf.nn.softmax(alignment, axis=1)
         attention_context = tf.expand_dims(attention_weights, 1)
+
         attention_context = tf.matmul(attention_context, memory)
         attention_context = tf.squeeze(attention_context, axis=1)
         return attention_context, attention_weights
@@ -151,7 +126,6 @@ class Attention(tf.keras.Model):
 
 # attention结束
 class Prenet(tf.keras.Model):
-
     def __init__(self, config, ):
         super().__init__()
         self.prenet_units = config.prenet_units
@@ -185,9 +159,7 @@ class Postnet(tf.keras.Model):
             kernel_size=config.n_conv_postnet,
             activation="tanh",
             padding="same"
-
         )
-
         self.norm1 = tf.keras.layers.experimental.SyncBatchNormalization(axis=-1)
         self.dropout1 = tf.keras.layers.Dropout(rate=0.5)
         self.conv1d2 = tf.keras.layers.Conv1D(
@@ -223,7 +195,7 @@ class Postnet(tf.keras.Model):
         )
         self.norm5 = tf.keras.layers.experimental.SyncBatchNormalization(axis=-1)
         self.dropout5 = tf.keras.layers.Dropout(rate=config.postnet_dropout_rate)
-        self.fc = tf.keras.layers.Dense(units=17, activation=None, name="frame_projection1")
+        self.fc = tf.keras.layers.Dense(units=config.max_len, activation=None, name="frame_projection1")
 
     def call(self, inputs):
         x = inputs
@@ -254,6 +226,7 @@ class Decoder(tf.keras.Model):
         self.embedding_hidden_size = config.embedding_hidden_size
         self.gate_threshold = config.gate_threshold
         self.n_mels = config.n_mels
+        self.max_len = config.max_len
         self.prenet2 = Prenet(config)
         self.postnet = Postnet(config)
         # 两个单层LSTM
@@ -367,24 +340,15 @@ class Decoder(tf.keras.Model):
         #print("self.attention_context",self.attention_context)
         cell_input = tf.concat((decoder_input, self.attention_context), -1)
 
-
         cell_output, (self.attention_hidden, self.attention_cell) = self.decoder_lstms1(cell_input, (
         self.attention_hidden, self.attention_cell))
 
         self.attention_hidden = tf.keras.layers.Dropout(rate=0.1)(self.attention_hidden)
 
-
-        # self.attention_cell=tf.convert_to_tensor(self.attention_cell)
-        #print("self.attention_cell:", self.attention_cell.shape)
-        #print("cell_input:", cell_input.shape)
-        #print("self.attention_hidden:", self.attention_hidden.shape)
-
-        # print("attention_hidden:",self.attention_hidden.shape)
         # 拼接
         attention_weights_cat = tf.concat(
             ((tf.expand_dims(self.attention_weights, axis=1)), (tf.expand_dims(self.attention_weights_cum, axis=1))),
             axis=1)
-
 
         # 注意力
         self.attention_context, self.attention_weights = self.attention_layer(self.attention_hidden, self.memory,
@@ -392,21 +356,23 @@ class Decoder(tf.keras.Model):
         self.attention_weights_cum += self.attention_weights
         # 拼接
         decoder_input = tf.concat((self.attention_hidden, self.attention_context), -1)
+
         # 第2次lstmcell
-        # self.decoder_cell = tf.zeros(shape=[B, self.decoder_lstm_dim], dtype=tf.float32)
         decoder_output, (self.decoder_hidden, self.decoder_cell) = self.decoder_lstms2(decoder_input, (
         self.decoder_hidden, self.decoder_cell))
+        self.decoder_hidden = tf.keras.layers.Dropout(rate=0.1)(self.decoder_hidden)
 
-        self.decoder_hidden=tf.keras.layers.Dropout(rate=0.1)(self.decoder_hidden)
         # 拼接
         decoder_hidden_attention_context = tf.concat((self.decoder_hidden, self.attention_context), axis=1)
+
         # 投影梅尔频谱
         decoder_output = self.frame_projection(decoder_hidden_attention_context)
+
         # 投影stop_token
         gate_prediction = self.stop_projection(decoder_hidden_attention_context)
         return decoder_output, gate_prediction, self.attention_weights
 
-    def call(self, memory, decoder_inputs, memory_lengths):
+    def call(self, memory, decoder_inputs):
         """ Decoder forward pass for training
                PARAMS
                ------
@@ -433,8 +399,10 @@ class Decoder(tf.keras.Model):
             mel_outputs += [tf.squeeze(mel_output)]
             gate_outputs += [tf.squeeze(gate_output,axis=1)]
             alignments += [attention_weights]
+
         mel_outputs, gate_outputs, alignments = self.parse_decoder_outputs(
             mel_outputs, gate_outputs, alignments)
+
         return mel_outputs, gate_outputs, alignments
 
     def inference(self, memory):
@@ -451,21 +419,26 @@ class Decoder(tf.keras.Model):
         decoder_input = self.get_go_frame(memory)
         self.initialize_decoder_states(memory)
         mel_outputs, gate_outputs, alignments = [], [], []
+        i = 1
         while True:
             decoder_input = self.prenet2(decoder_input)
             mel_output, gate_output, alignment = self.decode(decoder_input)
             mel_outputs += [tf.squeeze(mel_output)]
-            gate_outputs += [gate_output]
+            gate_outputs += [tf.squeeze(gate_output,axis=1)]
             alignments += [alignment]
-            #print("gate_output:", gate_output.shape)
-            #print("gate_output:", type(gate_output))
-
-            if tf.nn.sigmoid(gate_output) > self.gate_threshold:
+            #if tf.nn.sigmoid(gate_output) > self.gate_threshold:
+            i=i+1
+            if i > 17:
+            # if gate_output > self.gate_threshold:
                 break
             decoder_input = mel_output
-            mel_outputs, gate_outputs, alignments = self.parse_decoder_outputs(
-                mel_outputs, gate_outputs, alignments)
-            return mel_outputs, gate_outputs, alignments
+        #print("mel_outputs:", mel_outputs.shape)
+
+
+        mel_outputs = tf.expand_dims(mel_outputs,axis=1)
+        mel_outputs, gate_outputs, alignments = self.parse_decoder_outputs(
+            mel_outputs, gate_outputs, alignments)
+        return mel_outputs, gate_outputs, alignments
 
 
 class Tacotron2(tf.keras.Model):
@@ -478,8 +451,7 @@ class Tacotron2(tf.keras.Model):
     def call(self, inputs, mel_gts):
         #print(inputs.shape)
         encoder_outputs = self.encoder(inputs)
-        memory_lengths = encoder_outputs.shape[1]
-        mel_outputs, gate_outputs, alignments = self.decoder(encoder_outputs, mel_gts, memory_lengths)
+        mel_outputs, gate_outputs, alignments = self.decoder(encoder_outputs, mel_gts)
         mel_outputs_postnet = self.postnet(mel_outputs)
         mel_outputs_postnet = mel_outputs + mel_outputs_postnet
         return mel_outputs, mel_outputs_postnet, gate_outputs, alignments
@@ -487,11 +459,13 @@ class Tacotron2(tf.keras.Model):
     def inference(self, inputs):
         #print(inputs.shape)
         encoder_outputs = self.encoder(inputs)
-        #print("次数+1")
-        print(encoder_outputs.shape)
         mel_outputs, gate_outputs, alignments = self.decoder.inference(encoder_outputs)
-
+        print("mel_outputs:",mel_outputs.shape)
+        # mel_outputs = tf.keras.preprocessing.sequence.pad_sequences(mel_outputs[0], maxlen=memory_lengths,
+        #                                                             padding='post', dtype='float32')
+        # print("mel_outputs:",mel_outputs.shape)
+        # mel_outputs = tf.expand_dims(mel_outputs,axis=0)
+        # print("mel_outputs:",mel_outputs.shape)
         mel_outputs_postnet = self.postnet(mel_outputs)
         mel_outputs_postnet = mel_outputs + mel_outputs_postnet
-
         return mel_outputs, mel_outputs_postnet, gate_outputs, alignments

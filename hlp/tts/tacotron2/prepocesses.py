@@ -4,6 +4,9 @@ import tensorflow as tf
 import librosa
 import numpy as np
 from config2 import Tacotron2Config
+import pyaudio
+import wave
+
 #文字处理
 
 def preprocess_sentence(s):
@@ -12,7 +15,7 @@ def preprocess_sentence(s):
     s = re.sub(r'[" "]+', " ", s)  # 合并多个空格
     s = re.sub(r"[^a-zA-Z?.!,]+", " ", s)
     s = s.strip()
-    s = '<start>'+s+'<end>'
+    s = s
     return s
 
 def process_text(text_data_path):
@@ -35,11 +38,15 @@ def tokenize(texts):
 
     return sequences,tokenizer
 
-def Dataset_txt(path_to_file):
+def dataset_txt(path_to_file):
     en = process_text(path_to_file)
     en_seqs, en_tokenizer = tokenize(en)
     return en_seqs,en_tokenizer
 
+def dataset_sentence(sentence,text_data_path):
+    with open(text_data_path, "w") as f:
+        f.write(sentence)
+    return
 
 #mel频谱处理
 def get_spectrograms(fpath):
@@ -97,13 +104,13 @@ def get_spectrograms(fpath):
 
     return mel, mag
 
-def Dataset_wave(path):
+def dataset_wave(path,config):
     mel_list = []
     dirs = os.listdir(path)
     for file in dirs:
         logmelspec,sr= get_spectrograms(path+file)
         mel_list.append(logmelspec.tolist())
-    mel_numpy = tf.keras.preprocessing.sequence.pad_sequences(mel_list,padding='post',dtype='float32')
+    mel_numpy = tf.keras.preprocessing.sequence.pad_sequences(mel_list, maxlen=config.max_len, padding='post', dtype='float32')
     #print(len(mel_numpy[1000]))
     inputs = tf.convert_to_tensor(mel_numpy)
     return inputs
@@ -112,9 +119,32 @@ def Dataset_wave(path):
 def create_dataset(batch_size,input_ids,mel_gts):
     BUFFER_SIZE = len(input_ids)
     steps_per_epoch = BUFFER_SIZE // batch_size
-    dataset = tf.data.Dataset.from_tensor_slices((input_ids, mel_gts)).shuffle(BUFFER_SIZE)
+    #dataset = tf.data.Dataset.from_tensor_slices((input_ids, mel_gts)).shuffle(BUFFER_SIZE)
+    dataset = tf.data.Dataset.from_tensor_slices((input_ids, mel_gts))
     dataset = dataset.batch(batch_size, drop_remainder=True)
     return dataset,steps_per_epoch
+
+#播放音频
+def play(filename):
+    CHUNK = 1024
+    wf = wave.open(filename, 'rb')
+    p = pyaudio.PyAudio()
+
+    stream = p.open(format=p.get_format_from_width(wf.getsampwidth()),
+                    channels=wf.getnchannels(),
+                    rate=wf.getframerate(),
+                    output=True)
+
+    data = wf.readframes(CHUNK)
+
+    while data != b'':
+        stream.write(data)
+        data = wf.readframes(CHUNK)
+
+    stream.stop_stream()
+    stream.close()
+
+    p.terminate()
 
 if __name__ == '__main__':
     pass
