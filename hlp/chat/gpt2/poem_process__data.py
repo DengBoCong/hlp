@@ -15,4 +15,9 @@ def process_poemdata(in_, out):
     outfopen.close()
 
 
-process_poemdata(poem_data, poem_out)
+def main():
+    process_poemdata(poem_data, poem_out)
+
+
+if __name__ == '__main__':
+    main()

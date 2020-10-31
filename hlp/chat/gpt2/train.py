@@ -4,7 +4,6 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 from transformers import BertTokenizer
 import train_args as train_args
-#import preprocess_data as preprocess_data
 from gpt2 import TFGPT2Model
 from gpt2_config import GPT2Config
 import poem_proprocess_raw_data as preprocess_data

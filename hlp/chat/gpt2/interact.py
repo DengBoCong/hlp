@@ -34,6 +34,7 @@ def main():
     while True:
         try:
             text = input("user:")
+            length = len(text)
             if args.save_samples_path:
                 samples_file.write("user:{}\n".format(text))
             history.append(tokenizer.encode(text))  # 把输入的文本变成 token id
@@ -45,7 +46,7 @@ def main():
             curr_input_tensor = tf.convert_to_tensor(input_ids, tf.int64)  # 完整的输入id
             generated = []
             # 最多生成max_len个token
-            for _ in range(args.max_len):
+            for _ in range(length):
                 outputs = model(inputs=curr_input_tensor)
                 next_token_logits = outputs[0][-1, :]  # （vocab,)
                 # 对于已生成的结果generated中的每个token添加一个重复惩罚项，降低其生成概率--减少重复

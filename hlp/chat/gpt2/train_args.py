@@ -22,7 +22,7 @@ def setup_train_args():
                         help='将原始训练语料tokenize之后的数据的存放位置')
     parser.add_argument('--raw', action='store_false', help='是否对原始训练语料做tokenize。若尚未对原始训练语料进行tokenize，则指定该参数')
     parser.add_argument('--epochs', default=5, type=int, required=False, help='训练的轮次')
-    parser.add_argument('--batch_size', default=3, type=int, required=False, help='训练batch size')
+    parser.add_argument('--batch_size', default=32, type=int, required=False, help='训练batch size')
     parser.add_argument('--data_size', default=6, type=int, required=False, help='训练总句子对长度')
     parser.add_argument('--lr', default=1.5e-4, type=float, required=False, help='学习率')
     parser.add_argument('--warmup_steps', default=2000, type=int, required=False, help='warm up步数')
