@@ -1,26 +1,12 @@
-sr = 22050 # Sample rate.
-n_fft = 2048 # fft points (samples)
-frame_shift = 0.0125 # seconds
-frame_length = 0.05 # seconds
-hop_length = int(sr*frame_shift) # samples.
-win_length = int(sr*frame_length) # samples.
-n_mels =80# Number of Mel banks to generate
-power = 1.2 # Exponent for amplifying the predicted magnitude
-n_iter = 100 # Number of inversion iterations
-preemphasis = .97 # or None
-max_db = 100
-ref_db = 20
-top_db = 15
 import matplotlib.pyplot as plt
-import librosa
 import librosa.display
 import librosa
 import numpy as np
-import scipy.io.wavfile as wave
 import copy
 import scipy
-from prepocesses import get_spectrograms
-import tensorflow as tf
+from config2 import Tacotron2Config
+
+config=Tacotron2Config()
 
 def melspectrogram2wav(mel):
     '''# Generate wave file from spectrogram'''
@@ -28,18 +14,18 @@ def melspectrogram2wav(mel):
     #mel = mel.T
 
     # de-noramlize
-    mel = (np.clip(mel, 0, 1) * max_db) - max_db + ref_db
+    mel = (np.clip(mel, 0, 1) * config.max_db) - config.max_db + config.ref_db
 
     # to amplitude
     mel = np.power(10.0, mel * 0.05)
-    m = _mel_to_linear_matrix(sr, n_fft, n_mels)
+    m = _mel_to_linear_matrix(config.sr, config.n_fft, config.n_mels)
     mag = np.dot(m, mel)
 
     # wav reconstruction
     wav = griffin_lim(mag)
 
     # de-preemphasis
-    wav = scipy.signal.lfilter([1], [1, -preemphasis], wav)
+    wav = scipy.signal.lfilter([1], [1, -config.preemphasis], wav)
 
     # trim
     wav, _ = librosa.effects.trim(wav)
@@ -57,9 +43,9 @@ def griffin_lim(spectrogram):
     '''Applies Griffin-Lim's raw.
     '''
     X_best = copy.deepcopy(spectrogram)
-    for i in range(n_iter):
+    for i in range(config.n_iter):
         X_t = invert_spectrogram(X_best)
-        est = librosa.stft(X_t, n_fft, hop_length, win_length=win_length)
+        est = librosa.stft(X_t, config.n_fft, config.hop_length, win_length=config.win_length)
         phase = est / np.maximum(1e-8, np.abs(est))
         X_best = spectrogram * phase
     X_t = invert_spectrogram(X_best)
@@ -72,7 +58,7 @@ def invert_spectrogram(spectrogram):
     '''
     spectrogram: [f, t]
     '''
-    return librosa.istft(spectrogram, hop_length, win_length=win_length, window="hann")
+    return librosa.istft(spectrogram, config.hop_length, win_length=config.win_length, window="hann")
 
 
 
@@ -96,17 +82,3 @@ def save_figure_to_numpy(fig):
     data = np.fromstring(fig.canvas.tostring_rgb(), dtype=np.uint8, sep='')
     data = data.reshape(fig.canvas.get_width_height()[::-1] + (3,))
     return data
-
-
-#x,y=get_spectrograms('1.wav')
-##print("x:",type(x))
-#print("x:",x.shape)
-#print("mel", x)
-#wav=melspectrogram2wav(x)
-##wave.write('4.wav', rate=sr, data=wav)
-#plt.figure()
-# plt.subplot(3, 1, 1)
-# plt.imshow(plot_spectrogram_to_numpy(mel))
-#plt.subplot(1,1,1)
-#plt.imshow(plot_spectrogram_to_numpy (x))
-#plt.show()
