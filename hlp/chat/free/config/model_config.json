@@ -16,7 +16,7 @@
   },
   "resource_data": "data\\train.txt",
   "tokenized_data": "data\\train_tokenized.txt",
-  "vocab_size": 207,
+  "vocab_size": 300,
   "enc_vocab_size": 20000,
   "dec_vocab_size": 20000,
   "embedding_dim": 256,
