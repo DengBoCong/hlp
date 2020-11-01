@@ -27,7 +27,7 @@ if __name__ == "__main__":
     x_test_input = tf.keras.preprocessing.sequence.pad_sequences(
             [x_test],
             padding='post',
-            maxlen=configs["preprocess"]["max_input_length"]
+            maxlen=configs["preprocess"]["max_input_length"],
             dtype='float32'
             )
     y_test_pred = model(x_test_input)
