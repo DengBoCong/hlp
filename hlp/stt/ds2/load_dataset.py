@@ -41,6 +41,7 @@ def load_dataset_number(data_path, train_or_test, num_examples = None):
         if configs["train"]["if_is_first_train"]:
             text_int_sequences, tokenizer = tokenize(process_text_list)
             label_length_list = [[len(text_int)] for text_int in text_int_sequences]
+            # 获取最长
             max_input_length = get_max_audio_length(audio_data_path_list, configs["other"]["n_mfcc"])
             max_label_length = get_max_label_length(text_int_sequences)
 
