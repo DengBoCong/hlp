@@ -1,4 +1,3 @@
-import io
 import os
 import json
 import jieba
@@ -38,29 +37,28 @@ def create_dataset(path, num_examples, start_sign, end_sign):
     """
     is_exist = Path(path)
     if not is_exist.exists():
-        file = open(path, 'w', encoding='utf-8')
-        file.write('吃饭 了 吗' + '\t' + '吃 了')
-        file.close()
-    size = os.path.getsize(path)
-    lines = io.open(path, encoding='utf-8').read().strip().split('\n')
-    diag_weight = []
-    word_pairs = []
-    if num_examples == 0:
-        for l in lines:
-            temp = l.split("=")
-            word_pairs.append([preprocess_sentence(start_sign, end_sign, w) for w in temp[0].split('\t')])
-            if len(temp) == 1:
-                diag_weight.append(float(1))
-            else:
-                diag_weight.append(float(temp[1]))
-    else:
-        for l in lines[:num_examples]:
-            temp = l.split("=")
-            word_pairs.append([preprocess_sentence(start_sign, end_sign, w) for w in temp[0].split('\t')])
-            if len(temp) == 1:
-                diag_weight.append(float(1))
-            else:
-                diag_weight.append(float(temp[1]))
+        print('不存在已经分词好的文件，请先执行pre_treat模式')
+        exit(0)
+    with open(path, 'r', encoding="utf-8") as file:
+        lines = file.read().strip().split('\n')
+        diag_weight = []
+        word_pairs = []
+        if num_examples == 0:
+            for line in lines:
+                temp = line.split("=")
+                word_pairs.append([preprocess_sentence(start_sign, end_sign, w) for w in temp[0].split('\t')])
+                if len(temp) == 1:
+                    diag_weight.append(float(1))
+                else:
+                    diag_weight.append(float(temp[1]))
+        else:
+            for line in lines[:num_examples]:
+                temp = line.split("=")
+                word_pairs.append([preprocess_sentence(start_sign, end_sign, w) for w in temp[0].split('\t')])
+                if len(temp) == 1:
+                    diag_weight.append(float(1))
+                else:
+                    diag_weight.append(float(temp[1]))
 
     return zip(*word_pairs), diag_weight
 
@@ -147,6 +145,11 @@ def load_token_dict(dict_fn):
     加载字典方法
     :return:input_token, target_token
     """
+    is_exits = Path(dict_fn)
+    if not is_exits.exists():
+        print("不存在字典文件，请先执行train模式并生成字典文件")
+        exit(0)
+
     with open(dict_fn, 'r', encoding='utf-8') as file:
         token = json.load(file)
 

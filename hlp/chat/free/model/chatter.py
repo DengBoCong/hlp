@@ -15,14 +15,11 @@ class Chatter(object):
     不同模型或方法实现的聊天子类化该类。
     """
 
-    def __init__(self, model, checkpoint_dir, beam_size, dict_fn):
+    def __init__(self, checkpoint_dir, beam_size):
         """
         Transformer聊天器初始化，用于加载模型
         """
         self.checkpoint_dir = checkpoint_dir
-        if model == "chat":
-            print('正在从“{}”处加载字典...'.format(dict_fn))
-            self.token = _data.load_token_dict(dict_fn=dict_fn)
         self.beam_search_container = BeamSearch(
             beam_size=beam_size,
             max_length=_config.max_length_tar,

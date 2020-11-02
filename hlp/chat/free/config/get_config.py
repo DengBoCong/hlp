@@ -1,7 +1,7 @@
 import os
 import json
 
-seq2seq_config = os.path.dirname(__file__) + r'\model_config.json'
+seq2seq_config = os.path.dirname(__file__) + r'\config.json'
 path = os.path.dirname(__file__)[:-6]
 
 
@@ -34,18 +34,18 @@ beam_size = conf['beam_size']  # beam_search大小
 epochs = conf['epochs']  # 训练轮次
 start_sign = conf['start_sign']
 end_sign = conf['end_sign']
+lccc_data = path + conf['lccc_data']
+lccc_tokenized_data = path + conf['lccc_tokenized_data']
 
 # seq2seq模型相关配置
-seq2seq_train_data = path + conf['seq2seq']['train_data']  # 训练结果保存位置
-seq2seq_dict_fn = path + conf['transformer']['dict_fn']  # 字典保存位置
+seq2seq_checkpoint = path + conf['seq2seq_checkpoint']  # 训练结果保存位置
+seq2seq_dict_fn = path + conf['seq2seq_dict_fn']  # 字典保存位置
 
 # transformer模型相关配置
-transformer_train_data = path + conf['transformer']['train_data']  # 训练结果保存位置
+transformer_checkpoint = path + conf['transformer_checkpoint']  # 训练结果保存位置
 transformer_num_layers = conf['transformer']['num_layers']
 transformer_d_model = conf['transformer']['d_model']
 transformer_num_heads = conf['transformer']['num_heads']
 transformer_units = conf['transformer']['units']
 transformer_dropout = conf['transformer']['dropout']
-transformer_dict_fn = path + conf['transformer']['dict_fn']  # 字典保存位置
-transformer_lccc_data = conf['transformer']['lccc_data']
-transformer_lccc_tokenized_data = conf['transformer']['lccc_tokenized_data']
+transformer_dict_fn = path + conf['transformer_dict_fn']  # 字典保存位置

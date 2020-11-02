@@ -1,0 +1,31 @@
+{
+  "seq2seq": {
+  },
+  "transformer": {
+    "num_layers": 2,
+    "d_model": 256,
+    "num_heads": 8,
+    "units": 512,
+    "dropout": 0.1
+  },
+  "resource_data": "data\\train.txt",
+  "tokenized_data": "data\\train_tokenized.txt",
+  "transformer_checkpoint": "checkpoint\\transformer",
+  "transformer_dict_fn": "data\\transformer_dict.json",
+  "seq2seq_checkpoint": "checkpoint\\seq2seq",
+  "seq2seq_dict_fn": "data\\seq2seq_dict.json",
+  "lccc_data": "data\\LCCC.json",
+  "lccc_tokenized_data": "data\\lccc_tokenized.txt",
+  "vocab_size": 300,
+  "enc_vocab_size": 20000,
+  "dec_vocab_size": 20000,
+  "embedding_dim": 256,
+  "layer_size": 1024,
+  "max_train_data_size": 36,
+  "batch_size": 32,
+  "buffer_size": 20000,
+  "beam_size": 3,
+  "epochs": 2,
+  "start_sign": "start",
+  "end_sign": "end"
+}
