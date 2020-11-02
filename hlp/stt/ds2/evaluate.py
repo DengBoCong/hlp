@@ -37,7 +37,7 @@ if __name__ == "__main__":
     # 构建字符集对象
     index_word = get_index_word()
 
-    for batch, (input_tensor, labels_list) in zip(range(1,batchs+1), test_data_generator):
+    for batch, (input_tensor, labels_list) in zip(range(1, batchs+1), test_data_generator):
         originals = labels_list
         results = []
         y_pred = model(input_tensor)
