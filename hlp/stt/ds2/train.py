@@ -7,17 +7,16 @@ Created on Tue Sep 15 17:47:11 2020
 import time
 from math import ceil
 import tensorflow as tf
+from generator import data_generator
 from load_dataset import load_data
 from model import get_ds2_model
 from utils import get_config
-from generator import data_generator
 
 
 def train_step(input_tensor, target_tensor, target_length, optimizer, model):
     #单次训练
     with tf.GradientTape() as tape:
         y_pred=model(input_tensor)
-        #print(y_pred)
         y_true=target_tensor
         input_length=tf.fill([y_pred.shape[0],1],y_pred.shape[1])
         loss=tf.keras.backend.ctc_batch_cost(
@@ -59,6 +58,8 @@ def train(model, optimizer, train_data_generator, batchs, epochs):
         epoch_start = time.time()
         print("Epoch %d/%d" % (epoch, epochs))
         for batch, (input_tensor, target_tensor, target_length) in zip(range(1,batchs+1), train_data_generator):
+            
+            print(input_tensor.shape,target_tensor.shape, target_length.shape)
             batch_start = time.time()
             batch_loss = train_step(input_tensor, target_tensor, target_length, optimizer, model)
             total_loss += batch_loss
@@ -86,7 +87,7 @@ if __name__ == "__main__":
     dataset_name = configs["preprocess"]["dataset_name"]
     batch_size = configs["train"]["batch_size"]
 
-    #加载数据生成器
+    #加载数据，并构建数据生成器
     train_data = load_data(dataset_name, data_path, "train", num_examples)
     batchs = ceil(len(train_data[0]) / batch_size)
     train_data_generator = data_generator(train_data, "train", batchs, batch_size)
@@ -96,3 +97,4 @@ if __name__ == "__main__":
     optimizer = tf.keras.optimizers.Adam()
     #训练
     train(model, optimizer, train_data_generator, batchs, epochs)
+    
