@@ -1,12 +1,21 @@
 {
   "seq2seq": {
+    "vocab_size": 300,
+    "embedding_dim": 256,
+    "units": 1024,
+    "max_train_data_size": 36,
+    "max_length": 40
   },
   "transformer": {
     "num_layers": 2,
     "d_model": 256,
     "num_heads": 8,
     "units": 512,
-    "dropout": 0.1
+    "dropout": 0.1,
+    "vocab_size": 300,
+    "embedding_dim": 256,
+    "max_train_data_size": 36,
+    "max_length": 40
   },
   "resource_data": "data\\train.txt",
   "tokenized_data": "data\\train_tokenized.txt",
@@ -16,12 +25,6 @@
   "seq2seq_dict_fn": "data\\seq2seq_dict.json",
   "lccc_data": "data\\LCCC.json",
   "lccc_tokenized_data": "data\\lccc_tokenized.txt",
-  "vocab_size": 300,
-  "enc_vocab_size": 20000,
-  "dec_vocab_size": 20000,
-  "embedding_dim": 256,
-  "layer_size": 1024,
-  "max_train_data_size": 36,
   "batch_size": 32,
   "buffer_size": 20000,
   "beam_size": 3,

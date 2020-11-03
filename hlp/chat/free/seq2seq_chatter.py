@@ -14,13 +14,15 @@ class Seq2SeqChatter(Chatter):
     Seq2Seq模型的聊天类
     """
 
-    def __init__(self, execute_type, checkpoint_dir, beam_size, vocab_size, dict_fn):
+    def __init__(self, execute_type, checkpoint_dir, beam_size, vocab_size, dict_fn, max_length):
         """
         Seq2Seq聊天器初始化，用于加载模型
         """
-        super().__init__(checkpoint_dir, beam_size)
-        self.encoder = seq2seq.Encoder(vocab_size, _config.embedding_dim, _config.units, _config.BATCH_SIZE)
-        self.decoder = seq2seq.Decoder(vocab_size, _config.embedding_dim, _config.units, _config.BATCH_SIZE)
+        super().__init__(checkpoint_dir, beam_size, max_length)
+        self.encoder = seq2seq.Encoder(vocab_size, _config.seq2seq_embedding_dim, _config.seq2seq_units,
+                                       _config.BATCH_SIZE)
+        self.decoder = seq2seq.Decoder(vocab_size, _config.seq2seq_embedding_dim, _config.seq2seq_units,
+                                       _config.BATCH_SIZE)
         self.optimizer = tf.keras.optimizers.Adam()
         self.loss_object = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True, reduction='none')
         self.checkpoint = tf.train.Checkpoint(optimizer=self.optimizer, encoder=self.encoder, decoder=self.decoder)
@@ -63,7 +65,7 @@ class Seq2SeqChatter(Chatter):
         step_loss[0] += batch_loss
 
     def _create_predictions(self, inputs, dec_input, t):
-        hidden = tf.zeros((inputs.shape[0], _config.units))
+        hidden = tf.zeros((inputs.shape[0], _config.seq2seq_units))
         enc_out, enc_hidden = self.encoder(inputs, hidden)
         dec_hidden = enc_hidden
         dec_input = tf.expand_dims(dec_input[:, t], 1)
@@ -91,8 +93,9 @@ def get_chatter(execute_type):
     chatter = Seq2SeqChatter(execute_type=execute_type,
                              checkpoint_dir=_config.seq2seq_checkpoint,
                              beam_size=_config.beam_size,
-                             vocab_size=_config.vocab_size,
-                             dict_fn=_config.seq2seq_dict_fn)
+                             vocab_size=_config.seq2seq_vocab_size,
+                             dict_fn=_config.seq2seq_dict_fn,
+                             max_length=_config.seq2seq_max_length)
     return chatter
 
 
@@ -107,8 +110,8 @@ def main():
         chatter = get_chatter(execute_type=options.type)
         chatter.train(chatter.checkpoint,
                       dict_fn=_config.seq2seq_dict_fn,
-                      data_fn=_config.data,
-                      max_train_data_size=_config.max_train_data_size)
+                      data_fn=_config.lccc_tokenized_data,
+                      max_train_data_size=_config.seq2seq_max_train_data_size)
     elif options.type == 'chat':
         chatter = get_chatter(options.type)
         print("Agent: 你好！结束聊天请输入ESC。")

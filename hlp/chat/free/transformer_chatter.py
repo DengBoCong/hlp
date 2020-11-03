@@ -15,20 +15,19 @@ class TransformerChatter(Chatter):
     Transformer模型的聊天类
     """
 
-    def __init__(self, execute_type, checkpoint_dir, beam_size, vocab_size, dict_fn):
+    def __init__(self, execute_type, checkpoint_dir, beam_size, vocab_size, dict_fn, max_length):
         """
         Transformer聊天器初始化，用于加载模型
         """
-        super().__init__(checkpoint_dir, beam_size)
+        super().__init__(checkpoint_dir, beam_size, max_length)
 
-        self.model = transformer.transformer_scheduled_sample(
+        self.model = transformer.transformer(
             vocab_size=vocab_size,
             num_layers=_config.transformer_num_layers,
             units=_config.transformer_units,
             d_model=_config.transformer_d_model,
             num_heads=_config.transformer_num_heads,
-            dropout=_config.transformer_dropout,
-            alpha=1.
+            dropout=_config.transformer_dropout
         )
 
         self.learning_rate = transformer.CustomSchedule(_config.transformer_d_model)
@@ -81,7 +80,7 @@ class TransformerChatter(Chatter):
         return predictions
 
     def _loss_function(self, real, pred, weights):
-        real = tf.reshape(real, shape=(-1, _config.max_length_inp - 1))
+        real = tf.reshape(real, shape=(-1, self.max_length - 1))
         loss = tf.keras.losses.SparseCategoricalCrossentropy(
             from_logits=True, reduction='none')(real, pred, sample_weight=weights)
         mask = tf.cast(tf.not_equal(real, 0), tf.float32)
@@ -95,8 +94,9 @@ def get_chatter(execute_type):
     chatter = TransformerChatter(execute_type=execute_type,
                                  checkpoint_dir=_config.transformer_checkpoint,
                                  beam_size=_config.beam_size,
-                                 vocab_size=_config.vocab_size,
-                                 dict_fn=_config.transformer_dict_fn)
+                                 vocab_size=_config.transformer_vocab_size,
+                                 dict_fn=_config.transformer_dict_fn,
+                                 max_length=_config.transformer_max_length)
     return chatter
 
 
@@ -112,7 +112,7 @@ def main():
         chatter.train(chatter.checkpoint,
                       dict_fn=_config.transformer_dict_fn,
                       data_fn=_config.lccc_tokenized_data,
-                      max_train_data_size=_config.max_train_data_size)
+                      max_train_data_size=_config.transformer_max_train_data_size)
     elif options.type == 'chat':
         chatter = get_chatter(options.type)
         print("Agent: 你好！结束聊天请输入ESC。")

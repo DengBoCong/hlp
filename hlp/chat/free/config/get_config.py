@@ -19,14 +19,8 @@ conf = {}
 conf = config()
 
 # 公共配置
-embedding_dim = conf['embedding_dim']
 BATCH_SIZE = conf['batch_size']
 BUFFER_SIZE = conf['buffer_size']
-units = conf['layer_size']
-vocab_size = conf['vocab_size']
-max_length_inp = 40  # 最大文本长度
-max_length_tar = 40  # 最大文本长度
-max_train_data_size = conf['max_train_data_size']
 data = path + conf['tokenized_data']  # 训练数据位置
 resource_data = path + conf['resource_data']  # 原始数据位置
 tokenized_data = path + conf['tokenized_data']  # 预处理之后数据位置
@@ -38,10 +32,16 @@ lccc_data = path + conf['lccc_data']
 lccc_tokenized_data = path + conf['lccc_tokenized_data']
 
 # seq2seq模型相关配置
+seq2seq_units = conf['seq2seq']['units']
 seq2seq_checkpoint = path + conf['seq2seq_checkpoint']  # 训练结果保存位置
 seq2seq_dict_fn = path + conf['seq2seq_dict_fn']  # 字典保存位置
+seq2seq_vocab_size = conf['seq2seq']['vocab_size']
+seq2seq_embedding_dim = conf['seq2seq']['embedding_dim']
+seq2seq_max_train_data_size = conf['seq2seq']['max_train_data_size']
+seq2seq_max_length = conf['seq2seq']['max_length']  # 最大文本长度
 
 # transformer模型相关配置
+transformer_vocab_size = conf['transformer']['vocab_size']
 transformer_checkpoint = path + conf['transformer_checkpoint']  # 训练结果保存位置
 transformer_num_layers = conf['transformer']['num_layers']
 transformer_d_model = conf['transformer']['d_model']
@@ -49,3 +49,5 @@ transformer_num_heads = conf['transformer']['num_heads']
 transformer_units = conf['transformer']['units']
 transformer_dropout = conf['transformer']['dropout']
 transformer_dict_fn = path + conf['transformer_dict_fn']  # 字典保存位置
+transformer_max_train_data_size = conf['transformer']['max_train_data_size']
+transformer_max_length = conf['transformer']['max_length']  # 最大文本长度

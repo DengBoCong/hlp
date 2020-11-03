@@ -17,11 +17,11 @@ def preprocess_sentence(start_sign, end_sign, w):
     return w
 
 
-def preprocess_request(sentence, token):
+def preprocess_request(sentence, token, max_length):
     sentence = " ".join(jieba.cut(sentence))
     sentence = preprocess_sentence(sentence, _config.start_sign, _config.end_sign)
     inputs = [token.get(i, 3) for i in sentence.split(' ')]
-    inputs = tf.keras.preprocessing.sequence.pad_sequences([inputs], maxlen=_config.max_length_inp, padding='post')
+    inputs = tf.keras.preprocessing.sequence.pad_sequences([inputs], maxlen=max_length, padding='post')
     inputs = tf.convert_to_tensor(inputs)
     dec_input = tf.expand_dims([token[_config.start_sign]], 0)
 
@@ -71,7 +71,7 @@ def max_length(tensor):
     return max(len(t) for t in tensor)
 
 
-def read_data(path, num_examples, start_sign, end_sign):
+def read_data(path, num_examples, start_sign, end_sign, max_length):
     """
     读取数据，将input和target进行分词后返回
     :param path: Tokenizer文本路径
@@ -79,11 +79,11 @@ def read_data(path, num_examples, start_sign, end_sign):
     :return: input_tensor, target_tensor, lang_tokenizer
     """
     (input_lang, target_lang), diag_weight = create_dataset(path, num_examples, start_sign, end_sign)
-    input_tensor, target_tensor, lang_tokenizer = tokenize(input_lang, target_lang)
+    input_tensor, target_tensor, lang_tokenizer = tokenize(input_lang, target_lang, max_length)
     return input_tensor, target_tensor, lang_tokenizer, diag_weight
 
 
-def tokenize(input_lang, target_lang):
+def tokenize(input_lang, target_lang, max_length):
     """
     分词方法，使用Keras API中的Tokenizer进行分词操作
     :param input_lang: 输入
@@ -95,9 +95,9 @@ def tokenize(input_lang, target_lang):
     lang_tokenizer.fit_on_texts(lang)
     input_tensor = lang_tokenizer.texts_to_sequences(input_lang)
     target_tensor = lang_tokenizer.texts_to_sequences(target_lang)
-    input_tensor = tf.keras.preprocessing.sequence.pad_sequences(input_tensor, maxlen=_config.max_length_inp,
+    input_tensor = tf.keras.preprocessing.sequence.pad_sequences(input_tensor, maxlen=max_length,
                                                                  padding='post')
-    target_tensor = tf.keras.preprocessing.sequence.pad_sequences(target_tensor, maxlen=_config.max_length_inp,
+    target_tensor = tf.keras.preprocessing.sequence.pad_sequences(target_tensor, maxlen=max_length,
                                                                   padding='post')
 
     return input_tensor, target_tensor, lang_tokenizer
@@ -120,13 +120,13 @@ def create_look_ahead_mask(input):
     return tf.maximum(look_ahead_mask, padding_mask)
 
 
-def load_data(dict_fn, data_fn, start_sign, end_sign, checkpoint_dir, max_train_data_size=0):
+def load_data(dict_fn, data_fn, start_sign, end_sign, checkpoint_dir, max_length, max_train_data_size=0):
     """
     数据加载方法，含四个元素的元组，包括如下：
     :return:input_tensor, input_token, target_tensor, target_token
     """
     input_tensor, target_tensor, lang_tokenizer, diag_weight = read_data(data_fn, max_train_data_size, start_sign,
-                                                                         end_sign)
+                                                                         end_sign, max_length)
 
     with open(dict_fn, 'w', encoding='utf-8') as file:
         file.write(json.dumps(lang_tokenizer.word_index, indent=4, ensure_ascii=False))
