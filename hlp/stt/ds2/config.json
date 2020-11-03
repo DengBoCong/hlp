@@ -1,14 +1,14 @@
 {
     "train": {
         "train_epochs": 2,
-        "data_path": "./number/train",
-        "batch_size": 36,
+        "data_path": "./data/LibriSpeech/train-clean-5",
+        "batch_size": 48,
         "num_examples": null,
         "if_is_first_train": true
     },
     "test": {
-        "data_path": "./number/dev",
-        "batch_size": 24,
+        "data_path": "./data/LibriSpeech/dev-clean-2",
+        "batch_size": 36,
         "num_examples": null
     },
     "model": {
@@ -17,8 +17,7 @@
         "conv_kernel_size": 11,
         "conv_strides": 2,
         "bi_gru_layers": 1,
-        "gru_units": 256,
-        "dense_units": 12
+        "gru_units": 256
     },
     "checkpoint": {
         "directory": "./checkpoint",
@@ -35,12 +34,10 @@
     },
     "preprocess": {
         "dataset_name是指不同的语料集的数据预处理方法": "",
-        "dataset_name": "number",
+        "dataset_name": "librispeech",
         "text_raw_style是指文本数据集每行的格式：1是'index string',2是'index\tstring',3是'string')": "",
-        "text_raw_style": 3,
+        "text_raw_style": 1,
         "text_process_mode是指文本处理和序列解码的基准：en_word(英文单词)或者cn(中文或不带空格的单字符)、en_char(英文字符))": "",
-        "text_process_mode": "en_char",
-        "max_input_length": 36,
-        "max_label_length": 1
+        "text_process_mode": "en_word"
     }
 }

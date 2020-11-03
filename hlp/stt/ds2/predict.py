@@ -20,7 +20,7 @@ if __name__ == "__main__":
     if manager.latest_checkpoint:
         checkpoint.restore(manager.latest_checkpoint)
 
-    audio_path = "./number/train/0_jackson_3.wav"
+    audio_path = "./data/LibriSpeech/train-clean-5/1088/134315/1088-134315-0000.flac"
     # audio_path = configs["record"]["record_path"]
     n_mfcc = configs["other"]["n_mfcc"]
     x_test = wav_to_mfcc(audio_path, n_mfcc)

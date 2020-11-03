@@ -34,7 +34,10 @@ if __name__ == "__main__":
     aver_lers = 0
     aver_norm_lers = 0
     
-    for batch, (input_tensor, labels_list) in zip(range(1,batchs+1), test_data_generator):
+    # 构建字符集对象
+    index_word = get_index_word()
+
+    for batch, (input_tensor, labels_list) in zip(range(1, batchs+1), test_data_generator):
         originals = labels_list
         results = []
         y_pred = model(input_tensor)
@@ -45,8 +48,7 @@ if __name__ == "__main__":
         )
         results_int_list = output[0][0].numpy().tolist()
 
-        # 构建字符集对象,并解码出预测的结果list
-        index_word = get_index_word()
+        # 解码
         for i in range(len(results_int_list)):
             str = decode_output(results_int_list[i], index_word).strip()
             results.append(str)
