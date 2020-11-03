@@ -1,13 +1,10 @@
 # 机器翻译
 
-- 运行入口： nmt.py
-- 执行方法：
-    - 指令格式：python nmt.py -t/--type [执行模式]
-    - 可选模式：
-        - train: 使用 ./data.en-ch.txt 进行训练
-        - eval : 使用 ./data.en-ch_eval.txt 对模型进行测试,需对指标类型进行选择
-            - bleu指标
-        - translate : 对输入句子进行翻译，输入0退出
+- 运行入口： 
+    - nmt_train: 使用 ./data/corpus/en-zh_train.txt 进行训练
+    - nmt_evaluate : 使用 ./data/corpus/en-zh_eval.txt 对模型进行测试,需对指标类型进行选择
+        - bleu指标
+    - nmt_translate : 对输入句子进行翻译，输入0退出
 
 - 分词方法(在配置文件中进行选择)：
     - 英文分词:
@@ -17,6 +14,11 @@
         - TOKENIZE:使用字划分方法进行分词
 
 # 版本日志
+- 2020.11.03：version 1.4.0
+    - 可设置库中任意两语言对互译（可选：en、zh）
+    - 模型结构优化（改为三个入口、模块增删）
+    - 代码优化（变量、方法命名）
+    
 - 2020.10.23：version 1.3.2
     - 增加从磁盘逐个获得batch进行训练功能
     - 修复优化代码（文本加载、打印分词类型、检查点保存）

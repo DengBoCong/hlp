@@ -9,7 +9,7 @@ import math
 import nltk
 
 
-def calculate_average(precisions, weights):
+def _calculate_average(precisions, weights):
     """Calculate the geometric weighted mean."""
     tmp_res = 0
     for id, item in enumerate(precisions):
@@ -23,13 +23,13 @@ def calculate_average(precisions, weights):
         return math.exp(tmp_res)
 
 
-def calculate_candidate(gram_list, candidate):
+def _calculate_candidate(gram_list, candidate):
     """Calculate the count of gram_list in candidate."""
     gram_sub_str = ' '.join(gram_list)
     return len(re.findall(gram_sub_str, candidate))
 
 
-def calculate_reference(gram_list, references):
+def _calculate_reference(gram_list, references):
     """Calculate the count of gram_list in references"""
     gram_sub_str = ' '.join(gram_list)
     gram_count = []
@@ -81,8 +81,8 @@ def sentence_bleu(candidate_sentence, reference_sentences, max_gram = 4, weights
                 continue
             else:  # curr_gram_list 为机翻的第j个 n-gram 列表
                 curr_gram_list = candidate_corpus[j:j+curr_gram_len]
-                gram_candidate_count = calculate_candidate(curr_gram_list, candidate_sentence)  #
-                gram_reference_count_list = calculate_reference(curr_gram_list, reference_sentences)  # gram_reference_count_list 为计算 n-gram 在参考句子中数量的列表
+                gram_candidate_count = _calculate_candidate(curr_gram_list, candidate_sentence)  #
+                gram_reference_count_list = _calculate_reference(curr_gram_list, reference_sentences)  # gram_reference_count_list 为计算 n-gram 在参考句子中数量的列表
                 truncation_list = []
                 for item in gram_reference_count_list:
                     truncation_list.append(np.min([gram_candidate_count, item]))  # 在截断列表中添加该n-gram在机翻与各个参考句子中最小次数
@@ -96,7 +96,7 @@ def sentence_bleu(candidate_sentence, reference_sentences, max_gram = 4, weights
 
     # 其次对多元组合(n-gram)的precision 进行加权取平均作为最终的bleu评估指标
     # 一般选择的做法是计算几何加权平均 exp(sum(w*logP))
-    average_res = calculate_average(gram_precisions, weights)
+    average_res = _calculate_average(gram_precisions, weights)
     # print(' current average result：')
     # print(average_res)
 
@@ -117,16 +117,30 @@ def sentence_bleu(candidate_sentence, reference_sentences, max_gram = 4, weights
     return bp * average_res
 
 
-def sentence_bleu_nltk(candidate_sentence, reference_sentences):
+def sentence_bleu_nltk(candidate_sentence, reference_sentences, language):
     """
         :param candidate_sentence:机翻句子
         :param reference_sentences:参考句子列表
+        :param language:句子的语言
 
     """
-    candidate_sentence = [w for w in candidate_sentence]
-    reference_sentences_sum = []
-    for sentence in reference_sentences:
-        reference_sentences_sum.append([w for w in sentence])
+    # 根据所选择的语言对句子进行预处理
+    if language == "zh":
+        candidate_sentence = [w for w in candidate_sentence]
+        reference_sentences_sum = []
+        for sentence in reference_sentences:
+            reference_sentences_sum.append([w for w in sentence])
+    elif language == "en":
+        candidate_sentence = re.sub(r'([?.!,])', r' \1', candidate_sentence)  # 在?.!,前添加空格
+        candidate_sentence = re.sub(r'[" "]+', " ", candidate_sentence)  # 合并连续的空格
+        candidate_sentence = candidate_sentence.split(' ')
+        reference_sentences_sum = []
+        for sentence in reference_sentences:
+            sentence = re.sub(r'([?.!,])', r' \1', sentence)  # 在?.!,前添加空格
+            sentence = re.sub(r'[" "]+', " ", sentence)  # 合并连续的空格
+            sentence = sentence.split(' ')
+            reference_sentences_sum.append(sentence)
+
     smooth_function = nltk.translate.bleu_score.SmoothingFunction()
     score = nltk.translate.bleu_score.sentence_bleu(reference_sentences_sum, candidate_sentence
                                                     , smoothing_function=smooth_function.method1)
@@ -139,17 +153,30 @@ def main():
     Returns:返回BLEU指数
     """
     # 测试语句
-    candidate_sentence = '今天的天气真好啊。'
-    reference_sentence = '今天可真是个好天气啊。'
+    candidate_sentence_zh = '今天的天气真好啊。'
+    reference_sentence_zh = '今天可真是个好天气啊。'
 
     # 自己写的bleu计算
-    bleu = sentence_bleu(candidate_sentence, [reference_sentence], max_gram=4
+    bleu = sentence_bleu(candidate_sentence_zh, [reference_sentence_zh], max_gram=4
                          , weights=(0.25, 0.25, 0.25, 0.25), ch=True)
-    print(bleu)
+    print('自己写的BLEU:%.2f' % bleu)
 
     # nltk bleu计算
-    bleu_nltk = sentence_bleu_nltk(candidate_sentence, [reference_sentence])
-    print(bleu_nltk)
+    bleu_nltk = sentence_bleu_nltk(candidate_sentence_zh, [reference_sentence_zh], language='zh')
+    print('NLTK_BLEU:%.2f' % bleu_nltk)
+
+    # 测试英语语句
+    candidate_sentence_en = "It's a good day."
+    reference_sentence_en = "It's really a good sunny day."
+
+    # 自己写的bleu计算
+    bleu = sentence_bleu(candidate_sentence_en, [reference_sentence_en], max_gram=4
+                         , weights=(0.25, 0.25, 0.25, 0.25), ch=True)
+    print('自己写的BLEU:%.2f' % bleu)
+
+    # nltk bleu计算
+    bleu_nltk = sentence_bleu_nltk(candidate_sentence_en, [reference_sentence_en], language='en')
+    print('NLTK_BLEU:%.2f' % bleu_nltk)
 
 
 if __name__ == '__main__':
