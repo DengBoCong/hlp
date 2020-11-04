@@ -1,14 +1,12 @@
 import tensorflow as tf
 import os
-import numpy as np
 from sklearn.model_selection import train_test_split
 from transformers import BertTokenizer
+from config.get_config import get_config
+import change_transformer
 import train_args as train_args
-from gpt2 import TFGPT2Model
-from gpt2_config import GPT2Config
 import poem_proprocess_raw_data as preprocess_data
 import time
-
 
 # 数据处理
 PAD = '[PAD]'
@@ -22,14 +20,18 @@ def create_model(args, config):
     """
 
     print('创建model')
-    model = TFGPT2Model(config)
+    model = change_transformer.TFGPT2Model(d_model=config["d_model"], vocab_size=config["vocab_size"],
+                                           max_len=config["max_length"],
+                                           num_heads=config["num_heads"], dff=config["dff"],
+                                           num_layers=config["num_layers"], rate=config["dropout"])
+
     optimizer = tf.keras.optimizers.Adam(
         learning_rate=3e-5,
         beta_1=0.9,
         beta_2=0.98,
         epsilon=1e-9)
 
-    return model, config.n_ctx, optimizer
+    return model, config["max_length"], optimizer
 
 
 def change_tpye(outputs, labels):
@@ -82,16 +84,17 @@ def load_checkpoint(model, optimizer, args):
 
 
 def train_step(model, input_ids, optimizer, tokenizer, train_loss, train_accuracy):
+    look_ahead_mask = change_transformer.creat_mask(input_ids)
     with tf.GradientTape() as t:
-        outputs = model(
-            inputs=input_ids)  # input_ids  (bantch_size,dim)   outputs : [(batch_size, dim, vocab),(batch,2,head,4,dim,32)]  第二个？
+        outputs = model(inp=input_ids, training=True, look_ahead_mask=look_ahead_mask)
+        # input_ids  (bantch_size,dim)   outputs : [(batch_size, dim, vocab),(batch,2,head,4,dim,32)]
+
         shift_logits, shift_labels, output_logits = change_tpye(outputs, input_ids)
         # shift_logits:[batch*(dim-1),vocab]; shift_labels:[(dim-1),] ; output_logits：(batch_size, dim-1, vocab)
         loss, train_loss, train_accuracy = loss_function(shift_logits, shift_labels, tokenizer, output_logits,
                                                          train_loss, train_accuracy)
     gradients = t.gradient(loss, model.trainable_variables)
     optimizer.apply_gradients(zip(gradients, model.trainable_variables))
-
 
     return train_loss, train_accuracy
 
@@ -160,6 +163,7 @@ def data_process(args, ):
 
 
 def main():
+    config = get_config()
     args = train_args.setup_train_args()
     if args.seed:
         train_args.set_random_seed(args)
@@ -174,7 +178,6 @@ def main():
         os.mkdir(args.dialogue_model_output_path)
 
     # 加载GPT2模型
-    config = GPT2Config()
     model, n_ctx, optimizer = create_model(args, config)
 
     # 对原始数据进行预处理,将原始语料转换成对应的token_id

@@ -1,4 +1,4 @@
-poem_data = './poem_data/poem.txt'
+poem_data = './poem_data/train_poem.txt'
 poem_out = './poem_data/poem_raw.txt'
 
 
@@ -15,9 +15,4 @@ def process_poemdata(in_, out):
     outfopen.close()
 
 
-def main():
-    process_poemdata(poem_data, poem_out)
-
-
-if __name__ == '__main__':
-    main()
+process_poemdata(poem_data, poem_out)

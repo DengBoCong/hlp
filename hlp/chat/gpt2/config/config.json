@@ -1,0 +1,12 @@
+{
+  "units": 512,
+  "d_model": 256,
+  "dff": 512,
+  "num_heads": 8,
+  "dropout": 0.1,
+  "max_length": 40,
+  "batch_size": 32,
+  "buffer_size": 20000,
+  "vocab_size": 2341,
+  "num_layers": 12
+}
