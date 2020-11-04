@@ -63,14 +63,6 @@ def create_dataset(path, num_examples, start_sign, end_sign):
     return zip(*word_pairs), diag_weight
 
 
-def max_length(tensor):
-    """
-    :param tensor:
-    :return: 列表中最大的长度
-    """
-    return max(len(t) for t in tensor)
-
-
 def read_data(path, num_examples, start_sign, end_sign, max_length):
     """
     读取数据，将input和target进行分词后返回
