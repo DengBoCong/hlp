@@ -7,10 +7,10 @@
 import sys
 sys.path.append('..')
 from sklearn.model_selection import train_test_split
-from model import transformer as _transformer
+from model import trainer
 import config.get_config as _config
 import tensorflow_datasets as tfds
-from model import network
+from model import nmt_model
 from pathlib import Path
 import tensorflow as tf
 import numpy
@@ -149,10 +149,10 @@ def create_tokenizer(sentences, language):
     # 根据所选语言确定mode、save_path
     if language == "en":
         mode = _config.en_tokenize_type
-        save_path = _config.en_bpe_tokenizer_path
+        save_path = _config.tokenizer_path_prefix+language+'_'+mode.lower()
     elif language == "zh":
         mode = _config.zh_tokenize_type
-        save_path = _config.zh_tokenizer_path
+        save_path = _config.tokenizer_path_prefix+language+'_'+mode.lower()
 
     # 生成、保存目标语言字典
     if mode == 'BPE':
@@ -185,10 +185,10 @@ def get_tokenizer(language):
     # 根据所选语言确定mode、save_path
     if language == "en":
         mode = _config.en_tokenize_type
-        path = _config.en_bpe_tokenizer_path
+        path = _config.tokenizer_path_prefix+language+'_'+mode.lower()
     elif language == "zh":
         mode = _config.zh_tokenize_type
-        path = _config.zh_tokenizer_path
+        path = _config.tokenizer_path_prefix+language+'_'+mode.lower()
 
     if mode == 'BPE':
         return _get_tokenizer_bpe(path)
@@ -319,10 +319,10 @@ def create_encoded_sentences(sentences, tokenizer, language):
     # 根据所选语言确定mode、save_path
     if language == "en":
         mode = _config.en_tokenize_type
-        save_path = _config.path_encoded_sequences_en
+        save_path = _config.encoded_sequences_path_prefix+language
     elif language == "zh":
         mode = _config.zh_tokenize_type
-        save_path = _config.path_encoded_sequences_zh
+        save_path = _config.encoded_sequences_path_prefix+language
 
     if mode == 'BPE':
         return _create_encoded_sentences_bpe(sentences, tokenizer, save_path)
@@ -364,16 +364,9 @@ def split_batch():
     """
     根据配置文件语言对来确定文件路径，划分训练集与验证集
     """
-    # 根据配置文件确定source_path及target_path
-    if _config.source_lang == "en":
-        input_path = _config.path_encoded_sequences_en
-    elif _config.source_lang == "zh":
-        input_path = _config.path_encoded_sequences_zh
 
-    if _config.target_lang == "en":
-        target_path = _config.path_encoded_sequences_en
-    elif _config.target_lang == "zh":
-        target_path = _config.path_encoded_sequences_zh
+    input_path = _config.encoded_sequences_path_prefix + _config.source_lang
+    target_path = _config.encoded_sequences_path_prefix + _config.target_lang
 
     input_tensor = numpy.loadtxt(input_path, dtype='int32')
     target_tensor = numpy.loadtxt(target_path, dtype='int32')
@@ -396,15 +389,8 @@ def generate_batch_from_file(num_steps, batch_size):
     return:input_tensor shape=(batch_size, sentence_length), dtype=tf.int32
            , target_tensor shape=(batch_size, sentence_length), dtype=tf.int32
     """
-    if _config.source_lang == "en":
-        input_path = _config.path_encoded_sequences_en
-    elif _config.source_lang == "zh":
-        input_path = _config.path_encoded_sequences_zh
-
-    if _config.target_lang == "en":
-        target_path = _config.path_encoded_sequences_en
-    elif _config.target_lang == "zh":
-        target_path = _config.path_encoded_sequences_zh
+    input_path = _config.encoded_sequences_path_prefix + _config.source_lang
+    target_path = _config.encoded_sequences_path_prefix + _config.target_lang
 
     step = 0
     while step < num_steps:
@@ -489,11 +475,12 @@ def load_model():
     print('目标语言字典加载完毕！\n')
 
     # 创建模型及相关变量
-    optimizer, _, _ = _transformer.get_optimizer()
-    transformer = network.get_model(vocab_size_source, vocab_size_target)
+    learning_rate = trainer.CustomSchedule(_config.d_model)
+    optimizer = tf.keras.optimizers.Adam(learning_rate, beta_1=0.9, beta_2=0.98, epsilon=1e-9)
+    transformer = nmt_model.get_model(vocab_size_source, vocab_size_target)
 
     # 加载检查点
-    _transformer.load_checkpoint(transformer, optimizer)
+    nmt_model.load_checkpoint(transformer, optimizer)
 
     return transformer, tokenizer_source, tokenizer_target
 
