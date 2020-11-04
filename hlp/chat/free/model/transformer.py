@@ -97,7 +97,7 @@ def transformer(vocab_size, num_layers, units, d_model,
 
     # 使用了Lambda将方法包装成层，为的是满足函数式API的需要
     enc_padding_mask = tf.keras.layers.Lambda(
-        _data.create_padding_mask, output_shape=(1, 1, None),
+        _data._create_padding_mask, output_shape=(1, 1, None),
         name="enc_padding_mask"
     )(inputs)
 
@@ -107,7 +107,7 @@ def transformer(vocab_size, num_layers, units, d_model,
     )(dec_inputs)
 
     dec_padding_mask = tf.keras.layers.Lambda(
-        _data.create_padding_mask, output_shape=(1, 1, None),
+        _data._create_padding_mask, output_shape=(1, 1, None),
         name="dec_padding_mask"
     )(inputs)
 

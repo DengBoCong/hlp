@@ -5,6 +5,35 @@ import time
 from common import preprocess
 
 
+# 自定义优化器（Optimizer）
+class CustomSchedule(tf.keras.optimizers.schedules.LearningRateSchedule):
+    def __init__(self, d_model, warmup_steps=4000):
+        super(CustomSchedule, self).__init__()
+
+        self.d_model = d_model
+        self.d_model = tf.cast(self.d_model, tf.float32)
+
+        self.warmup_steps = warmup_steps
+
+    def __call__(self, step):
+        arg1 = tf.math.rsqrt(step)
+        arg2 = step * (self.warmup_steps ** -1.5)
+
+        return tf.math.rsqrt(self.d_model) * tf.math.minimum(arg1, arg2)
+
+
+def _loss_function(real, pred):
+    mask = tf.math.logical_not(tf.math.equal(real, 0))
+    loss_object = tf.keras.losses.SparseCategoricalCrossentropy(
+        from_logits=True, reduction='none')
+    loss_ = loss_object(real, pred)
+
+    mask = tf.cast(mask, dtype=loss_.dtype)
+    loss_ *= mask
+
+    return tf.reduce_mean(loss_)
+
+
 def _train_step(inp, tar, transformer, optimizer, train_loss, train_accuracy):
     tar_inp = tar[:, :-1]
     tar_real = tar[:, 1:]
@@ -17,7 +46,7 @@ def _train_step(inp, tar, transformer, optimizer, train_loss, train_accuracy):
                                      enc_padding_mask,
                                      combined_mask,
                                      dec_padding_mask)
-        loss = _transformer.loss_function(tar_real, predictions)
+        loss = _loss_function(tar_real, predictions)
 
     gradients = tape.gradient(loss, transformer.trainable_variables)
     optimizer.apply_gradients(zip(gradients, transformer.trainable_variables))
@@ -27,10 +56,15 @@ def _train_step(inp, tar, transformer, optimizer, train_loss, train_accuracy):
     return transformer, optimizer, train_loss, train_accuracy
 
 
-def train(transformer, optimizer, train_loss, train_accuracy, cache=True):
+def train(transformer, cache=True):
     """
     cache:若为True则将数据集都加载进内存进行训练，否则分批次加载内存训练
     """
+    # optimizer, train_loss, train_accuracy
+    learning_rate = CustomSchedule(_config.d_model)
+    optimizer = tf.keras.optimizers.Adam(learning_rate, beta_1=0.9, beta_2=0.98, epsilon=1e-9)
+    train_loss = tf.keras.metrics.Mean(name='train_loss')
+    train_accuracy = tf.keras.metrics.SparseCategoricalAccuracy(name='train_accuracy')
 
     if cache:
         # 若为True，则将全部数据集加载进内存

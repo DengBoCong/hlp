@@ -14,80 +14,25 @@ transformer中除了层之外的内容
 
 - Multi-head attention 多头注意力 ：将原来单个头分成多头
 
-- CustomSchedule 优化器
-
--loss_function 损失函数
-
+- Transformer 类
 """
 import tensorflow as tf
 from config import get_config as _config
 import numpy as np
-
-
-# 自定义优化器（Optimizer）
-class CustomSchedule(tf.keras.optimizers.schedules.LearningRateSchedule):
-    def __init__(self, d_model, warmup_steps=4000):
-        super(CustomSchedule, self).__init__()
-
-        self.d_model = d_model
-        self.d_model = tf.cast(self.d_model, tf.float32)
-
-        self.warmup_steps = warmup_steps
-
-    def __call__(self, step):
-        arg1 = tf.math.rsqrt(step)
-        arg2 = step * (self.warmup_steps ** -1.5)
-
-        return tf.math.rsqrt(self.d_model) * tf.math.minimum(arg1, arg2)
-
-
-def loss_function(real, pred):
-    mask = tf.math.logical_not(tf.math.equal(real, 0))
-    loss_object = tf.keras.losses.SparseCategoricalCrossentropy(
-        from_logits=True, reduction='none')
-    loss_ = loss_object(real, pred)
-
-    mask = tf.cast(mask, dtype=loss_.dtype)
-    loss_ *= mask
-
-    return tf.reduce_mean(loss_)
-
-
-def get_optimizer():
-    learning_rate = CustomSchedule(_config.d_model)
-
-    optimizer = tf.keras.optimizers.Adam(learning_rate, beta_1=0.9, beta_2=0.98,
-                                         epsilon=1e-9)
-
-    train_loss = tf.keras.metrics.Mean(name='train_loss')
-    train_accuracy = tf.keras.metrics.SparseCategoricalAccuracy(
-        name='train_accuracy')
-    return optimizer, train_loss, train_accuracy
-
-
-def load_checkpoint(transformer, optimizer):
-    # 加载检查点
-    checkpoint_path = _config.checkpoint_path
-    ckpt = tf.train.Checkpoint(transformer=transformer,
-                               optimizer=optimizer)
-    ckpt_manager = tf.train.CheckpointManager(ckpt, checkpoint_path, max_to_keep=100)
-    if ckpt_manager.latest_checkpoint:
-        ckpt.restore(ckpt_manager.latest_checkpoint)
-        # ckpt.restore('./checkpoints/train/ckpt-9')
-        print('已恢复至最新的检查点！')
+from model import network
 
 
 # 位置编码
-def get_angles(pos, i, d_model):
+def _get_angles(pos, i, d_model):
     angle_rates = 1 / np.power(10000, (2 * (i//2)) / np.float32(d_model))
     return pos * angle_rates
 
 
 def positional_encoding(position, d_model):
     '''位置编码，在embedding中加入位置信息'''
-    angle_rads = get_angles(np.arange(position)[:, np.newaxis],
+    angle_rads = _get_angles(np.arange(position)[:, np.newaxis],
                             np.arange(d_model)[np.newaxis, :],
-                            d_model)
+                             d_model)
 
     # 将 sin 应用于数组中的偶数索引（indices）；2i
     angle_rads[:, 0::2] = np.sin(angle_rads[:, 0::2])
@@ -101,7 +46,7 @@ def positional_encoding(position, d_model):
 
 
 # 遮挡
-def create_padding_mask(seq):
+def _create_padding_mask(seq):
     seq = tf.cast(tf.math.equal(seq, 0), tf.float32)
 
     # 添加额外的维度来将填充加到
@@ -116,16 +61,16 @@ def create_look_ahead_mask(size):
 
 def create_masks(inp, tar):
     # 编码器填充遮挡
-    enc_padding_mask = create_padding_mask(inp)
+    enc_padding_mask = _create_padding_mask(inp)
 
     # 在解码器的第二个注意力模块使用。
     # 该填充遮挡用于遮挡编码器的输出。
-    dec_padding_mask = create_padding_mask(inp)
+    dec_padding_mask = _create_padding_mask(inp)
 
     # 在解码器的第一个注意力模块使用。
     # 用于填充（pad）和遮挡（mask）解码器获取到的输入的后续标记（future tokens）。
     look_ahead_mask = create_look_ahead_mask(tf.shape(tar)[1])
-    dec_target_padding_mask = create_padding_mask(tar)
+    dec_target_padding_mask = _create_padding_mask(tar)
     combined_mask = tf.maximum(dec_target_padding_mask, look_ahead_mask)
 
     return enc_padding_mask, combined_mask, dec_padding_mask
@@ -167,4 +112,32 @@ def scaled_dot_product_attention(q, k, v, mask):
     output = tf.matmul(attention_weights, v)  # (..., seq_len_q, depth_v)
 
     return output, attention_weights
+
+
+# Transformer模型
+class Transformer(tf.keras.Model):
+    """
+    Transformer 包括编码器，解码器和最后的线性层。解码器的输出是线性层的输入，返回线性层的输出。
+    """
+    def __init__(self, num_layers, d_model, num_heads, dff, input_vocab_size,
+                 target_vocab_size, pe_input, pe_target, rate=0.1):
+        super(Transformer, self).__init__()
+
+        self.encoder = network.Encoder(num_layers, d_model, num_heads, dff, input_vocab_size, pe_input, rate)
+
+        self.decoder = network.Decoder(num_layers, d_model, num_heads, dff, target_vocab_size, pe_target, rate)
+
+        self.final_layer = tf.keras.layers.Dense(target_vocab_size)
+
+    def call(self, inp, tar, training, enc_padding_mask,
+             look_ahead_mask, dec_padding_mask):
+        enc_output = self.encoder(inp, training, enc_padding_mask)  # (batch_size, inp_seq_len, d_model)
+
+        # dec_output.shape == (batch_size, tar_seq_len, d_model)
+        dec_output, attention_weights = self.decoder(
+            tar, enc_output, training, look_ahead_mask, dec_padding_mask)
+
+        final_output = self.final_layer(dec_output)  # (batch_size, tar_seq_len, target_vocab_size)
+
+        return final_output, attention_weights
 

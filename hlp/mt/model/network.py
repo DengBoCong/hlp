@@ -7,19 +7,10 @@ transformer中网络层的部分
 - 解码器层（Decoder layer）
 - 编码器（Encoder）
 - 解码器（Decoder）
-- Transformer
-- 优化器（Optimizer）
-- 损失函数与指标（Loss and metrics）
-
-在此模块空间中完成数据集及字典的加载
 
 """
-
-import sys
-sys.path.append('..')
 import tensorflow as tf
 from model import transformer as _transformer
-from config import get_config as _config
 
 
 # 多头注意力层
@@ -241,47 +232,6 @@ class Decoder(tf.keras.layers.Layer):
 
         # x.shape == (batch_size, target_seq_len, d_model)
         return x, attention_weights
-
-
-# Transformer模型
-class Transformer(tf.keras.Model):
-    """
-    Transformer 包括编码器，解码器和最后的线性层。解码器的输出是线性层的输入，返回线性层的输出。
-    """
-
-    def __init__(self, num_layers, d_model, num_heads, dff, input_vocab_size,
-                 target_vocab_size, pe_input, pe_target, rate=0.1):
-        super(Transformer, self).__init__()
-
-        self.encoder = Encoder(num_layers, d_model, num_heads, dff,
-                               input_vocab_size, pe_input, rate)
-
-        self.decoder = Decoder(num_layers, d_model, num_heads, dff,
-                               target_vocab_size, pe_target, rate)
-
-        self.final_layer = tf.keras.layers.Dense(target_vocab_size)
-
-    def call(self, inp, tar, training, enc_padding_mask,
-             look_ahead_mask, dec_padding_mask):
-        enc_output = self.encoder(inp, training, enc_padding_mask)  # (batch_size, inp_seq_len, d_model)
-
-        # dec_output.shape == (batch_size, tar_seq_len, d_model)
-        dec_output, attention_weights = self.decoder(
-            tar, enc_output, training, look_ahead_mask, dec_padding_mask)
-
-        final_output = self.final_layer(dec_output)  # (batch_size, tar_seq_len, target_vocab_size)
-
-        return final_output, attention_weights
-
-
-def get_model(vocab_size_source, vocab_size_target):
-    """获取模型"""
-    transformer = Transformer(_config.num_layers, _config.d_model, _config.num_heads, _config.dff,
-                              vocab_size_source + 1, vocab_size_target + 1,
-                              pe_input=vocab_size_source + 1,
-                              pe_target=vocab_size_target + 1,
-                              rate=_config.dropout_rate)
-    return transformer
 
 
 
