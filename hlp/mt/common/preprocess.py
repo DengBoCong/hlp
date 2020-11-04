@@ -150,9 +150,13 @@ def create_tokenizer(sentences, language):
     if language == "en":
         mode = _config.en_tokenize_type
         save_path = _config.tokenizer_path_prefix+language+'_'+mode.lower()
+        if not os.path.exists(os.path.dirname(save_path)):
+            os.makedirs(os.path.dirname(save_path), exist_ok=True)
     elif language == "zh":
         mode = _config.zh_tokenize_type
         save_path = _config.tokenizer_path_prefix+language+'_'+mode.lower()
+        if not os.path.exists(os.path.dirname(save_path)):
+            os.makedirs(os.path.dirname(save_path), exist_ok=True)
 
     # 生成、保存目标语言字典
     if mode == 'BPE':
@@ -320,9 +324,13 @@ def create_encoded_sentences(sentences, tokenizer, language):
     if language == "en":
         mode = _config.en_tokenize_type
         save_path = _config.encoded_sequences_path_prefix+language
+        if not os.path.exists(os.path.dirname(save_path)):
+            os.makedirs(os.path.dirname(save_path), exist_ok=True)
     elif language == "zh":
         mode = _config.zh_tokenize_type
         save_path = _config.encoded_sequences_path_prefix+language
+        if not os.path.exists(os.path.dirname(save_path)):
+            os.makedirs(os.path.dirname(save_path), exist_ok=True)
 
     if mode == 'BPE':
         return _create_encoded_sentences_bpe(sentences, tokenizer, save_path)
