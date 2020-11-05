@@ -20,14 +20,14 @@ if __name__ == "__main__":
     if manager.latest_checkpoint:
         checkpoint.restore(manager.latest_checkpoint)
 
-    audio_path = "./number/train/0_jackson_3.wav"
+    audio_path = "./data/LibriSpeech/train-clean-5/1088/134315/1088-134315-0000.flac"
     # audio_path = configs["record"]["record_path"]
     n_mfcc = configs["other"]["n_mfcc"]
     x_test = wav_to_mfcc(audio_path, n_mfcc)
     x_test_input = tf.keras.preprocessing.sequence.pad_sequences(
             [x_test],
             padding='post',
-            maxlen=configs["preprocess"]["max_input_length"]
+            maxlen=configs["preprocess"]["max_input_length"],
             dtype='float32'
             )
     y_test_pred = model(x_test_input)

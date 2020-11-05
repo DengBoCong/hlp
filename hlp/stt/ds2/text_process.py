@@ -26,12 +26,18 @@ def text_row_process(str, row_style):
         return str.strip().lower()
 
 # 非初次训练时，基于word_index和处理好的文本list得到数字list
-def get_text_int_sequences(process_text_list):
-    word_index = get_word_index()
+def get_text_int_sequences(process_text_list, word_index):
     text_int_sequences = []
     for process_text in process_text_list:
         text_int_sequences.append(text_to_int_sequence(process_text, word_index))
     return text_int_sequences
+
+# process_text转token序列
+def text_to_int_sequence(process_text, word_index):
+    int_sequence = []
+    for c in process_text.split(" "):
+        int_sequence.append(int(word_index[c]))
+    return int_sequence
 
 # 基于某种mode(en_word,en_char,cn等)来处理原始的文本语料
 def get_process_text_list(text_list, mode):
@@ -56,7 +62,7 @@ def get_text_list(text_path, row_style):
         text_list.append(text_row_process(sentence, row_style))
     return text_list
 
-# 基于原始text和其label_length的整形数字list来补齐并构建tensor
+# 基于原始text和其label_length的整形数字list来补齐label_tensor
 def get_text_label(text_int_sequences, max_label_length):
     label_tensor_numpy = tf.keras.preprocessing.sequence.pad_sequences(
         text_int_sequences,
@@ -66,18 +72,12 @@ def get_text_label(text_int_sequences, max_label_length):
     label_tensor = tf.convert_to_tensor(label_tensor_numpy)
     return label_tensor
 
+# 获取最长的label_length
 def get_max_label_length(text_int_sequences):
     max_label_length = 0
     for seq in text_int_sequences:
         max_label_length = max(max_label_length, len(seq))
     return max_label_length
-
-#word_list转token序列
-def text_to_int_sequence(word_list, word_index):
-    int_sequence = []
-    for c in word_list:
-        int_sequence.append(int(word_index[c]))
-    return int_sequence
 
 # 对英文句子：小写化，切分句子，添加开始和结束标记，按单词切分
 def preprocess_sentence_en_word(s):
