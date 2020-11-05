@@ -30,6 +30,8 @@ start_sign = conf['start_sign']
 end_sign = conf['end_sign']
 lccc_data = path + conf['lccc_data']
 lccc_tokenized_data = path + conf['lccc_tokenized_data']
+douban_tokenized_data = path + conf['douban_tokenized_data']
+ubuntu_tokenized_data = path + conf['ubuntu_tokenized_data']
 
 # seq2seq模型相关配置
 seq2seq_units = conf['seq2seq']['units']
@@ -51,3 +53,12 @@ transformer_dropout = conf['transformer']['dropout']
 transformer_dict_fn = path + conf['transformer_dict_fn']  # 字典保存位置
 transformer_max_train_data_size = conf['transformer']['max_train_data_size']
 transformer_max_length = conf['transformer']['max_length']  # 最大文本长度
+
+# smn模型相关配置
+smn_checkpoint = path + conf['smn_checkpoint']
+smn_dict_fn = path + conf['smn_dict_fn']
+smn_embedding_dim = conf['smn']['embedding_dim']
+smn_max_sentence = conf['smn']['max_sentence']
+smn_max_utterance = conf['smn']['max_utterance']
+smn_units = conf['smn']['units']
+smn_vocab_size = conf['smn']['vocab_size']

@@ -63,7 +63,7 @@ def decoder(units, embedding_dim, max_utterance, max_sentence):
 
         matching_vector = dense_layer(flatten_outputs)
         matching_vectors.append(matching_vector)
-    vector = tf.stack(matching_vectors, axis=0)
+    vector = tf.stack(matching_vectors, axis=1)
     _, outputs = tf.keras.layers.GRU(units, return_state=True,
                                      kernel_initializer='orthogonal')(vector)
 
@@ -73,23 +73,16 @@ def decoder(units, embedding_dim, max_utterance, max_sentence):
 def smn(units, vocab_size, embedding_dim, max_utterance, max_sentence):
     utterances = tf.keras.Input(shape=(None, None))
     responses = tf.keras.Input(shape=(None,))
-    print("utterances", utterances.shape)
-    print("responses", responses.shape)
 
     utterances_embeddings, responses_embeddings, responses_gru = \
         encoder(units=units, vocab_size=vocab_size, embedding_dim=embedding_dim,
                 max_utterance=max_utterance, max_sentence=max_sentence)(inputs=[utterances, responses])
-    print("utterances_embeddings", utterances_embeddings.shape)
-    print("responses_embeddings", responses_embeddings.shape)
-    print("responses_gru", responses_gru.shape)
     dec_outputs = decoder(units=units, embedding_dim=embedding_dim, max_utterance=max_utterance,
                           max_sentence=max_sentence)(
         inputs=[utterances_embeddings, responses_embeddings, responses_gru])
-    print("dec_outputs", dec_outputs)
+
     outputs = tf.keras.layers.Dense(2, kernel_initializer='glorot_normal')(dec_outputs)
-    print("outputs", outputs)
     outputs = tf.nn.softmax(outputs)
-    print("outputs", outputs)
 
     return tf.keras.Model(inputs=[utterances, responses], outputs=outputs)
 

@@ -22,6 +22,7 @@
    + [豆瓣多轮](https://github.com/MarkWuNLP/MultiTurnResponseSelection)
    + [电视剧对白语料](https://github.com/fateleak/dgk_lost_conv)
    + [贴吧论坛回帖语料](https://pan.baidu.com/s/1mUknfwy1nhSM7XzH8xi7gQ)，密码:i4si
+   + [Ubuntu](https://www.dropbox.com/s/2fdn26rj6h9bpvl/ubuntu_data.zip?dl=0)
 + 任务对话语料
    + [MultiWOZ1.0](https://www.repository.cam.ac.uk/bitstream/handle/1810/278720/MultiWOZ_1.0.zip?sequence=1&isAllowed=y)
    + [MultiWOZ2.0](https://www.repository.cam.ac.uk/bitstream/handle/1810/280608/MULTIWOZ2.zip?sequence=3&isAllowed=y)

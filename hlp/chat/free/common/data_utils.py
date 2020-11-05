@@ -163,3 +163,81 @@ def sequences_to_texts(sequences, token_dict):
             temp = temp + ' ' + inv[token]
         result.append(temp)
     return result
+
+
+def smn_load_train_data(dict_fn, data_fn, checkpoint_dir, max_utterance, max_sentence, max_train_data_size=0):
+    is_exist = os.path.exists(data_fn)
+    if not is_exist:
+        print('不存在训练数据集，请添加数据集之后重试')
+        exit(0)
+
+    print('正在读取文本数据...')
+    history = []  # 用于保存每轮对话历史语句
+    response = []  # 用于保存每轮对话的回答
+    label = []  # 用于保存每轮对话的标签
+    store = []  # 作为中间介质保存所有语句，用于字典处理
+    count = 0  # 用于处理数据计数
+
+    with open(data_fn, 'r', encoding='utf-8') as file:
+        lines = file.read().strip().split('\n')
+        if max_train_data_size == 0:
+            for line in lines:
+                count += 1
+                apart = line.split('\t')
+                store.extend(apart[0:])
+                label.append(int(apart[0]))
+                response.append(apart[-1])
+                del apart[0]
+                del apart[-1]
+                history.append(apart)
+                if count % 100 == 0:
+                    print('已读取 {} 轮对话'.format(count))
+        else:
+            for line in lines[:max_train_data_size]:
+                count += 1
+                apart = line.split('\t')
+                label.append(int(apart[0]))
+                store.extend(apart[1:])
+                response.append(apart[-1])
+                del apart[0]
+                del apart[-1]
+                history.append(apart)
+                if count % 100 == 0:
+                    print('已读取 {} 轮对话'.format(count))
+
+    print('数据读取完成，正在生成字典并保存...')
+    tokenizer = tf.keras.preprocessing.text.Tokenizer(filters='', oov_token='<UNK>')
+    tokenizer.fit_on_texts(store)
+
+    with open(dict_fn, 'w', encoding='utf-8') as file:
+        file.write(json.dumps(tokenizer.word_index, indent=4, ensure_ascii=False))
+    print('字典已保存，正在整理数据，生成训练数据...')
+    response = tokenizer.texts_to_sequences(response)
+    response = tf.keras.preprocessing.sequence.pad_sequences(response, maxlen=max_sentence, padding="post")
+
+    count = 0
+    utterances = []
+    for utterance in history:
+        count += 1
+        pad_sequences = [0] * max_sentence
+        # 注意了，这边要取每轮对话的最后max_utterances数量的语句
+        utterance_padding = tokenizer.texts_to_sequences(utterance)[-max_utterance:]
+        utterance_len = len(utterance_padding)
+        # 如果当前轮次中的历史语句不足max_utterances数量，需要在尾部进行填充
+        if utterance_len != 10:
+            utterance_padding += [pad_sequences] * (max_utterance - utterance_len)
+        utterances.append(tf.keras.preprocessing.sequence.pad_sequences(utterance_padding, maxlen=max_sentence,
+                                                                        padding="post").tolist())
+
+        if count % 100 == 0:
+            print('已生成 {} 轮训练数据'.format(count))
+
+    print('数据生成完毕，正在转换为Dataset...')
+    dataset = tf.data.Dataset.from_tensor_slices((utterances, response, label)).cache().shuffle(
+        _config.BUFFER_SIZE).prefetch(tf.data.experimental.AUTOTUNE)
+    dataset = dataset.batch(_config.BATCH_SIZE, drop_remainder=True)
+    checkpoint_prefix = os.path.join(checkpoint_dir, 'ckpt')
+    steps_per_epoch = len(utterances) // _config.BATCH_SIZE
+    print('训练数据处理完成，正在进行训练...')
+
+    return dataset, checkpoint_prefix, steps_per_epoch

@@ -4,6 +4,7 @@ import common.data_utils as _data
 sys.path.append(sys.path[0][:-10])
 from model.chatter import Chatter
 from common.utils import CmdParser
+from common.utils import CustomSchedule
 import config.get_config as _config
 import model.transformer as transformer
 from common.pre_treat import preprocess_raw_lccc_data
@@ -30,7 +31,7 @@ class TransformerChatter(Chatter):
             dropout=_config.transformer_dropout
         )
 
-        self.learning_rate = transformer.CustomSchedule(_config.transformer_d_model)
+        self.learning_rate = CustomSchedule(_config.transformer_d_model)
         self.optimizer = tf.keras.optimizers.Adam(
             self.learning_rate, beta_1=0.9, beta_2=0.98, epsilon=1e-9
         )
