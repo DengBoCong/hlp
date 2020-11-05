@@ -5,31 +5,19 @@ import numpy as np
 import copy
 import scipy
 from config2 import Tacotron2Config
-
 config=Tacotron2Config()
 
 def melspectrogram2wav(mel):
-    '''# Generate wave file from spectrogram'''
-    # transpose
-    #mel = mel.T
-
-    # de-noramlize
     mel = (np.clip(mel, 0, 1) * config.max_db) - config.max_db + config.ref_db
-
-    # to amplitude
+    # 转为幅度谱
     mel = np.power(10.0, mel * 0.05)
     m = _mel_to_linear_matrix(config.sr, config.n_fft, config.n_mels)
     mag = np.dot(m, mel)
-
-    # wav reconstruction
+    # 波形重构
     wav = griffin_lim(mag)
-
-    # de-preemphasis
     wav = scipy.signal.lfilter([1], [1, -config.preemphasis], wav)
-
-    # trim
+    # 剪裁
     wav, _ = librosa.effects.trim(wav)
-
     return wav.astype(np.float32)
 
 def _mel_to_linear_matrix(sr, n_fft, n_mels):
@@ -40,8 +28,6 @@ def _mel_to_linear_matrix(sr, n_fft, n_mels):
     return np.matmul(m_t, np.diag(d))
 
 def griffin_lim(spectrogram):
-    '''Applies Griffin-Lim's raw.
-    '''
     X_best = copy.deepcopy(spectrogram)
     for i in range(config.n_iter):
         X_t = invert_spectrogram(X_best)
@@ -50,17 +36,13 @@ def griffin_lim(spectrogram):
         X_best = spectrogram * phase
     X_t = invert_spectrogram(X_best)
     y = np.real(X_t)
-
     return y
-
 
 def invert_spectrogram(spectrogram):
     '''
     spectrogram: [f, t]
     '''
     return librosa.istft(spectrogram, config.hop_length, win_length=config.win_length, window="hann")
-
-
 
 def plot_spectrogram_to_numpy(spectrogram):
     fig, ax = plt.subplots(figsize=(12, 3))
@@ -70,15 +52,13 @@ def plot_spectrogram_to_numpy(spectrogram):
     plt.xlabel("Frames")
     plt.ylabel("Channels")
     plt.tight_layout()
-
     fig.canvas.draw()
     data = save_figure_to_numpy(fig)
     plt.close()
     return data
 
-
 def save_figure_to_numpy(fig):
-    # save it to a numpy array.
+    # 保存成numpy
     data = np.fromstring(fig.canvas.tostring_rgb(), dtype=np.uint8, sep='')
     data = data.reshape(fig.canvas.get_width_height()[::-1] + (3,))
     return data

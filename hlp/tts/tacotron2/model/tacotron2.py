@@ -84,16 +84,6 @@ class Attention(tf.keras.Model):
         self.score_mask_value = -float("inf")
 
     def get_alignment_energies(self, query, memory, attention_weights_cat):
-        """
-        PARAMS
-        ------
-        query: decoder output (batch, n_mel_channels * n_frames_per_step)
-        processed_memory: processed encoder outputs (B, T_in, attention_dim)
-        attention_weights_cat: cumulative and prev. att weights (B, 2, max_time)
-        RETURNS
-        -------
-        alignment (batch, max_time)
-        """
         #print("query:", query.shape)
         processed_query = self.query_layer(tf.expand_dims(query, axis=1))
         processed_memory = self.memory_layer(memory)
@@ -104,21 +94,10 @@ class Attention(tf.keras.Model):
         return energies
 
     def __call__(self, attention_hidden_state, memory, attention_weights_cat):
-        """
-        PARAMS
-    ------
-   attention_hidden_state: attention rnn last output
-   memory: encoder outputs
-   processed_memory: processed encoder outputs
-   attention_weights_cat: previous and cummulative attention weights
-   mask: binary mask for padded data
-   """
         alignment = self.get_alignment_energies(
             attention_hidden_state, memory, attention_weights_cat)
-
         attention_weights = tf.nn.softmax(alignment, axis=1)
         attention_context = tf.expand_dims(attention_weights, 1)
-
         attention_context = tf.matmul(attention_context, memory)
         attention_context = tf.squeeze(attention_context, axis=1)
         return attention_context, attention_weights
@@ -126,7 +105,7 @@ class Attention(tf.keras.Model):
 
 # attention结束
 class Prenet(tf.keras.Model):
-    def __init__(self, config, ):
+    def __init__(self, config):
         super().__init__()
         self.prenet_units = config.prenet_units
         self.n_prenet_layers = config.n_prenet_layers
@@ -175,7 +154,6 @@ class Postnet(tf.keras.Model):
             kernel_size=config.n_conv_postnet,
             activation="tanh",
             padding="same"
-
         )
         self.norm3 = tf.keras.layers.experimental.SyncBatchNormalization(axis=-1)
         self.dropout3 = tf.keras.layers.Dropout(rate=config.postnet_dropout_rate)
@@ -195,10 +173,10 @@ class Postnet(tf.keras.Model):
         )
         self.norm5 = tf.keras.layers.experimental.SyncBatchNormalization(axis=-1)
         self.dropout5 = tf.keras.layers.Dropout(rate=config.postnet_dropout_rate)
-        self.fc = tf.keras.layers.Dense(units=config.max_len, activation=None, name="frame_projection1")
+        self.fc = tf.keras.layers.Dense(units=config.n_mels, activation=None, name="frame_projection1")
 
     def call(self, inputs):
-        x = inputs
+        x = tf.transpose(inputs,[0,2,1])
         x = self.conv1d1(x)
         x = self.norm1(x)
         x = self.dropout1(x)
@@ -215,6 +193,7 @@ class Postnet(tf.keras.Model):
         x = self.norm5(x)
         x = self.dropout5(x)
         x = self.fc(x)
+        x = tf.transpose(x,[0,2,1])
         return x
 
 
@@ -225,6 +204,7 @@ class Decoder(tf.keras.Model):
         self.decoder_lstm_dim = config.decoder_lstm_dim
         self.embedding_hidden_size = config.embedding_hidden_size
         self.gate_threshold = config.gate_threshold
+        self.max_len = config.max_len
         self.n_mels = config.n_mels
         self.max_len = config.max_len
         self.prenet2 = Prenet(config)
@@ -244,25 +224,24 @@ class Decoder(tf.keras.Model):
         self.attention_layer = Attention(config)
 
     def get_go_frame(self, memory):
-        """ Gets all zeros frames to use as first decoder input
-        PARAMS
+        """ 用于第一步解码器输入
+        参数
         ------
-        memory: decoder outputs
-        RETURNS
+        memory: 解码器输出
+        返回
         -------
-        decoder_input: all zeros frames
+        decoder_input: 全0张量
         """
         B = tf.shape(memory)[0]
         decoder_input = tf.zeros(shape=[B, self.n_mels], dtype=tf.float32)
         return decoder_input
 
     def initialize_decoder_states(self, memory):
-        """ Initializes attention rnn states, decoder rnn states, attention
-        weights, attention cumulative weights, attention context, stores memory
-        and stores processed memory
-        PARAMS
+        """ 初始化注意力rnn状态，解码器rnn状态，注意权重，注意力累积权重，注意力上下文，存储记忆
+        并存储处理过的内存
+        参数
         ------
-        memory: Encoder outputs
+        memory: 编码器输出
         """
         B = tf.shape(memory)[0]
         MAX_TIME = tf.shape(memory)[1]
@@ -283,14 +262,6 @@ class Decoder(tf.keras.Model):
         self.processed_memory = self.attention_layer.memory_layer(memory)
 
     def parse_decoder_inputs(self, decoder_inputs):
-        """ Prepares decoder inputs, i.e. mel outputs
-        PARAMS
-        ------
-        decoder_inputs: inputs used for teacher-forced training, i.e. mel-specs
-        RETURNS
-        -------
-        inputs: processed decoder inputs
-        """
         # (B, n_mel_channels, T_out) -> (B, T_out, n_mel_channels)
         decoder_inputs = tf.transpose(decoder_inputs, (0, 2, 1))
         # (B, T_out, n_mel_channels) -> (T_out, B, n_mel_channels)
@@ -298,18 +269,6 @@ class Decoder(tf.keras.Model):
         return decoder_inputs
 
     def parse_decoder_outputs(self, mel_outputs, gate_outputs, alignments):
-        """ Prepares decoder outputs for output
-        PARAMS
-        ------
-        mel_outputs:
-        gate_outputs: gate output energies
-        alignments:
-        RETURNS
-        -------
-        mel_outputs:
-        gate_outpust: gate output energies
-        alignments:
-        """
         # (T_out, B) -> (B, T_out)
         alignments = tf.stack(alignments)
         alignments = tf.transpose(alignments, (1, 0, 2))
@@ -319,30 +278,23 @@ class Decoder(tf.keras.Model):
         # (T_out, B, n_mel_channels) -> (B, T_out, n_mel_channels)
         mel_outputs = tf.stack(mel_outputs)
         mel_outputs = tf.transpose(mel_outputs, (1, 0, 2))
-        # decouple frames per step
         mel_outputs = tf.reshape(mel_outputs, (mel_outputs.shape[0], -1, self.n_mels))
         # (B, T_out, n_mel_channels) -> (B, n_mel_channels, T_out)
         mel_outputs = tf.transpose(mel_outputs, (0, 2, 1))
-
         return mel_outputs, gate_outputs, alignments
 
     def decode(self, decoder_input):
-        """ Decoder step using stored states, attention and memory
-               PARAMS
+        """    参数
                ------
-               decoder_input: previous mel output
-               RETURNS
+               decoder_input: 先前的mel output
                -------
-               mel_output:
-               gate_output: gate output energies
-               attention_weights:
                """
-        #print("self.attention_context",self.attention_context)
+        #拼接
         cell_input = tf.concat((decoder_input, self.attention_context), -1)
-
+        #第一次过lstmcell
         cell_output, (self.attention_hidden, self.attention_cell) = self.decoder_lstms1(cell_input, (
         self.attention_hidden, self.attention_cell))
-
+        #dropout
         self.attention_hidden = tf.keras.layers.Dropout(rate=0.1)(self.attention_hidden)
 
         # 拼接
@@ -354,12 +306,14 @@ class Decoder(tf.keras.Model):
         self.attention_context, self.attention_weights = self.attention_layer(self.attention_hidden, self.memory,
                                                                               attention_weights_cat)
         self.attention_weights_cum += self.attention_weights
+
         # 拼接
         decoder_input = tf.concat((self.attention_hidden, self.attention_context), -1)
 
         # 第2次lstmcell
         decoder_output, (self.decoder_hidden, self.decoder_cell) = self.decoder_lstms2(decoder_input, (
         self.decoder_hidden, self.decoder_cell))
+        #dropout
         self.decoder_hidden = tf.keras.layers.Dropout(rate=0.1)(self.decoder_hidden)
 
         # 拼接
@@ -373,18 +327,11 @@ class Decoder(tf.keras.Model):
         return decoder_output, gate_prediction, self.attention_weights
 
     def call(self, memory, decoder_inputs):
-        """ Decoder forward pass for training
-               PARAMS
-               ------
-               memory: Encoder outputs
-               decoder_inputs: Decoder inputs for teacher forcing. i.e. mel-specs
-               memory_lengths: Encoder output lengths for attention masking.
-               RETURNS
-               -------
-               mel_outputs: mel outputs from the decoder
-               gate_outputs: gate outputs from the decoder
-               alignments: sequence of attention weights from the decoder
+        """    参数
+               memory: 编码器输出
+               decoder_inputs: #用于教师强制
                """
+        #go_frame
         decoder_input = self.get_go_frame(memory)
         decoder_input = tf.expand_dims((decoder_input),axis=0)
         decoder_inputs = self.parse_decoder_inputs(decoder_inputs)
@@ -392,50 +339,44 @@ class Decoder(tf.keras.Model):
         decoder_inputs = self.prenet2(decoder_inputs)
         self.initialize_decoder_states(memory)
         mel_outputs, gate_outputs, alignments = [], [], []
+        #教师强制
         while len(mel_outputs) < decoder_inputs.shape[0]-1:
             decoder_input = decoder_inputs[len(mel_outputs)]
             mel_output, gate_output, attention_weights = self.decode(
                 decoder_input)
+            #拼接
             mel_outputs += [tf.squeeze(mel_output)]
             gate_outputs += [tf.squeeze(gate_output,axis=1)]
             alignments += [attention_weights]
-
+            #调整维度输出
         mel_outputs, gate_outputs, alignments = self.parse_decoder_outputs(
             mel_outputs, gate_outputs, alignments)
-
         return mel_outputs, gate_outputs, alignments
 
+    #预测 我觉得有问题 但是我还没有改好，它一直很让我头疼
     def inference(self, memory):
-        """ Decoder inference
-        PARAMS
-        ------
-        memory: Encoder outputs
-        RETURNS
-        -------
-        mel_outputs: mel outputs from the decoder
-        gate_outputs: gate outputs from the decoder
-        alignments: sequence of attention weights from the decoder
+        """    参数
+               memory: 编码器输出
         """
+        #go frame
         decoder_input = self.get_go_frame(memory)
         self.initialize_decoder_states(memory)
         mel_outputs, gate_outputs, alignments = [], [], []
-        i = 1
-        while True:
+        while len(mel_outputs) < self.max_len:
+            #通过pre_net
             decoder_input = self.prenet2(decoder_input)
-            mel_output, gate_output, alignment = self.decode(decoder_input)
+            #解码
+            mel_output, gate_output, attention_weights = self.decode(
+                decoder_input)
+            #拼接
             mel_outputs += [tf.squeeze(mel_output)]
-            gate_outputs += [tf.squeeze(gate_output,axis=1)]
-            alignments += [alignment]
-            #if tf.nn.sigmoid(gate_output) > self.gate_threshold:
-            i=i+1
-            if i > 17:
-            # if gate_output > self.gate_threshold:
-                break
+            gate_outputs += [tf.squeeze(gate_output, axis=1)]
+            alignments += [attention_weights]
+            #将自己预测的作为下一步的输入
             decoder_input = mel_output
-        #print("mel_outputs:", mel_outputs.shape)
-
-
+        #拓展维度
         mel_outputs = tf.expand_dims(mel_outputs,axis=1)
+        #变维度输出
         mel_outputs, gate_outputs, alignments = self.parse_decoder_outputs(
             mel_outputs, gate_outputs, alignments)
         return mel_outputs, gate_outputs, alignments
@@ -449,23 +390,17 @@ class Tacotron2(tf.keras.Model):
         self.postnet = Postnet(config)
 
     def call(self, inputs, mel_gts):
-        #print(inputs.shape)
         encoder_outputs = self.encoder(inputs)
         mel_outputs, gate_outputs, alignments = self.decoder(encoder_outputs, mel_gts)
+        # 后处理网络
         mel_outputs_postnet = self.postnet(mel_outputs)
         mel_outputs_postnet = mel_outputs + mel_outputs_postnet
         return mel_outputs, mel_outputs_postnet, gate_outputs, alignments
 
     def inference(self, inputs):
-        #print(inputs.shape)
         encoder_outputs = self.encoder(inputs)
         mel_outputs, gate_outputs, alignments = self.decoder.inference(encoder_outputs)
-        print("mel_outputs:",mel_outputs.shape)
-        # mel_outputs = tf.keras.preprocessing.sequence.pad_sequences(mel_outputs[0], maxlen=memory_lengths,
-        #                                                             padding='post', dtype='float32')
-        # print("mel_outputs:",mel_outputs.shape)
-        # mel_outputs = tf.expand_dims(mel_outputs,axis=0)
-        # print("mel_outputs:",mel_outputs.shape)
+        #后处理网络
         mel_outputs_postnet = self.postnet(mel_outputs)
         mel_outputs_postnet = mel_outputs + mel_outputs_postnet
         return mel_outputs, mel_outputs_postnet, gate_outputs, alignments
