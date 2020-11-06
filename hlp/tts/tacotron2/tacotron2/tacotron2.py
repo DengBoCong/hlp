@@ -88,9 +88,9 @@ class Attention(tf.keras.Model):
         processed_query = self.query_layer(tf.expand_dims(query, axis=1))
         processed_memory = self.memory_layer(memory)
 
-        attention_weights_cat = tf.transpose(attention_weights_cat,(0,2,1))
+        attention_weights_cat = tf.transpose(attention_weights_cat, (0, 2, 1))
         processed_attention_weights = self.location_layer(attention_weights_cat)
-        energies = tf.squeeze(self.V(tf.nn.tanh( processed_query + processed_attention_weights + processed_memory)), -1)
+        energies = tf.squeeze(self.V(tf.nn.tanh(processed_query + processed_attention_weights + processed_memory)), -1)
         return energies
 
     def __call__(self, attention_hidden_state, memory, attention_weights_cat):
@@ -176,7 +176,7 @@ class Postnet(tf.keras.Model):
         self.fc = tf.keras.layers.Dense(units=config.n_mels, activation=None, name="frame_projection1")
 
     def call(self, inputs):
-        x = tf.transpose(inputs,[0,2,1])
+        x = tf.transpose(inputs, [0, 2, 1])
         x = self.conv1d1(x)
         x = self.norm1(x)
         x = self.dropout1(x)
@@ -193,7 +193,7 @@ class Postnet(tf.keras.Model):
         x = self.norm5(x)
         x = self.dropout5(x)
         x = self.fc(x)
-        x = tf.transpose(x,[0,2,1])
+        x = tf.transpose(x, [0, 2, 1])
         return x
 
 
@@ -333,7 +333,7 @@ class Decoder(tf.keras.Model):
                """
         #go_frame
         decoder_input = self.get_go_frame(memory)
-        decoder_input = tf.expand_dims((decoder_input),axis=0)
+        decoder_input = tf.expand_dims((decoder_input), axis=0)
         decoder_inputs = self.parse_decoder_inputs(decoder_inputs)
         decoder_inputs = tf.concat((decoder_input, decoder_inputs), axis=0)
         decoder_inputs = self.prenet2(decoder_inputs)
@@ -346,7 +346,7 @@ class Decoder(tf.keras.Model):
                 decoder_input)
             #拼接
             mel_outputs += [tf.squeeze(mel_output)]
-            gate_outputs += [tf.squeeze(gate_output,axis=1)]
+            gate_outputs += [tf.squeeze(gate_output, axis=1)]
             alignments += [attention_weights]
             #调整维度输出
         mel_outputs, gate_outputs, alignments = self.parse_decoder_outputs(
@@ -375,7 +375,7 @@ class Decoder(tf.keras.Model):
             #将自己预测的作为下一步的输入
             decoder_input = mel_output
         #拓展维度
-        mel_outputs = tf.expand_dims(mel_outputs,axis=1)
+        mel_outputs = tf.expand_dims(mel_outputs, axis=1)
         #变维度输出
         mel_outputs, gate_outputs, alignments = self.parse_decoder_outputs(
             mel_outputs, gate_outputs, alignments)

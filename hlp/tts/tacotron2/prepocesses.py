@@ -4,8 +4,6 @@ import tensorflow as tf
 import librosa
 import numpy as np
 from config2 import Tacotron2Config
-import pyaudio
-import wave
 import io
 #文字处理
 config = Tacotron2Config()
@@ -21,7 +19,7 @@ def preprocess_sentence(s):
 #数字集处理的process_text
 def process_text_number(text_data_path):
     sentences_list = []
-    with open(text_data_path,"r",encoding='UTF-8') as f:
+    with open(text_data_path, "r", encoding='UTF-8') as f:
         sen_list = f.readlines()
     for sentence in sen_list[:]:
         sentence = sentence.strip().lower()
@@ -47,7 +45,7 @@ def tokenize(texts):
     sequences_length = []
     for seq in sequences:
         sequences_length.append([len(seq)])
-    sequences = tf.keras.preprocessing.sequence.pad_sequences(sequences,padding='post')
+    sequences = tf.keras.preprocessing.sequence.pad_sequences(sequences, padding='post')
     return sequences,tokenizer
 
 def dataset_txt(path_to_file):
@@ -106,19 +104,19 @@ def dataset_wave(path, config):
         logmelspec,sr= get_spectrograms(path+file)
         mel_len_wav.append(len(logmelspec))
         mel_list.append(logmelspec.tolist())
-    mel_numpy = tf.keras.preprocessing.sequence.pad_sequences(mel_list,maxlen=config.max_len ,padding='post', dtype='float32')
+    mel_numpy = tf.keras.preprocessing.sequence.pad_sequences(mel_list, maxlen=config.max_len, padding='post', dtype='float32')
     #print(len(mel_numpy[1000]))
     inputs = tf.convert_to_tensor(mel_numpy)
     return inputs,mel_len_wav
 
 #用于训练stop_token
 def tar_stop_token(mel_len_wav, mel_gts, max_len):
-    tar_token = np.zeros((mel_gts.shape[0],max_len))
+    tar_token = np.zeros((mel_gts.shape[0], max_len))
     print(tar_token)
     for i in range(len(mel_len_wav)):
         j = mel_len_wav[i]
         print(j)
-        tar_token[i,(j-1):] = 1
+        tar_token[i, (j-1):] = 1
     return tar_token
 
 #create_dataset
@@ -126,26 +124,9 @@ def create_dataset(batch_size, input_ids, mel_gts, tar_token):
     BUFFER_SIZE = len(input_ids)
     steps_per_epoch = BUFFER_SIZE // batch_size
     #dataset = tf.data.Dataset.from_tensor_slices((input_ids, mel_gts)).shuffle(BUFFER_SIZE)
-    dataset = tf.data.Dataset.from_tensor_slices((input_ids, mel_gts,tar_token))
+    dataset = tf.data.Dataset.from_tensor_slices((input_ids, mel_gts, tar_token))
     dataset = dataset.batch(batch_size, drop_remainder=True)
     return dataset, steps_per_epoch
-
-#播放音频
-def play(filename):
-    CHUNK = 1024
-    wf = wave.open(filename, 'rb')
-    p = pyaudio.PyAudio()
-    stream = p.open(format=p.get_format_from_width(wf.getsampwidth()),
-                    channels=wf.getnchannels(),
-                    rate=wf.getframerate(),
-                    output=True)
-    data = wf.readframes(CHUNK)
-    while data != b'':
-        stream.write(data)
-        data = wf.readframes(CHUNK)
-    stream.stop_stream()
-    stream.close()
-    p.terminate()
 
 if __name__ == '__main__':
     pass

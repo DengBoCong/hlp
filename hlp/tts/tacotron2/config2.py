@@ -24,7 +24,6 @@ class Tacotron2Config(object):
         # Location Layer parameters
         attention_filters=32,
         attention_kernel=31,
-
         # Mel-post processing network parameters
         reduction_factor=5,
         n_prenet_layers=2,
@@ -38,6 +37,7 @@ class Tacotron2Config(object):
         postnet_conv_kernel_sizes=5,
         postnet_dropout_rate=0.1,
         #path
+        checkpoingt_dir=r"./training_checkpoints2",
         text_train_path=r"./data/LJSpeech-1.1/train/train.txt",
         wave_train_path=r"./data/LJSpeech-1.1/train/wavs/",
         text_test_path=r"./data/LJSpeech-1.1/test/test.txt",
@@ -101,6 +101,7 @@ class Tacotron2Config(object):
         self.wave_test_path = wave_test_path
         self.text_path = text_path
         self.batch_size = batch_size
+        self.checkpoingt_dir = checkpoingt_dir
         # 声音参数
         self.sr = sr
         self.n_fft = n_fft
