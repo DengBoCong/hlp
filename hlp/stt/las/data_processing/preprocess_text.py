@@ -3,7 +3,6 @@
 Created on Tue Sep 29 10:20:05 2020
 formatted
 @author: 九童
-
 文字语料预处理
 """
 import io
@@ -64,16 +63,6 @@ def tokenize(texts):
 
 def max_length(texts):
     return max(len(t) for t in texts)
-
-
-def tensor_to_onehot(tensor, tokenizer):
-    tensor = tensor.tolist()
-    for _, sentence in enumerate(tensor):
-        for index, word in enumerate(sentence):
-            word = tf.keras.utils.to_categorical(word - 1, num_classes=len(tokenizer.word_index) + 1)
-            sentence[index] = word
-    tensor = np.array(tensor).astype(int)
-    return tensor
 
 
 def load_dataset(path, num_examples=None):
