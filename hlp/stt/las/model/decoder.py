@@ -1,11 +1,10 @@
 # -*- coding: utf-8 -*-
 """
 Created on Thu Oct 15 10:47:26 2020
-
+formatted
 @author: 九童
 """
 import tensorflow as tf
-
 from hlp.stt.las.model import attention
 
 

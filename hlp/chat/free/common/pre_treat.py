@@ -1,5 +1,7 @@
 import os
+import json
 import jieba
+import numpy as np
 
 '''
 对话数据集预处理模块
@@ -19,17 +21,20 @@ def preprocess_raw_data(raw_data, tokenized_data):
 
     # 首先判断原数据集是否存在，不存在则退出
     if not os.path.exists(raw_data):
-        print('数据集不存在，请添加数据集!')
-        exit()
+        print("数据集不存在，请添加数据集")
+        exit(0)
 
     pairs = []
+    max_len = 0
+    min_len = 10000
+    sentence_len = []
 
     # 对每一轮对话上下文进行配对，形成一问一答两个部分，如果遇到
     # 下一轮对话，直接跳过
-    with open(raw_data, encoding='utf-8') as raw_file:
+    with open(raw_data, encoding="utf-8") as file:
         one_pair = []
-        pair_count = 0
-        for line in raw_file:
+        count = 0
+        for line in file:
             line = line.strip('\n').replace('/', '')
             # line = re.sub(r"[%s]+" % punctuation, "", line)
             # 因为原始数据集中，是一轮一轮的对话排列的，所以需要注意的是
@@ -41,29 +46,67 @@ def preprocess_raw_data(raw_data, tokenized_data):
                 one_pair.append(line)
                 pairs.append(one_pair)
                 one_pair = [line]
-                pair_count += 1
-                if pair_count % 10000 == 0:
-                    print('已处理：', pair_count, '个问答对')
+                count += 1
+                if count % 10000 == 0:
+                    print('已处理：', count, '个问答对')
             else:
                 one_pair.append(line)
 
-    print('读取完毕，处理中...')
-    results = []
-    # 接下来，我们把上面的对话内容进行分词，并存入train_tokenized文本中
-    for pair in pairs:
-        if len(pair) != 2:
-            continue
+            length = len(line)
+            max_len = max(max_len, length)
+            min_len = min(min_len, length)
+            sentence_len.append(length)
 
-        # 使用jieba分词器进行分词
-        pair[0] = " ".join(jieba.cut(pair[0]))
-        pair[1] = " ".join(jieba.cut(pair[1]))
-        results.append(pair[0] + '\t' + pair[1])
+    print("数据读取完毕，正在处理中...")
 
     # 将处理之后存在内存中的数据写入到新文本中
-    train_tokenized = open(tokenized_data, 'w', encoding='utf-8')
-    for i in range(len(results)):
-        train_tokenized.write(results[i] + '\n')
-        if i % 10000 == 0:
-            print(len(range(len(results))), '处理进度：', i)
+    with open(tokenized_data, 'w', encoding="utf-8") as file:
+        for i in range(len(pairs)):
+            file.write(" ".join(jieba.cut(pairs[i][0])) + "\t" + " ".join(jieba.cut(pairs[i][1])) + "\n")
+            if i % 10000 == 0:
+                print(len(range(len(pairs))), '处理进度：', i)
 
-    train_tokenized.close()
+    print("数据处理完毕，数据信息统计：语句最大长度：{}，语句最短长度{}，语句平均长度{:.3f}".format(max_len, min_len, np.mean(sentence_len)))
+
+
+def preprocess_raw_lccc_data(raw_data, tokenized_data):
+    """
+    用于处理LCCC数据集的方法，将LCCC数据集处理成问答对的形式
+    :param raw_data: 原始数据集
+    :param tokenized_data: 处理后保存的数据集
+    """
+    if not os.path.exists(raw_data):
+        print('数据集不存在，请添加数据集!')
+        exit(0)
+
+    pairs = []
+    count = 0
+    max_len = 0
+    min_len = 10000
+    sentence_len = []
+
+    with open(raw_data, 'r', encoding="utf-8") as file:
+        raw_data = json.load(file)
+        for data in raw_data:
+            max_len = max(max_len, len(data[0]))
+            min_len = min(min_len, len(data[0]))
+            sentence_len.append(len(data[0]))
+            for i in range(len(data) - 1):
+                max_len = max(max_len, len(data[i + 1]))
+                min_len = min(min_len, len(data[i + 1]))
+                sentence_len.append(len(data[i + 1]))
+                pairs.append([data[i], data[i + 1]])
+            count += 1
+            if count % 10000 == 0:
+                print("已读取：{}轮对话数据".format(count))
+
+    print('读取完毕，处理中...')
+    count = 0
+    with open(tokenized_data, 'w', encoding="utf-8") as file:
+        for pair in pairs:
+            file.write(pair[0] + "\t" + pair[1] + "\n")
+            count += 1
+            if count % 10000 == 0:
+                print("数据处理进度：{}".format(count))
+
+    print("数据处理完毕，数据信息统计：语句最大长度：{}，语句最短长度{}，语句平均长度{:.3f}".format(max_len, min_len, np.mean(sentence_len)))

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Created on Thu Oct 15 10:48:33 2020
-
+formatted
 @author: 九童
 """
 import tensorflow as tf
@@ -17,7 +17,7 @@ class Attention(tf.keras.layers.Layer):
     def call(self, query, values):
         # query隐藏层的形状 == （批大小，隐藏层大小）
         # hidden_with_time_axis 的形状 == （批大小，1，隐藏层大小）
-        # 这样做是为了执行加法以计算分数
+        # 这样做是为了执行加法以计算分数  
         hidden_with_time_axis = tf.expand_dims(query, 1)
 
         # 分数的形状 == （批大小，最大长度，1），每步一个分数，每步表示每个源token

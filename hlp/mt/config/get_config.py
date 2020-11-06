@@ -1,7 +1,7 @@
 import os
 import json
 
-json_path = os.path.join(os.path.dirname(__file__), 'transformer.json')  # 配置文件路径
+json_path = os.path.join(os.path.dirname(__file__), 'config.json')  # 配置文件路径
 
 
 def get_config_json(config_file='main.json'):
@@ -12,12 +12,17 @@ def get_config_json(config_file='main.json'):
 conf = get_config_json(json_path)
 
 # 对各变量赋值
+source_lang = conf['source_lang']  # 源语言
+target_lang = conf['target_lang']  # 目标语言
+reverse = conf['reverse']  # 是否对语料语言对翻转
 en_tokenize_type = conf['en_tokenize_type']  # 英文分词类型，可选：BPE/TOKENIZE
-ch_tokenize_type = conf['ch_tokenize_type']  # 中文分词类型，可选：TOKENIZE
+zh_tokenize_type = conf['zh_tokenize_type']  # 中文分词类型，可选：TOKENIZE
+tokenizer_path_prefix = conf["tokenizer_path_prefix"]  # 字典保存路径前缀
+encoded_sequences_path_prefix = conf['encoded_sequences_path_prefix']  # 编码句子保存路径前缀
 path_to_train_file = conf['path_to_train_file']  # 用于训练的文本路径
 path_to_eval_file = conf['path_to_eval_file']  # 用于评估计算指标的文本路径
 num_eval = conf['num_eval']  # 用于计算指标的句子对数量
-checkpoint_path = conf["checkpoint_path"]   # 检查点路径
+checkpoint_path = os.path.join(conf["checkpoint_path_dir"], conf['source_lang']+'_'+conf['target_lang'])   # 检查点路径
 BUFFER_SIZE = conf['BUFFER_SIZE']
 BATCH_SIZE = conf['BATCH_SIZE']
 test_size = conf['test_size']  # 训练数据中test数据占比
@@ -32,11 +37,5 @@ max_target_length = conf['max_target_length']  # 最大生成目标句子长度
 target_vocab_size = conf["target_vocab_size"]  # 英语分词target_vocab_size
 start_word = conf["start_word"]  # 句子开始标志
 end_word = conf["end_word"]  # 句子结束标志
-en_bpe_tokenizer_path = conf["en_bpe_tokenizer_path"]  # 英文BPE字典保存路径
-en_tokenizer_path = conf["en_tokenizer_path"]  # 英文tokenize字典保存路径
-ch_tokenizer_path = conf["ch_tokenizer_path"]  # 中文tokenize字典保存路径
 BEAM_SIZE = conf["BEAM_SIZE"]  # BEAM_SIZE
-path_to_train_file_en = conf["path_to_train_file_en"]
-path_to_train_file_zh = conf["path_to_train_file_zh"]
-path_temp_encoded_sequences_en = conf['path_temp_encoded_sequences_en']
-path_temp_encoded_sequences_zh = conf['path_temp_encoded_sequences_zh']
+
