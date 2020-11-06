@@ -23,8 +23,6 @@ def process_text_number(text_data_path):
         sen_list = f.readlines()
     for sentence in sen_list[:]:
         sentence = sentence.strip().lower()
-        print(sentence)
-        print("/n")
         sentences_list.append(preprocess_sentence(sentence))
     return sentences_list
 
@@ -33,8 +31,6 @@ def process_text(text_data_path):
     lines = io.open(text_data_path, encoding='UTF-8').read().strip().split('\n')
     en_sentences = [l.split('|')[0] for l in lines[:]]
     en_sentences = [preprocess_sentence(s) for s in en_sentences]
-    print(en_sentences)
-    print("\n")
     return en_sentences
 
 def tokenize(texts):
@@ -112,10 +108,8 @@ def dataset_wave(path, config):
 #用于训练stop_token
 def tar_stop_token(mel_len_wav, mel_gts, max_len):
     tar_token = np.zeros((mel_gts.shape[0], max_len))
-    print(tar_token)
     for i in range(len(mel_len_wav)):
         j = mel_len_wav[i]
-        print(j)
         tar_token[i, (j-1):] = 1
     return tar_token
 
