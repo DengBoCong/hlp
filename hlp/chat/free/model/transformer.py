@@ -209,24 +209,6 @@ def transformer_scheduled_sample(vocab_size, num_layers, units, d_model, num_hea
     return tf.keras.Model(inputs=[inputs, dec_inputs], outputs=outputs, name=name)
 
 
-class CustomSchedule(tf.keras.optimizers.schedules.LearningRateSchedule):
-    """
-    优化器将 Adam 优化器与自定义的学习速率调度程序配合使用，这里直接参考了官网的实现
-    因为是公式的原因，其实大同小异
-    """
-
-    def __init__(self, d_model, warmup_steps=4000):
-        super(CustomSchedule, self).__init__()
-        self.d_model = d_model
-        self.d_model = tf.cast(self.d_model, tf.float32)
-        self.warmup_steps = warmup_steps
-
-    def __call__(self, step):
-        arg1 = tf.math.rsqrt(step)
-        arg2 = step * (self.warmup_steps ** -1.5)
-        return tf.math.rsqrt(self.d_model) * tf.math.minimum(arg1, arg2)
-
-
 def accuracy(real, pred):
     real = tf.reshape(real, shape=(-1, 40 - 1))
     return tf.keras.metrics.sparse_categorical_accuracy(real, pred)
