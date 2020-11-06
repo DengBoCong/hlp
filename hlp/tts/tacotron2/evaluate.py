@@ -2,16 +2,16 @@ import tensorflow as tf
 from prepocesses import dataset_txt,dataset_wave
 import numpy as np
 from config2 import Tacotron2Config
-from model.tacotron2 import Tacotron2
+from tacotron2.tacotron2 import Tacotron2
 from predict import load_checkpoint
 #计算mel谱之间的欧式距离
-def compute_distence(mel1,mel2):
+def compute_distence(mel1, mel2):
     mel1 = tf.transpose(mel1, [0, 2, 1])
     score = np.sqrt(np.sum((mel1 - mel2)**2))
     print(score)
     return score
 
-def evluate(path1,path2):
+def evluate(path1, path2):
     #读取测试集的文本数据
     input_ids,vocab_inp_size = dataset_txt(path1)
     input_ids = tf.convert_to_tensor(input_ids)
@@ -20,8 +20,8 @@ def evluate(path1,path2):
     vocab_inp_size = 55
     # 模型初始化
     tacotron2 = Tacotron2(vocab_inp_size, config)
-    path = './training_checkpoints2'
-    load_checkpoint(tacotron2,path)
+    path = config.checkpoingt_dir
+    load_checkpoint(tacotron2, path)
     print('已恢复至最新的检查点！')
     for i in range(input_ids.shape[0]):
         new_input_ids = input_ids[i]
