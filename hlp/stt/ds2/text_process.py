@@ -1,6 +1,6 @@
 import re
 import tensorflow as tf
-from utils import get_config, get_word_index
+from util import get_config
 import tensorflow as tf
 
 
@@ -10,19 +10,19 @@ def preprocess_sentence(str, mode):
         return preprocess_sentence_ch(str)
     elif mode == "en_word":
         return preprocess_sentence_en_word(str)
-    else:
+    elif mode == "en_char":
         return preprocess_sentence_en_char(str)
 
 #基于数据文本规则的行获取
-def text_row_process(str, row_style):
-    if row_style == 1:
-        #当前数据文本的每行为'index string\n'
+def text_row_process(str, text_row_style):
+    if text_row_style == 1:
+        # 当前数据文本的每行为'index string\n'
         return str.strip().split(" ",1)[1].lower()
-    elif row_style == 2:
-        #当前数据文本的每行为'index\tstring\n'
+    elif text_row_style == 2:
+        # 当前数据文本的每行为'index\tstring\n'
         return str.strip().split("\t",1)[1].lower()
-    else:
-        #文本每行"string\n"
+    elif text_row_style == 3:
+        # 当前数据文本的每行为"string\n"
         return str.strip().lower()
 
 # 非初次训练时，基于word_index和处理好的文本list得到数字list
@@ -54,12 +54,12 @@ def tokenize(texts):
     return text_int_sequences, tokenizer
 
 # 读取文本文件，并基于某种row_style来处理原始语料
-def get_text_list(text_path, row_style):
+def get_text_list(text_path, text_row_style):
     text_list = []
     with open(text_path, "r") as f:
         sentence_list = f.readlines()
     for sentence in sentence_list:
-        text_list.append(text_row_process(sentence, row_style))
+        text_list.append(text_row_process(sentence, text_row_style))
     return text_list
 
 # 基于原始text和其label_length的整形数字list来补齐label_tensor
