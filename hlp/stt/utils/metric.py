@@ -12,7 +12,7 @@ def wers(originals, results):
         assert count > 0
     except:
         print(originals)
-        raise ("ERROR assert count>0 - looks like data is missing")
+        raise ("error, assert count>0 - 可能数据丢失")
     rates = []
     mean = 0.0
     assert count == len(results)
@@ -20,20 +20,20 @@ def wers(originals, results):
         rate = _wer(originals[i], results[i])
         mean = mean + rate
         rates.append(rate)
+    
     return rates, mean / float(count)
 
 def _wer(original, result):
-    r"""
-    The WER is defined as the editing/Levenshtein distance on word level
-    divided by the amount of words in the original text.
-    In case of the original having more words (N) than the result and both
-    being totally different (all N words resulting in 1 edit operation each),
-    the WER will always be 1 (N / N = 1).
     """
-    # The WER ist calculated on word (and NOT on character) level.
-    # Therefore we split the strings into words first:
+    WER的定义是在单词水平上编辑/Levenshtein距离除以原文中的单词量。
+    如果原稿的字数（N）比结果多，而且两者完全不同（N个字都会导致一次编辑操作），则WER始终为1（N/N=1）
+    
+    WER是在单词（而不是字符）级别上计算的。
+    因此，我们首先将字符串分成单词：
+    """
     original = original.split()
     result = result.split()
+
     return _levenshtein(original, result) / float(len(original))
 
 def lers(originals, results):
@@ -60,10 +60,10 @@ def lers(originals, results):
     return rates, (mean / float(count)), norm_rates, (norm_mean / float(count))
 
 def _levenshtein(a, b):
-    "Calculates the Levenshtein distance between a and b."
+    # 计算a和b之间的Levenshtein距离
     n, m = len(a), len(b)
     if n > m:
-        # Make sure n <= m, to use O(min(n,m)) space
+        # 确保n <= m, 使用O(min(n, m))
         a, b = b, a
         n, m = m, n
 
