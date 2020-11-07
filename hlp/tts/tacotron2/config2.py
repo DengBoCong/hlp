@@ -43,6 +43,8 @@ class Tacotron2Config(object):
         text_test_path=r"./data/LJSpeech-1.1/test/test.txt",
         wave_test_path=r"./data/LJSpeech-1.1/test/wavs/",
         text_path=r"./data/LJSpeech-1.1/test/test1.txt",
+        csv_dir=r"./data/LJSpeech-1.1/metadata.csv",
+        path_all_data_dir=r"./data/LJSpeech-1.1/all_data.txt",
         #关于音频的参数
         sr=22050,
         n_fft=2048,
@@ -57,7 +59,10 @@ class Tacotron2Config(object):
         max_db=100,
         ref_db=20,
         top_db=15,
-        batch_size=4
+        #其他
+        batch_size=4,
+        train_number=4,
+        test_number=2
 
     ):
         """tacotron2参数."""
@@ -100,8 +105,9 @@ class Tacotron2Config(object):
         self.text_test_path = text_test_path
         self.wave_test_path = wave_test_path
         self.text_path = text_path
-        self.batch_size = batch_size
         self.checkpoingt_dir = checkpoingt_dir
+        self.path_all_data_dir = path_all_data_dir
+        self.csv_dir = csv_dir
         # 声音参数
         self.sr = sr
         self.n_fft = n_fft
@@ -116,4 +122,7 @@ class Tacotron2Config(object):
         self.max_db = max_db
         self.ref_db = ref_db
         self.top_db = top_db
-
+        #其他
+        self.batch_size = batch_size
+        self.train_number = train_number
+        self.test_number = test_number
