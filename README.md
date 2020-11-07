@@ -17,5 +17,4 @@
 - 基于Transformer的机器翻译
 - 基于DeepSpeech2的语音识别
 - 基于Listen-Attend-Spell的语音识别
-- 基于Tacotron1的语音合成
 - 基于Tacotron2的语音合成
