@@ -2,7 +2,7 @@
   "source_lang": "en",
   "target_lang": "zh",
   "reverse": "False",
-  "en_tokenize_type": "BPE",
+  "en_tokenize_type": "WORD",
   "zh_tokenize_type": "CHAR",
   "path_to_train_file": "./data/corpus/en-zh_train.txt",
   "path_to_eval_file": "./data/corpus/en-zh_eval.txt",

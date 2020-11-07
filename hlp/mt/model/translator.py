@@ -6,19 +6,20 @@ from config import get_config as _config
 from model import transformer as _transformer
 from common import preprocess
 from utils import beamsearch
+from common import tokenize
 
 
 def _predict_index(inp_sentence, transformer, beam_search_container, input_tokenizer, target_tokenizer):
     """对输入句子进行翻译并返回编码的句子列表"""
     sentence = preprocess.preprocess_sentences([inp_sentence], language=_config.source_lang)
 
-    inp_sequence, _ = preprocess.encode_sentences(sentence, input_tokenizer, language=_config.source_lang)
+    inp_sequence, _ = tokenize.encode_sentences(sentence, input_tokenizer, language=_config.source_lang)
     inp_sequence = tf.squeeze(inp_sequence)
     inp_sequence = tf.expand_dims(inp_sequence, 0)
 
     # start_token  shape:(1,)
-    start_token = preprocess.get_start_token(_config.start_word, target_tokenizer, language=_config.target_lang)
-    end_token, _ = preprocess.encode_sentences([_config.end_word], target_tokenizer, language=_config.target_lang)
+    start_token = tokenize.get_start_token(_config.start_word, target_tokenizer, language=_config.target_lang)
+    end_token, _ = tokenize.encode_sentences([_config.end_word], target_tokenizer, language=_config.target_lang)
     end_token = tf.squeeze(end_token)
 
     decoder_input = tf.expand_dims(start_token, 0)  # shape --> (1,1) 即(batch_size,sentence_length)
@@ -61,7 +62,7 @@ def translate(sentence, transformer, tokenizer_source, tokenizer_target, beam_si
     for i in range(len(predict_idxes)):
         predict_idx = predict_idxes[i].numpy()
         predict_idx = tf.squeeze(predict_idx)
-        predict_sentence = preprocess.decode_sentence(predict_idx, tokenizer_target, language=_config.target_lang)
+        predict_sentence = tokenize.decode_sentence(predict_idx, tokenizer_target, language=_config.target_lang)
         # text[0] = text[0].replace('start', '').replace('end', '').replace(' ', '')
         predict_sentence = predict_sentence.replace(_config.start_word, '')\
             .replace(_config.end_word, '').strip()

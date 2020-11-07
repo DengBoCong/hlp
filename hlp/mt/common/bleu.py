@@ -56,7 +56,7 @@ def sentence_bleu(candidate_sentence, reference_sentences, max_gram = 4, weights
         reference_sentences = [' '.join(s) for s in reference_sentences]
 
     candidate_corpus = list(candidate_sentence.split(' '))
-    # number of the reference sentences
+    # number of the reference sentence
     refer_len = len(reference_sentences)
     candidate_tokens_len = len(candidate_corpus)
     # 首先需要计算各种长度的gram 的precision值
