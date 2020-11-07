@@ -1,10 +1,9 @@
 import os
 import time
 import tensorflow as tf
-from prepocesses import dataset_txt, dataset_wave, create_dataset, tar_stop_token, divide
+from prepocesses import dataset_txt, dataset_wave, create_dataset, tar_stop_token, process_wav_name, map_to_text
 from config2 import Tacotron2Config
 from tacotron2 import Tacotron2
-from prepocesses import dataset_csv_to_txt
 
 #损失函数
 def loss_function(mel_out, mel_out_postnet, mel_gts, tar_token, stop_token):
@@ -72,14 +71,13 @@ if __name__=="__main__":
     train_number = config.train_number
     test_number = config.test_number
 
-    #将csv数据写入txt中
-    dataset_csv_to_txt(csv_dir, path_all_data_dir)
-
-    #产生训练文本数据集和测试文本数据集
-    divide(path_all_data_dir, text_train_path, test_to_file, train_number, test_number)
+    #统计wav名称
+    wav_name_list = process_wav_name(wave_train_path)
+    #根据wav名称生成需要的列表
+    sentence_list = map_to_text(csv_dir, wav_name_list)
 
     #取数据
-    input_ids, vocab_inp_size = dataset_txt(text_train_path)
+    input_ids, vocab_inp_size = dataset_txt(sentence_list)
     input_ids = tf.convert_to_tensor(input_ids)
     mel_gts, mel_len_wav = dataset_wave(wave_train_path, config)
 

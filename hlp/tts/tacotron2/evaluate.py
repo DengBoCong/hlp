@@ -1,5 +1,5 @@
 import tensorflow as tf
-from prepocesses import dataset_txt, dataset_wave
+from prepocesses import dataset_txt, dataset_wave, process_wav_name, map_to_text
 import numpy as np
 from config2 import Tacotron2Config
 from tacotron2 import Tacotron2
@@ -11,15 +11,20 @@ def compute_distence(mel1, mel2):
     print(score)
     return score
 
-def evluate(path1, path2):
+def evluate(path, csv_dir):
 
     #读取测试集的文本数据
-    input_ids,vocab_inp_size = dataset_txt(path1)
+    # 统计wav名称
+    wav_name_list = process_wav_name(path)
+    # 根据wav名称生成需要的列表
+    sentence_list = map_to_text(csv_dir, wav_name_list)
+    # 取数据
+    input_ids, vocab_inp_size = dataset_txt(sentence_list)
     input_ids = tf.convert_to_tensor(input_ids)
 
-    #读取测试机的音频数据
-    mel_gts, mel_len_wav = dataset_wave(path2, config)
-    vocab_inp_size = 55
+    #读取测试集的音频数据
+    mel_gts, mel_len_wav = dataset_wave(path, config)
+    vocab_inp_size = 56
 
     # 模型初始化
     tacotron2 = Tacotron2(vocab_inp_size, config)
@@ -38,9 +43,9 @@ def evluate(path1, path2):
 
 if __name__=="__main__":
     config = Tacotron2Config()
-    path1 = config.text_test_path
-    path2 = config.wave_test_path
-    evluate(path1, path2)
+    csv_dir = config.csv_dir
+    path = config.wave_test_path
+    evluate(path, csv_dir)
 
 
 
