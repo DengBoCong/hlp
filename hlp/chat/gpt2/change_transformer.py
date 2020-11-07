@@ -258,7 +258,7 @@ class Decoder(tf.keras.layers.Layer):
         return x, attention_weights  # 返回x 注意力权重
 
 
-class TFGPT2Model(tf.keras.layers.Layer):
+class GPT2Model(tf.keras.layers.Layer):
     def __init__(self, d_model, vocab_size, max_len, num_heads, dff, num_layers, rate, **kwargs):
         super(TFGPT2Model, self).__init__()
         self.encoder = Encoder(d_model, vocab_size, max_len, rate=0.1)  # (batch_size, inp_seq_len, d_model)
