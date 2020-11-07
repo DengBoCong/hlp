@@ -172,19 +172,15 @@ def main():
     # 创建对话模型的输出目录
     if not os.path.exists(args.dialogue_model_output_path):
         os.mkdir(args.dialogue_model_output_path)
-
-    # 加载GPT2模型
-    config = GPT2Config()
-    model, n_ctx, optimizer = create_model(args, config)
-
-    # 对原始数据进行预处理,将原始语料转换成对应的token_id
-    # 如果当前是要训练对话生成模型
     print('开始产生token')
-    # 不修改数据集的情况下，没必要每次训练都运行preprocess_raw_data 因为 生成的data是一样的
     if not os.path.exists(args.train_tokenized_path):
         file = open(args.train_tokenized_path, 'w')
 
+    # 不修改数据集的情况下，没必要每次训练都运行preprocess_raw_data 因为 生成的data是一样的
     preprocess_data.preprocess_raw_data(args, tokenizer, n_ctx)
+    # 加载GPT2模型
+    config = GPT2Config()
+    model, n_ctx, optimizer = create_model(args, config)
     train_loss = tf.keras.metrics.Mean(name='train_loss')
     train_accuracy = tf.keras.metrics.SparseCategoricalAccuracy(
         name='train_accuracy')
