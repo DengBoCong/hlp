@@ -1,11 +1,8 @@
 import os
 import sys
 import time
-import json
-import numpy as np
 import model.smn as smn
 import tensorflow as tf
-
 sys.path.append(sys.path[0][:-10])
 from common.utils import CmdParser
 import common.data_utils as _data
@@ -82,13 +79,13 @@ class SMNChatter():
                 print('\r', '{}/{} [==================================]'.format(batch_sum, sample_sum),
                       end='', flush=True)
 
-            r2_1, r10_1 = self.evaluate(valid_fn=data_fn,
+            r2_1, _ = self.evaluate(valid_fn=data_fn,
                                         tokenizer=tokenizer,
                                         max_valid_data_size=max_valid_data_size)
 
             step_time = time.time() - start_time
-            sys.stdout.write(' - {:.4f}s/step - loss: {:.4f} - R2@1：{:0.3f} - R10@1：{:.3f}\n'
-                             .format(step_time, self.train_loss.result(), r2_1, r10_1))
+            sys.stdout.write(' - {:.4f}s/step - loss: {:.4f} - R2@1：{:0.3f}\n'
+                             .format(step_time, self.train_loss.result(), r2_1))
             sys.stdout.flush()
             self.checkpoint.save(file_prefix=checkpoint_prefix)
 
@@ -113,6 +110,7 @@ class SMNChatter():
         labels = tf.constant([], dtype=tf.int32)
         for (batch, (utterances, response, label)) in enumerate(valid_dataset.take(step)):
             score = self.model(inputs=[utterances, response])
+            score = tf.nn.softmax(score, axis=-1)
             labels = tf.concat([labels, label], axis=0)
             scores = tf.concat([scores, score[:, 1]], axis=0)
 
