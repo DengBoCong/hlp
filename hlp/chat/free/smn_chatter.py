@@ -1,12 +1,13 @@
 import os
 import sys
 import time
+import json
+import numpy as np
 import model.smn as smn
 import tensorflow as tf
 
 sys.path.append(sys.path[0][:-10])
 from common.utils import CmdParser
-from common.utils import CustomSchedule
 import common.data_utils as _data
 import config.get_config as _config
 
@@ -17,20 +18,16 @@ class SMNChatter():
     """
 
     def __init__(self, units, vocab_size, execute_type, dict_fn, embedding_dim, checkpoint_dir, max_utterance,
-                 max_sentence):
-        self.units = units
-        self.vocab_size = vocab_size
+                 max_sentence, learning_rate):
         self.dict_fn = dict_fn
         self.checkpoint_dir = checkpoint_dir
         self.max_utterance = max_utterance
         self.max_sentence = max_sentence
-        self.embedding_dim = embedding_dim
-        self.learning_rate = CustomSchedule(embedding_dim)
-        self.optimizer = tf.keras.optimizers.Adam(learning_rate=self.learning_rate, beta_2=0.98, epsilon=1e-9)
+        self.optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate)
         self.train_loss = tf.keras.metrics.Mean()
 
         self.model = smn.smn(units=units, vocab_size=vocab_size,
-                             embedding_dim=self.embedding_dim,
+                             embedding_dim=embedding_dim,
                              max_utterance=self.max_utterance,
                              max_sentence=self.max_sentence)
 
@@ -51,12 +48,16 @@ class SMNChatter():
                 print('不存在检查点，请先执行train模式，再进入chat模式')
                 exit(0)
 
-    def train(self, epochs, data_fn, max_train_data_size=0):
-        dataset, checkpoint_prefix, steps_per_epoch = _data.smn_load_train_data(dict_fn=self.dict_fn, data_fn=data_fn,
-                                                                                checkpoint_dir=self.checkpoint_dir,
-                                                                                max_utterance=self.max_utterance,
-                                                                                max_sentence=self.max_sentence,
-                                                                                max_train_data_size=max_train_data_size)
+    def train(self, epochs, data_fn, valid_data_fn, max_train_data_size=0, max_valid_data_size=0):
+        # 处理并加载训练数据，
+        dataset, tokenizer, checkpoint_prefix, steps_per_epoch = \
+            _data.smn_load_train_data(dict_fn=self.dict_fn,
+                                      data_fn=data_fn,
+                                      checkpoint_dir=self.checkpoint_dir,
+                                      max_utterance=self.max_utterance,
+                                      max_sentence=self.max_sentence,
+                                      max_train_data_size=max_train_data_size)
+
         for epoch in range(epochs):
             print('Epoch {}/{}'.format(epoch + 1, _config.epochs))
             start_time = time.time()
@@ -67,12 +68,10 @@ class SMNChatter():
 
             for (batch, (utterances, response, label)) in enumerate(dataset.take(steps_per_epoch)):
                 with tf.GradientTape() as tape:
-                    outputs = self.model(inputs=[utterances, response])
-                    # print(label)
-                    # print(outputs)
-                    # exit(0)
-                    loss = tf.keras.losses.SparseCategoricalCrossentropy(
-                        reduction=tf.keras.losses.Reduction.AUTO)(label, outputs)
+                    scores = self.model(inputs=[utterances, response])
+                    loss = tf.keras.losses. \
+                        SparseCategoricalCrossentropy(from_logits=True,
+                                                      reduction=tf.keras.losses.Reduction.AUTO)(label, scores)
                 gradient = tape.gradient(loss, self.model.trainable_variables)
                 self.optimizer.apply_gradients(zip(gradient, self.model.trainable_variables))
                 self.train_loss(loss)
@@ -83,17 +82,67 @@ class SMNChatter():
                 print('\r', '{}/{} [==================================]'.format(batch_sum, sample_sum),
                       end='', flush=True)
 
+            r2_1, r10_1 = self.evaluate(valid_fn=data_fn,
+                                        tokenizer=tokenizer,
+                                        max_valid_data_size=max_valid_data_size)
+
             step_time = time.time() - start_time
-            sys.stdout.write(' - {:.4f}s/step - loss: {:.4f}\n'
-                             .format(step_time, self.train_loss.result()))
+            sys.stdout.write(' - {:.4f}s/step - loss: {:.4f} - R2@1：{:0.3f} - R10@1：{:.3f}\n'
+                             .format(step_time, self.train_loss.result(), r2_1, r10_1))
             sys.stdout.flush()
             self.checkpoint.save(file_prefix=checkpoint_prefix)
+
+    def evaluate(self, valid_fn, dict_fn="", tokenizer=None, max_turn_utterances_num=10, max_valid_data_size=0):
+        token_dict = None
+        step = max_valid_data_size // max_turn_utterances_num
+        if max_valid_data_size == 0:
+            return None
+        if dict_fn is not "":
+            token_dict = _data.load_token_dict(dict_fn)
+        # 处理并加载评价数据，注意，如果max_valid_data_size传
+        # 入0，就直接跳过加载评价数据，也就是说只训练不评价
+        valid_dataset = _data.load_smn_valid_data(data_fn=valid_fn,
+                                                  max_sentence=self.max_sentence,
+                                                  max_utterance=self.max_utterance,
+                                                  token_dict=token_dict,
+                                                  tokenizer=tokenizer,
+                                                  max_turn_utterances_num=max_turn_utterances_num,
+                                                  max_valid_data_size=max_valid_data_size)
+
+        scores = tf.constant([], dtype=tf.float32)
+        labels = tf.constant([], dtype=tf.int32)
+        for (batch, (utterances, response, label)) in enumerate(valid_dataset.take(step)):
+            score = self.model(inputs=[utterances, response])
+            labels = tf.concat([labels, label], axis=0)
+            scores = tf.concat([scores, score[:, 1]], axis=0)
+
+        r10_1 = self._metrics_rn_1(scores, labels, num=10)
+        r2_1 = self._metrics_rn_1(scores, labels, num=2)
+        return r2_1, r10_1
 
     def response(self, req):
         print('正在从“{}”处加载字典...'.format(self.dict_fn))
         token = _data.load_token_dict(dict_fn=self.dict_fn)
         print('功能待完善...')
 
+    def _metrics_rn_1(self, scores, labels, num=10):
+        """
+        计算Rn@k指标
+        Args:
+            scores: 训练所得分数
+            labels: 数据标签
+            num: n
+        Returns:
+        """
+        total = 0
+        correct = 0
+        for i in range(len(labels)):
+            if labels[i] == 1:
+                total = total + 1
+                sublist = scores[i:i + num]
+                if max(sublist) == scores[i]:
+                    correct = correct + 1
+        return float(correct) / total
 
 
 def get_chatter(execute_type):
@@ -104,7 +153,8 @@ def get_chatter(execute_type):
                          embedding_dim=_config.smn_embedding_dim,
                          checkpoint_dir=_config.smn_checkpoint,
                          max_utterance=_config.smn_max_utterance,
-                         max_sentence=_config.smn_max_sentence)
+                         max_sentence=_config.smn_max_sentence,
+                         learning_rate=_config.smn_learning_rate)
 
     return chatter
 
@@ -118,10 +168,19 @@ def main():
 
     if options.type == 'train':
         chatter = get_chatter(execute_type=options.type)
-        chatter.train(epochs=_config.epochs, data_fn=_config.ubuntu_tokenized_data, max_train_data_size=100)
+        chatter.train(epochs=_config.epochs,
+                      data_fn=_config.ubuntu_tokenized_data,
+                      valid_data_fn=_config.ubuntu_valid_data,
+                      max_train_data_size=_config.smn_max_train_data_size,
+                      max_valid_data_size=_config.max_valid_data_size)
+
+    elif options.type == 'evaluate':
+        chatter = get_chatter(execute_type=options.type)
+        r2_1, r10_1 = chatter.evaluate(valid_fn=_config.ubuntu_valid_data, dict_fn=_config.smn_dict_fn,
+                                       max_valid_data_size=_config.max_valid_data_size)
+        print("指标：R2@1-{:0.3f}，R10@1-{:0.3f}".format(r2_1, r10_1))
 
     elif options.type == 'chat':
-        print("待完善")
         chatter = get_chatter(execute_type=options.type)
         print("Agent: 你好！结束聊天请输入ESC。")
         while True:

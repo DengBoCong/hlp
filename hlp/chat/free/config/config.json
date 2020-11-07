@@ -18,11 +18,14 @@
     "max_length": 40
   },
   "smn": {
-    "embedding_dim": 256,
+    "embedding_dim": 200,
     "max_sentence": 50,
     "max_utterance": 10,
-    "units": 512,
-    "vocab_size": 2000
+    "units": 200,
+    "vocab_size": 2000,
+    "max_train_data_size": 36,
+    "learning_rate": 0.001,
+    "max_valid_data_size": 100
   },
   "seq2seq_dict_fn": "data\\seq2seq_dict.json",
   "seq2seq_checkpoint": "checkpoint\\seq2seq",
@@ -36,10 +39,11 @@
   "lccc_tokenized_data": "data\\lccc_tokenized.txt",
   "douban_tokenized_data": "data\\douban.txt",
   "ubuntu_tokenized_data": "data\\ubuntu_train.txt",
+  "ubuntu_valid_data": "data\\ubuntu_valid.txt",
   "batch_size": 32,
   "buffer_size": 20000,
   "beam_size": 3,
-  "epochs": 2,
+  "epochs": 10,
   "start_sign": "start",
   "end_sign": "end"
 }

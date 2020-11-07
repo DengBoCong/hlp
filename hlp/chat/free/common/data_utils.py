@@ -165,6 +165,21 @@ def sequences_to_texts(sequences, token_dict):
     return result
 
 
+def dict_texts_to_sequences(texts, token_dict):
+    """
+    将text转换成序列
+    Args:
+        texts: 文本列表
+        token_dict: 字典
+    Returns: 序列列表
+    """
+    result = []
+    for text in texts:
+        result.append([token_dict.get(element, 1) for element in text.split(" ")])
+
+    return result
+
+
 def smn_load_train_data(dict_fn, data_fn, checkpoint_dir, max_utterance, max_sentence, max_train_data_size=0):
     is_exist = os.path.exists(data_fn)
     if not is_exist:
@@ -240,4 +255,63 @@ def smn_load_train_data(dict_fn, data_fn, checkpoint_dir, max_utterance, max_sen
     steps_per_epoch = len(utterances) // _config.BATCH_SIZE
     print('训练数据处理完成，正在进行训练...')
 
-    return dataset, checkpoint_prefix, steps_per_epoch
+    return dataset, tokenizer, checkpoint_prefix, steps_per_epoch
+
+
+def load_smn_valid_data(data_fn, max_sentence, max_utterance, max_valid_data_size,
+                        token_dict=None, tokenizer=None, max_turn_utterances_num=10):
+    """
+    用于单独加载smn的评价数据，这个方法设计用于能够同时在train时进行评价，以及单独evaluate模式中使用
+    注意了，这里token_dict和必传其一，同时传只使用tokenizer
+    Args:
+        data_fn: 评价数据地址
+        max_sentence: 最大句子长度
+        max_utterance: 最大轮次语句数量
+        token_dict: 字典地址
+        tokenizer: 分词器实例
+        max_turn_utterances_num: dataset的批量，最好取单轮对话正负样本数总和的倍数
+    Returns: dataset
+    """
+    if not os.path.exists(data_fn):
+        return
+
+    history = []
+    response = []
+    label = []
+    with open(data_fn, 'r', encoding='utf-8') as file:
+        lines = file.read().strip().split("\n")[:max_valid_data_size]
+        for line in lines:
+            apart = line.split("\t")
+            label.append(int(apart[0]))
+            response.append(apart[-1])
+            del apart[0]
+            del apart[-1]
+            history.append(apart)
+
+    if tokenizer is not None:
+        response = tokenizer.texts_to_sequences(response)
+    else:
+        response = dict_texts_to_sequences(response, token_dict)
+    response = tf.keras.preprocessing.sequence.pad_sequences(response, maxlen=max_sentence, padding="post")
+
+    utterances = []
+    for utterance in history:
+        pad_sequences = [0] * max_sentence
+        if tokenizer is not None:
+            utterance_padding = tokenizer.texts_to_sequences(utterance)[-max_utterance:]
+        else:
+            utterance_padding = dict_texts_to_sequences(utterance, token_dict)[-max_utterance:]
+
+        utterance_len = len(utterance_padding)
+        # 如果当前轮次中的历史语句不足max_utterances数量，需要在尾部进行填充
+        if utterance_len != 10:
+            utterance_padding += [pad_sequences] * (max_utterance - utterance_len)
+        utterances.append(tf.keras.preprocessing.sequence.pad_sequences(utterance_padding, maxlen=max_sentence,
+                                                                        padding="post").tolist())
+
+    # 在这里不对数据集进行打乱，方便用于指标计算
+    dataset = tf.data.Dataset.from_tensor_slices((utterances, response, label)).prefetch(
+        tf.data.experimental.AUTOTUNE)
+    dataset = dataset.batch(max_turn_utterances_num, drop_remainder=True)
+
+    return dataset
