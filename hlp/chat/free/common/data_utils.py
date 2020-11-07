@@ -5,6 +5,7 @@ import numpy as np
 import tensorflow as tf
 from pathlib import Path
 import config.get_config as _config
+from sklearn.feature_extraction.text import TfidfVectorizer
 
 
 def preprocess_sentence(start_sign, end_sign, w):
@@ -194,31 +195,23 @@ def smn_load_train_data(dict_fn, data_fn, checkpoint_dir, max_utterance, max_sen
     count = 0  # 用于处理数据计数
 
     with open(data_fn, 'r', encoding='utf-8') as file:
-        lines = file.read().strip().split('\n')
+
         if max_train_data_size == 0:
-            for line in lines:
-                count += 1
-                apart = line.split('\t')
-                store.extend(apart[0:])
-                label.append(int(apart[0]))
-                response.append(apart[-1])
-                del apart[0]
-                del apart[-1]
-                history.append(apart)
-                if count % 100 == 0:
-                    print('已读取 {} 轮对话'.format(count))
+            lines = file.read().strip().split('\n')
         else:
-            for line in lines[:max_train_data_size]:
-                count += 1
-                apart = line.split('\t')
-                label.append(int(apart[0]))
-                store.extend(apart[1:])
-                response.append(apart[-1])
-                del apart[0]
-                del apart[-1]
-                history.append(apart)
-                if count % 100 == 0:
-                    print('已读取 {} 轮对话'.format(count))
+            lines = file.read().strip().split('\n')[:max_train_data_size]
+
+        for line in lines:
+            count += 1
+            apart = line.split('\t')
+            store.extend(apart[0:])
+            label.append(int(apart[0]))
+            response.append(apart[-1])
+            del apart[0]
+            del apart[-1]
+            history.append(apart)
+            if count % 100 == 0:
+                print('已读取 {} 轮对话'.format(count))
 
     print('数据读取完成，正在生成字典并保存...')
     tokenizer = tf.keras.preprocessing.text.Tokenizer(filters='', oov_token='<UNK>')
@@ -304,7 +297,7 @@ def load_smn_valid_data(data_fn, max_sentence, max_utterance, max_valid_data_siz
 
         utterance_len = len(utterance_padding)
         # 如果当前轮次中的历史语句不足max_utterances数量，需要在尾部进行填充
-        if utterance_len != 10:
+        if utterance_len != max_utterance:
             utterance_padding += [pad_sequences] * (max_utterance - utterance_len)
         utterances.append(tf.keras.preprocessing.sequence.pad_sequences(utterance_padding, maxlen=max_sentence,
                                                                         padding="post").tolist())
@@ -315,3 +308,70 @@ def load_smn_valid_data(data_fn, max_sentence, max_utterance, max_valid_data_siz
     dataset = dataset.batch(max_turn_utterances_num, drop_remainder=True)
 
     return dataset
+
+
+def get_tf_idf_top_k(history, k=5):
+    """
+    使用tf_idf算法计算权重最高的k个词，并返回
+    Args:
+        history: 上下文语句
+        k: 返回词数量
+    Returns: top_5_key
+    """
+    tf_idf = {}
+
+    vectorizer = TfidfVectorizer(analyzer='char_wb')
+    weights = vectorizer.fit_transform(history).toarray()[-1]
+    key_words = vectorizer.get_feature_names()
+
+    for i in range(len(weights)):
+        tf_idf[key_words[i]] = weights[i]
+
+    top_k_key = []
+    tf_idf_sorted = sorted(tf_idf.items(), key=lambda x: x[1], reverse=True)[:k]
+    for element in tf_idf_sorted:
+        top_k_key.append(element[0])
+
+    return top_k_key
+
+
+def creat_index_dataset(data_fn, database_fn, max_database_size):
+    """
+    生成轮次tf-idf为索引的候选回复
+    Args:
+        data_fn: 文本数据路径
+        database_fn: 保存候选数据路径
+        max_database_size: 从文本中读取最大数据量
+    Returns:
+    """
+    if not os.path.exists(data_fn):
+        print("没有找到对应的文本数据，请确认文本数据存在")
+        exit(0)
+
+    tf_idf = {}
+    count = 0
+
+    print("检测到对应文本，正在处理文本数据...")
+    with open(data_fn, 'r', encoding='utf-8') as file:
+        if max_database_size == 0:
+            lines = file.read().strip().split("\n")
+        else:
+            lines = file.read().strip().split("\n")[:max_database_size]
+
+        for line in lines:
+            count += 1
+            apart = line.split("\t")[1:]
+            for i in range(len(apart) - 1):
+                key_words = get_tf_idf_top_k(apart[:i + 1], 5)
+                if tf_idf.get('-'.join(key_words), '[NONE]') is '[NONE]':
+                    tf_idf['-'.join(key_words)] = [apart[i + 1]]
+                else:
+                    tf_idf['-'.join(key_words)].append(apart[i + 1])
+
+            if count % 100 == 0:
+                print("已处理了 {} 轮次对话".format(count))
+
+    with open(database_fn, 'w', encoding='utf-8') as file:
+        file.write(json.dumps(tf_idf, indent=4, ensure_ascii=False))
+
+    print("文本处理完毕，已保存tf-idf候选回复集")

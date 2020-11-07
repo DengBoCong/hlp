@@ -3,6 +3,7 @@ import sys
 import time
 import model.smn as smn
 import tensorflow as tf
+
 sys.path.append(sys.path[0][:-10])
 from common.utils import CmdParser
 import common.data_utils as _data
@@ -15,11 +16,12 @@ class SMNChatter():
     """
 
     def __init__(self, units, vocab_size, execute_type, dict_fn, embedding_dim, checkpoint_dir, max_utterance,
-                 max_sentence, learning_rate):
+                 max_sentence, learning_rate, database_fn):
         self.dict_fn = dict_fn
         self.checkpoint_dir = checkpoint_dir
         self.max_utterance = max_utterance
         self.max_sentence = max_sentence
+        self.database_fn = database_fn
         self.optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate)
         self.train_loss = tf.keras.metrics.Mean()
 
@@ -34,6 +36,11 @@ class SMNChatter():
         if not ckpt:
             os.makedirs(checkpoint_dir)
 
+        if execute_type == "chat":
+            print('正在从“{}”处加载字典...'.format(self.dict_fn))
+            self.token = _data.load_token_dict(dict_fn=self.dict_fn)
+            print('正在从“{}”处加载候选回复数据库...'.format(self.database_fn))
+            self.database = _data.load_token_dict(self.database_fn)
         print('正在检查是否存在检查点...')
         if ckpt:
             print('存在检查点，正在从“{}”中加载检查点...'.format(checkpoint_dir))
@@ -45,7 +52,7 @@ class SMNChatter():
                 print('不存在检查点，请先执行train模式，再进入chat模式')
                 exit(0)
 
-    def train(self, epochs, data_fn, valid_data_fn, max_train_data_size=0, max_valid_data_size=0):
+    def train(self, epochs, data_fn, max_train_data_size=0, max_valid_data_size=0):
         # 处理并加载训练数据，
         dataset, tokenizer, checkpoint_prefix, steps_per_epoch = \
             _data.smn_load_train_data(dict_fn=self.dict_fn,
@@ -80,8 +87,8 @@ class SMNChatter():
                       end='', flush=True)
 
             r2_1, _ = self.evaluate(valid_fn=data_fn,
-                                        tokenizer=tokenizer,
-                                        max_valid_data_size=max_valid_data_size)
+                                    tokenizer=tokenizer,
+                                    max_valid_data_size=max_valid_data_size)
 
             step_time = time.time() - start_time
             sys.stdout.write(' - {:.4f}s/step - loss: {:.4f} - R2@1：{:0.3f}\n'
@@ -118,10 +125,34 @@ class SMNChatter():
         r2_1 = self._metrics_rn_1(scores, labels, num=2)
         return r2_1, r10_1
 
-    def response(self, req):
-        print('正在从“{}”处加载字典...'.format(self.dict_fn))
-        token = _data.load_token_dict(dict_fn=self.dict_fn)
-        print('功能待完善...')
+    def respond(self, req):
+        history = req[-self.max_utterance:]
+        pad_sequences = [0] * self.max_sentence
+        utterance = _data.dict_texts_to_sequences(history, self.token)
+        utterance_len = len(utterance)
+
+        # 如果当前轮次中的历史语句不足max_utterances数量，需要在尾部进行填充
+        if utterance_len != self.max_utterance:
+            utterance += [pad_sequences] * (self.max_utterance - utterance_len)
+        utterance = tf.keras.preprocessing.sequence.pad_sequences(utterance, maxlen=self.max_sentence,
+                                                                  padding="post").tolist()
+
+        tf_idf = _data.get_tf_idf_top_k(history)
+        candidates = self.database.get('-'.join(tf_idf), None)
+
+        if candidates is None:
+            return "Sorry! I didn't hear clearly, can you say it again?"
+        else:
+            utterances = [utterance] * len(candidates)
+            responses = _data.dict_texts_to_sequences(candidates, self.token)
+            responses = tf.keras.preprocessing.sequence.pad_sequences(responses, maxlen=self.max_sentence,
+                                                                      padding="post")
+            utterances = tf.convert_to_tensor(utterances)
+            responses = tf.convert_to_tensor(responses)
+            scores = self.model(inputs=[utterances, responses])
+            index = tf.argmax(scores[:, 0])
+
+            return candidates[index]
 
     def _metrics_rn_1(self, scores, labels, num=10):
         """
@@ -152,7 +183,8 @@ def get_chatter(execute_type):
                          checkpoint_dir=_config.smn_checkpoint,
                          max_utterance=_config.smn_max_utterance,
                          max_sentence=_config.smn_max_sentence,
-                         learning_rate=_config.smn_learning_rate)
+                         learning_rate=_config.smn_learning_rate,
+                         database_fn=_config.candidate_database)
 
     return chatter
 
@@ -168,25 +200,31 @@ def main():
         chatter = get_chatter(execute_type=options.type)
         chatter.train(epochs=_config.epochs,
                       data_fn=_config.ubuntu_tokenized_data,
-                      valid_data_fn=_config.ubuntu_valid_data,
                       max_train_data_size=_config.smn_max_train_data_size,
-                      max_valid_data_size=_config.max_valid_data_size)
+                      max_valid_data_size=_config.smn_max_valid_data_size)
+
+    elif options.type == 'pre_treat':
+        _data.creat_index_dataset(data_fn=_config.ubuntu_tokenized_data,
+                                  database_fn=_config.candidate_database,
+                                  max_database_size=_config.smn_max_database_size)
 
     elif options.type == 'evaluate':
         chatter = get_chatter(execute_type=options.type)
         r2_1, r10_1 = chatter.evaluate(valid_fn=_config.ubuntu_valid_data, dict_fn=_config.smn_dict_fn,
-                                       max_valid_data_size=_config.max_valid_data_size)
+                                       max_valid_data_size=_config.smn_max_valid_data_size)
         print("指标：R2@1-{:0.3f}，R10@1-{:0.3f}".format(r2_1, r10_1))
 
     elif options.type == 'chat':
         chatter = get_chatter(execute_type=options.type)
+        history = []  # 用于存放历史对话
         print("Agent: 你好！结束聊天请输入ESC。")
         while True:
             req = input("User: ")
             if req == "ESC":
                 print("Agent: 再见！")
                 exit(0)
-            response = chatter.respond(req=req)
+            history.append(req)
+            response = chatter.respond(req=history)
             print("Agent: ", response)
     else:
         parser.error(msg='')
