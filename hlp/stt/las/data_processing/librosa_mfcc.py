@@ -19,17 +19,17 @@ def mfcc_extract(path, n_mfcc):
     return mfcc
 
 
-def wav_to_mfcc(path, n_mfcc):
+def wav_to_mfcc(path, n_mfcc, max_length = 36):
     print("开始处理语音数据......")
     files = os.listdir(path)  # 得到文件夹下的所有文件名称
     mfccs = []
 
     for file in files:  # 遍历文件夹
-        position = path + '\\' + file        
+        position = path + '\\' + file  
         bool = file.endswith(".wav")
         if bool:
             mfcc = mfcc_extract(position, n_mfcc)
             mfccs.append(mfcc)
 
-    mfccs = tf.keras.preprocessing.sequence.pad_sequences(mfccs, padding='post', dtype='float32')
+    mfccs = tf.keras.preprocessing.sequence.pad_sequences(mfccs, padding='post', dtype='float32', maxlen=max_length)
     return mfccs
