@@ -28,12 +28,10 @@ class pBLSTM(tf.keras.layers.Layer):
 
 
 class Encoder(tf.keras.Model):
-    def __init__(self, vocab_size, embedding_dim, enc_units, batch_sz):
+    def __init__(self, embedding_dim, enc_units, batch_sz):
         super(Encoder, self).__init__()
         self.batch_sz = batch_sz
         self.enc_units = enc_units
-        self.vocab_size = vocab_size
-        self.input_1 = tf.keras.Input(shape=(None, vocab_size))
         self.dim = embedding_dim
         # Listen; Lower resoultion by 8x
         self.plstm1 = pBLSTM(self.dim // 2)
