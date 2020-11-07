@@ -1,9 +1,10 @@
 import os
 import time
 import tensorflow as tf
-from prepocesses import dataset_txt,dataset_wave,create_dataset,tar_stop_token
+from prepocesses import dataset_txt, dataset_wave, create_dataset, tar_stop_token, divide
 from config2 import Tacotron2Config
 from tacotron2 import Tacotron2
+from prepocesses import dataset_csv_to_txt
 
 #损失函数
 def loss_function(mel_out, mel_out_postnet, mel_gts, tar_token, stop_token):
@@ -33,6 +34,7 @@ def train(model, optimizer, dataset, epochs, steps_per_epoch, batch_size, checkp
         print('Epoch {}/{}'.format(epoch + 1, epochs))
         start = time.time()
         total_loss = 0
+
         for (batch, (input_ids, mel_gts, tar_token)) in enumerate(dataset.take(steps_per_epoch)):
             batch_start = time.time()
             batch_loss, mel_outputs = train_step(input_ids, mel_gts, model, optimizer, tar_token)  # 训练一个批次，返回批损失
@@ -52,15 +54,34 @@ if __name__=="__main__":
     batch = 2
     batch_size = config.batch_size
 
-    #设置文件路径
+    #设置文件路径，训练文本与音频路径
     text_train_path = config.text_train_path
     wave_train_path = config.wave_train_path
+
+    #测试文本路径
+    test_to_file = config.text_test_path
+
+    #检查点
     checkpoint_dir = config.checkpoingt_dir
+    csv_dir = config.csv_dir
+
+    #此路径包含了所有ljspeech的所有文本数据
+    path_all_data_dir = config.path_all_data_dir
+
+    #训练集包含样本数量，测试集包含样本数量
+    train_number = config.train_number
+    test_number = config.test_number
+
+    #将csv数据写入txt中
+    dataset_csv_to_txt(csv_dir, path_all_data_dir)
+
+    #产生训练文本数据集和测试文本数据集
+    divide(path_all_data_dir, text_train_path, test_to_file, train_number, test_number)
 
     #取数据
-    input_ids,vocab_inp_size = dataset_txt(text_train_path)
+    input_ids, vocab_inp_size = dataset_txt(text_train_path)
     input_ids = tf.convert_to_tensor(input_ids)
-    mel_gts,mel_len_wav = dataset_wave(wave_train_path, config)
+    mel_gts, mel_len_wav = dataset_wave(wave_train_path, config)
 
     # 生成stop_token的参照值
     tar_token = tar_stop_token(mel_len_wav, mel_gts, config.max_len)
@@ -68,7 +89,7 @@ if __name__=="__main__":
     mel_gts = tf.transpose(mel_gts, [0, 2, 1])
 
     #建立输入输出流
-    dataset,steps_per_epoch = create_dataset(batch, input_ids, mel_gts, tar_token)
+    dataset, steps_per_epoch = create_dataset(batch, input_ids, mel_gts, tar_token)
 
     # 初始化模型和优化器
     tacotron2 = Tacotron2(vocab_inp_size, config)
@@ -78,6 +99,6 @@ if __name__=="__main__":
     checkpoint_prefix = os.path.join(checkpoint_dir, "ckpt")
     checkpoint = tf.train.Checkpoint(tacotron2=tacotron2)
 
-    #训练
+    #训练1000轮的声音会
     epochs = 2
     mel_outputs = train(tacotron2, optimizer, dataset, epochs, steps_per_epoch, batch_size, checkpoint)

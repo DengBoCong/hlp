@@ -5,6 +5,8 @@ import librosa
 import numpy as np
 from config2 import Tacotron2Config
 import io
+import csv
+import pandas as pd
 #文字处理
 config = Tacotron2Config()
 def preprocess_sentence(s):
@@ -43,6 +45,66 @@ def tokenize(texts):
         sequences_length.append([len(seq)])
     sequences = tf.keras.preprocessing.sequence.pad_sequences(sequences, padding='post')
     return sequences,tokenizer
+
+def dataset_csv_to_txt(path_to_file,path_all_data):
+    #将csv文件转化为txt
+    with open(path_to_file,
+              'r', encoding='UTF-8') as f:
+        reader = csv.reader(f)
+        j = 0
+        for row in reader:
+            row[0] = row[0][11:]
+            str = ''.join(row)
+            #print(str)
+            with open('文字预处理.txt', 'a', encoding='UTF-8') as w:
+                w.write(str + '\n')
+        w.close()
+        f.close()
+    #因为有很多异常数据所以要对txt进行处理
+    with open('文字预处理.txt', 'r', encoding='UTF-8') as w:
+        with open(path_all_data, 'w', encoding='UTF-8') as f:
+            for row in w:
+                if row[0] == 'L' and row[1] == 'J':
+                    #for i in range(len(row) - 11):
+                    str = row[11:]
+                    f.write(str)
+                else:
+                    f.write(row)
+            f.write('\n')
+        w.close()
+        f.close()
+    os.remove('文字预处理.txt')
+    return
+
+#划分训练集和测试集，我取前四句话为训练集，第五第六句话为测试集
+def divide(text_to_file,train_to_file,test_to_file,train_number,test_number):
+    # 划分训练集部分
+    with open(text_to_file, 'r', encoding='UTF-8') as w:
+        with open(train_to_file, 'w', encoding='UTF-8') as f:
+            i = 0
+            for row in w:
+                if i < train_number:
+                    f.write(row)
+                else:
+                    break
+                i = i + 1
+            f.write('\n')
+        w.close()
+        f.close()
+    #划分测试集部分
+    with open(text_to_file, 'r', encoding='UTF-8') as w:
+        with open(test_to_file, 'w', encoding='UTF-8') as f:
+            i = 0
+            for row in w:
+                if i < test_number + train_number and i >= train_number:
+                    f.write(row)
+                elif i == test_number + train_number:
+                    break
+                i = i + 1
+            f.write('\n')
+        w.close()
+        f.close()
+    return
 
 def dataset_txt(path_to_file):
     en = process_text(path_to_file)
@@ -97,7 +159,7 @@ def dataset_wave(path, config):
     mel_len_wav = []
     dirs = os.listdir(path)
     for file in dirs:
-        logmelspec,sr= get_spectrograms(path+file)
+        logmelspec,sr = get_spectrograms(path+file)
         mel_len_wav.append(len(logmelspec))
         mel_list.append(logmelspec.tolist())
     mel_numpy = tf.keras.preprocessing.sequence.pad_sequences(mel_list, maxlen=config.max_len, padding='post', dtype='float32')
