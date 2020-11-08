@@ -1,5 +1,5 @@
 import tensorflow as tf
-from prepocesses import dataset_txt
+from prepocesses import dataset_txt, _get_tokenizer_keras
 from config2 import Tacotron2Config
 from tacotron2 import Tacotron2
 from tacotron2 import melspectrogram2wav, plot_spectrogram_to_numpy
@@ -19,26 +19,31 @@ def load_checkpoint(tacotron2, path):
 
 if __name__=="__main__":
     config = Tacotron2Config()
+    #检查点路径
     path = config.checkpoingt_dir
-    #max_len = config.max_len
-    vocab_inp_size = 56
+
+    #字典路径
+    save_path_dictionary = config.save_path_dictionary
+
+    #恢复字典
+    tokenizer, vocab_size = _get_tokenizer_keras(save_path_dictionary)
+    print("vocab_size:", vocab_size)
 
     #模型初始化
-    tacotron2 = Tacotron2(vocab_inp_size, config)
+    tacotron2 = Tacotron2(vocab_size+1, config)
 
     #加载检查点
     load_checkpoint(tacotron2, path)
     print('已恢复至最新的检查点！')
 
-    # 设置文件路径
-    text_path1 = config.text_path
     # 抓取文本数据
     print("请输入需要合成的话：")
     seq = input()
     sequences_list = []
     sequences_list.append(seq)
-    input_ids, vocab_inp_size = dataset_txt(sequences_list)
+    input_ids, vocab_inp_size = dataset_txt(sequences_list, save_path_dictionary, "predict")
     input_ids = tf.convert_to_tensor(input_ids)
+
     #预测
     mel_outputs, mel_outputs_postnet, gate_outputs, alignments = tacotron2.inference(input_ids)
 

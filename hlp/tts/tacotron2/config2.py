@@ -45,6 +45,7 @@ class Tacotron2Config(object):
         text_path=r"./data/LJSpeech-1.1/test/test1.txt",
         csv_dir=r"./data/LJSpeech-1.1/metadata.csv",
         path_all_data_dir=r"./data/LJSpeech-1.1/all_data.txt",
+        save_path_dictionary=r"./data/LJSpeech-1.1/dictionary.json",
         #关于音频的参数
         sr=22050,
         n_fft=2048,
@@ -103,6 +104,7 @@ class Tacotron2Config(object):
         self.wave_train_path = wave_train_path
         self.text_test_path = text_test_path
         self.wave_test_path = wave_test_path
+        self.save_path_dictionary = save_path_dictionary
         self.text_path = text_path
         self.checkpoingt_dir = checkpoingt_dir
         self.path_all_data_dir = path_all_data_dir
