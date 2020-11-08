@@ -60,6 +60,9 @@ if __name__=="__main__":
     #测试文本路径
     test_to_file = config.text_test_path
 
+    #保存字典路径
+    save_path_dictionary = config.save_path_dictionary
+
     #检查点
     checkpoint_dir = config.checkpoingt_dir
     csv_dir = config.csv_dir
@@ -77,7 +80,7 @@ if __name__=="__main__":
     sentence_list = map_to_text(csv_dir, wav_name_list)
 
     #取数据
-    input_ids, vocab_inp_size = dataset_txt(sentence_list)
+    input_ids, vocab_inp_size = dataset_txt(sentence_list, save_path_dictionary, "train")
     input_ids = tf.convert_to_tensor(input_ids)
     mel_gts, mel_len_wav = dataset_wave(wave_train_path, config)
 
