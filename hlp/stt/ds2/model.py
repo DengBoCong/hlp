@@ -7,68 +7,20 @@ Created on Tue Sep 15 16:50:12 2020
 #模型搭建
 #step1：1-3 Conv1D -> 1BN -> 1-3 bi_gru -> 1BN -> 1dense
 import tensorflow as tf
-import config
-from utils import get_index_and_char_map
 
-
-#函数式构建DS2模型
-def DS2_func(
-    n_mfcc=config.configs_other()["n_mfcc"],
-    conv_layers=config.configs_model()["conv_layers"],
-    filters=config.configs_model()["conv_filters"],
-    kernel_size=config.configs_model()["conv_kernel_size"],
-    strides=config.configs_model()["conv_strides"],
-    bi_gru_layers=config.configs_model()["bi_gru_layers"],
-    gru_units=config.configs_model()["gru_units"],
-    dense_units=len(get_index_and_char_map()[0])+2
-    ):
-    inputs=tf.keras.Input(shape=(None,None,n_mfcc))
-    x=inputs
-    for _ in range(conv_layers):
-        x = tf.keras.layers.Conv1D(
-                filters=filters,
-                name="conv{}".format(_+1),
-                kernel_size=kernel_size,
-                padding="same",
-                activation="relu",
-                strides=strides
-                )(x)
-    x=tf.keras.layers.BatchNormalization(
-                axis=-1,
-                momentum=0.99,
-                epsilon=0.001
-                )(x)
-    for _ in range(bi_gru_layers):
-        x = tf.keras.layers.Bidirectional(
-                tf.keras.layers.GRU(
-                        gru_units,
-                        name="bi_gru{}".format(_+1),
-                        return_sequences=True,
-                        activation="relu"
-                        ),
-                merge_mode="sum"
-                )(x)
-    x=tf.keras.layers.BatchNormalization(
-                axis=-1,
-                momentum=0.99,
-                epsilon=0.001
-                )(x)
-    outputs=tf.keras.layers.Dense(dense_units,activation="softmax")(x)
-    return tf.keras.Model(inputs,outputs)
 
 #子类化构建DS2模型
 class DS2(tf.keras.Model):
     #dense_units=num_classes
     def __init__(
         self,
-        n_mfcc=config.configs_other()["n_mfcc"],
-        conv_layers=config.configs_model()["conv_layers"],
-        filters=config.configs_model()["conv_filters"],
-        kernel_size=config.configs_model()["conv_kernel_size"],
-        strides=config.configs_model()["conv_strides"],
-        bi_gru_layers=config.configs_model()["bi_gru_layers"],
-        gru_units=config.configs_model()["gru_units"],
-        dense_units=len(get_index_and_char_map()[0])+2
+        conv_layers,
+        filters,
+        kernel_size,
+        strides,
+        bi_gru_layers,
+        gru_units,
+        dense_units
         ):
         super(DS2,self).__init__()
         self.conv_layers=conv_layers
@@ -76,9 +28,8 @@ class DS2(tf.keras.Model):
                 filters=filters,
                 kernel_size=kernel_size,
                 strides=strides,
-                padding="same",
-                activation="relu",
-                input_shape=(None,None,n_mfcc)
+                padding="valid",
+                activation="relu"
                 )
         self.bi_gru_layers=bi_gru_layers
         self.bi_gru = tf.keras.layers.Bidirectional(
@@ -94,9 +45,9 @@ class DS2(tf.keras.Model):
                 momentum=0.99,
                 epsilon=0.001
                 )
-        self.ds = tf.keras.layers.Dense(dense_units,activation="softmax")
+        self.ds = tf.keras.layers.Dense(dense_units, activation="softmax")
     
-    def call(self,inputs):
+    def call(self, inputs):
         x=inputs
         for _ in range(self.conv_layers):
             x = self.conv(x)
@@ -106,6 +57,55 @@ class DS2(tf.keras.Model):
         x = self.bn(x)
         x = self.ds(x)
         return x
+
+# 基于模型预测得到的序列list并通过字典集来进行解码处理
+def decode_output(seq, index_word, mode):
+    if mode == "cn":
+        return decode_output_ch_sentence(seq, index_word)
+    elif mode == "en_word":
+        return decode_output_en_sentence_word(seq, index_word)
+    elif mode == "en_char":
+        return decode_output_en_sentence_char(seq, index_word)
+
+def decode_output_ch_sentence(seq, index_word):
+    result = ""
+    for i in seq:
+        if i >= 1 and i <= len(index_word):
+            word = index_word[str(i)]
+            if word != "<start>":
+                if word != "<end>":
+                    result += word
+                else:
+                    return result
+    return result
+
+def decode_output_en_sentence_word(seq, index_word):
+    result = ""
+    for i in seq:
+        if i >= 1 and i <= (len(index_word)):
+            word = index_word[str(i)]
+            if word != "<start>":
+                if word != "<end>":
+                    result += word+" "
+                else:
+                    return result
+    return result
+
+def decode_output_en_sentence_char(seq, index_word):
+    result = ""
+    for i in seq:
+        if i >= 1 and i <= (len(index_word)):
+            word = index_word[str(i)]
+            if word != "<start>":
+                if word != "<end>":
+                    if word !="<space>":
+                        result += word
+                    else:
+                        word += " "
+                else:
+                    return result
+    return result
+
 
 if __name__ == "__main__":
     pass

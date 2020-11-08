@@ -1,13 +1,10 @@
 # 机器翻译
 
-- 运行入口： nmt.py
-- 执行方法：
-    - 指令格式：python nmt.py -t/--type [执行模式]
-    - 可选模式：
-        - train: 使用 ./data.en-ch.txt 进行训练
-        - eval : 使用 ./data.en-ch_eval.txt 对模型进行测试,需对指标类型进行选择
-            - bleu指标
-        - translate : 对输入句子进行翻译，输入0退出
+- 运行入口： 
+    - nmt_train: 使用 ./data/corpus/en-zh_train.txt 进行训练
+    - nmt_evaluate : 使用 ./data/corpus/en-zh_eval.txt 对模型进行测试,需对指标类型进行选择
+        - bleu指标
+    - nmt_translate : 对输入句子进行翻译，输入0退出
 
 - 分词方法(在配置文件中进行选择)：
     - 英文分词:
@@ -17,6 +14,20 @@
         - TOKENIZE:使用字划分方法进行分词
 
 # 版本日志
+- 2020.11.03：version 1.4.0
+    - 可设置库中任意两语言对互译（可选：en、zh）
+    - 模型结构优化（改为三个入口、模块增删）
+    - 代码优化（变量、方法命名）
+    
+- 2020.10.23：version 1.3.2
+    - 增加从磁盘逐个获得batch进行训练功能
+    - 修复优化代码（文本加载、打印分词类型、检查点保存）
+    
+- 2020.10.17：version 1.3.1
+    - 将编码后的数据集保存文本，以优化内存使用
+    - 训练打印标准化
+    - 更改模型配置
+    
 - 2020.10.13：version 1.3.0
     - 加入Beam search
     - 训练打印标准化
@@ -56,3 +67,13 @@
 交互式翻译
 
 ![](./image/test_translate.png)
+
+# 数据集
+
+github上传为测试数据集
+
+若需完整数据集请自行下载：
+
+链接：https://pan.baidu.com/s/1cXPHJXFtMLJSJv-_Qn9cQA
+提取码：mt66 
+复制这段内容后打开百度网盘手机App，操作更方便哦

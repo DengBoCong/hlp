@@ -1,0 +1,39 @@
+{
+    "train": {
+        "if_is_first_train": true,
+        "train_epochs": 2,
+        "data_path": "./data/LibriSpeech/train-clean-5",
+        "batch_size": 48,
+        "num_examples": null
+    },
+    "test": {
+        "data_path": "./data/LibriSpeech/dev-clean-2",
+        "batch_size": 128,
+        "num_examples": null
+    },
+    "model": {
+        "conv_layers": 3,
+        "conv_filters": 256,
+        "conv_kernel_size": 11,
+        "conv_strides": 2,
+        "bi_gru_layers": 1,
+        "gru_units": 256
+    },
+    "checkpoint": {
+        "directory": "./checkpoints",
+        "max_to_keep": 5,
+        "save_interval": 2
+    },
+    "record": {
+        "record_path": "./record/record.wav"
+    },
+    "other": {
+        "audio_feature_type": "fbank"
+    },
+    "preprocess": {
+        "dataset_information_path":"./dataset_information.json",
+        "dataset_name": "librispeech",
+        "text_row_style": 1,
+        "text_process_mode": "en_word"
+    }
+}
