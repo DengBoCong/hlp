@@ -15,7 +15,10 @@ def evluate(path, csv_dir, save_path_dictionary, vocab_size):
 
     #读取测试集的文本数据
     # 统计wav名称
-    wav_name_list = process_wav_name(path)
+    #a=1代表是number数据集
+    #a = 1
+    a = 1
+    wav_name_list = process_wav_name(path, a)
     # 根据wav名称生成需要的列表
     sentence_list = map_to_text(csv_dir, wav_name_list)
     # 取数据
@@ -28,7 +31,7 @@ def evluate(path, csv_dir, save_path_dictionary, vocab_size):
     # 模型初始化
     tacotron2 = Tacotron2(vocab_size+1, config)
     path = config.checkpoingt_dir
-    load_checkpoint(tacotron2, path)
+    checkpoint = load_checkpoint(tacotron2, path)
     print('已恢复至最新的检查点！')
 
     for i in range(input_ids.shape[0]):
@@ -43,14 +46,14 @@ def evluate(path, csv_dir, save_path_dictionary, vocab_size):
 if __name__=="__main__":
     config = Tacotron2Config()
     #字典路径
-    save_path_dictionary = config.save_path_dictionary
+    save_path_dictionary = config.save_path_dictionary_number
     #恢复字典
     tokenizer, vocab_size = _get_tokenizer_keras(save_path_dictionary)
 
     #csv文件的路径
-    csv_dir = config.csv_dir
+    csv_dir = config.csv_dir_number
     #测试音频文件的路径
-    path = config.wave_test_path
+    path = config.wave_test_path_number
     evluate(path, csv_dir, save_path_dictionary, vocab_size)
 
 

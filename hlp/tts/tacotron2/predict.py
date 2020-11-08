@@ -4,7 +4,6 @@ from config2 import Tacotron2Config
 from tacotron2 import Tacotron2
 from tacotron2 import melspectrogram2wav, plot_spectrogram_to_numpy
 import scipy.io.wavfile as wave
-import os
 import matplotlib.pyplot as plt
 from playsound import playsound
 #恢复检查点
@@ -16,6 +15,7 @@ def load_checkpoint(tacotron2, path):
     if ckpt_manager.latest_checkpoint:
         ckpt.restore(ckpt_manager.latest_checkpoint).expect_partial()
         #ckpt.restore('./checkpoints/train/ckpt-2')
+    return ckpt
 
 if __name__=="__main__":
     config = Tacotron2Config()
@@ -23,7 +23,7 @@ if __name__=="__main__":
     path = config.checkpoingt_dir
 
     #字典路径
-    save_path_dictionary = config.save_path_dictionary
+    save_path_dictionary = config.save_path_dictionary_number
 
     #恢复字典
     tokenizer, vocab_size = _get_tokenizer_keras(save_path_dictionary)
@@ -33,7 +33,7 @@ if __name__=="__main__":
     tacotron2 = Tacotron2(vocab_size+1, config)
 
     #加载检查点
-    load_checkpoint(tacotron2, path)
+    checkpoint = load_checkpoint(tacotron2, path)
     print('已恢复至最新的检查点！')
 
     # 抓取文本数据

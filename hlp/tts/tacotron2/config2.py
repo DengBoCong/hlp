@@ -36,16 +36,19 @@ class Tacotron2Config(object):
         postnet_conv_filters=512,
         postnet_conv_kernel_sizes=5,
         postnet_dropout_rate=0.1,
-        #path
         checkpoingt_dir=r"./training_checkpoints2",
-        text_train_path=r"./data/LJSpeech-1.1/train/train.txt",
+        #ljspeech的path
         wave_train_path=r"./data/LJSpeech-1.1/train/wavs/",
-        text_test_path=r"./data/LJSpeech-1.1/test/test.txt",
         wave_test_path=r"./data/LJSpeech-1.1/test/wavs/",
-        text_path=r"./data/LJSpeech-1.1/test/test1.txt",
         csv_dir=r"./data/LJSpeech-1.1/metadata.csv",
-        path_all_data_dir=r"./data/LJSpeech-1.1/all_data.txt",
         save_path_dictionary=r"./data/LJSpeech-1.1/dictionary.json",
+
+        #number的path
+        wave_train_path_number=r"./data/number/train/wavs/",
+        wave_test_path_number=r"./data/number/test/wavs/",
+        csv_dir_number=r"./data/number/metadata.csv",
+        save_path_dictionary_number=r"./data/number/dictionary.json",
+
         #关于音频的参数
         sr=22050,
         n_fft=2048,
@@ -62,9 +65,6 @@ class Tacotron2Config(object):
         top_db=15,
         #其他
         batch_size=4,
-        train_number=4,
-        test_number=2
-
     ):
         """tacotron2参数."""
         self.max_len = max_len
@@ -99,16 +99,18 @@ class Tacotron2Config(object):
         self.postnet_conv_filters = postnet_conv_filters
         self.postnet_conv_kernel_sizes = postnet_conv_kernel_sizes
         self.postnet_dropout_rate = postnet_dropout_rate
-        # path路径
-        self.text_train_path = text_train_path
+        #检查点路径
+        self.checkpoingt_dir = checkpoingt_dir
+        # ljspeech路径
         self.wave_train_path = wave_train_path
-        self.text_test_path = text_test_path
         self.wave_test_path = wave_test_path
         self.save_path_dictionary = save_path_dictionary
-        self.text_path = text_path
-        self.checkpoingt_dir = checkpoingt_dir
-        self.path_all_data_dir = path_all_data_dir
         self.csv_dir = csv_dir
+        #number路径
+        self.wave_train_path_number = wave_train_path_number
+        self.wave_test_path_number = wave_test_path_number
+        self.save_path_dictionary_number = save_path_dictionary_number
+        self.csv_dir_number = csv_dir_number
         # 声音参数
         self.sr = sr
         self.n_fft = n_fft
@@ -125,5 +127,3 @@ class Tacotron2Config(object):
         self.top_db = top_db
         #其他
         self.batch_size = batch_size
-        self.train_number = train_number
-        self.test_number = test_number

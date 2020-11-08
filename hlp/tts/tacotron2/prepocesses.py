@@ -8,6 +8,7 @@ import io
 import json
 #文字处理
 config = Tacotron2Config()
+#按字符切
 def preprocess_sentence(s):
     s = s.lower().strip()
     s = re.sub(r"([?.!,])", r" \1 ", s)  # 切分断句的标点符号
@@ -16,14 +17,20 @@ def preprocess_sentence(s):
     s = s.strip()
     s = s
     return s
-
 #提取语音文件名
-def process_wav_name(wav_path):
+def process_wav_name(wav_path, a):
     datanames = os.listdir(wav_path)
     wav_name_list = []
-    for i in datanames:
-        wav_name_list.append(i[:10])
-    return wav_name_list
+    #a=1代表它是number数据集
+    if a == 1:
+        for i in datanames:
+            #i[:11]，11代表的是文件名字的长度，方便去csv文本文件中索引对应内容
+            wav_name_list.append(i[:11])
+        return wav_name_list
+    else:
+        for i in datanames:
+            wav_name_list.append(i[:10])
+        return wav_name_list
 
 #用语音文件名映射保存文本
 def map_to_text(path_to_csv, wav_name_list):
@@ -38,20 +45,22 @@ def map_to_text(path_to_csv, wav_name_list):
                 sentence_list.append(index_sentences[x])
     return sentence_list
 
-#数字集处理的process_text
-def process_text_number(text_data_path):
-    sentences_list = []
-    with open(text_data_path, "r", encoding='UTF-8') as f:
-        sen_list = f.readlines()
-    for sentence in sen_list[:]:
-        sentence = sentence.strip().lower()
-        sentences_list.append(preprocess_sentence(sentence))
-    return sentences_list
-
-#LJspeech数据集的处理
-def process_text(sentence_list):
+#按字符切分
+def process_text_word(sentence_list):
     en_sentences = [preprocess_sentence(s) for s in sentence_list]
     return en_sentences
+
+#按字母切分
+def process_text(sentence_list):
+    sentences_list2 = []
+    for s in sentence_list:
+        a = ""
+        sentence = preprocess_sentence(s)
+        for q in sentence:
+                a = a + ' ' +q
+        #print(a)
+        sentences_list2.append(a)
+    return sentences_list2
 
 def tokenize(texts, save_path, name):
     if name == "train":
@@ -59,20 +68,18 @@ def tokenize(texts, save_path, name):
         tokenizer = tf.keras.preprocessing.text.Tokenizer(filters='', oov_token='UNK')  # 无过滤字符
         tokenizer.fit_on_texts(texts)
         sequences = tokenizer.texts_to_sequences(texts)  # 文本数字序列
+        #保存字典
         json_string = tokenizer.to_json()
         with open(save_path, 'w') as f:
             json.dump(json_string, f)
+        vocab_size = len(tokenizer.word_index) + 1
         sequences = tf.keras.preprocessing.sequence.pad_sequences(sequences, padding='post')
-        vocab_size = len(tokenizer.word_index)+1
         return sequences, vocab_size
     else:
         tokenizer = tf.keras.preprocessing.text.Tokenizer(filters='')  # 无过滤字符
         tokenizer.fit_on_texts(texts)
         sequences = tokenizer.texts_to_sequences(texts)  # 文本数字序列
         # print(sequences[-1])
-        sequences_length = []
-        for seq in sequences:
-            sequences_length.append([len(seq)])
         sequences = tf.keras.preprocessing.sequence.pad_sequences(sequences, padding='post')
         vocab_size = len(tokenizer.word_index) + 1
         return sequences, vocab_size
@@ -153,11 +160,14 @@ def tar_stop_token(mel_len_wav, mel_gts, max_len):
 #create_dataset
 def create_dataset(batch_size, input_ids, mel_gts, tar_token):
     BUFFER_SIZE = len(input_ids)
+    print(BUFFER_SIZE)
     steps_per_epoch = BUFFER_SIZE // batch_size
     #dataset = tf.data.Dataset.from_tensor_slices((input_ids, mel_gts)).shuffle(BUFFER_SIZE)
     dataset = tf.data.Dataset.from_tensor_slices((input_ids, mel_gts, tar_token))
     dataset = dataset.batch(batch_size, drop_remainder=True)
     return dataset, steps_per_epoch
+
+
 
 if __name__ == '__main__':
     pass
