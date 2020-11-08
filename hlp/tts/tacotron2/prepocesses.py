@@ -5,8 +5,6 @@ import librosa
 import numpy as np
 from config2 import Tacotron2Config
 import io
-import csv
-import pandas as pd
 #文字处理
 config = Tacotron2Config()
 def preprocess_sentence(s):
@@ -17,6 +15,27 @@ def preprocess_sentence(s):
     s = s.strip()
     s = s
     return s
+
+#提取语音文件名
+def process_wav_name(wav_path):
+    datanames = os.listdir(wav_path)
+    wav_name_list = []
+    for i in datanames:
+        wav_name_list.append(i[:10])
+    return wav_name_list
+
+#用语音文件名映射保存文本
+def map_to_text(path_to_csv, wav_name_list):
+    lines = io.open(path_to_csv, encoding='UTF-8').read().strip().split('\n')
+    number = [l.split('|')[0] for l in lines[:]]
+    index_sentences = [l.split('|')[1] for l in lines[:]]
+    sentence_list = []
+    for i in wav_name_list:
+        for j in number:
+            if i == j:
+                x = number.index(j)
+                sentence_list.append(index_sentences[x])
+    return sentence_list
 
 #数字集处理的process_text
 def process_text_number(text_data_path):
@@ -29,10 +48,8 @@ def process_text_number(text_data_path):
     return sentences_list
 
 #LJspeech数据集的处理
-def process_text(text_data_path):
-    lines = io.open(text_data_path, encoding='UTF-8').read().strip().split('\n')
-    en_sentences = [l.split('|')[0] for l in lines[:]]
-    en_sentences = [preprocess_sentence(s) for s in en_sentences]
+def process_text(sentence_list):
+    en_sentences = [preprocess_sentence(s) for s in sentence_list]
     return en_sentences
 
 def tokenize(texts):
@@ -44,78 +61,24 @@ def tokenize(texts):
     for seq in sequences:
         sequences_length.append([len(seq)])
     sequences = tf.keras.preprocessing.sequence.pad_sequences(sequences, padding='post')
-    return sequences,tokenizer
+    return sequences, tokenizer
 
-def dataset_csv_to_txt(path_to_file,path_all_data):
-    #将csv文件转化为txt
-    with open(path_to_file,
-              'r', encoding='UTF-8') as f:
-        reader = csv.reader(f)
-        j = 0
-        for row in reader:
-            row[0] = row[0][11:]
-            str = ''.join(row)
-            #print(str)
-            with open('文字预处理.txt', 'a', encoding='UTF-8') as w:
-                w.write(str + '\n')
-        w.close()
-        f.close()
-    #因为有很多异常数据所以要对txt进行处理
-    with open('文字预处理.txt', 'r', encoding='UTF-8') as w:
-        with open(path_all_data, 'w', encoding='UTF-8') as f:
-            for row in w:
-                if row[0] == 'L' and row[1] == 'J':
-                    #for i in range(len(row) - 11):
-                    str = row[11:]
-                    f.write(str)
-                else:
-                    f.write(row)
-            f.write('\n')
-        w.close()
-        f.close()
-    os.remove('文字预处理.txt')
-    return
-
-#划分训练集和测试集，我取前四句话为训练集，第五第六句话为测试集
-def divide(text_to_file,train_to_file,test_to_file,train_number,test_number):
-    # 划分训练集部分
-    with open(text_to_file, 'r', encoding='UTF-8') as w:
-        with open(train_to_file, 'w', encoding='UTF-8') as f:
-            i = 0
-            for row in w:
-                if i < train_number:
-                    f.write(row)
-                else:
-                    break
-                i = i + 1
-            f.write('\n')
-        w.close()
-        f.close()
-    #划分测试集部分
-    with open(text_to_file, 'r', encoding='UTF-8') as w:
-        with open(test_to_file, 'w', encoding='UTF-8') as f:
-            i = 0
-            for row in w:
-                if i < test_number + train_number and i >= train_number:
-                    f.write(row)
-                elif i == test_number + train_number:
-                    break
-                i = i + 1
-            f.write('\n')
-        w.close()
-        f.close()
-    return
-
-def dataset_txt(path_to_file):
-    en = process_text(path_to_file)
+def dataset_txt(sentence_list):
+    en = process_text(sentence_list)
     en_seqs, en_tokenizer = tokenize(en)
     vocab_inp_size = len(en_tokenizer.word_index) + 1  # 含填充的0
-    return en_seqs,vocab_inp_size
+    return en_seqs, vocab_inp_size
 
-def dataset_sentence(sentence, text_data_path):
-    with open(text_data_path, "w") as f:
-        f.write(sentence)
-    return
+def process_text_predict(seq):
+    en_sentences = preprocess_sentence(seq)
+    return en_sentences
+
+def dataset_sentence(sentence):
+    en = process_text_predict(sentence)
+    print(en)
+    en_seqs, en_tokenizer = tokenize(en)
+    vocab_inp_size = len(en_tokenizer.word_index) + 1  # 含填充的0
+    return en_seqs, vocab_inp_size
 
 #mel频谱处理
 def get_spectrograms(fpath):

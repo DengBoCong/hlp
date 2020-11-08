@@ -98,7 +98,6 @@ class Tacotron2Config(object):
         self.postnet_conv_filters = postnet_conv_filters
         self.postnet_conv_kernel_sizes = postnet_conv_kernel_sizes
         self.postnet_dropout_rate = postnet_dropout_rate
-        self.max_len = max_len
         # path路径
         self.text_train_path = text_train_path
         self.wave_train_path = wave_train_path

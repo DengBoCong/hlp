@@ -1,5 +1,5 @@
 import tensorflow as tf
-from prepocesses import dataset_txt, dataset_sentence
+from prepocesses import dataset_txt
 from config2 import Tacotron2Config
 from tacotron2 import Tacotron2
 from tacotron2 import melspectrogram2wav, plot_spectrogram_to_numpy
@@ -21,7 +21,7 @@ if __name__=="__main__":
     config = Tacotron2Config()
     path = config.checkpoingt_dir
     #max_len = config.max_len
-    vocab_inp_size = 55
+    vocab_inp_size = 56
 
     #模型初始化
     tacotron2 = Tacotron2(vocab_inp_size, config)
@@ -35,18 +35,16 @@ if __name__=="__main__":
     # 抓取文本数据
     print("请输入需要合成的话：")
     seq = input()
-    dataset_sentence(seq, text_path1)
-    input_ids, en_tokenizer = dataset_txt(text_path1)
+    sequences_list = []
+    sequences_list.append(seq)
+    input_ids, vocab_inp_size = dataset_txt(sequences_list)
     input_ids = tf.convert_to_tensor(input_ids)
-    os.remove(text_path1)
-
     #预测
     mel_outputs, mel_outputs_postnet, gate_outputs, alignments = tacotron2.inference(input_ids)
 
     #生成预测声音
     wav = melspectrogram2wav(mel_outputs_postnet[0].numpy())
-    sr = 22050
-    wave.write('predict.wav', rate=sr, data=wav)
+    wave.write('predict.wav', rate=config.sr, data=wav)
     playsound('.\predict.wav')
 
     #画图
