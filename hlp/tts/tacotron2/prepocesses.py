@@ -1,14 +1,19 @@
-import os
-import re
-import tensorflow as tf
-import librosa
-import numpy as np
-from config2 import Tacotron2Config
 import io
 import json
-#文字处理
+import os
+import re
+
+import librosa
+import numpy as np
+import tensorflow as tf
+from config2 import Tacotron2Config
+from audio_process import get_spectrograms
+
+
 config = Tacotron2Config()
-#按字符切
+
+
+# 按字符切
 def preprocess_sentence(s):
     s = s.lower().strip()
     s = re.sub(r"([?.!,])", r" \1 ", s)  # 切分断句的标点符号
@@ -17,14 +22,16 @@ def preprocess_sentence(s):
     s = s.strip()
     s = s
     return s
-#提取语音文件名
+
+
+# 提取语音文件名
 def process_wav_name(wav_path, a):
     datanames = os.listdir(wav_path)
     wav_name_list = []
-    #a=1代表它是number数据集
+    # a=1代表它是number数据集
     if a == 1:
         for i in datanames:
-            #i[:11]，11代表的是文件名字的长度，方便去csv文本文件中索引对应内容
+            # i[:11]，11代表的是文件名字的长度，方便去csv文本文件中索引对应内容
             wav_name_list.append(i[:11])
         return wav_name_list
     else:
@@ -32,7 +39,8 @@ def process_wav_name(wav_path, a):
             wav_name_list.append(i[:10])
         return wav_name_list
 
-#用语音文件名映射保存文本
+
+# 用语音文件名映射保存文本
 def map_to_text(path_to_csv, wav_name_list):
     lines = io.open(path_to_csv, encoding='UTF-8').read().strip().split('\n')
     number = [l.split('|')[0] for l in lines[:]]
@@ -45,30 +53,33 @@ def map_to_text(path_to_csv, wav_name_list):
                 sentence_list.append(index_sentences[x])
     return sentence_list
 
-#按字符切分
+
+# 按字符切分
 def process_text_word(sentence_list):
     en_sentences = [preprocess_sentence(s) for s in sentence_list]
     return en_sentences
 
-#按字母切分
+
+# 按字母切分
 def process_text(sentence_list):
     sentences_list2 = []
     for s in sentence_list:
         a = ""
         sentence = preprocess_sentence(s)
         for q in sentence:
-                a = a + ' ' +q
-        #print(a)
+            a = a + ' ' + q
+        # print(a)
         sentences_list2.append(a)
     return sentences_list2
 
+
 def tokenize(texts, save_path, name):
     if name == "train":
-        #准备train之前要保存字典
+        # 准备train之前要保存字典
         tokenizer = tf.keras.preprocessing.text.Tokenizer(filters='', oov_token='UNK')  # 无过滤字符
         tokenizer.fit_on_texts(texts)
         sequences = tokenizer.texts_to_sequences(texts)  # 文本数字序列
-        #保存字典
+        # 保存字典
         json_string = tokenizer.to_json()
         with open(save_path, 'w') as f:
             json.dump(json_string, f)
@@ -84,7 +95,8 @@ def tokenize(texts, save_path, name):
         vocab_size = len(tokenizer.word_index) + 1
         return sequences, vocab_size
 
-#提取字典
+
+# 提取字典
 def _get_tokenizer_keras(path):
     """从指定路径加载保存好的字典"""
     with open(path) as f:
@@ -93,80 +105,47 @@ def _get_tokenizer_keras(path):
     vocab_size = len(tokenizer.word_index)
     return tokenizer, vocab_size
 
-#训练的时候对取得的句子列表处理
+
+# 训练的时候对取得的句子列表处理
 def dataset_txt(sentence_list, save_path, name):
     en = process_text(sentence_list)
     en_seqs, vocab_size = tokenize(en, save_path, name)
     return en_seqs, vocab_size
 
-#mel频谱处理
-def get_spectrograms(fpath):
-    #设定一些参数
-    config=Tacotron2Config()
-    preemphasis=config.preemphasis
-    n_fft=config.n_fft
-    n_mels=config.n_mels
-    hop_length=config.hop_length
-    win_length=config.win_length
-    max_db=config.max_db
-    ref_db=config.ref_db
-    top_db=config.top_db
-    # 加载声音文件
-    y, sr = librosa.load(fpath, sr=None)
-    # 裁剪
-    y, _ = librosa.effects.trim(y, top_db=top_db)
-    y = np.append(y[0], y[1:] - preemphasis * y[:-1])
-    # 短时傅里叶变换
-    linear = librosa.stft(y=y,
-                          n_fft=n_fft,
-                          hop_length=hop_length,
-                          win_length=win_length)
-
-    # 幅度谱
-    mag = np.abs(linear)  # (1+n_fft//2, T)
-    # mel频谱
-    mel_basis = librosa.filters.mel(sr, n_fft, n_mels)  # (n_mels, 1+n_fft//2)
-    mel = np.dot(mel_basis, mag)  # (n_mels, t)
-    mel = 20 * np.log10(np.maximum(1e-5, mel))
-    mag = 20 * np.log10(np.maximum(1e-5, mag))
-    mel = np.clip((mel - ref_db + max_db) / max_db, 1e-8, 1)
-    mag = np.clip((mag - ref_db + max_db) / max_db, 1e-8, 1)
-    # 转置
-    mel = mel.T.astype(np.float32)  # (T, n_mels)
-    mag = mag.T.astype(np.float32)  # (T, 1+n_fft//2)
-    return mel, mag
 
 def dataset_wave(path, config):
     mel_list = []
     mel_len_wav = []
     dirs = os.listdir(path)
     for file in dirs:
-        logmelspec,sr = get_spectrograms(path+file)
+        logmelspec, sr = get_spectrograms(path + file)
         mel_len_wav.append(len(logmelspec))
         mel_list.append(logmelspec.tolist())
-    mel_numpy = tf.keras.preprocessing.sequence.pad_sequences(mel_list, maxlen=config.max_len, padding='post', dtype='float32')
-    #print(len(mel_numpy[1000]))
+    mel_numpy = tf.keras.preprocessing.sequence.pad_sequences(mel_list, maxlen=config.max_len, padding='post',
+                                                              dtype='float32')
+    # print(len(mel_numpy[1000]))
     inputs = tf.convert_to_tensor(mel_numpy)
     return inputs, mel_len_wav
 
-#用于训练stop_token
+
+# 用于训练stop_token
 def tar_stop_token(mel_len_wav, mel_gts, max_len):
     tar_token = np.zeros((mel_gts.shape[0], max_len))
     for i in range(len(mel_len_wav)):
         j = mel_len_wav[i]
-        tar_token[i, (j-1):] = 1
+        tar_token[i, (j - 1):] = 1
     return tar_token
 
-#create_dataset
+
+# create_dataset
 def create_dataset(batch_size, input_ids, mel_gts, tar_token):
     BUFFER_SIZE = len(input_ids)
     print(BUFFER_SIZE)
     steps_per_epoch = BUFFER_SIZE // batch_size
-    #dataset = tf.data.Dataset.from_tensor_slices((input_ids, mel_gts)).shuffle(BUFFER_SIZE)
+    # dataset = tf.data.Dataset.from_tensor_slices((input_ids, mel_gts)).shuffle(BUFFER_SIZE)
     dataset = tf.data.Dataset.from_tensor_slices((input_ids, mel_gts, tar_token))
     dataset = dataset.batch(batch_size, drop_remainder=True)
     return dataset, steps_per_epoch
-
 
 
 if __name__ == '__main__':
