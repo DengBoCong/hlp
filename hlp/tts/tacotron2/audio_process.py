@@ -1,3 +1,5 @@
+import copy
+
 import librosa
 import numpy as np
 import scipy
