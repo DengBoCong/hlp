@@ -10,6 +10,7 @@ from tacotron2 import Tacotron2, load_checkpoint
 from audio_process import melspectrogram2wav
 
 
+# 下面两个方法没使用，暂时保留
 def _plot_spectrogram_to_numpy(spectrogram):
     fig, ax = plt.subplots(figsize=(12, 3))
     im = ax.imshow(spectrogram, aspect="auto", origin="lower",
@@ -63,11 +64,5 @@ if __name__ == "__main__":
 
     # 生成预测声音
     wav = melspectrogram2wav(mel_outputs_postnet[0].numpy())
-    wave.write('predict.wav', rate=config.sr, data=wav)
-    playsound('.\predict.wav')
-
-    # 画图
-    plt.figure()
-    mel_gts = tf.transpose(mel_outputs_postnet, [0, 2, 1])
-    plt.imshow(_plot_spectrogram_to_numpy(mel_gts[0].numpy()))
-    plt.show()
+    wave.write('generated.wav', rate=config.sr, data=wav)
+    playsound('.\generated.wav')
