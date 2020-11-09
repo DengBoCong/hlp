@@ -15,7 +15,6 @@ def preprocess_sentence(s):
     s = re.sub(r'[" "]+', " ", s)  # 合并多个空格
     s = re.sub(r"[^a-zA-Z?.!,]+", " ", s)
     s = s.strip()
-    s = s
     return s
 
 
@@ -60,10 +59,12 @@ def process_text(sentence_list):
     sentences_list2 = []
     for s in sentence_list:
         a = ""
-        sentence = preprocess_sentence(s)
+        s = s.lower().strip()  # 大写转小写
+        s = re.sub(r"[^a-zA-Z?.!,]+", " ", s)  # 替换一些不常规符号
+        s = re.sub(r'[" "]+', " ", s)  # 合并多个空格
+        sentence = s.strip()  # 去掉前后空格
         for q in sentence:
             a = a + ' ' + q
-        # print(a)
         sentences_list2.append(a)
     return sentences_list2
 
@@ -135,7 +136,6 @@ def tar_stop_token(mel_len_wav, mel_gts, max_len):
 
 def create_dataset(batch_size, input_ids, mel_gts, tar_token):
     BUFFER_SIZE = len(input_ids)
-    print(BUFFER_SIZE)
     steps_per_epoch = BUFFER_SIZE // batch_size
     # dataset = tf.data.Dataset.from_tensor_slices((input_ids, mel_gts)).shuffle(BUFFER_SIZE)
     dataset = tf.data.Dataset.from_tensor_slices((input_ids, mel_gts, tar_token))

@@ -35,8 +35,8 @@ def evluate(path, csv_dir, save_path_dictionary, vocab_size):
         mel_outputs, mel_outputs_postnet, gate_outputs, alignments = tacotron2.inference(new_input_ids)
         mel2 = mel_gts[i]
         mel2 = tf.expand_dims(mel2, axis=0)
-        print("欧式距离为：")
-        spec_distance(mel_outputs_postnet, mel2)
+        score = spec_distance(mel_outputs_postnet, mel2)
+        print("欧式距离为：", score)
 
 
 if __name__ == "__main__":
