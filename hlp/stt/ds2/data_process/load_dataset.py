@@ -1,21 +1,23 @@
-from util import get_config, get_all_data_path, set_config, get_dataset_information
 import os
-from text_process import get_text_list, get_process_text_list, tokenize, get_text_int_sequences, get_max_label_length
 import json
-from audio_process import get_max_audio_length
+from util import get_config, get_all_data_path, set_config, get_dataset_information
+
+from data_process.audio_process import get_max_audio_length
+from data_process.text_process import get_text_list, get_text_int_sequences, get_max_label_length, tokenize, get_process_text_list
+
 
 #加载数据
 def load_data(dataset_name, data_path, text_row_style, train_or_test, num_examples):
     # 基于某种语料获取其中语音路径和文本的list
-    if dataset_name == "number":
+    if dataset_name.lower() == "number":
         audio_data_path_list, text_list = load_dataset_number(data_path, text_row_style, num_examples)
-    elif dataset_name == "LibriSpeech" or dataset_name == "librispeech":
+    elif dataset_name.lower() == "librispeech":
         audio_data_path_list, text_list = load_dataset_librispeech(data_path, text_row_style, num_examples)
     
     # 训练则对数据进行预处理，测试则直接返回
-    if train_or_test == "train":
+    if train_or_test.lower() == "train":
         return build_train_data(audio_data_path_list, text_list)
-    elif train_or_test == "test":
+    elif train_or_test.lower() == "test":
         return audio_data_path_list, text_list
 
 # 加载number语料，返回语音文件list和对应文本字符串list
@@ -37,7 +39,7 @@ def load_dataset_number(data_path, text_row_style, num_examples = None):
 
 # 加载librispeech语料
 def load_dataset_librispeech(data_path, text_row_style, num_examples = None):
-    # 获取librispeech数据文件下(train或test)所有的最终数据folder
+    # 获取librispeech数据文件下(train或test)所有的数据folder
     data_folder_list = []
     folders_first = os.listdir(data_path)
     for folder_first in folders_first:
@@ -80,7 +82,7 @@ def build_train_data(audio_data_path_list, text_list):
         dataset_information_path = configs["preprocess"]["dataset_information_path"]
         
         dataset_information = {}
-        dataset_information["dense_units"] = len(tokenizer.index_word) + 2
+        dataset_information["vocab_size"] = len(tokenizer.index_word)
         dataset_information["max_input_length"] = max_input_length
         dataset_information["max_label_length"] = max_label_length
         dataset_information["index_word"] = tokenizer.index_word

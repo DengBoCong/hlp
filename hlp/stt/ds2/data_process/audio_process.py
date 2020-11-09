@@ -1,36 +1,10 @@
 import wave
 import pyaudio
 import tensorflow as tf
-from python_speech_features import mfcc, logfbank, delta
-from scipy.io import wavfile
-import numpy as np
 
-
-def wav_to_feature(wav_path, audio_feature_type):
-    fs, audio = wavfile.read(wav_path)
-    
-    if audio_feature_type == "mfcc":
-        return get_mfcc_feature(audio, fs)
-    elif audio_feature_type == "fbank":
-        return get_fbank_feature(audio, fs)
-
-def get_mfcc_feature(wavsignal, fs):
-    # 输入为wav文件数学表示和采样频率，输出为语音的MFCC特征(默认13维)+一阶差分+二阶差分；
-    feat_mfcc = mfcc(wavsignal, fs)
-    feat_mfcc_d = delta(feat_mfcc, 2)
-    feat_mfcc_dd = delta(feat_mfcc_d, 2)
-    
-    # (timestep, 39)
-    wav_feature = np.column_stack((feat_mfcc, feat_mfcc_d, feat_mfcc_dd))
-    return wav_feature.tolist()
-
-def get_fbank_feature(wavsignal, fs):
-    # 输入为wav文件数学表示和采样频率，输出为语音的FBANK特征
-    feat_fbank = logfbank(wavsignal, fs, nfilt=80)
-    
-    # 未加差分, (timestep, 80)
-    wav_feature = np.column_stack((feat_fbank))
-    return wav_feature.tolist()
+import sys
+sys.path.append("..")
+from utils.features import wav_to_feature
 
 # 基于语音路径序列，处理成模型的输入tensor
 def get_input_tensor(audio_data_path_list, audio_feature_type, maxlen):
@@ -41,9 +15,9 @@ def get_input_tensor(audio_data_path_list, audio_feature_type, maxlen):
 
     audio_feature_numpy = tf.keras.preprocessing.sequence.pad_sequences(
         audio_feature_list,
-        maxlen=maxlen,
-        padding='post',
-        dtype='float32'
+        maxlen = maxlen,
+        dtype = 'float32',
+        padding = 'post'
         )
     input_tensor = tf.convert_to_tensor(audio_feature_numpy)
 
@@ -60,12 +34,12 @@ def get_max_audio_length(audio_data_path_list, audio_feature_type):
     return max_audio_length
 
 # 获取麦克风录音并保存在filepath中
-def record(record_path):
+def record(record_path, record_duration):
     CHUNK = 1024
     FORMAT = pyaudio.paInt16
     CHANNELS = 1  # 声道数
     RATE = 16000  # 采样率
-    RECORD_SECONDS = int(input("录音时长(秒):"))
+    RECORD_SECONDS = record_duration
     WAVE_OUTPUT_FILENAME = record_path
     p = pyaudio.PyAudio()
 

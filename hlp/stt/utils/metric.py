@@ -1,8 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Tue Sep 15 16:50:12 2020
-@author: 彭康
-"""
 
 
 # 输入的两个参数均是字符串的list,是wer计算的入口
