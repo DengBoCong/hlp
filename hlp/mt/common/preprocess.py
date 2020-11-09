@@ -126,20 +126,20 @@ def split_batch():
 
     input_tensor = numpy.loadtxt(input_path, dtype='int32')
     target_tensor = numpy.loadtxt(target_path, dtype='int32')
-    x_train, x_test, y_train, y_test = train_test_split(input_tensor, target_tensor, test_size=_config.test_size)
+    x_train, x_test, y_train, y_test = train_test_split(input_tensor, target_tensor, test_size=_config.val_size)
     train_dataset = tf.data.Dataset.from_tensor_slices((x_train, y_train))
     train_dataset = train_dataset.shuffle(_config.BUFFER_SIZE).batch(_config.BATCH_SIZE, drop_remainder=True)
     val_dataset = tf.data.Dataset.from_tensor_slices((x_test, y_test))
     val_dataset = val_dataset.shuffle(_config.BUFFER_SIZE).batch(_config.BATCH_SIZE, drop_remainder=True)
-    train_dataset.cache()
     return train_dataset, val_dataset
 
 
-def generate_batch_from_file(num_steps, batch_size):
+def generate_batch_from_file(num_steps, start_step, batch_size):
     """
     从编码文件中分batch读入数据集
     自动从配置文件设置确定input_path、target_path
     num_steps：整个训练集的step数，即数据集中包含多少个batch
+    start_step:从哪个step开始读batch
     batch_size:batch大小
 
     return:input_tensor shape=(batch_size, sentence_length), dtype=tf.int32
@@ -148,7 +148,7 @@ def generate_batch_from_file(num_steps, batch_size):
     input_path = _config.encoded_sequences_path_prefix + _config.source_lang
     target_path = _config.encoded_sequences_path_prefix + _config.target_lang
 
-    step = 0
+    step = int(start_step)
     while step < num_steps:
         input_tensor = numpy.loadtxt(input_path, dtype='int32', skiprows=0 + step*batch_size, max_rows=batch_size)
         target_tensor = numpy.loadtxt(target_path, dtype='int32', skiprows=0 + step*batch_size, max_rows=batch_size)
@@ -192,12 +192,14 @@ def train_preprocess():
 
     # 生成及保存字典
     print('正在生成、保存源语言(%s)字典(分词方式:%s)...' % (_config.source_lang, _config.en_tokenize_type))
-    tokenizer_source, vocab_size_source = tokenize.create_tokenizer(sentences=source_sentences, language=_config.source_lang)
+    tokenizer_source, vocab_size_source = tokenize.create_tokenizer(sentences=source_sentences
+                                                                    , language=_config.source_lang)
     print('生成英文字典大小:%d' % vocab_size_source)
     print('源语言字典生成、保存完毕！\n')
 
     print('正在生成、保存目标语言(%s)字典(分词方式:%s)...' % (_config.target_lang, _config.zh_tokenize_type))
-    tokenizer_target, vocab_size_target = tokenize.create_tokenizer(sentences=target_sentences, language=_config.target_lang)
+    tokenizer_target, vocab_size_target = tokenize.create_tokenizer(sentences=target_sentences
+                                                                    , language=_config.target_lang)
     print('生成目标语言字典大小:%d' % vocab_size_target)
     print('目标语言字典生成、保存完毕！\n')
 
