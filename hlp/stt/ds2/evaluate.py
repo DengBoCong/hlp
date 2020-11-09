@@ -1,14 +1,32 @@
 import tensorflow as tf
-from model import get_ds2_model, decode_output
-from utils import get_config, get_index_word
-from data_preprocess import load_data
-from metric import wers, lers
+from load_dataset import load_data
+from generator import data_generator
+
+from model import DS2, decode_output
+from util import get_config, get_dataset_information
+from math import ceil
+
+import sys
+if sys.path[-1] != "..":
+    sys.path.append("..")
+from utils.metric import wers, lers
+
 
 if __name__ == "__main__":
     configs = get_config()
+    dataset_information = get_dataset_information()
     
+    # 获取模型配置，加载模型
+    conv_layers = configs["model"]["conv_layers"]
+    filters = configs["model"]["conv_filters"]
+    kernel_size = configs["model"]["conv_kernel_size"]
+    strides = configs["model"]["conv_strides"]
+    bi_gru_layers = configs["model"]["bi_gru_layers"]
+    gru_units = configs["model"]["gru_units"]
+    dense_units = dataset_information["dense_units"]
+    model = DS2(conv_layers, filters, kernel_size, strides, bi_gru_layers, gru_units, dense_units)
+
     # 加载模型检查点
-    model = get_ds2_model()
     checkpoint = tf.train.Checkpoint(model=model)
     manager = tf.train.CheckpointManager(
         checkpoint,
@@ -18,35 +36,59 @@ if __name__ == "__main__":
     if manager.latest_checkpoint:
         checkpoint.restore(manager.latest_checkpoint)
 
-    
     test_data_path = configs["test"]["data_path"]
     num_examples = configs["test"]["num_examples"]
-    #加载测试集数据并通过模型计算出结果序列
-    inputs, labels_list = load_data(test_data_path, "test", num_examples)
-    originals = labels_list
-    results = []
-    y_pred = model(inputs)
-    output = tf.keras.backend.ctc_decode(
-        y_pred=y_pred,
-        input_length=tf.fill([y_pred.shape[0]], y_pred.shape[1]),
-        greedy=True
-    )
-    results_int_list = output[0][0].numpy().tolist()
+    dataset_name = configs["preprocess"]["dataset_name"]
+    batch_size = configs["test"]["batch_size"]
+    text_row_style = configs["preprocess"]["text_row_style"]
+    mode = configs["preprocess"]["text_process_mode"]
+    audio_feature_type = configs["other"]["audio_feature_type"]
 
-    # 构建字符集对象,并解码出预测的结果list
-    index_word = get_index_word()
-    for i in range(len(results_int_list)):
-        str = decode_output(results_int_list[i], index_word).strip()
-        results.append(str)
+    # 加载测试集数据生成器
+    test_data = load_data(dataset_name, test_data_path, text_row_style, "test", num_examples)
+    batchs = ceil(len(test_data[0]) / batch_size)
+    test_data_generator = data_generator(
+        test_data,
+        "test",
+        batchs,
+        batch_size,
+        audio_feature_type,
+        dataset_information["max_input_length"],
+        dataset_information["max_label_length"]
+    )
+
+    aver_wers = 0
+    aver_lers = 0
+    aver_norm_lers = 0
     
-    # 通过wer、ler指标评价模型
-    rates_wers, aver_wers = wers(originals, results)
-    rates_lers, aver_lers, norm_rates_lers, norm_aver_lers = lers(originals, results)
+    # 获取index_word
+    index_word = dataset_information["index_word"]
+
+    for batch, (input_tensor, labels_list) in zip(range(1, batchs+1), test_data_generator):
+        originals = labels_list
+        results = []
+        y_pred = model(input_tensor)
+        output = tf.keras.backend.ctc_decode(
+            y_pred=y_pred,
+            input_length=tf.fill([y_pred.shape[0]], y_pred.shape[1]),
+            greedy=True
+        )
+        results_int_list = output[0][0].numpy().tolist()
+
+        # 解码
+        for i in range(len(results_int_list)):
+            str = decode_output(results_int_list[i], index_word, mode).strip()
+            results.append(str)
+        
+        # 通过wer、ler指标评价模型
+        rates_wer, aver_wer = wers(originals, results)
+        rates_ler, aver_ler, norm_rates_ler, norm_aver_ler = lers(originals, results)
+        aver_wers += aver_wer
+        aver_lers += aver_ler
+        aver_norm_lers += norm_aver_ler
+    
     print("WER:")
-    print("rates", rates_wers)
-    print("aver:", aver_wers)
+    print("aver:", aver_wers/batchs)
     print("LER:")
-    print("rates:", rates_lers)
-    print("aver:", aver_lers)
-    print("norm_rates:", norm_rates_lers)
-    print("norm_aver:", norm_aver_lers)
+    print("aver:", aver_lers/batchs)
+    print("aver_norm:", aver_norm_lers/batchs)

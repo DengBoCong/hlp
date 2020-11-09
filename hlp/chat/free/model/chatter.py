@@ -15,17 +15,15 @@ class Chatter(object):
     不同模型或方法实现的聊天子类化该类。
     """
 
-    def __init__(self, model, checkpoint_dir, beam_size, dict_fn):
+    def __init__(self, checkpoint_dir, beam_size, max_length):
         """
         Transformer聊天器初始化，用于加载模型
         """
+        self.max_length = max_length
         self.checkpoint_dir = checkpoint_dir
-        if model == "chat":
-            print('正在从“{}”处加载字典...'.format(dict_fn))
-            self.token = _data.load_token_dict(dict_fn=dict_fn)
         self.beam_search_container = BeamSearch(
             beam_size=beam_size,
-            max_length=_config.max_length_tar,
+            max_length=max_length,
             worst_score=0
         )
         is_exist = Path(checkpoint_dir)
@@ -70,6 +68,7 @@ class Chatter(object):
                             start_sign=_config.start_sign,
                             end_sign=_config.end_sign,
                             checkpoint_dir=self.checkpoint_dir,
+                            max_length=self.max_length,
                             max_train_data_size=max_train_data_size)
 
         for epoch in range(_config.epochs):
@@ -81,8 +80,8 @@ class Chatter(object):
             batch_sum = 0
             sample_sum = 0
 
-            for (batch, (inp, tar)) in enumerate(dataset.take(steps_per_epoch)):
-                self._train_step(inp, tar, step_loss)
+            for (batch, (inp, tar, weight)) in enumerate(dataset.take(steps_per_epoch)):
+                self._train_step(inp, tar, weight, step_loss)
                 batch_sum = batch_sum + len(inp)
                 sample_sum = steps_per_epoch * len(inp)
                 print('\r', '{}/{} [==================================]'.format(batch_sum, sample_sum), end='',
@@ -98,18 +97,18 @@ class Chatter(object):
 
     def respond(self, req):
         # 对req进行初步处理
-        inputs, dec_input = _data.preprocess_request(req=req, token=self.token)
+        inputs, dec_input = _data.preprocess_request(sentence=req, token=self.token, max_length=self.max_length)
 
         self.beam_search_container.init_all_inner_variables(inputs=inputs, dec_input=dec_input)
         inputs, dec_input = self.beam_search_container.expand_beam_size_inputs()
-        for t in range(_config.max_length_tar):
+        for t in range(self.max_length):
             predictions = self._create_predictions(inputs, dec_input, t)
             self.beam_search_container.add(predictions=predictions, end_sign=self.token.get('end'))
             if self.beam_search_container.beam_size == 0:
                 break
 
             inputs, dec_input = self.beam_search_container.expand_beam_size_inputs()
-        beam_search_result = self.beam_search_container.get_result()
+        beam_search_result = self.beam_search_container.get_result(top_k=3)
         result = ''
         # 从容器中抽取序列，生成最终结果
         for i in range(len(beam_search_result)):

@@ -1,14 +1,8 @@
 import os
 import tensorflow as tf
-import matplotlib.pyplot as plt
-import librosa.display
-import librosa
-import numpy as np
-import copy
-import scipy
-from config2 import Tacotron2Config
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+
 
 # 自己的模型
 class Encoder(tf.keras.Model):
@@ -92,7 +86,7 @@ class Attention(tf.keras.Model):
         self.score_mask_value = -float("inf")
 
     def get_alignment_energies(self, query, memory, attention_weights_cat):
-        #print("query:", query.shape)
+        # print("query:", query.shape)
         processed_query = self.query_layer(tf.expand_dims(query, axis=1))
         processed_memory = self.memory_layer(memory)
 
@@ -297,12 +291,12 @@ class Decoder(tf.keras.Model):
                decoder_input: 先前的mel output
                -------
                """
-        #拼接
+        # 拼接
         cell_input = tf.concat((decoder_input, self.attention_context), -1)
-        #第一次过lstmcell
+        # 第一次过lstmcell
         cell_output, (self.attention_hidden, self.attention_cell) = self.decoder_lstms1(cell_input, (
-        self.attention_hidden, self.attention_cell))
-        #dropout
+            self.attention_hidden, self.attention_cell))
+        # dropout
         self.attention_hidden = tf.keras.layers.Dropout(rate=0.1)(self.attention_hidden)
 
         # 拼接
@@ -320,8 +314,8 @@ class Decoder(tf.keras.Model):
 
         # 第2次lstmcell
         decoder_output, (self.decoder_hidden, self.decoder_cell) = self.decoder_lstms2(decoder_input, (
-        self.decoder_hidden, self.decoder_cell))
-        #dropout
+            self.decoder_hidden, self.decoder_cell))
+        # dropout
         self.decoder_hidden = tf.keras.layers.Dropout(rate=0.1)(self.decoder_hidden)
 
         # 拼接
@@ -339,7 +333,7 @@ class Decoder(tf.keras.Model):
                memory: 编码器输出
                decoder_inputs: #用于教师强制
                """
-        #go_frame
+        # go_frame
         decoder_input = self.get_go_frame(memory)
         decoder_input = tf.expand_dims((decoder_input), axis=0)
         decoder_inputs = self.parse_decoder_inputs(decoder_inputs)
@@ -347,44 +341,44 @@ class Decoder(tf.keras.Model):
         decoder_inputs = self.prenet2(decoder_inputs)
         self.initialize_decoder_states(memory)
         mel_outputs, gate_outputs, alignments = [], [], []
-        #教师强制
-        while len(mel_outputs) < decoder_inputs.shape[0]-1:
+        # 教师强制
+        while len(mel_outputs) < decoder_inputs.shape[0] - 1:
             decoder_input = decoder_inputs[len(mel_outputs)]
             mel_output, gate_output, attention_weights = self.decode(
                 decoder_input)
-            #拼接
+            # 拼接
             mel_outputs += [tf.squeeze(mel_output)]
             gate_outputs += [tf.squeeze(gate_output, axis=1)]
             alignments += [attention_weights]
-            #调整维度输出
+            # 调整维度输出
         mel_outputs, gate_outputs, alignments = self.parse_decoder_outputs(
             mel_outputs, gate_outputs, alignments)
         return mel_outputs, gate_outputs, alignments
 
-    #预测 我觉得有问题 但是我还没有改好，它一直很让我头疼
+    # 预测 我觉得有问题 但是我还没有改好，它一直很让我头疼
     def inference(self, memory):
         """    参数
                memory: 编码器输出
         """
-        #go frame
+        # go frame
         decoder_input = self.get_go_frame(memory)
         self.initialize_decoder_states(memory)
         mel_outputs, gate_outputs, alignments = [], [], []
         while len(mel_outputs) < self.max_len:
-            #通过pre_net
+            # 通过pre_net
             decoder_input = self.prenet2(decoder_input)
-            #解码
+            # 解码
             mel_output, gate_output, attention_weights = self.decode(
                 decoder_input)
-            #拼接
+            # 拼接
             mel_outputs += [tf.squeeze(mel_output)]
             gate_outputs += [tf.squeeze(gate_output, axis=1)]
             alignments += [attention_weights]
-            #将自己预测的作为下一步的输入
+            # 将自己预测的作为下一步的输入
             decoder_input = mel_output
-        #拓展维度
+        # 拓展维度
         mel_outputs = tf.expand_dims(mel_outputs, axis=1)
-        #变维度输出
+        # 变维度输出
         mel_outputs, gate_outputs, alignments = self.parse_decoder_outputs(
             mel_outputs, gate_outputs, alignments)
         return mel_outputs, gate_outputs, alignments
@@ -408,67 +402,18 @@ class Tacotron2(tf.keras.Model):
     def inference(self, inputs):
         encoder_outputs = self.encoder(inputs)
         mel_outputs, gate_outputs, alignments = self.decoder.inference(encoder_outputs)
-        #后处理网络
+        # 后处理网络
         mel_outputs_postnet = self.postnet(mel_outputs)
         mel_outputs_postnet = mel_outputs + mel_outputs_postnet
         return mel_outputs, mel_outputs_postnet, gate_outputs, alignments
 
-#griffin_lim部分
-config=Tacotron2Config()
 
-def melspectrogram2wav(mel):
-    mel = (np.clip(mel, 0, 1) * config.max_db) - config.max_db + config.ref_db
-    # 转为幅度谱
-    mel = np.power(10.0, mel * 0.05)
-    m = _mel_to_linear_matrix(config.sr, config.n_fft, config.n_mels)
-    mag = np.dot(m, mel)
-    # 波形重构
-    wav = griffin_lim(mag)
-    wav = scipy.signal.lfilter([1], [1, -config.preemphasis], wav)
-    # 剪裁
-    wav, _ = librosa.effects.trim(wav)
-    return wav.astype(np.float32)
-
-def _mel_to_linear_matrix(sr, n_fft, n_mels):
-    m = librosa.filters.mel(sr, n_fft, n_mels)
-    m_t = np.transpose(m)
-    p = np.matmul(m, m_t)
-    d = [1.0 / x if np.abs(x) > 1.0e-8 else x for x in np.sum(p, axis=0)]
-    return np.matmul(m_t, np.diag(d))
-
-def griffin_lim(spectrogram):
-    X_best = copy.deepcopy(spectrogram)
-    for i in range(config.n_iter):
-        X_t = invert_spectrogram(X_best)
-        est = librosa.stft(X_t, config.n_fft, config.hop_length, win_length=config.win_length)
-        phase = est / np.maximum(1e-8, np.abs(est))
-        X_best = spectrogram * phase
-    X_t = invert_spectrogram(X_best)
-    y = np.real(X_t)
-    return y
-
-def invert_spectrogram(spectrogram):
-    '''
-    spectrogram: [f, t]
-    '''
-    return librosa.istft(spectrogram, config.hop_length, win_length=config.win_length, window="hann")
-
-def plot_spectrogram_to_numpy(spectrogram):
-    fig, ax = plt.subplots(figsize=(12, 3))
-    im = ax.imshow(spectrogram, aspect="auto", origin="lower",
-                   interpolation='none')
-    plt.colorbar(im, ax=ax)
-    plt.xlabel("Frames")
-    plt.ylabel("Channels")
-    plt.tight_layout()
-    fig.canvas.draw()
-    data = save_figure_to_numpy(fig)
-    plt.close()
-    return data
-
-def save_figure_to_numpy(fig):
-    # 保存成numpy
-    data = np.fromstring(fig.canvas.tostring_rgb(), dtype=np.uint8, sep='')
-    data = data.reshape(fig.canvas.get_width_height()[::-1] + (3,))
-    return data
-
+# 恢复检查点
+def load_checkpoint(tacotron2, path):
+    # 加载检查点
+    checkpoint_path = path
+    ckpt = tf.train.Checkpoint(tacotron2=tacotron2)
+    ckpt_manager = tf.train.CheckpointManager(ckpt, checkpoint_path, max_to_keep=100)
+    if ckpt_manager.latest_checkpoint:
+        ckpt.restore(ckpt_manager.latest_checkpoint).expect_partial()
+    return ckpt

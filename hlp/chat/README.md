@@ -14,12 +14,15 @@
 
 # 数据集汇总
 + 闲聊对话语料
+   + [LCCC_base](https://cloud.tsinghua.edu.cn/f/f131a4d259184566a29c/)
+   + [LCCC_large](https://cloud.tsinghua.edu.cn/f/8424e7b9454c4e628c24/)
    + free中data目录中的语料为缩减版，是原版语料的六分之一，需要[原版语料](https://pan.baidu.com/s/1qAIrdX-mv-Bzq1Y7MDjmLg)可以自取，提取码：r6da
    + [小黄鸡语料](https://github.com/candlewill/Dialog_Corpus)
    + [PTT八卦语料](https://github.com/zake7749/Gossiping-Chinese-Corpus)
    + [豆瓣多轮](https://github.com/MarkWuNLP/MultiTurnResponseSelection)
    + [电视剧对白语料](https://github.com/fateleak/dgk_lost_conv)
    + [贴吧论坛回帖语料](https://pan.baidu.com/s/1mUknfwy1nhSM7XzH8xi7gQ)，密码:i4si
+   + [Ubuntu](https://www.dropbox.com/s/2fdn26rj6h9bpvl/ubuntu_data.zip?dl=0)
 + 任务对话语料
    + [MultiWOZ1.0](https://www.repository.cam.ac.uk/bitstream/handle/1810/278720/MultiWOZ_1.0.zip?sequence=1&isAllowed=y)
    + [MultiWOZ2.0](https://www.repository.cam.ac.uk/bitstream/handle/1810/280608/MULTIWOZ2.zip?sequence=3&isAllowed=y)

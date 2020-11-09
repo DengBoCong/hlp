@@ -3,7 +3,6 @@
 Created on Tue Sep 29 10:20:05 2020
 formatted
 @author: 九童
-
 文字语料预处理
 """
 import io
@@ -46,7 +45,7 @@ def preprocess_en_sentence(s):
 
 def create_input_dataset(path, num_examples):
     lines = io.open(path, encoding='UTF-8').read().strip().split('\n')
-    en_sentences = [l.split('\t')[0] for l in lines[:num_examples]]
+    en_sentences = [l.split('\t')[1] for l in lines[:num_examples]]
     en_sentences = [preprocess_en_sentence(s) for s in en_sentences]
 
     return en_sentences
@@ -66,18 +65,9 @@ def max_length(texts):
     return max(len(t) for t in texts)
 
 
-def tensor_to_onehot(tensor, tokenizer):
-    tensor = tensor.tolist()
-    for _, sentence in enumerate(tensor):
-        for index, word in enumerate(sentence):
-            word = tf.keras.utils.to_categorical(word - 1, num_classes=len(tokenizer.word_index) + 1)
-            sentence[index] = word
-    tensor = np.array(tensor).astype(int)
-    return tensor
-
-
 def load_dataset(path, num_examples=None):
-    # 创建清理过的输入输出对
+    # 创建清理过的输入输出对    
+    print("开始处理文本标签数据......")
     targ_lang = create_input_dataset(path, num_examples)
     target_tensor, targ_lang_tokenizer = tokenize(targ_lang)
     return target_tensor, targ_lang_tokenizer
