@@ -2,7 +2,7 @@ import tensorflow as tf
 
 from config2 import Tacotron2Config
 from tacotron2 import load_checkpoint
-from prepocesses import dataset_txt, dataset_wave, process_wav_name, map_to_text, _get_tokenizer_keras
+from prepocesses import dataset_txt, dataset_wave, process_wav_name, map_to_text, get_tokenizer_keras
 from tacotron2 import Tacotron2
 from audio_process import spec_distance
 
@@ -45,7 +45,7 @@ if __name__ == "__main__":
     # 字典路径
     save_path_dictionary = config.save_path_dictionary_number
     # 恢复字典
-    tokenizer, vocab_size = _get_tokenizer_keras(save_path_dictionary)
+    tokenizer, vocab_size = get_tokenizer_keras(save_path_dictionary)
 
     # csv文件的路径
     csv_dir = config.csv_dir_number
