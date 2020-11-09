@@ -6,11 +6,7 @@ import re
 import librosa
 import numpy as np
 import tensorflow as tf
-from config2 import Tacotron2Config
 from audio_process import get_spectrograms
-
-
-config = Tacotron2Config()
 
 
 # 按字符切
