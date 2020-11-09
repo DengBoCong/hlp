@@ -1,17 +1,10 @@
-import numpy as np
 import tensorflow as tf
+
 from config2 import Tacotron2Config
 from tacotron2 import load_checkpoint
 from prepocesses import dataset_txt, dataset_wave, process_wav_name, map_to_text, _get_tokenizer_keras
 from tacotron2 import Tacotron2
-
-
-# 计算mel谱之间的欧式距离
-def compute_distence(mel1, mel2):
-    mel1 = tf.transpose(mel1, [0, 2, 1])
-    score = np.sqrt(np.sum((mel1 - mel2) ** 2))
-    print(score)
-    return score
+from audio_process import spec_distance
 
 
 def evluate(path, csv_dir, save_path_dictionary, vocab_size):
@@ -43,11 +36,12 @@ def evluate(path, csv_dir, save_path_dictionary, vocab_size):
         mel2 = mel_gts[i]
         mel2 = tf.expand_dims(mel2, axis=0)
         print("欧式距离为：")
-        compute_distence(mel_outputs_postnet, mel2)
+        spec_distance(mel_outputs_postnet, mel2)
 
 
 if __name__ == "__main__":
     config = Tacotron2Config()
+
     # 字典路径
     save_path_dictionary = config.save_path_dictionary_number
     # 恢复字典

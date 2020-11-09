@@ -1,7 +1,7 @@
 import os
 import time
-
 import tensorflow as tf
+
 from config2 import Tacotron2Config
 from tacotron2 import load_checkpoint
 from prepocesses import dataset_txt, dataset_wave, create_dataset, tar_stop_token, process_wav_name, map_to_text
@@ -44,8 +44,11 @@ def train(model, optimizer, dataset, epochs, steps_per_epoch, checkpoint, checkp
             batch_start = time.time()
             batch_loss, mel_outputs = train_step(input_ids, mel_gts, model, optimizer, tar_token)  # 训练一个批次，返回批损失
             total_loss += batch_loss
-            print('\r{}/{} [Batch {} Loss {:.4f}]'.format((batch + 1), steps_per_epoch, batch + 1, batch_loss.numpy()),
-                  end='')
+            print('\r{}/{} [Batch {} Loss {:.4f} {:.1f}s]'.format((batch + 1),
+                                                                 steps_per_epoch,
+                                                                 batch + 1,
+                                                                 batch_loss.numpy(),
+                                                                  (time.time() - batch_start)), end='')
 
         # 每 2 个周期（epoch），保存（检查点）一次模型
         if (epoch + 1) % 2 == 0:
@@ -58,7 +61,7 @@ def train(model, optimizer, dataset, epochs, steps_per_epoch, checkpoint, checkp
 
 if __name__ == "__main__":
     config = Tacotron2Config()
-    batch = 2
+    batch = config.batch_size
     # 检查点
     checkpoint_dir = config.checkpoingt_dir
 
@@ -114,6 +117,5 @@ if __name__ == "__main__":
         checkpoint = tf.train.Checkpoint(tacotron2=tacotron2)
         print('新的检查点已创建！')
 
-    # 训练2轮的声音会
     epochs = 2
     mel_outputs = train(tacotron2, optimizer, dataset, epochs, steps_per_epoch, checkpoint, checkpoint_prefix)

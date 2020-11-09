@@ -2,10 +2,9 @@ import io
 import json
 import os
 import re
-
-import librosa
 import numpy as np
 import tensorflow as tf
+
 from audio_process import get_spectrograms
 
 
@@ -93,7 +92,7 @@ def tokenize(texts, save_path, name):
 
 
 # 提取字典
-def _get_tokenizer_keras(path):
+def get_tokenizer_keras(path):
     """从指定路径加载保存好的字典"""
     with open(path) as f:
         json_string = json.load(f)
@@ -117,6 +116,7 @@ def dataset_wave(path, config):
         logmelspec, sr = get_spectrograms(path + file)
         mel_len_wav.append(len(logmelspec))
         mel_list.append(logmelspec.tolist())
+
     mel_numpy = tf.keras.preprocessing.sequence.pad_sequences(mel_list, maxlen=config.max_len, padding='post',
                                                               dtype='float32')
     # print(len(mel_numpy[1000]))
@@ -133,7 +133,6 @@ def tar_stop_token(mel_len_wav, mel_gts, max_len):
     return tar_token
 
 
-# create_dataset
 def create_dataset(batch_size, input_ids, mel_gts, tar_token):
     BUFFER_SIZE = len(input_ids)
     print(BUFFER_SIZE)

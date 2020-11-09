@@ -1,5 +1,4 @@
 import os
-
 import tensorflow as tf
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
@@ -417,5 +416,4 @@ def load_checkpoint(tacotron2, path):
     ckpt_manager = tf.train.CheckpointManager(ckpt, checkpoint_path, max_to_keep=100)
     if ckpt_manager.latest_checkpoint:
         ckpt.restore(ckpt_manager.latest_checkpoint).expect_partial()
-        # ckpt.restore('./checkpoints/train/ckpt-2')
     return ckpt

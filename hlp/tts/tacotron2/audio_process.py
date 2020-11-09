@@ -3,6 +3,7 @@ import copy
 import librosa
 import numpy as np
 import scipy
+import tensorflow as tf
 
 from config2 import Tacotron2Config
 
@@ -86,3 +87,10 @@ def invert_spectrogram(spectrogram):
     spectrogram: [f, t]
     '''
     return librosa.istft(spectrogram, config.hop_length, win_length=config.win_length, window="hann")
+
+
+# 计算mel谱之间的欧式距离
+def spec_distance(mel1, mel2):
+    mel1 = tf.transpose(mel1, [0, 2, 1])
+    score = np.sqrt(np.sum((mel1 - mel2) ** 2))
+    return score

@@ -37,7 +37,7 @@ class Tacotron2Config(object):
             postnet_conv_filters=512,
             postnet_conv_kernel_sizes=5,
             postnet_dropout_rate=0.1,
-            checkpoingt_dir=r"./training_checkpoints2",
+            checkpoingt_dir=r"./checkpoints",
             # ljspeech的path
             wave_train_path=r"./data/LJSpeech-1.1/train/wavs/",
             wave_test_path=r"./data/LJSpeech-1.1/test/wavs/",
@@ -65,7 +65,7 @@ class Tacotron2Config(object):
             ref_db=20,
             top_db=15,
             # 其他
-            batch_size=4,
+            batch_size=32,
     ):
         """tacotron2参数."""
         self.max_len = max_len
