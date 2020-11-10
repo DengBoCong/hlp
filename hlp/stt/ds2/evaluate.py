@@ -88,8 +88,8 @@ if __name__ == "__main__":
     # 英文单词为token，则计算wer指标，其他(如中文、英文字符，计算ler指标)
     if configs["preprocess"]["text_process_mode"] == "en_word":
         print("WER:")
-        print("aver:", aver_wers/batchs)
+        print("平均WER:", aver_wers/batchs)
     else:
         print("LER:")
-        print("aver:", aver_lers/batchs)
-        print("aver_norm:", aver_norm_lers/batchs)
+        print("平均LER:", aver_lers/batchs)
+        print("规范化平均LER:", aver_norm_lers/batchs)

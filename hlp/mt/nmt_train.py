@@ -1,6 +1,6 @@
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
-from model import evaluate, trainer, translator
+from model import trainer
 from common import preprocess as _pre
 from model import nmt_model
 
