@@ -63,6 +63,7 @@ if __name__ == "__main__":
     mel_outputs, mel_outputs_postnet, gate_outputs, alignments = tacotron2.inference(input_ids)
 
     # 生成预测声音
-    wav = melspectrogram2wav(mel_outputs_postnet[0].numpy())
+    wav = melspectrogram2wav(mel_outputs_postnet[0].numpy(), config.max_db, config.ref_db, config.sr, config.n_fft, config.n_mels, config.preemphasis, config.n_iter, config.hop_length, config.win_length)
+
     wave.write('generated.wav', rate=config.sr, data=wav)
     playsound('.\generated.wav')
