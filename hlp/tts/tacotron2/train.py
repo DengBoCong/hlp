@@ -54,7 +54,7 @@ def train(model, optimizer, dataset, epochs, steps_per_epoch, checkpoint, checkp
         if (epoch + 1) % 2 == 0:
             checkpoint.save(file_prefix=checkpoint_prefix)
 
-        print(' - {:.0f}s/step - loss: {:.4f}'.format((time.time() - start), total_loss / steps_per_epoch))
+        print(' - {:.0f}s/step - loss: {:.4f}'.format((time.time() - start)/steps_per_epoch, total_loss / steps_per_epoch))
 
     return mel_outputs
 

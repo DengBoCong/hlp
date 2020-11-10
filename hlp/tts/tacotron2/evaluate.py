@@ -38,6 +38,7 @@ def evluate(path, csv_dir, save_path_dictionary, vocab_size):
         mel2 = tf.expand_dims(mel2, axis=0)
         score = spec_distance(mel_outputs_postnet, mel2)
         score_sum += score
+        print('第{}个样本的欧式距离为：{}'.format((i+1), score))
     print("样本平均欧式距离为：", score_sum/input_ids.shape[0])
 
 

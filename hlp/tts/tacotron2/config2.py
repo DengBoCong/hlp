@@ -11,10 +11,11 @@ class Tacotron2Config(object):
             layer_norm_eps=1e-6,
             embedding_dropout_prob=0.1,
             n_speakers=5,
+            # encoder-conv1d层数
             n_conv_encoder=3,
             encoder_conv_filters=512,
             encoder_conv_kernel_sizes=5,
-            encoder_conv_activation="mish",
+            encoder_conv_activation="relu",
             encoder_conv_dropout_rate=0.5,
             encoder_lstm_units=256,
             decoder_dim=256,
@@ -33,10 +34,12 @@ class Tacotron2Config(object):
             n_lstm_decoder=1,
             decoder_lstm_units=1024,
             gate_threshold=0.5,
+            #postnet-conv1d层数
             n_conv_postnet=5,
             postnet_conv_filters=512,
             postnet_conv_kernel_sizes=5,
             postnet_dropout_rate=0.1,
+            postnet_conv_activation="tanh",
             checkpoingt_dir=r"./checkpoints",
             # ljspeech的path
             wave_train_path=r"./data/LJSpeech-1.1/train/wavs/",
@@ -99,6 +102,7 @@ class Tacotron2Config(object):
 
         # postnet网络
         self.n_conv_postnet = n_conv_postnet
+        self.postnet_conv_activation = postnet_conv_activation
         self.postnet_conv_filters = postnet_conv_filters
         self.postnet_conv_kernel_sizes = postnet_conv_kernel_sizes
         self.postnet_dropout_rate = postnet_dropout_rate

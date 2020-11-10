@@ -3,31 +3,52 @@ import tensorflow as tf
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
-
 # 自己的模型
-class Encoder(tf.keras.Model):
+class ConvBatchDrop(tf.keras.layers.Layer):
+    def __init__(self, filters, kernel_size, activation, dropout_rate):
+        super(ConvBatchDrop, self).__init__()
+        self.conv1d = tf.keras.layers.Conv1D(
+            filters,
+            kernel_size,
+            padding="same",
+            activation=activation
+        )
+        self.dropout = tf.keras.layers.Dropout(rate=dropout_rate)
+        self.norm = tf.keras.layers.BatchNormalization()
+
+    def call(self, inputs):
+        outputs = self.conv1d(inputs)
+        outputs = self.dropout(outputs)
+        outputs = self.norm(outputs)
+        return outputs
+
+
+class Encoder(tf.keras.layers.Layer):
     def __init__(self, vocab_size, config):
         super(Encoder, self).__init__()
         self.num_filters = config.encoder_conv_filters
+
         self.kernel_size = config.encoder_conv_kernel_sizes
         self.lstm_unit = config.encoder_lstm_units
         self.rate = config.encoder_conv_dropout_rate
+
         self.vocab_size = vocab_size
         self.embedding_dim = config.embedding_hidden_size
+        self.encoder_conv_activation = config.encoder_conv_activation
         # 定义嵌入层
         self.embedding = tf.keras.layers.Embedding(self.vocab_size, self.embedding_dim, mask_zero=True)
+
         # 定义三层卷积层
-        self.conv1d1 = tf.keras.layers.Conv1D(self.num_filters, self.kernel_size, padding='same', activation='relu')
-        self.dropout1 = tf.keras.layers.Dropout(self.rate)
-        self.output1 = tf.keras.layers.BatchNormalization()
+        self.conv_batch_norm = []
+        for i in range(config.n_conv_encoder):
+            conv = ConvBatchDrop(
+                filters=self.num_filters,
+                kernel_size=self.kernel_size,
+                activation=self.encoder_conv_activation,
+                dropout_rate=self.rate,
+            )
+            self.conv_batch_norm.append(conv)
 
-        self.conv1d2 = tf.keras.layers.Conv1D(self.num_filters, self.kernel_size, padding='same', activation='relu')
-        self.dropout2 = tf.keras.layers.Dropout(self.rate)
-        self.output2 = tf.keras.layers.BatchNormalization()
-
-        self.conv1d3 = tf.keras.layers.Conv1D(self.num_filters, self.kernel_size, padding='same', activation='relu')
-        self.dropout3 = tf.keras.layers.Dropout(self.rate)
-        self.output3 = tf.keras.layers.BatchNormalization()
         # 定义两次LSTM
         self.forward_layer = tf.keras.layers.LSTM(units=self.lstm_unit, return_sequences=True)
         self.backward_layer = tf.keras.layers.LSTM(units=self.lstm_unit, return_sequences=True,
@@ -37,20 +58,13 @@ class Encoder(tf.keras.Model):
 
     def call(self, x):
         x = self.embedding(x)
-        x = self.conv1d1(x)
-        x = self.dropout1(x)
-        x = self.output1(x)
-        x = self.conv1d2(x)
-        x = self.dropout2(x)
-        x = self.output2(x)
-        x = self.conv1d3(x)
-        x = self.dropout3(x)
-        x = self.output3(x)
+        for conv in self.conv_batch_norm:
+            x = conv(x)
         output = self.bidir(x)
         return output
 
 
-class LocationLayer(tf.keras.Model):
+class LocationLayer(tf.keras.layers.Layer):
     def __init__(self, attention_n_filters, attention_kernel_size,
                  attention_dim1):
         super(LocationLayer, self).__init__()
@@ -71,7 +85,7 @@ class LocationLayer(tf.keras.Model):
         return processed_attention
 
 
-class Attention(tf.keras.Model):
+class Attention(tf.keras.layers.Layer):
     def __init__(self, config):
         super(Attention, self).__init__()
         self.attention_rnn_dim = config.attention_dim
@@ -106,7 +120,7 @@ class Attention(tf.keras.Model):
 
 
 # attention结束
-class Prenet(tf.keras.Model):
+class Prenet(tf.keras.layers.Layer):
     def __init__(self, config):
         super().__init__()
         self.prenet_units = config.prenet_units
@@ -132,74 +146,39 @@ class Prenet(tf.keras.Model):
         return outputs
 
 
-class Postnet(tf.keras.Model):
+class Postnet(tf.keras.layers.Layer):
     def __init__(self, config):
         super().__init__()
-        self.conv1d1 = tf.keras.layers.Conv1D(
-            filters=config.postnet_conv_filters,
-            kernel_size=config.n_conv_postnet,
-            activation="tanh",
-            padding="same"
-        )
-        self.norm1 = tf.keras.layers.experimental.SyncBatchNormalization(axis=-1)
-        self.dropout1 = tf.keras.layers.Dropout(rate=0.5)
-        self.conv1d2 = tf.keras.layers.Conv1D(
-            filters=config.postnet_conv_filters,
-            kernel_size=config.n_conv_postnet,
-            activation="tanh",
-            padding="same"
-        )
-        self.norm2 = tf.keras.layers.experimental.SyncBatchNormalization(axis=-1)
-        self.dropout2 = tf.keras.layers.Dropout(rate=config.postnet_dropout_rate)
-        self.conv1d3 = tf.keras.layers.Conv1D(
-            filters=config.postnet_conv_filters,
-            kernel_size=config.n_conv_postnet,
-            activation="tanh",
-            padding="same"
-        )
-        self.norm3 = tf.keras.layers.experimental.SyncBatchNormalization(axis=-1)
-        self.dropout3 = tf.keras.layers.Dropout(rate=config.postnet_dropout_rate)
-        self.conv1d4 = tf.keras.layers.Conv1D(
-            filters=config.postnet_conv_filters,
-            kernel_size=config.n_conv_postnet,
-            activation="tanh",
-            padding="same"
-        )
-        self.norm4 = tf.keras.layers.experimental.SyncBatchNormalization(axis=-1)
-        self.dropout4 = tf.keras.layers.Dropout(rate=config.postnet_dropout_rate)
-        self.conv1d5 = tf.keras.layers.Conv1D(
-            filters=config.postnet_conv_filters,
-            kernel_size=config.n_conv_postnet,
-            activation=None,
-            padding="same"
-        )
-        self.norm5 = tf.keras.layers.experimental.SyncBatchNormalization(axis=-1)
-        self.dropout5 = tf.keras.layers.Dropout(rate=config.postnet_dropout_rate)
+        self.conv_batch_norm = []
+        for i in range(config.n_conv_encoder):
+            if i == config.n_conv_postnet-1:
+                conv = ConvBatchDrop(
+                    filters=config.postnet_conv_filters,
+                    kernel_size=config.postnet_conv_kernel_sizes,
+                    activation=None,
+                    dropout_rate=config.postnet_dropout_rate,
+                )
+            else:
+                conv = ConvBatchDrop(
+                    filters=config.postnet_conv_filters,
+                    kernel_size=config.postnet_conv_kernel_sizes,
+                    activation=config.postnet_conv_activation,
+                    dropout_rate=config.postnet_dropout_rate,
+                )
+            self.conv_batch_norm.append(conv)
+
         self.fc = tf.keras.layers.Dense(units=config.n_mels, activation=None, name="frame_projection1")
 
     def call(self, inputs):
         x = tf.transpose(inputs, [0, 2, 1])
-        x = self.conv1d1(x)
-        x = self.norm1(x)
-        x = self.dropout1(x)
-        x = self.conv1d2(x)
-        x = self.norm2(x)
-        x = self.dropout2(x)
-        x = self.conv1d3(x)
-        x = self.norm3(x)
-        x = self.dropout3(x)
-        x = self.conv1d4(x)
-        x = self.norm4(x)
-        x = self.dropout4(x)
-        x = self.conv1d5(x)
-        x = self.norm5(x)
-        x = self.dropout5(x)
+        for _, conv in enumerate(self.conv_batch_norm):
+            x = conv(x)
         x = self.fc(x)
         x = tf.transpose(x, [0, 2, 1])
         return x
 
 
-class Decoder(tf.keras.Model):
+class Decoder(tf.keras.layers.Layer):
     def __init__(self, config):
         super(Decoder, self).__init__()
         self.attention_dim = config.attention_dim
