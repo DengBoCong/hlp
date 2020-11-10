@@ -1,19 +1,17 @@
 import re
 import tensorflow as tf
-from util import get_config
-import tensorflow as tf
 
 
-#此方法依据文本是中文文本还是英文文本，若为英文文本是按字符切分还是按单词切分
+# 此方法依据文本是中文文本还是英文文本，若为英文文本是按字符切分还是按单词切分
 def preprocess_sentence(str, mode):
-    if mode == "cn":
+    if mode.lower() == "cn":
         return preprocess_sentence_ch(str)
-    elif mode == "en_word":
+    elif mode.lower() == "en_word":
         return preprocess_sentence_en_word(str)
-    elif mode == "en_char":
+    elif mode.lower() == "en_char":
         return preprocess_sentence_en_char(str)
 
-#基于数据文本规则的行获取
+# 基于数据文本规则的行获取
 def text_row_process(str, text_row_style):
     if text_row_style == 1:
         # 当前数据文本的每行为'index string\n'

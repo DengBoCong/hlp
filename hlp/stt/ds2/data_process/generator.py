@@ -1,12 +1,13 @@
-from audio_process import get_input_tensor
-from text_process import get_text_label
 import numpy as np
 import tensorflow as tf
+
+from data_process.audio_process import get_input_tensor
+from data_process.text_process import get_text_label
 
 # 数据生成器
 def data_generator(data, train_or_test, batchs, batch_size, audio_feature_type, max_input_length, max_label_length):
 
-    if train_or_test == "train":
+    if train_or_test.lower() == "train":
         audio_data_path_list, text_int_sequences, label_length_list = data
         
         # generator只能进行一次生成，故需要while True来进行多个epoch的数据生成
@@ -31,7 +32,7 @@ def data_generator(data, train_or_test, batchs, batch_size, audio_feature_type, 
                 
                 yield batch_input_tensor, batch_label_tensor, batch_label_length
     
-    elif train_or_test == "test":
+    elif train_or_test.lower() == "test":
         audio_data_path_list, text_list = data
         
         for idx in range(batchs):
