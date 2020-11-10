@@ -114,7 +114,7 @@ def dataset_wave(path, config):
     mel_len_wav = []
     dirs = os.listdir(path)
     for file in dirs:
-        logmelspec, sr = get_spectrograms(path + file)
+        logmelspec, sr = get_spectrograms(path + file, config.preemphasis, config.n_fft, config.n_mels, config.hop_length, config.win_length, config.max_db, config.ref_db, config.top_db)
         mel_len_wav.append(len(logmelspec))
         mel_list.append(logmelspec.tolist())
 

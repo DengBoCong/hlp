@@ -28,6 +28,7 @@ def evluate(path, csv_dir, save_path_dictionary, vocab_size):
     path = config.checkpoingt_dir
     checkpoint = load_checkpoint(tacotron2, path)
     print('已恢复至最新的检查点！')
+    score_sum = 0
 
     for i in range(input_ids.shape[0]):
         new_input_ids = input_ids[i]
@@ -36,7 +37,8 @@ def evluate(path, csv_dir, save_path_dictionary, vocab_size):
         mel2 = mel_gts[i]
         mel2 = tf.expand_dims(mel2, axis=0)
         score = spec_distance(mel_outputs_postnet, mel2)
-        print("欧式距离为：", score)
+        score_sum += score
+    print("样本平均欧式距离为：", score_sum/input_ids.shape[0])
 
 
 if __name__ == "__main__":

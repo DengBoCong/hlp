@@ -5,23 +5,9 @@ import numpy as np
 import scipy
 import tensorflow as tf
 
-from config2 import Tacotron2Config
-
-config = Tacotron2Config()
-
 
 # mel频谱处理
-def get_spectrograms(fpath):
-    # 设定一些参数
-    config = Tacotron2Config()
-    preemphasis = config.preemphasis
-    n_fft = config.n_fft
-    n_mels = config.n_mels
-    hop_length = config.hop_length
-    win_length = config.win_length
-    max_db = config.max_db
-    ref_db = config.ref_db
-    top_db = config.top_db
+def get_spectrograms(fpath, preemphasis, n_fft, n_mels, hop_length, win_length, max_db, ref_db, top_db):
     # 加载声音文件
     y, sr = librosa.load(fpath, sr=None)
     # 裁剪
@@ -48,15 +34,15 @@ def get_spectrograms(fpath):
     return mel, mag
 
 
-def melspectrogram2wav(mel):
-    mel = (np.clip(mel, 0, 1) * config.max_db) - config.max_db + config.ref_db
+def melspectrogram2wav(mel, max_db, ref_db, sr, n_fft, n_mels, preemphasis, n_iter, hop_length, win_length):
+    mel = (np.clip(mel, 0, 1) * max_db) - max_db + ref_db
     # 转为幅度谱
     mel = np.power(10.0, mel * 0.05)
-    m = _mel_to_linear_matrix(config.sr, config.n_fft, config.n_mels)
+    m = _mel_to_linear_matrix(sr, n_fft, n_mels)
     mag = np.dot(m, mel)
     # 波形重构
-    wav = griffin_lim(mag)
-    wav = scipy.signal.lfilter([1], [1, -config.preemphasis], wav)
+    wav = griffin_lim(mag, n_iter, n_fft, hop_length, win_length)
+    wav = scipy.signal.lfilter([1], [1, -preemphasis], wav)
     # 剪裁
     wav, _ = librosa.effects.trim(wav)
     return wav.astype(np.float32)
@@ -70,23 +56,23 @@ def _mel_to_linear_matrix(sr, n_fft, n_mels):
     return np.matmul(m_t, np.diag(d))
 
 
-def griffin_lim(spectrogram):
+def griffin_lim(spectrogram, n_iter, n_fft, hop_length, win_length):
     X_best = copy.deepcopy(spectrogram)
-    for i in range(config.n_iter):
-        X_t = invert_spectrogram(X_best)
-        est = librosa.stft(X_t, config.n_fft, config.hop_length, win_length=config.win_length)
+    for i in range(n_iter):
+        X_t = invert_spectrogram(X_best, hop_length, win_length)
+        est = librosa.stft(X_t, n_fft, hop_length, win_length=win_length)
         phase = est / np.maximum(1e-8, np.abs(est))
         X_best = spectrogram * phase
-    X_t = invert_spectrogram(X_best)
+    X_t = invert_spectrogram(X_best, hop_length, win_length)
     y = np.real(X_t)
     return y
 
 
-def invert_spectrogram(spectrogram):
+def invert_spectrogram(spectrogram, hop_length, win_length):
     '''
     spectrogram: [f, t]
     '''
-    return librosa.istft(spectrogram, config.hop_length, win_length=config.win_length, window="hann")
+    return librosa.istft(spectrogram, hop_length, win_length=win_length, window="hann")
 
 
 # 计算mel谱之间的欧式距离
