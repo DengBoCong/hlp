@@ -1,25 +1,19 @@
 import os
-import json
-from util import get_config, get_all_data_path, set_config, get_dataset_information
+from util import get_all_data_path
 
-from data_process.audio_process import get_max_audio_length
-from data_process.text_process import get_text_list, get_text_int_sequences, get_max_label_length, tokenize, get_process_text_list
+from data_process.text_process import get_text_list
 
 
 #加载数据
-def load_data(dataset_name, data_path, text_row_style, train_or_test, num_examples):
+def load_data(dataset_name, data_path, text_row_style, num_examples):
     # 基于某种语料获取其中语音路径和文本的list
     if dataset_name.lower() == "number":
         audio_data_path_list, text_list = load_dataset_number(data_path, text_row_style, num_examples)
     elif dataset_name.lower() == "librispeech":
         audio_data_path_list, text_list = load_dataset_librispeech(data_path, text_row_style, num_examples)
     
-    # 训练则对数据进行预处理，测试则直接返回
-    if train_or_test.lower() == "train":
-        return build_train_data(audio_data_path_list, text_list)
-    elif train_or_test.lower() == "test":
-        return audio_data_path_list, text_list
-
+    return audio_data_path_list, text_list
+    
 # 加载number语料，返回语音文件list和对应文本字符串list
 def load_dataset_number(data_path, text_row_style, num_examples = None):
     # number语料里没有文本集，故先通过audio文件名构建文本文件
@@ -63,44 +57,6 @@ def load_dataset_librispeech(data_path, text_row_style, num_examples = None):
     text_list = text_list[:num_examples]
     return audio_data_path_list, text_list
 
-# 基于dataset中的audio_data_path_list和text_list来加载train或test数据
-def build_train_data(audio_data_path_list, text_list):
-    configs = get_config()
-
-    # 基于文本按照某种mode切分文本
-    mode = configs["preprocess"]["text_process_mode"]
-    process_text_list = get_process_text_list(text_list, mode)
-    
-    if configs["train"]["if_is_first_train"]:
-        text_int_sequences, tokenizer = tokenize(process_text_list)
-
-        # 获取音频和文本的最大length，从而进行数据补齐
-        max_input_length = get_max_audio_length(audio_data_path_list, configs["other"]["audio_feature_type"])
-        max_label_length = get_max_label_length(text_int_sequences)
-
-        # 若为初次训练，则将数据集的相关信息写入dataset_information.json文件
-        dataset_information_path = configs["preprocess"]["dataset_information_path"]
-        
-        dataset_information = {}
-        dataset_information["vocab_size"] = len(tokenizer.index_word)
-        dataset_information["max_input_length"] = max_input_length
-        dataset_information["max_label_length"] = max_label_length
-        dataset_information["index_word"] = tokenizer.index_word
-        dataset_information["word_index"] = tokenizer.word_index
-
-        with open(dataset_information_path, 'w', encoding="utf-8") as f:
-            json.dump(dataset_information, f, ensure_ascii=False, indent=4)
-        
-        # 将是否为初次加载改为false
-        set_config(configs, "train", "if_is_first_train", False)
-
-    else:
-        # 不是初次训练就基于初次训练时写入的word_index构建文本
-        dataset_information = get_dataset_information()
-        text_int_sequences = get_text_int_sequences(process_text_list, dataset_information["word_index"])
-    
-    label_length_list = [[len(text_int)] for text_int in text_int_sequences]
-    return audio_data_path_list, text_int_sequences, label_length_list
 
 if __name__ == "__main__":
     pass
