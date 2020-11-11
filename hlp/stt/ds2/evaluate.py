@@ -1,30 +1,28 @@
 import tensorflow as tf
-from load_dataset import load_data
-from generator import data_generator
-
+from math import ceil
 from model import DS2, decode_output
 from util import get_config, get_dataset_information
-from math import ceil
+
+from data_process.load_dataset import load_data
+from data_process.generator import data_generator
 
 import sys
-if sys.path[-1] != "..":
-    sys.path.append("..")
+sys.path.append("..")
 from utils.metric import wers, lers
-
 
 if __name__ == "__main__":
     configs = get_config()
     dataset_information = get_dataset_information()
     
     # 获取模型配置，加载模型
-    conv_layers = configs["model"]["conv_layers"]
     filters = configs["model"]["conv_filters"]
     kernel_size = configs["model"]["conv_kernel_size"]
     strides = configs["model"]["conv_strides"]
-    bi_gru_layers = configs["model"]["bi_gru_layers"]
     gru_units = configs["model"]["gru_units"]
-    dense_units = dataset_information["dense_units"]
-    model = DS2(conv_layers, filters, kernel_size, strides, bi_gru_layers, gru_units, dense_units)
+    fc_units = configs["model"]["fc_units"]
+    dense_units = dataset_information["vocab_size"] + 2
+
+    model = DS2(filters, kernel_size, strides, gru_units, fc_units, dense_units)
 
     # 加载模型检查点
     checkpoint = tf.train.Checkpoint(model=model)
@@ -87,8 +85,11 @@ if __name__ == "__main__":
         aver_lers += aver_ler
         aver_norm_lers += norm_aver_ler
     
-    print("WER:")
-    print("aver:", aver_wers/batchs)
-    print("LER:")
-    print("aver:", aver_lers/batchs)
-    print("aver_norm:", aver_norm_lers/batchs)
+    # 英文单词为token，则计算wer指标，其他(如中文、英文字符，计算ler指标)
+    if configs["preprocess"]["text_process_mode"] == "en_word":
+        print("WER:")
+        print("平均WER:", aver_wers/batchs)
+    else:
+        print("LER:")
+        print("平均LER:", aver_lers/batchs)
+        print("规范化平均LER:", aver_norm_lers/batchs)

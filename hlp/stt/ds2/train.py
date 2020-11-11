@@ -1,22 +1,18 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Tue Sep 15 17:47:11 2020
-
-@author: 彭康
-"""
 import time
 from math import ceil
 import tensorflow as tf
-from generator import data_generator
-from load_dataset import load_data
 from model import DS2
 from util import get_config, get_dataset_information
 
+from data_process.generator import data_generator
+from data_process.load_dataset import load_data
 
-def train_step(input_tensor, target_tensor, target_length, optimizer, model):
-    #单次训练
+
+def train_step(model, optimizer, input_tensor, target_tensor, target_length):
+    # 单次训练
     with tf.GradientTape() as tape:
         y_pred=model(input_tensor)
+        # print(y_pred)
         y_true=target_tensor
         input_length=tf.fill([y_pred.shape[0],1],y_pred.shape[1])
         loss=tf.keras.backend.ctc_batch_cost(
@@ -38,40 +34,28 @@ def train_step(input_tensor, target_tensor, target_length, optimizer, model):
     optimizer.apply_gradients(zip(grads, model.trainable_variables))
     return loss
 
-def train(model, optimizer, train_data_generator, batchs, epochs):
-    #加载检查点
-    configs = get_config()
-    checkpoint = tf.train.Checkpoint(model=model)
-    manager = tf.train.CheckpointManager(
-        checkpoint,
-        directory=configs["checkpoint"]['directory'],
-        max_to_keep=configs["checkpoint"]['max_to_keep']
-        )
-    save_interval = configs["checkpoint"]["save_interval"]
-    if manager.latest_checkpoint:
-        checkpoint.restore(manager.latest_checkpoint)
-    
-    #迭代训练
+def train(model, optimizer, train_data_generator, batchs, epochs, manager, save_interval):
+    # 迭代训练
     for epoch in range(1, epochs+1):
-        #epoch损失
+        # epoch损失
         total_loss = 0
         epoch_start = time.time()
         print("Epoch %d/%d" % (epoch, epochs))
-        for batch, (input_tensor, target_tensor, target_length) in zip(range(1,batchs+1), train_data_generator):
+        for batch, (input_tensor, target_tensor, target_length) in zip(range(1, batchs+1), train_data_generator):
+            print("Batch %d/%d" % (batch, batchs))
             
-            print(input_tensor.shape,target_tensor.shape, target_length.shape)
+            # print(input_tensor, target_tensor, target_length)
             batch_start = time.time()
-            batch_loss = train_step(input_tensor, target_tensor, target_length, optimizer, model)
+            batch_loss = train_step(model, optimizer, input_tensor, target_tensor, target_length)
             total_loss += batch_loss
             batch_end = time.time()
             
             # 打印批处理的信息
-            print("Batch %d/%d" % (batch, batchs))
             print("batch_time: %dms - batch_loss: %.4f" % ((batch_end - batch_start)*1000, batch_loss))
 
         epoch_end = time.time()
         # 打印epoch的信息
-        print("batchs: %d - epoch_time: %ds %dms/batch - loss: %.4f" % (batchs, epoch_end - epoch_start, (epoch_end-epoch_start)*1000/batchs, total_loss/batchs))
+        print("batchs: %d - epoch_time: %ds %dms/batch - loss: %.4f\n" % (batchs, epoch_end - epoch_start, (epoch_end-epoch_start)*1000/batchs, total_loss/batchs))
         
         # 按配置json文件里的save_interval的数值来保存检查点
         if epoch % save_interval == 0:
@@ -108,17 +92,27 @@ if __name__ == "__main__":
     )
 
     # 加载模型
-    conv_layers = configs["model"]["conv_layers"]
     filters = configs["model"]["conv_filters"]
     kernel_size = configs["model"]["conv_kernel_size"]
     strides = configs["model"]["conv_strides"]
-    bi_gru_layers = configs["model"]["bi_gru_layers"]
     gru_units = configs["model"]["gru_units"]
+    fc_units = configs["model"]["fc_units"]
     
-    dense_units = dataset_information["dense_units"]
+    dense_units = dataset_information["vocab_size"] + 2
 
-    model = DS2(conv_layers, filters, kernel_size, strides, bi_gru_layers, gru_units, dense_units)
+    model = DS2(filters, kernel_size, strides, gru_units, fc_units, dense_units)
     optimizer = tf.keras.optimizers.Adam()
-    #训练
-    train(model, optimizer, train_data_generator, batchs, epochs)
+    
+    # 加载检查点
+    checkpoint = tf.train.Checkpoint(model = model)
+    manager = tf.train.CheckpointManager(
+        checkpoint,
+        directory=configs["checkpoint"]['directory'],
+        max_to_keep=configs["checkpoint"]['max_to_keep']
+        )
+    save_interval = configs["checkpoint"]["save_interval"]
+    if manager.latest_checkpoint:
+        checkpoint.restore(manager.latest_checkpoint)
+    # 训练
+    train(model, optimizer, train_data_generator, batchs, epochs, manager, save_interval)
     
