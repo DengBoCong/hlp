@@ -97,13 +97,14 @@ if __name__ == "__main__":
                                         label_path,
                                         "train",
                                         num_examples)
-    _, _, _, vocab_tar_size = train_data
+    print("获取训练语料信息......")
+    dataset_information = config.get_dataset_information()
+    vocab_tar_size = dataset_information["vocab_tar_size"]
     batchs = len(train_data[0]) // batch_size
     optimizer = tf.keras.optimizers.Adam()
     model = las.las_model(vocab_tar_size, embedding_dim, units, batch_size)
 
-    print("获取训练语料信息......")
-    dataset_information = config.get_dataset_information()
+
 
     print("构建数据生成器......")
     train_data_generator = data_generator(

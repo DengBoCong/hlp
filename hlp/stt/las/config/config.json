@@ -1,6 +1,6 @@
 {
     "train": {
-        "if_is_first_train": true,
+        "if_is_first_train": false,
         "epochs": 10,
         "wav_path": ".\\data\\wav_train",
         "label_path": ".\\data\\data_train.txt",
