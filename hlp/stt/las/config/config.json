@@ -1,0 +1,41 @@
+{
+    "train": {
+        "if_is_first_train": true,
+        "epochs": 10,
+        "wav_path": ".\\data\\wav_train",
+        "label_path": ".\\data\\data_train.txt",
+        "batch_size": 64,
+        "num_examples": 1926
+    },
+    "test": {
+        "wav_path": ".\\data\\wav_test",
+        "label_path": ".\\data\\data_test.txt",
+        "test_num": 80,
+        "batch_size": 1,
+        "warning": "batch_size can only be 1"
+    },
+    "model": {
+        "embedding_dim": 256,
+        "units": 512
+    },
+    "checkpoint": {
+        "directory": "./checkpoints",
+        "prefix": "ckpt"
+    },
+    "recognition": {
+        "CHUNK": 1024,
+        "FORMAT": "pyaudio.paInt16",
+        "CHANNELS": 2,
+        "RATE": 44100,
+        "file_path": ".\\",
+        "file_name": "output.wav",
+        "record_second": 2
+    },
+    "data": {
+        "dataset_information_path": "./dataset_information.json",
+        "dataset_name": "number",
+        "n_mfcc": 39,
+        "audio_feature_type": "mfcc",
+        "index_word_json_path": "index_word_json.json"
+    }
+}
