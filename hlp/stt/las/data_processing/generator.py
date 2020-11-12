@@ -40,12 +40,12 @@ def data_generator(data, train_or_test, batchs, batch_size, audio_feature_type, 
                 batch_label_length = tf.convert_to_tensor(label_length_list[idx * batch_size: (idx + 1) * batch_size])
 
                 yield batch_input_tensor, batch_label_tensor, batch_label_length
-    '''
+    
     elif train_or_test == "test":
         audio_data_path_list, text_list = data
 
         for idx in range(batchs):
-            batch_input_tensor = get_input_tensor(
+            batch_input_tensor = librosa_mfcc.wav_to_mfcc(
                 audio_data_path_list[idx*batch_size : (idx+1)*batch_size],
                 audio_feature_type,
                 max_input_length
@@ -55,4 +55,4 @@ def data_generator(data, train_or_test, batchs, batch_size, audio_feature_type, 
             #测试集只需要文本串list
             yield batch_input_tensor, batch_text_list
 
-    '''
+    
