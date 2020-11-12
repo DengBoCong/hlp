@@ -117,5 +117,5 @@ if __name__ == "__main__":
         checkpoint = tf.train.Checkpoint(tacotron2=tacotron2)
         print('新的检查点已创建！')
 
-    epochs = 2
+    epochs = 40
     mel_outputs = train(tacotron2, optimizer, dataset, epochs, steps_per_epoch, checkpoint, checkpoint_prefix)
