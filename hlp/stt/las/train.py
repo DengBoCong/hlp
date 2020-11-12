@@ -92,7 +92,7 @@ if __name__ == "__main__":
     dataset_name = config.dataset_name
     audio_feature_type = config.audio_feature_type
 
-    # 加载数据并预处理
+    print("加载数据并预处理......")
     train_data = load_dataset.load_data(dataset_name, wav_path,
                                         label_path,
                                         "train",
@@ -102,10 +102,10 @@ if __name__ == "__main__":
     optimizer = tf.keras.optimizers.Adam()
     model = las.las_model(vocab_tar_size, embedding_dim, units, batch_size)
 
-    # 获取训练语料信息
+    print("获取训练语料信息......")
     dataset_information = config.get_dataset_information()
 
-    # 构建数据生成器
+    print("构建数据生成器......")
     train_data_generator = data_generator(
         train_data,
         "train",
@@ -120,7 +120,7 @@ if __name__ == "__main__":
     checkpoint_prefix = os.path.join(checkpoint_dir, config.checkpoint_prefix)
     checkpoint = tf.train.Checkpoint(optimizer=optimizer, model=model)
 
-    # 恢复检查点目录 （checkpoint_dir） 中最新的检查点
+    print("恢复检查点目录 （checkpoint_dir） 中最新的检查点......")
     checkpoint.restore(tf.train.latest_checkpoint(checkpoint_dir))
     EPOCHS = config.epochs
 
