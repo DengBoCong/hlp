@@ -12,7 +12,7 @@ import librosa
 import tensorflow as tf
 
 
-def mfcc_extract(path, n_mfcc):
+def mfcc_extract(path, n_mfcc=39):
     y, sr = librosa.load(path=path)
     mfcc = librosa.feature.mfcc(y=y, n_mfcc=n_mfcc).transpose(1, 0).tolist()
     return mfcc

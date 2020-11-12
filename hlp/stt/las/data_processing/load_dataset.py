@@ -112,7 +112,7 @@ def max_length(texts):
 def get_max_audio_length(audio_data_path_list):
     max_audio_length = 0
     for audio_path in audio_data_path_list:
-        audio_feature = librosa_mfcc.wav_to_mfcc(audio_path)
+        audio_feature = librosa_mfcc.mfcc_extract(audio_path)
         if (audio_feature):
             max_audio_length = max(max_audio_length, len(audio_feature))
 
