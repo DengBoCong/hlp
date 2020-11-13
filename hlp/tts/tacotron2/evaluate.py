@@ -26,7 +26,7 @@ def evluate(path, csv_dir, save_path_dictionary, vocab_size):
     # 模型初始化
     tacotron2 = Tacotron2(vocab_size + 1, config)
     path = config.checkpoingt_dir
-    checkpoint = load_checkpoint(tacotron2, path)
+    checkpoint = load_checkpoint(tacotron2, path, config)
     print('已恢复至最新的检查点！')
     score_sum = 0
 

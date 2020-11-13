@@ -5,7 +5,7 @@ formatted
 @author: 九童
 """
 import tensorflow as tf
-from hlp.stt.las.model import attention
+from hlp.utils.layers import BahdanauAttention
 
 
 class Decoder(tf.keras.Model):
@@ -20,7 +20,7 @@ class Decoder(tf.keras.Model):
         self.fc = tf.keras.layers.Dense(vocab_size)
 
         # 用于注意力
-        self.attention = attention.Attention(self.dec_units)
+        self.attention = BahdanauAttention(self.dec_units)
 
     def call(self, x, hidden, enc_output):
         # 编码器输出 （enc_output） 的形状 == （批大小，最大长度，隐藏层大小）

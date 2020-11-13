@@ -3,7 +3,7 @@ class Tacotron2Config(object):
 
     def __init__(
             self,
-            max_len=762,
+            max_len=128,
             # TRAIN_SET_RATIO=0.2
             # vocab_size=5,
             embedding_hidden_size=512,
@@ -11,36 +11,41 @@ class Tacotron2Config(object):
             layer_norm_eps=1e-6,
             embedding_dropout_prob=0.1,
             n_speakers=5,
+
             # encoder-conv1d层数
             n_conv_encoder=3,
-            encoder_conv_filters=512,
+            encoder_conv_filters=256,
             encoder_conv_kernel_sizes=5,
             encoder_conv_activation="relu",
             encoder_conv_dropout_rate=0.5,
             encoder_lstm_units=256,
             decoder_dim=256,
-            decoder_lstm_dim=1024,
+            decoder_lstm_dim=512,
             decoder_lstm_rate=0.1,
+
             # Attention parameters
             attention_dim=128,
             # Location Layer parameters
             attention_filters=32,
             attention_kernel=31,
+
             # Mel-post processing network parameters
             reduction_factor=5,
             n_prenet_layers=2,
             prenet_units=256,
             prenet_dropout_rate=0.5,
             n_lstm_decoder=1,
-            decoder_lstm_units=1024,
+            decoder_lstm_units=512,
             gate_threshold=0.5,
+
             #postnet-conv1d层数
-            n_conv_postnet=5,
-            postnet_conv_filters=512,
+            n_conv_postnet=3,
+            postnet_conv_filters=256,
             postnet_conv_kernel_sizes=5,
             postnet_dropout_rate=0.1,
             postnet_conv_activation="tanh",
             checkpoingt_dir=r"./checkpoints",
+
             # ljspeech的path
             wave_train_path=r"./data/LJSpeech-1.1/train/wavs/",
             wave_test_path=r"./data/LJSpeech-1.1/test/wavs/",
@@ -69,6 +74,8 @@ class Tacotron2Config(object):
             top_db=15,
             # 其他
             batch_size=32,
+            #最大检查点保存数目
+            max_to_keep=2,
     ):
         """tacotron2参数."""
         self.max_len = max_len
@@ -139,3 +146,4 @@ class Tacotron2Config(object):
 
         # 其他
         self.batch_size = batch_size
+        self.max_to_keep = max_to_keep

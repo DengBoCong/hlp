@@ -1,7 +1,7 @@
 import tensorflow as tf
 from math import ceil
 from model import DS2, decode_output
-from util import get_config, get_dataset_information
+from util import get_config, get_dataset_information, compute_ctc_input_length
 
 from data_process.load_dataset import load_data
 from data_process.generator import data_generator
@@ -10,19 +10,22 @@ import sys
 sys.path.append("..")
 from utils.metric import wers, lers
 
+
 if __name__ == "__main__":
     configs = get_config()
     dataset_information = get_dataset_information()
     
     # 获取模型配置，加载模型
+    conv_layers = configs["model"]["conv_layers"]
     filters = configs["model"]["conv_filters"]
     kernel_size = configs["model"]["conv_kernel_size"]
     strides = configs["model"]["conv_strides"]
+    bi_gru_layers = configs["model"]["bi_gru_layers"]
     gru_units = configs["model"]["gru_units"]
     fc_units = configs["model"]["fc_units"]
     dense_units = dataset_information["vocab_size"] + 2
 
-    model = DS2(filters, kernel_size, strides, gru_units, fc_units, dense_units)
+    model = DS2(conv_layers, filters, kernel_size, strides, bi_gru_layers, gru_units, fc_units, dense_units)
 
     # 加载模型检查点
     checkpoint = tf.train.Checkpoint(model=model)
@@ -34,25 +37,29 @@ if __name__ == "__main__":
     if manager.latest_checkpoint:
         checkpoint.restore(manager.latest_checkpoint)
 
-    test_data_path = configs["test"]["data_path"]
-    num_examples = configs["test"]["num_examples"]
     dataset_name = configs["preprocess"]["dataset_name"]
-    batch_size = configs["test"]["batch_size"]
+    test_data_path = configs["test"]["data_path"]
     text_row_style = configs["preprocess"]["text_row_style"]
-    mode = configs["preprocess"]["text_process_mode"]
-    audio_feature_type = configs["other"]["audio_feature_type"]
+    num_examples = configs["test"]["num_examples"]
 
-    # 加载测试集数据生成器
-    test_data = load_data(dataset_name, test_data_path, text_row_style, "test", num_examples)
+    # 加载测试集数据(audio_data_path_list, text_list)
+    test_data = load_data(dataset_name, test_data_path, text_row_style, num_examples)
+
+    batch_size = configs["test"]["batch_size"]
     batchs = ceil(len(test_data[0]) / batch_size)
+    audio_feature_type = configs["other"]["audio_feature_type"]
+    max_input_length = dataset_information["max_input_length"]
+    max_label_length = dataset_information["max_label_length"]
+
+    # 构建测试数据生成器
     test_data_generator = data_generator(
         test_data,
         "test",
         batchs,
         batch_size,
         audio_feature_type,
-        dataset_information["max_input_length"],
-        dataset_information["max_label_length"]
+        max_input_length,
+        max_label_length
     )
 
     aver_wers = 0
@@ -61,14 +68,17 @@ if __name__ == "__main__":
     
     # 获取index_word
     index_word = dataset_information["index_word"]
+    mode = configs["preprocess"]["text_process_mode"]
 
-    for batch, (input_tensor, labels_list) in zip(range(1, batchs+1), test_data_generator):
-        originals = labels_list
+    for batch, (input_tensor, input_length, text_list) in zip(range(1, batchs+1), test_data_generator):
+        originals = text_list
         results = []
         y_pred = model(input_tensor)
+        ctc_input_length = compute_ctc_input_length(input_tensor.shape[1], y_pred.shape[1], input_length)
         output = tf.keras.backend.ctc_decode(
             y_pred=y_pred,
-            input_length=tf.fill([y_pred.shape[0]], y_pred.shape[1]),
+            input_length=tf.reshape(ctc_input_length,[ctc_input_length.shape[0]]),
+            # input_length=tf.fill([y_pred.shape[0]], y_pred.shape[1]),
             greedy=True
         )
         results_int_list = output[0][0].numpy().tolist()
@@ -84,9 +94,11 @@ if __name__ == "__main__":
         aver_wers += aver_wer
         aver_lers += aver_ler
         aver_norm_lers += norm_aver_ler
+        
+        print(batch)
     
     # 英文单词为token，则计算wer指标，其他(如中文、英文字符，计算ler指标)
-    if configs["preprocess"]["text_process_mode"] == "en_word":
+    if mode == "en_word":
         print("WER:")
         print("平均WER:", aver_wers/batchs)
     else:

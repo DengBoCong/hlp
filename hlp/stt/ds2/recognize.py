@@ -1,7 +1,7 @@
 import tensorflow as tf
 import numpy as np
 from model import DS2, decode_output
-from util import get_config, get_dataset_information
+from util import get_config, get_dataset_information, compute_ctc_input_length
 
 from data_process.audio_process import record
 
@@ -9,18 +9,22 @@ import sys
 sys.path.append("..")
 from utils.features import wav_to_feature
 
+
 if __name__ == "__main__":
     configs = get_config()
     dataset_information = get_dataset_information()
 
     # 获取模型配置，加载模型
+    conv_layers = configs["model"]["conv_layers"]
     filters = configs["model"]["conv_filters"]
     kernel_size = configs["model"]["conv_kernel_size"]
     strides = configs["model"]["conv_strides"]
+    bi_gru_layers = configs["model"]["bi_gru_layers"]
     gru_units = configs["model"]["gru_units"]
     fc_units = configs["model"]["fc_units"]
     dense_units = dataset_information["vocab_size"] + 2
-    model = DS2(filters, kernel_size, strides, gru_units, fc_units, dense_units)
+
+    model = DS2(conv_layers, filters, kernel_size, strides, bi_gru_layers, gru_units, fc_units, dense_units)
     
     # 加载模型检查点
     checkpoint = tf.train.Checkpoint(model=model)
@@ -33,10 +37,10 @@ if __name__ == "__main__":
         checkpoint.restore(manager.latest_checkpoint)
 
     # 加载预测、解码所需的参数
-    audio_feature_type = configs["other"]["audio_feature_type"]
-    mode = configs["preprocess"]["text_process_mode"]
-    index_word = dataset_information["index_word"]
     record_path = "./record.wav"
+    audio_feature_type = configs["other"]["audio_feature_type"]
+    index_word = dataset_information["index_word"]
+    mode = configs["preprocess"]["text_process_mode"]
     max_input_length = dataset_information["max_input_length"]
     
     while True:
@@ -49,20 +53,22 @@ if __name__ == "__main__":
                 break
             # 录音
             record(record_path, record_duration)
+            # record_path = "./1088-134315-0000.flac"
 
             # 加载录音数据并预测
-            # record_path = "./data/LibriSpeech/train-clean-5/1088/134315/1088-134315-0000.flac"
             x_test = wav_to_feature(record_path, audio_feature_type)
-            x_test_input = tf.keras.preprocessing.sequence.pad_sequences(
+            x_test_input_tensor = tf.keras.preprocessing.sequence.pad_sequences(
                     [x_test],
                     padding='post',
                     maxlen=max_input_length,
                     dtype='float32'
                     )
-            y_test_pred = model(x_test_input)
+            y_test_pred = model(x_test_input_tensor)
+            ctc_input_length = compute_ctc_input_length(x_test_input_tensor.shape[1], y_test_pred.shape[1], tf.convert_to_tensor([[len(x_test)]]))
+            
             output = tf.keras.backend.ctc_decode(
                 y_pred=y_test_pred,
-                input_length=tf.constant([y_test_pred.shape[1]]),
+                input_length=tf.reshape(ctc_input_length,[ctc_input_length.shape[0]]),
                 greedy=True
             )
             

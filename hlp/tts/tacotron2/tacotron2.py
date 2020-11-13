@@ -388,11 +388,11 @@ class Tacotron2(tf.keras.Model):
 
 
 # 恢复检查点
-def load_checkpoint(tacotron2, path):
+def load_checkpoint(tacotron2, path, config):
     # 加载检查点
     checkpoint_path = path
     ckpt = tf.train.Checkpoint(tacotron2=tacotron2)
-    ckpt_manager = tf.train.CheckpointManager(ckpt, checkpoint_path, max_to_keep=100)
+    ckpt_manager = tf.train.CheckpointManager(ckpt, checkpoint_path, max_to_keep=config.max_to_keep)
     if ckpt_manager.latest_checkpoint:
         ckpt.restore(ckpt_manager.latest_checkpoint).expect_partial()
-    return ckpt
+    return ckpt_manager
