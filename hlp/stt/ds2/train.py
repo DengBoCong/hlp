@@ -2,19 +2,19 @@ import time
 from math import ceil
 import tensorflow as tf
 from model import DS2
-from util import get_config, get_dataset_information
+from util import get_config, get_dataset_information, compute_ctc_input_length
 
 from data_process.generator import data_generator
 from data_process.load_dataset import load_data
-from data_process.text_process import build_train_text_data
+from data_process.text_process import build_text_int_sequences
 
 
-def train_step(model, optimizer, input_tensor, target_tensor, target_length):
+def train_step(model, optimizer, input_tensor, target_tensor, input_length, target_length):
     # 单次训练
     with tf.GradientTape() as tape:
         y_pred=model(input_tensor)
         y_true=target_tensor
-        input_length=tf.fill([y_pred.shape[0],1],y_pred.shape[1])
+        input_length=compute_ctc_input_length(input_tensor.shape[1], y_pred.shape[1], input_length)
         loss=tf.keras.backend.ctc_batch_cost(
             y_true=y_true,
             y_pred=y_pred,
@@ -39,11 +39,11 @@ def train(model, optimizer, train_data_generator, batchs, epochs, manager, save_
         total_loss = 0
         epoch_start = time.time()
         print("Epoch %d/%d" % (epoch, epochs))
-        for batch, (input_tensor, target_tensor, target_length) in zip(range(1, batchs+1), train_data_generator):
+        for batch, (input_tensor, target_tensor, input_length, target_length) in zip(range(1, batchs+1), train_data_generator):
             print("Batch %d/%d" % (batch, batchs))
             
             batch_start = time.time()
-            batch_loss = train_step(model, optimizer, input_tensor, target_tensor, target_length)
+            batch_loss = train_step(model, optimizer, input_tensor, target_tensor, input_length, target_length)
             total_loss += batch_loss
             batch_end = time.time()
             
@@ -75,8 +75,8 @@ if __name__ == "__main__":
     
     mode = configs["preprocess"]["text_process_mode"]
     word_index = dataset_information["word_index"]
-    text_int_sequences_list, label_length_list = build_train_text_data(text_list, mode, word_index)
-    train_data = (audio_data_path_list, text_int_sequences_list, label_length_list)
+    text_int_sequences_list = build_text_int_sequences(text_list, mode, word_index)
+    train_data = (audio_data_path_list, text_int_sequences_list)
     
     batch_size = configs["train"]["batch_size"]
     batchs = ceil(len(audio_data_path_list) / batch_size)

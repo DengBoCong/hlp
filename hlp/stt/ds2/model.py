@@ -86,31 +86,32 @@ def decode_output(seq, index_word, mode):
         return decode_output_en_sentence_char(seq, index_word)
 
 def decode_output_cn_sentence(seq, index_word):
-    result = ""
+    result = []
     for i in seq:
         if i >= 1 and i <= len(index_word):
             word = index_word[str(i)]
-            result += word
-    return result
+            result.append(word)
+    return "".join(result).strip()
 
 def decode_output_en_sentence_word(seq, index_word):
-    result = ""
+    result = []
     for i in seq:
         if i >= 1 and i <= (len(index_word)):
             word = index_word[str(i)]
-            result += word+" "
-    return result.strip()
+            result.append(word)
+            result.append(" ")
+    return "".join(result).strip()
 
 def decode_output_en_sentence_char(seq, index_word):
-    result = ""
+    result = []
     for i in seq:
         if i >= 1 and i <= (len(index_word)):
             word = index_word[str(i)]
             if word != "<space>":
-                result += word
+                result.append(word)
             else:
-                result = result.strip() + " "
-    return result.strip()
+                result.append(" ")
+    return "".join(result).strip()
 
 
 if __name__ == "__main__":
