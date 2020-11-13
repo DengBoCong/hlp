@@ -9,9 +9,10 @@ import os
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 import json
-import tensorflow as tf
 from hlp.stt.las.config import config
-from hlp.stt.las.data_processing import librosa_mfcc, preprocess_text
+from hlp.stt.las.data_processing import preprocess_text
+from hlp.stt.utils import features
+
 
 
 # 基于dataset中的audio_data_path_list和text_list来加载train或test数据
@@ -23,7 +24,7 @@ def build_train_data(audio_data_path_list, text_list):
     if config.if_is_first_train:
         text_int_sequences, tokenizer = preprocess_text.tokenize(process_text_list)
         # 获取音频和文本的最大length，从而进行数据补齐
-        max_input_length = get_max_audio_length(audio_data_path_list)
+        max_input_length = get_max_audio_length(audio_data_path_list,config.audio_feature_type)
         max_label_length = max_length(text_int_sequences)
 
         # 若为初次训练，则将数据集的相关信息写入dataset_information.json文件
@@ -64,7 +65,7 @@ def load_dataset_number(wav_path, label_path, num_examples=None):
     text_list = get_text_list(text_data_path)[:num_examples]
     return audio_data_path_list, text_list
 
-
+'''
 # 创建一个 tf.data 数据集
 def create_dataset(path, path_to_file, num_examples, n_mfcc, batch_size):
     input_tensor = librosa_mfcc.wav_to_mfcc(path, n_mfcc, num_examples)
@@ -80,7 +81,7 @@ def create_dataset(path, path_to_file, num_examples, n_mfcc, batch_size):
     dataset = dataset.batch(batch_size, drop_remainder=True)
     return steps_per_epoch, targ_lang_tokenizer, max_length_targ, max_length_inp, dataset
 
-
+'''
 # 加载数据
 def load_data(dataset_name, wav_path, label_path, train_or_test, num_examples):
     # 基于某种语料获取其中语音路径和文本的list
@@ -109,10 +110,10 @@ def max_length(texts):
 
 
 # 获取最长的音频length(timesteps)
-def get_max_audio_length(audio_data_path_list):
+def get_max_audio_length(audio_data_path_list, audio_feature_type):
     max_audio_length = 0
     for audio_path in audio_data_path_list:
-        audio_feature = librosa_mfcc.mfcc_extract(audio_path)
+        audio_feature = features.wav_to_feature(audio_path, audio_feature_type)
         if (audio_feature):
             max_audio_length = max(max_audio_length, len(audio_feature))
 

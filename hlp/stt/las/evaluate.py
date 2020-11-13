@@ -103,8 +103,8 @@ if __name__ == "__main__":
     rates_lers, aver_lers, norm_rates_lers, norm_aver_lers = lers(labels_list, results)
 
 
-    print("LER:")
-    print("rates:", rates_lers)
-    print("aver:", aver_lers)
-    print("norm_rates:", norm_rates_lers)
-    print("norm_aver:", norm_aver_lers)
+    print("字母错误率:")
+    print("每条语音字母错误数:", rates_lers)
+    print("所有语音平均字母错误数:", aver_lers)
+    print("每条语音字母错误率，错误字母数/标签字母数:", norm_rates_lers)
+    print("所有语音平均字母错误率:", norm_aver_lers)
