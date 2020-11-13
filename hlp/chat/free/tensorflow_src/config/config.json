@@ -45,7 +45,7 @@
   "batch_size": 32,
   "buffer_size": 20000,
   "beam_size": 3,
-  "epochs": 10,
+  "epochs": 1,
   "start_sign": "start",
   "end_sign": "end"
 }

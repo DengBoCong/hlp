@@ -10,7 +10,9 @@ __pycache__/
 .Python
 #data/
 free/pytorch_src/checkpoint/
+free/pytorch_src/data/
 free/tensorflow_src/checkpoint/
+free/tensorflow_src/data/
 task/checkpoint/
 build/
 develop-eggs/

@@ -4,6 +4,10 @@ import json
 seq2seq_config = os.path.dirname(__file__) + r'\config.json'
 path = os.path.dirname(__file__)[:-21]
 
+if not os.path.exists(path + 'tensorflow_src\data'):
+    os.makedirs(path + 'tensorflow_src\data')
+
+
 def get_config_json(config_file='main.json'):
     with open(config_file, 'r') as file:
         return json.load(file)

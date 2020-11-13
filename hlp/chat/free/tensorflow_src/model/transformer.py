@@ -3,22 +3,23 @@ import common.layers as layers
 import common.data_utils as _data
 
 
-def encoder(vocab_size, num_layers, units, d_model,
-            num_heads, dropout, name="encoder"):
+def encoder(vocab_size: int, num_layers: int, units: int, d_model: int,
+            num_heads: int, dropout: float, name: str = "encoder") -> tf.keras.Model:
     """
     transformer的encoder，使用函数式API进行编写，实现了
     模型层内部的一系列操作，num_layers决定了使用多少个
     encoder_layer层，更具Transformer架构里面的描述，可以根据
     效果进行调整，在encoder中还进行了位置编码，具体原理自行翻阅
     资料，就是实现公式的问题，这里就不多做注释了
-    :param vocab_size:token大小
-    :param num_layers:编码解码的数量
-    :param units:单元大小
-    :param d_model:深度
-    :param num_heads:多头注意力的头部层数量
-    :param dropout:dropout的权重
-    :param name:
-    :return: Model(inputs=[inputs, padding_mask], outputs=outputs)
+    Args:
+        vocab_size: token大小
+        num_layers: 编码解码的数量
+        units: 单元大小
+        d_model: 深度
+        num_heads: 多头注意力的头部层数量
+        dropout: dropout的权重
+        name: 名称
+    Returns:
     """
     inputs = tf.keras.Input(shape=(None,), name="inputs")
     padding_mask = tf.keras.Input(shape=(1, 1, None), name="padding_mask")
@@ -41,19 +42,21 @@ def encoder(vocab_size, num_layers, units, d_model,
     return tf.keras.Model(inputs=[inputs, padding_mask], outputs=outputs, name=name)
 
 
-def decoder(vocab_size, num_layers, units, d_model, num_heads, dropout, name="decoder"):
+def decoder(vocab_size: int, num_layers: int, units: int, d_model: int,
+            num_heads: int, dropout: float, name: str = "decoder") -> tf.keras.Model:
     """
     transformer的decoder，使用函数式API进行编写，实现了
     模型层内部的一系列操作，相关的一些变量的时候基本和上面
     的encoder差不多，这里不多说
-    :param vocab_size:token大小
-    :param num_layers:编码解码的层数量
-    :param units:单元大小
-    :param d_model:深度
-    :param num_heads:多头注意力的头部层数量
-    :param dropout:dropout的权重
-    :param name:
-    :return:
+    Args:
+        vocab_size: token大小
+        num_layers: 编码解码的数量
+        units: 单元大小
+        d_model: 深度
+        num_heads: 多头注意力的头部层数量
+        dropout: dropout的权重
+        name: 名称
+    Returns:
     """
     inputs = tf.keras.Input(shape=(None,), name="inputs")
     enc_outputs = tf.keras.Input(shape=(None, d_model), name="encoder_outputs")
@@ -76,21 +79,22 @@ def decoder(vocab_size, num_layers, units, d_model, num_heads, dropout, name="de
                           outputs=outputs, name=name)
 
 
-def transformer(vocab_size, num_layers, units, d_model,
-                num_heads, dropout, name="transformer"):
+def transformer(vocab_size: int, num_layers: int, units: int, d_model: int,
+                num_heads: int, dropout: float, name: str = "transformer") -> tf.keras.Model:
     """
     transformer的粗粒度的结构实现，在忽略细节的情况下，看作是
     encoder和decoder的实现，这里需要注意的是，因为是使用self_attention，
     所以在输入的时候，这里需要进行mask，防止暴露句子中带预测的信息，影响
     模型的效果
-    :param vocab_size:token大小
-    :param num_layers:编码解码层的数量
-    :param units:单元大小
-    :param d_model:深度
-    :param num_heads:多头注意力的头部层数量
-    :param dropout:dropout的权重
-    :param name:
-    :return:
+    Args:
+        vocab_size: token大小
+        num_layers: 编码解码的数量
+        units: 单元大小
+        d_model: 深度
+        num_heads: 多头注意力的头部层数量
+        dropout: dropout的权重
+        name: 名称
+    Returns:
     """
     inputs = tf.keras.Input(shape=(None,), name="inputs")
     dec_inputs = tf.keras.Input(shape=(None,), name="dec_inputs")
@@ -125,7 +129,7 @@ def transformer(vocab_size, num_layers, units, d_model,
     return tf.keras.Model(inputs=[inputs, dec_inputs], outputs=outputs, name=name)
 
 
-def gumbel_softmax(inputs, alpha):
+def gumbel_softmax(inputs: tf.Tensor, alpha: float):
     """
     按照论文中的公式，实现GumbelSoftmax，具体见论文公式
     Args:
@@ -145,7 +149,14 @@ def gumbel_softmax(inputs, alpha):
     return tf.cast(gumbel_outputs, dtype=tf.float32)
 
 
-def embedding_mix(gumbel_inputs, inputs):
+def embedding_mix(gumbel_inputs: tf.Tensor, inputs: tf.Tensor):
+    """
+    将输入和gumbel噪音混合嵌入
+    Args:
+        inputs: 输入
+        alpha: 温度
+    线性衰减
+    """
     probability = tf.random.uniform(shape=tf.shape(inputs), maxval=1, minval=0, dtype=tf.float32)
     return tf.where(probability < 0.3, x=gumbel_inputs, y=inputs)
 
