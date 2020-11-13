@@ -1,7 +1,7 @@
 import tensorflow as tf
 from math import ceil
 from model import DS2, decode_output
-from util import get_config, get_dataset_information
+from util import get_config, get_dataset_information, compute_ctc_input_length
 
 from data_process.load_dataset import load_data
 from data_process.generator import data_generator
@@ -70,13 +70,15 @@ if __name__ == "__main__":
     index_word = dataset_information["index_word"]
     mode = configs["preprocess"]["text_process_mode"]
 
-    for batch, (input_tensor, labels_list) in zip(range(1, batchs+1), test_data_generator):
-        originals = labels_list
+    for batch, (input_tensor, input_length, text_list) in zip(range(1, batchs+1), test_data_generator):
+        originals = text_list
         results = []
         y_pred = model(input_tensor)
+        ctc_input_length = compute_ctc_input_length(input_tensor.shape[1], y_pred.shape[1], input_length)
         output = tf.keras.backend.ctc_decode(
             y_pred=y_pred,
-            input_length=tf.fill([y_pred.shape[0]], y_pred.shape[1]),
+            input_length=tf.reshape(ctc_input_length,[ctc_input_length.shape[0]]),
+            # input_length=tf.fill([y_pred.shape[0]], y_pred.shape[1]),
             greedy=True
         )
         results_int_list = output[0][0].numpy().tolist()
@@ -92,6 +94,8 @@ if __name__ == "__main__":
         aver_wers += aver_wer
         aver_lers += aver_ler
         aver_norm_lers += norm_aver_ler
+        
+        print(batch)
     
     # 英文单词为token，则计算wer指标，其他(如中文、英文字符，计算ler指标)
     if mode == "en_word":
