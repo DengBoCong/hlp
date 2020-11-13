@@ -8,28 +8,23 @@ librosa提取mfcc
 
 """
 
-import os
 import librosa
 import tensorflow as tf
 
 
-def mfcc_extract(path, n_mfcc):
+def mfcc_extract(path, n_mfcc=39):
     y, sr = librosa.load(path=path)
     mfcc = librosa.feature.mfcc(y=y, n_mfcc=n_mfcc).transpose(1, 0).tolist()
     return mfcc
 
 
-def wav_to_mfcc(path, n_mfcc, max_length = 36):
-    print("开始处理语音数据......")
-    files = os.listdir(path)  # 得到文件夹下的所有文件名称
+def wav_to_mfcc(path_list, audio_feature_type, max_input_length, n_mfcc=39):
     mfccs = []
-
-    for file in files:  # 遍历文件夹
-        position = path + '\\' + file  
-        bool = file.endswith(".wav")
+    for path in path_list:
+        bool = path.endswith(".wav")
         if bool:
-            mfcc = mfcc_extract(position, n_mfcc)
+            mfcc = mfcc_extract(path, n_mfcc)
             mfccs.append(mfcc)
-
-    mfccs = tf.keras.preprocessing.sequence.pad_sequences(mfccs, padding='post', dtype='float32', maxlen=max_length)
+    mfccs = tf.keras.preprocessing.sequence.pad_sequences(mfccs, padding='post', dtype='float32',
+                                                          maxlen=max_input_length)
     return mfccs

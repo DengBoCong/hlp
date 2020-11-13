@@ -1,5 +1,6 @@
 import json
 import os
+import tensorflow as tf
 
 
 # 获取配置文件
@@ -27,6 +28,24 @@ def get_all_data_path(data_path):
     text_data_path = files.pop()
     audio_data_path_list = files
     return text_data_path, audio_data_path_list
+
+# 计算ctc api中的参数input_length，基于https://github.com/tensorflow/models/blob/master/research/deep_speech
+def compute_ctc_input_length(max_time_steps, ctc_time_steps, input_length):
+    ctc_input_length = tf.cast(
+        tf.multiply(
+            input_length,
+            ctc_time_steps
+            ),
+        dtype=tf.float32
+        )
+    
+    return tf.cast(
+            tf.math.floordiv(
+                ctc_input_length,
+                tf.cast(max_time_steps, dtype=tf.float32)
+            ),
+            dtype=tf.int32
+        )
 
 
 if __name__ == "__main__":
