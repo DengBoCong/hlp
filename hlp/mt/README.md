@@ -8,12 +8,19 @@
 
 - 分词方法(在配置文件中进行选择)：
     - 英文分词:
-        - BPE:使用子词分词器（subwords tokenizer）对英文进行分词
-        - TOKENIZE:使用单词划分的方法进行分词
+        - BPE:使用子词分词器（subwords tokenizer）对英文进行BPE(Byte Pair Encoding)分词
+        - WORD:使用单词划分的方法进行分词
     - 中文分词：
-        - TOKENIZE:使用字划分方法进行分词
+        - CHAR:使用字划分方法进行分词
+        - WORD:使用jieba模块对词进行划分来分词
 
 # 版本日志
+- 2020.11.09：version 1.5.0
+    - 检查点保存最大数量及保存频率可在配置文件设置
+    - 训练过程增加validation数据验证（可在配置文件设置验证频率及验证集大小划分比例）
+    - 支持stop-early（通过监控val_accuracy的值）
+    - 训练过程保存并返回history数据，包括:loss、accuracy、val_loss、val_accuracy
+    
 - 2020.11.03：version 1.4.0
     - 可设置库中任意两语言对互译（可选：en、zh）
     - 模型结构优化（改为三个入口、模块增删）

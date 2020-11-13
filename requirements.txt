@@ -1,5 +1,6 @@
 jieba==0.42.1
 librosa==0.8.0
+python-speech-features==0.6
 matplotlib==3.3.2
 numpy==1.18.5
 scikit-learn==0.23.2

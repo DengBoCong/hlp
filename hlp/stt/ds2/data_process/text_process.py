@@ -1,19 +1,8 @@
 import re
 import tensorflow as tf
-from util import get_config
-import tensorflow as tf
 
 
-#此方法依据文本是中文文本还是英文文本，若为英文文本是按字符切分还是按单词切分
-def preprocess_sentence(str, mode):
-    if mode == "cn":
-        return preprocess_sentence_ch(str)
-    elif mode == "en_word":
-        return preprocess_sentence_en_word(str)
-    elif mode == "en_char":
-        return preprocess_sentence_en_char(str)
-
-#基于数据文本规则的行获取
+# 基于数据文本规则的行获取
 def text_row_process(str, text_row_style):
     if text_row_style == 1:
         # 当前数据文本的每行为'index string\n'
@@ -25,14 +14,50 @@ def text_row_process(str, text_row_style):
         # 当前数据文本的每行为"string\n"
         return str.strip().lower()
 
-# 非初次训练时，基于word_index和处理好的文本list得到数字list
+# 此方法依据文本是中文文本还是英文文本，若为英文文本是按字符切分还是按单词切分
+def preprocess_sentence(str, mode):
+    if mode.lower() == "cn":
+        return preprocess_sentence_ch(str)
+    elif mode.lower() == "en_word":
+        return preprocess_sentence_en_word(str)
+    elif mode.lower() == "en_char":
+        return preprocess_sentence_en_char(str)
+
+# 获取最长的label_length
+def get_max_label_length(text_int_sequences):
+    max_label_length = 0
+    for seq in text_int_sequences:
+        max_label_length = max(max_label_length, len(seq))
+    return max_label_length
+
+# 构建训练所需的text_int_sequences和label_length_list
+def build_train_text_data(text_list, mode, word_index):
+    # 基于文本按照某种mode切分文本
+    process_text_list = get_process_text_list(text_list, mode)
+
+    # 基于预处理时dataset_information中写入的word_index构建文本整形序列list
+    text_int_sequences_list = get_text_int_sequences(process_text_list, word_index)
+    label_length_list = [[len(text_int)] for text_int in text_int_sequences_list]
+    
+    return text_int_sequences_list, label_length_list
+
+# 读取文本文件，并基于某种row_style来处理原始语料
+def get_text_list(text_path, text_row_style):
+    text_list = []
+    with open(text_path, "r") as f:
+        sentence_list = f.readlines()
+    for sentence in sentence_list:
+        text_list.append(text_row_process(sentence, text_row_style))
+    return text_list
+
+# 基于word_index和切割好的文本list得到数字序列list
 def get_text_int_sequences(process_text_list, word_index):
     text_int_sequences = []
     for process_text in process_text_list:
         text_int_sequences.append(text_to_int_sequence(process_text, word_index))
     return text_int_sequences
 
-# process_text转token序列
+# 对单行文本进行process_text转token整形序列
 def text_to_int_sequence(process_text, word_index):
     int_sequence = []
     for c in process_text.split(" "):
@@ -53,31 +78,15 @@ def tokenize(texts):
     text_int_sequences = tokenizer.texts_to_sequences(texts)  # 文本数字序列
     return text_int_sequences, tokenizer
 
-# 读取文本文件，并基于某种row_style来处理原始语料
-def get_text_list(text_path, text_row_style):
-    text_list = []
-    with open(text_path, "r") as f:
-        sentence_list = f.readlines()
-    for sentence in sentence_list:
-        text_list.append(text_row_process(sentence, text_row_style))
-    return text_list
-
-# 基于原始text和其label_length的整形数字list来补齐label_tensor
-def get_text_label(text_int_sequences, max_label_length):
+# 基于原始text的整形数字序列list来构建补齐的label_tensor
+def get_text_label(text_int_sequences_list, max_label_length):
     label_tensor_numpy = tf.keras.preprocessing.sequence.pad_sequences(
-        text_int_sequences,
+        text_int_sequences_list,
         maxlen=max_label_length,
         padding='post'
         )
     label_tensor = tf.convert_to_tensor(label_tensor_numpy)
     return label_tensor
-
-# 获取最长的label_length
-def get_max_label_length(text_int_sequences):
-    max_label_length = 0
-    for seq in text_int_sequences:
-        max_label_length = max(max_label_length, len(seq))
-    return max_label_length
 
 # 对英文句子：小写化，切分句子，添加开始和结束标记，按单词切分
 def preprocess_sentence_en_word(s):
@@ -92,8 +101,6 @@ def preprocess_sentence_en_word(s):
     s = re.sub(r"[^a-zA-Z?.!,]+", " ", s)
     s = s.strip()
     """
-    # 给句子加上开始和结束标记
-    # 以便模型知道何时开始和结束预测
     s = '<start> ' + s + ' <end>'
     """
     return s
@@ -123,8 +130,6 @@ def preprocess_sentence_ch(s):
 
     s = s.strip()
     """
-    # 给句子加上开始和结束标记
-    # 以便模型知道何时开始和结束预测
     s = '<start> ' + s + ' <end>'
     """
     return s
