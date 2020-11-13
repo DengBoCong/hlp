@@ -34,7 +34,7 @@ def train_step(input_ids, mel_gts, model, optimizer, tar_token):
 
 
 # 启动训练
-def train(model, optimizer, dataset, epochs, steps_per_epoch, checkpoint, checkpoint_prefix):
+def train(model, optimizer, dataset, epochs, steps_per_epoch, checkpoint):
     for epoch in range(epochs):
         print('Epoch {}/{}'.format(epoch + 1, epochs))
         start = time.time()
@@ -52,7 +52,7 @@ def train(model, optimizer, dataset, epochs, steps_per_epoch, checkpoint, checkp
 
         # 每 2 个周期（epoch），保存（检查点）一次模型
         if (epoch + 1) % 2 == 0:
-            checkpoint.save(file_prefix=checkpoint_prefix)
+            checkpoint.save()
 
         print(' - {:.0f}s/step - loss: {:.4f}'.format((time.time() - start)/steps_per_epoch, total_loss / steps_per_epoch))
 
@@ -109,13 +109,14 @@ if __name__ == "__main__":
 
     # 如果检查点存在就恢复，如果不存在就重新创建一个
     if os.path.exists(checkpoint_dir):
-        checkpoint = load_checkpoint(tacotron2, checkpoint_dir)
-        checkpoint_prefix = os.path.join(checkpoint_dir, "ckpt")
+        ckpt_manager = load_checkpoint(tacotron2, checkpoint_dir, config)
+        #checkpoint_prefix = os.path.join(checkpoint_dir, "ckpt")
         print('已恢复至最新的检查点！')
     else:
         checkpoint_prefix = os.path.join(checkpoint_dir, "ckpt")
         checkpoint = tf.train.Checkpoint(tacotron2=tacotron2)
+        ckpt_manager = tf.train.CheckpointManager(checkpoint, checkpoint_dir, max_to_keep=config.max_to_keep)
         print('新的检查点已创建！')
 
-    epochs = 40
-    mel_outputs = train(tacotron2, optimizer, dataset, epochs, steps_per_epoch, checkpoint, checkpoint_prefix)
+    epochs = 10
+    mel_outputs = train(tacotron2, optimizer, dataset, epochs, steps_per_epoch, ckpt_manager)

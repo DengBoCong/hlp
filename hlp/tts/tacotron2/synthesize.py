@@ -48,7 +48,7 @@ if __name__ == "__main__":
     tacotron2 = Tacotron2(vocab_size + 1, config)
 
     # 加载检查点
-    checkpoint = load_checkpoint(tacotron2, path)
+    checkpoint = load_checkpoint(tacotron2, path, config)
     print('已恢复至最新的检查点！')
 
     # 抓取文本数据

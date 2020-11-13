@@ -19,10 +19,10 @@ class Tacotron2Config(object):
             encoder_conv_activation="relu",
             encoder_conv_dropout_rate=0.5,
             encoder_lstm_units=256,
-
             decoder_dim=256,
             decoder_lstm_dim=512,
             decoder_lstm_rate=0.1,
+
             # Attention parameters
             attention_dim=128,
             # Location Layer parameters
@@ -37,6 +37,7 @@ class Tacotron2Config(object):
             n_lstm_decoder=1,
             decoder_lstm_units=512,
             gate_threshold=0.5,
+
             #postnet-conv1d层数
             n_conv_postnet=3,
             postnet_conv_filters=256,
@@ -73,6 +74,8 @@ class Tacotron2Config(object):
             top_db=15,
             # 其他
             batch_size=32,
+            #最大检查点保存数目
+            max_to_keep=2,
     ):
         """tacotron2参数."""
         self.max_len = max_len
@@ -143,3 +146,4 @@ class Tacotron2Config(object):
 
         # 其他
         self.batch_size = batch_size
+        self.max_to_keep = max_to_keep
