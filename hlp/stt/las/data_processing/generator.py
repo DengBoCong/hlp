@@ -6,8 +6,9 @@ Created on Wed Nov 11 09:27:45 2020
 """
 import numpy as np
 import tensorflow as tf
-from hlp.stt.las.data_processing import librosa_mfcc
+from hlp.stt.utils import features
 from hlp.stt.las.data_processing import preprocess_text
+
 
 
 # 数据生成器
@@ -27,7 +28,7 @@ def data_generator(data, train_or_test, batchs, batch_size, audio_feature_type, 
             label_length_list = [label_length_list[i] for i in order]
 
             for idx in range(batchs):
-                batch_input_tensor = librosa_mfcc.wav_to_mfcc(
+                batch_input_tensor = get_input_tensor(
                     audio_data_path_list[idx * batch_size: (idx + 1) * batch_size],
                     audio_feature_type,
                     max_input_length
@@ -45,7 +46,7 @@ def data_generator(data, train_or_test, batchs, batch_size, audio_feature_type, 
         audio_data_path_list, text_list = data
 
         for idx in range(batchs):
-            batch_input_tensor = librosa_mfcc.wav_to_mfcc(
+            batch_input_tensor = get_input_tensor(
                 audio_data_path_list[idx*batch_size : (idx+1)*batch_size],
                 audio_feature_type,
                 max_input_length
@@ -56,3 +57,19 @@ def data_generator(data, train_or_test, batchs, batch_size, audio_feature_type, 
             yield batch_input_tensor, batch_text_list
 
     
+# 基于语音路径序列，处理成模型的输入tensor
+def get_input_tensor(audio_data_path_list, audio_feature_type, maxlen):
+    audio_feature_list = []
+    for audio_path in audio_data_path_list:
+        audio_feature = features.wav_to_feature(audio_path, audio_feature_type)
+        audio_feature_list.append(audio_feature)
+
+    audio_feature_numpy = tf.keras.preprocessing.sequence.pad_sequences(
+        audio_feature_list,
+        maxlen=maxlen,
+        padding='post',
+        dtype='float32'
+        )
+    input_tensor = tf.convert_to_tensor(audio_feature_numpy)
+
+    return input_tensor
