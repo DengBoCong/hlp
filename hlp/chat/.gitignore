@@ -9,10 +9,7 @@ __pycache__/
 # Distribution / packaging
 .Python
 #data/
-free/pytorch_src/checkpoint/
-free/pytorch_src/data/
-free/tensorflow_src/checkpoint/
-free/tensorflow_src/data/
+free/checkpoint/
 task/checkpoint/
 build/
 develop-eggs/

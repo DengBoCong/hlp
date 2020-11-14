@@ -10,13 +10,14 @@ tokenized_data保存分词后的数据集路径
 '''
 
 
-def preprocess_raw_data(raw_data, tokenized_data):
+def preprocess_raw_data(raw_data: str, tokenized_data: str):
     """
     用来对原始文本进行预处理的方法，主要是将原
     始文本进行分词后，保存在一个新的文本中，供后继使用
-    :param raw_data:  原始数据路径
-    :param tokenized_data: 生成token数据保存路径
-    :return:
+    Args:
+        raw_data: 原始数据路径
+        tokenized_data: 生成token数据保存路径
+    Returns:
     """
 
     # 首先判断原数据集是否存在，不存在则退出
@@ -69,11 +70,13 @@ def preprocess_raw_data(raw_data, tokenized_data):
     print("数据处理完毕，数据信息统计：语句最大长度：{}，语句最短长度{}，语句平均长度{:.3f}".format(max_len, min_len, np.mean(sentence_len)))
 
 
-def preprocess_raw_lccc_data(raw_data, tokenized_data):
+def preprocess_raw_lccc_data(raw_data: str, tokenized_data: str):
     """
     用于处理LCCC数据集的方法，将LCCC数据集处理成问答对的形式
-    :param raw_data: 原始数据集
-    :param tokenized_data: 处理后保存的数据集
+    Args:
+        raw_data: 原始数据路径
+        tokenized_data: 生成token数据保存路径
+    Returns:
     """
     if not os.path.exists(raw_data):
         print('数据集不存在，请添加数据集!')

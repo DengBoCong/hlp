@@ -1,6 +1,6 @@
 import tensorflow as tf
 import common.layers as layers
-import common.data_utils as _data
+import common.data_utils as data_utils
 
 
 def encoder(vocab_size: int, num_layers: int, units: int, d_model: int,
@@ -101,17 +101,17 @@ def transformer(vocab_size: int, num_layers: int, units: int, d_model: int,
 
     # 使用了Lambda将方法包装成层，为的是满足函数式API的需要
     enc_padding_mask = tf.keras.layers.Lambda(
-        _data.create_padding_mask, output_shape=(1, 1, None),
+        data_utils.create_padding_mask, output_shape=(1, 1, None),
         name="enc_padding_mask"
     )(inputs)
 
     look_ahead_mask = tf.keras.layers.Lambda(
-        _data.create_look_ahead_mask, output_shape=(1, None, None),
+        data_utils.create_look_ahead_mask, output_shape=(1, None, None),
         name="look_ahead_mask"
     )(dec_inputs)
 
     dec_padding_mask = tf.keras.layers.Lambda(
-        _data.create_padding_mask, output_shape=(1, 1, None),
+        data_utils.create_padding_mask, output_shape=(1, 1, None),
         name="dec_padding_mask"
     )(inputs)
 
@@ -153,8 +153,8 @@ def embedding_mix(gumbel_inputs: tf.Tensor, inputs: tf.Tensor):
     """
     将输入和gumbel噪音混合嵌入
     Args:
+        gumbel_inputs: 噪音输入
         inputs: 输入
-        alpha: 温度
     线性衰减
     """
     probability = tf.random.uniform(shape=tf.shape(inputs), maxval=1, minval=0, dtype=tf.float32)
@@ -162,17 +162,18 @@ def embedding_mix(gumbel_inputs: tf.Tensor, inputs: tf.Tensor):
 
 
 def transformer_scheduled_sample(vocab_size, num_layers, units, d_model, num_heads,
-                                 dropout, alpha=1.0, name="transformer_scheduled_sample"):
+                                 dropout, alpha=1.0, name="transformer_scheduled_sample") -> tf.keras.Model:
     """
     Transformer应用Scheduled Sample
     Args:
-        vocab_size:token大小
-        num_layers:编码解码层的数量
-        units:单元大小
-        d_model:深度
+        vocab_size: token大小
+        num_layers: 编码解码层的数量
+        units: 单元大小
+        d_model: 词嵌入维度
         num_heads:多头注意力的头部层数量
-        dropout:dropout的权重
-        name:
+        dropout: dropout的权重
+        alpha: 温度
+        name: 名称
     Returns:
     """
     inputs = tf.keras.Input(shape=(None,), name="inputs")
@@ -180,17 +181,17 @@ def transformer_scheduled_sample(vocab_size, num_layers, units, d_model, num_hea
 
     # 使用了Lambda将方法包装成层，为的是满足函数式API的需要
     enc_padding_mask = tf.keras.layers.Lambda(
-        _data.create_padding_mask, output_shape=(1, 1, None),
+        data_utils.create_padding_mask, output_shape=(1, 1, None),
         name="enc_padding_mask"
     )(inputs)
 
     look_ahead_mask = tf.keras.layers.Lambda(
-        _data.create_look_ahead_mask, output_shape=(1, None, None),
+        data_utils.create_look_ahead_mask, output_shape=(1, None, None),
         name="look_ahead_mask"
     )(dec_inputs)
 
     dec_padding_mask = tf.keras.layers.Lambda(
-        _data.create_padding_mask, output_shape=(1, 1, None),
+        data_utils.create_padding_mask, output_shape=(1, 1, None),
         name="dec_padding_mask"
     )(inputs)
 

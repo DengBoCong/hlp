@@ -1,7 +1,8 @@
 import tensorflow as tf
 
 
-def accumulate(units, embedding_dim, max_utterance, max_sentence):
+def accumulate(units: int, embedding_dim: int,
+               max_utterance: int, max_sentence: int) -> tf.keras.Model:
     """
     SMN的语义抽取层，主要是对匹配对的两个相似度矩阵进行计
     算，并返回最终的最后一层GRU的状态，用于计算分数
@@ -52,7 +53,8 @@ def accumulate(units, embedding_dim, max_utterance, max_sentence):
     return tf.keras.Model(inputs=[utterance_inputs, response_inputs], outputs=outputs)
 
 
-def smn(units, vocab_size, embedding_dim, max_utterance, max_sentence):
+def smn(units: int, vocab_size: int, embedding_dim: int,
+        max_utterance: int, max_sentence: int) -> tf.keras.Model:
     """
     SMN的模型，在这里将输入进行accumulate之后，得
     到匹配对的向量，然后通过这些向量计算最终的分类概率

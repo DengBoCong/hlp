@@ -1,24 +1,23 @@
 import os
 import json
 
-seq2seq_config = os.path.dirname(__file__) + r'\config.json'
-path = os.path.dirname(__file__)[:-18]
 
-if not os.path.exists(path + 'pytorch_src\data'):
-    os.makedirs(path + 'pytorch_src\data')
+def config(config_file: str = ""):
+    """
+    Args:
+        config_file: 配置文件路径
+    Returns:
+        json: 加载的配置字典
+    """
+    if config_file is "":
+        config_file = os.path.dirname(__file__) + r'\config.json'
 
-def get_config_json(config_file='main.json'):
     with open(config_file, 'r') as file:
         return json.load(file)
 
 
-def config(config_file=seq2seq_config):
-    return get_config_json(config_file=config_file)
-
-
-conf = {}
-
 conf = config()
+path = os.path.dirname(__file__)[:-6]
 
 # 公共配置
 BATCH_SIZE = conf['batch_size']
@@ -30,7 +29,6 @@ beam_size = conf['beam_size']  # beam_search大小
 epochs = conf['epochs']  # 训练轮次
 start_sign = conf['start_sign']
 end_sign = conf['end_sign']
-unk_sign = conf['unk_sign']
 lccc_data = path + conf['lccc_data']
 lccc_tokenized_data = path + conf['lccc_tokenized_data']
 douban_tokenized_data = path + conf['douban_tokenized_data']
@@ -46,7 +44,6 @@ seq2seq_vocab_size = conf['seq2seq']['vocab_size']
 seq2seq_embedding_dim = conf['seq2seq']['embedding_dim']
 seq2seq_max_train_data_size = conf['seq2seq']['max_train_data_size']
 seq2seq_max_length = conf['seq2seq']['max_length']  # 最大文本长度
-seq2seq_dropout = conf['seq2seq']['dropout']
 
 # transformer模型相关配置
 transformer_vocab_size = conf['transformer']['vocab_size']
