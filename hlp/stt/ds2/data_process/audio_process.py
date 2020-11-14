@@ -26,7 +26,7 @@ def get_input_and_length(audio_data_path_list, audio_feature_type, maxlen):
 
     return input_tensor, input_length
 
-#获取最长的音频length(timesteps)
+# 获取最长的音频length(timesteps)
 def get_max_audio_length(audio_data_path_list, audio_feature_type):
     max_audio_length = 0
 

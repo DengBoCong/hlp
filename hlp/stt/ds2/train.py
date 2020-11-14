@@ -109,7 +109,7 @@ if __name__ == "__main__":
     optimizer = tf.keras.optimizers.Adam()
     
     # 加载检查点
-    checkpoint = tf.train.Checkpoint(model = model)
+    checkpoint = tf.train.Checkpoint(model=model, optimizer=optimizer)
     manager = tf.train.CheckpointManager(
         checkpoint,
         directory=configs["checkpoint"]['directory'],

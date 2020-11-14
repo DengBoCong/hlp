@@ -38,7 +38,6 @@ def compute_ctc_input_length(max_time_steps, ctc_time_steps, input_length):
             ),
         dtype=tf.float32
         )
-    
     return tf.cast(
             tf.math.floordiv(
                 ctc_input_length,
