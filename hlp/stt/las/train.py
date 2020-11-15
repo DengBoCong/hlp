@@ -19,7 +19,6 @@ from hlp.stt.las.data_processing import load_dataset
 from hlp.stt.las.data_processing.generator import data_generator
 
 
-
 def loss_function(real, pred):
     loss_object = tf.keras.losses.SparseCategoricalCrossentropy(
         from_logits=True, reduction='none')
@@ -40,29 +39,10 @@ def train_step(inputx_1, targetx_2, enc_hidden, word_index, model, las_optimizer
         # 解码器输入符号
         dec_input = tf.expand_dims([word_index['<start>']] * batch_size, 1)
 
-        predicted_result = ''
-        target_result = ''
-
         # 教师强制 - 将目标词作为下一个输入
         for t in range(1, targetx_2.shape[1]):
             # 将编码器输出 （enc_output） 传送至解码器，解码 
             predictions, dec_hidden = model(inputx_1, enc_hidden, dec_input)
-            predicted_ids = tf.argmax(predictions, 1).numpy()  # 共batchsize个，贪婪解码，取最大 
-            '''
-            待修改
-            if predicted_id == 0:
-                result = ' '  # 目标句子
-            else:
-                result = targ_tokenizer.index_word[predicted_id] + ' '  # 目标句子
-            predicted_result += result
-            target_id = targetx_2[:, t].numpy()
-
-            # 如果是填充位0
-            if target_id[0] == 0:
-                target_result += ' '
-            else:
-                target_result += targ_tokenizer.index_word[target_id[0]] + ' '  # 目标句子
-            '''
             loss += loss_function(targetx_2[:, t], predictions)  # 根据预测计算损失
 
             # 使用教师强制，下一步输入符号是训练集中对应目标符号
@@ -103,8 +83,6 @@ if __name__ == "__main__":
     batchs = len(train_data[0]) // batch_size
     optimizer = tf.keras.optimizers.Adam()
     model = las.las_model(vocab_tar_size, embedding_dim, units, batch_size)
-
-
 
     print("构建数据生成器......")
     train_data_generator = data_generator(
