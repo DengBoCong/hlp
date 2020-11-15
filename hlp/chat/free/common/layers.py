@@ -1,12 +1,15 @@
 import tensorflow as tf
 
 
-def scaled_dot_product_attention(query, key, value, mask):
+def scaled_dot_product_attention(query: tf.Tensor, key: tf.Tensor, value: tf.Tensor, mask: tf.Tensor):
     """
-    # 这里直接根据注意力的公式进行编写
-    参数：
-    query,key,value:这三个均来自输入自身
-    mask:
+    这里直接根据注意力的公式进行编写
+    Args:
+        query: Q
+        key: K
+        value: V
+        mask: 注意力机制的权重
+    Returns:
     """
     # 先将query和可以做点积
     matmul_qk = tf.matmul(query, key, transpose_b=True)
@@ -26,13 +29,18 @@ def scaled_dot_product_attention(query, key, value, mask):
 
 
 class MultiHeadAttention(tf.keras.layers.Layer):
-    '''
-    # 按照过头注意力的结构进行编写
-    参数：
-        inputs: query,key,value
-    '''
+    """
+    按照多头注意力的结构进行编写
+    """
 
-    def __init__(self, d_model, num_heads, name="multi_head_attention"):
+    def __init__(self, d_model: int, num_heads: int, name: str = "multi_head_attention"):
+        """
+        Args:
+            d_model: 深度，词嵌入维度
+            num_heads: 注意力头数量
+            name: 名称
+        Returns:
+        """
         super(MultiHeadAttention, self).__init__(name=name)
         self.num_heads = num_heads
         self.d_model = d_model
@@ -46,11 +54,22 @@ class MultiHeadAttention(tf.keras.layers.Layer):
 
         self.dense = tf.keras.layers.Dense(d_model)
 
-    def split_heads(self, inputs, batch_size):
+    def split_heads(self, inputs: tf.Tensor, batch_size: int):
+        """
+        Args:
+            inputs: 输入
+            batch_size: batch大小
+        Returns:
+        """
         inputs = tf.reshape(inputs, (batch_size, -1, self.num_heads, self.depth))
         return tf.transpose(inputs, perm=[0, 2, 1, 3])
 
-    def call(self, inputs):
+    def call(self, inputs: tf.Tensor):
+        """
+        Args:
+            inputs: 输入
+        Returns:
+        """
         query, key, value, mask = inputs['query'], inputs['key'], inputs['value'], inputs['mask']
         batch_size = tf.shape(query)[0]
 
@@ -77,15 +96,34 @@ class PositionalEncoding(tf.keras.layers.Layer):
     位置编码原理自行翻阅资料，这边不做注释
     """
 
-    def __init__(self, position, d_model):
+    def __init__(self, position: int, d_model: int):
+        """
+        Args:
+            position: 词汇量大小
+            d_model: 深度，词嵌入维度
+        Returns:
+        """
         super(PositionalEncoding, self).__init__()
         self.pos_encoding = self.positional_encoding(position, d_model)
 
-    def get_angles(self, position, i, d_model):
+    def get_angles(self, position: tf.Tensor, i: tf.Tensor, d_model: int):
+        """
+        Args:
+            position: 奇偶位置
+            i: 奇偶位置
+            d_model: 深度，词嵌入维度
+        Returns:
+        """
         angles = 1 / tf.pow(10000, (2 * (i // 2)) / tf.cast(d_model, tf.float32))
         return position * angles
 
-    def positional_encoding(self, position, d_model):
+    def positional_encoding(self, position: int, d_model: int):
+        """
+        Args:
+            position: 词汇量大小
+            d_model: 深度，词嵌入维度
+        Returns:
+        """
         angle_rads = self.get_angles(
             position=tf.range(position, dtype=tf.float32)[:, tf.newaxis],
             i=tf.range(d_model, dtype=tf.float32)[tf.newaxis, :], d_model=d_model
@@ -97,19 +135,21 @@ class PositionalEncoding(tf.keras.layers.Layer):
         pos_encoding = pos_encoding[tf.newaxis, ...]
         return tf.cast(pos_encoding, tf.float32)
 
-    def call(self, inputs):
+    def call(self, inputs: tf.Tensor):
         return inputs + self.pos_encoding[:, :tf.shape(inputs)[1], :]
 
 
-def transformer_encoder_layer(units, d_model, num_heads, dropout, name="transformer_encoder_layer"):
+def transformer_encoder_layer(units: int, d_model: int, num_heads: int,
+                              dropout: float, name: str = "transformer_encoder_layer"):
     """
-    # Transformer的encoder层，使用函数式API
-    :param units:单元大小
-    :param d_model:深度
-    :param num_heads:多头注意力的头部层数量
-    :param dropout:dropout的权重
-    :param name:
-    :return:
+    Transformer的encoder层，使用函数式API
+    Args:
+        units: 词汇量大小
+        d_model: 深度，词嵌入维度
+        num_heads: 注意力头数
+        dropout: dropout的权重
+        name: 名称
+    Returns:
     """
     inputs = tf.keras.Input(shape=(None, d_model), name="inputs")
     padding_mask = tf.keras.Input(shape=(1, 1, None), name="padding_mask")
@@ -132,8 +172,18 @@ def transformer_encoder_layer(units, d_model, num_heads, dropout, name="transfor
     return tf.keras.Model(inputs=[inputs, padding_mask], outputs=outputs, name=name)
 
 
-# Transformer的decoder层，使用函数式API
-def transformer_decoder_layer(units, d_model, num_heads, dropout, name="transformer_decoder_layer"):
+def transformer_decoder_layer(units: int, d_model: int, num_heads: int,
+                              dropout: float, name: str = "transformer_decoder_layer"):
+    """
+    Transformer的decoder层，使用函数式API
+    Args:
+        units: 词汇量大小
+        d_model: 深度，词嵌入维度
+        num_heads: 注意力头数
+        dropout: dropout的权重
+        name: 名称
+    Returns:
+    """
     inputs = tf.keras.Input(shape=(None, d_model), name="inputs")
     enc_outputs = tf.keras.Input(shape=(None, d_model), name="encoder_outputs")
     look_ahead_mask = tf.keras.Input(shape=(1, None, None), name="look_ahead_mask")

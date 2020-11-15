@@ -8,17 +8,31 @@ import config.get_config as _config
 from sklearn.feature_extraction.text import TfidfVectorizer
 
 
-def preprocess_sentence(start_sign, end_sign, w):
+def preprocess_sentence(start_sign: str, end_sign: str, sentence: str):
     """
     用于给句子首尾添加start和end
-    :param w:
-    :return: 合成之后的句子
+    Args:
+        start_sign: 开始标记
+        end_sign: 结束标记
+        sentence: 待处理句子
+    Returns:
+        sentence: 合成之后的句子
     """
-    w = start_sign + ' ' + w + ' ' + end_sign
-    return w
+    sentence = start_sign + ' ' + sentence + ' ' + end_sign
+    return sentence
 
 
-def preprocess_request(sentence, token, max_length):
+def preprocess_request(sentence: str, token: dict, max_length: int):
+    """
+    用于处理回复功能的输入句子，返回模型使用的序列
+    Args:
+        sentence: 待处理句子
+        token: 字典
+        max_length: 单个句子最大长度
+    Returns:
+        inputs: 处理好的句子
+        dec_input: decoder输入
+    """
     sentence = " ".join(jieba.cut(sentence))
     sentence = preprocess_sentence(sentence, _config.start_sign, _config.end_sign)
     inputs = [token.get(i, 3) for i in sentence.split(' ')]
@@ -29,12 +43,17 @@ def preprocess_request(sentence, token, max_length):
     return inputs, dec_input
 
 
-def create_dataset(path, num_examples, start_sign, end_sign):
+def create_dataset(path: str, num_examples: int, start_sign: str, end_sign: str):
     """
     用于将分词文本读入内存，并整理成问答对
-    :param path:
-    :param num_examples:
-    :return: 整理好的问答对
+    Args:
+        path: 分词文本路径
+        num_examples: 读取的数据量大小
+        start_sign: 开始标记
+        end_sign: 结束标记
+    Returns:
+        zip(*word_pairs): 整理好的问答对
+        diag_weight: 样本权重
     """
     is_exist = Path(path)
     if not is_exist.exists():
@@ -44,44 +63,52 @@ def create_dataset(path, num_examples, start_sign, end_sign):
         lines = file.read().strip().split('\n')
         diag_weight = []
         word_pairs = []
-        if num_examples == 0:
-            for line in lines:
-                temp = line.split("=")
-                word_pairs.append([preprocess_sentence(start_sign, end_sign, w) for w in temp[0].split('\t')])
-                if len(temp) == 1:
-                    diag_weight.append(float(1))
-                else:
-                    diag_weight.append(float(temp[1]))
-        else:
-            for line in lines[:num_examples]:
-                temp = line.split("=")
-                word_pairs.append([preprocess_sentence(start_sign, end_sign, w) for w in temp[0].split('\t')])
-                if len(temp) == 1:
-                    diag_weight.append(float(1))
-                else:
-                    diag_weight.append(float(temp[1]))
+        if num_examples != 0:
+            lines = lines[:num_examples]
+
+        for line in lines:
+            # 文本数据中的问答对权重通过在问答对尾部添加“<|>”配置
+            temp = line.split("<|>")
+            word_pairs.append([preprocess_sentence(start_sign, end_sign, w) for w in temp[0].split('\t')])
+            # 如果没有配置对应问答对权重，则默认为1.
+            if len(temp) == 1:
+                diag_weight.append(float(1))
+            else:
+                diag_weight.append(float(temp[1]))
 
     return zip(*word_pairs), diag_weight
 
 
-def read_data(path, num_examples, start_sign, end_sign, max_length):
+def read_data(path: str, num_examples: int, start_sign: str, end_sign: str, max_length: int):
     """
     读取数据，将input和target进行分词后返回
-    :param path: Tokenizer文本路径
-    :param num_examples: 最大序列长度
-    :return: input_tensor, target_tensor, lang_tokenizer
+    Args:
+        path: 分词文本路径
+        num_examples: 读取的数据量大小
+        start_sign: 开始标记
+        end_sign: 结束标记
+        max_length: 最大序列长度
+    Returns:
+        input_tensor: 输入序列张量
+        target_tensor: 目标序列张量
+        lang_tokenizer: 分词器
     """
     (input_lang, target_lang), diag_weight = create_dataset(path, num_examples, start_sign, end_sign)
     input_tensor, target_tensor, lang_tokenizer = tokenize(input_lang, target_lang, max_length)
     return input_tensor, target_tensor, lang_tokenizer, diag_weight
 
 
-def tokenize(input_lang, target_lang, max_length):
+def tokenize(input_lang: list, target_lang: list, max_length: int):
     """
     分词方法，使用Keras API中的Tokenizer进行分词操作
-    :param input_lang: 输入
-    :param target_lang: 目标
-    :return: input_tensor, target_tensor, lang_tokenizer
+    Args:
+        input_lang: 输入序列
+        target_lang: 目标序列
+        max_length: 最大序列长度
+    Returns:
+        input_tensor: 输入序列张量
+        target_tensor: 目标序列张量
+        lang_tokenizer: 分词器
     """
     lang = np.hstack((input_lang, target_lang))
     lang_tokenizer = tf.keras.preprocessing.text.Tokenizer(filters='', oov_token=3)
@@ -96,27 +123,49 @@ def tokenize(input_lang, target_lang, max_length):
     return input_tensor, target_tensor, lang_tokenizer
 
 
-def create_padding_mask(input):
+def create_padding_mask(input: tf.Tensor):
     """
     对input中的padding单位进行mask
-    :param input:
-    :return:
+    Args:
+        input: 输入序列
+    Returns: mask
     """
     mask = tf.cast(tf.math.equal(input, 0), tf.float32)
     return mask[:, tf.newaxis, tf.newaxis, :]
 
 
-def create_look_ahead_mask(input):
+def create_look_ahead_mask(input: tf.Tensor):
+    """
+    对input中的不能见单位进行mask
+    Args:
+        input: 输入序列
+    Returns: mask
+    """
     seq_len = tf.shape(input)[1]
     look_ahead_mask = 1 - tf.linalg.band_part(tf.ones((seq_len, seq_len)), -1, 0)
     padding_mask = create_padding_mask(input)
     return tf.maximum(look_ahead_mask, padding_mask)
 
 
-def load_data(dict_fn, data_fn, start_sign, end_sign, checkpoint_dir, max_length, max_train_data_size=0):
+def load_data(dict_fn: str, data_fn: str, start_sign: str, end_sign: str,
+              checkpoint_dir: str, max_length: int, max_train_data_size: int = 0):
     """
     数据加载方法，含四个元素的元组，包括如下：
-    :return:input_tensor, input_token, target_tensor, target_token
+    Args:
+        dict_fn: 字典路径
+        data_fn: 文本数据路径
+        start_sign: 开始标记
+        end_sign: 结束标记
+        checkpoint_dir: 检查点保存路径
+        max_length: 单个句子最大长度
+        max_train_data_size: 最大训练数据量
+    Returns:
+        input_tensor: 输入序列张量
+        target_tensor: 目标序列张量
+        lang_tokenizer: 分词器
+        dataset: tensorflow的数据加载类
+        steps_per_epoch: 总共的步数
+        checkpoint_prefix: 检查点前缀
     """
     input_tensor, target_tensor, lang_tokenizer, diag_weight = read_data(data_fn, max_train_data_size, start_sign,
                                                                          end_sign, max_length)
@@ -133,13 +182,15 @@ def load_data(dict_fn, data_fn, start_sign, end_sign, checkpoint_dir, max_length
     return input_tensor, target_tensor, lang_tokenizer, dataset, steps_per_epoch, checkpoint_prefix
 
 
-def load_token_dict(dict_fn):
+def load_token_dict(dict_fn: str):
     """
     加载字典方法
-    :return:input_token, target_token
+    Args:
+        dict_fn: 字典路径
+    Returns:
+        token: 字典
     """
-    is_exits = Path(dict_fn)
-    if not is_exits.exists():
+    if not os.path.exists(dict_fn):
         print("不存在字典文件，请先执行train模式并生成字典文件")
         exit(0)
 
@@ -149,9 +200,14 @@ def load_token_dict(dict_fn):
     return token
 
 
-def sequences_to_texts(sequences, token_dict):
+def sequences_to_texts(sequences: list, token_dict: dict):
     """
     将序列转换成text
+    Args:
+        sequences: 待处理序列
+        token_dict: 字典文本路径
+    Returns:
+        result: 处理完成的序列
     """
     inv = {}
     for key, value in token_dict.items():
@@ -166,7 +222,7 @@ def sequences_to_texts(sequences, token_dict):
     return result
 
 
-def dict_texts_to_sequences(texts, token_dict):
+def dict_texts_to_sequences(texts: list, token_dict: dict):
     """
     将text转换成序列
     Args:
@@ -181,7 +237,23 @@ def dict_texts_to_sequences(texts, token_dict):
     return result
 
 
-def smn_load_train_data(dict_fn, data_fn, checkpoint_dir, max_utterance, max_sentence, max_train_data_size=0):
+def smn_load_train_data(dict_fn: str, data_fn: str, checkpoint_dir: str,
+                        max_utterance: int, max_sentence: int, max_train_data_size: int = 0):
+    """
+    用于SMN的训练数据加载
+    Args:
+        dict_fn: 字典文本路径
+        data_fn: 数据文本路径
+        checkpoint_dir: 检查点保存路径
+        max_utterance: 每轮对话最大对话数
+        max_sentence: 单个句子最大长度
+        max_train_data_size: 最大训练数据量
+    Returns:
+        dataset: TensorFlow的数据处理类
+        tokenizer: 分词器
+        checkpoint_prefix: 检查点前缀
+        steps_per_epoch: 总的步数
+    """
     is_exist = os.path.exists(data_fn)
     if not is_exist:
         print('不存在训练数据集，请添加数据集之后重试')
@@ -251,8 +323,9 @@ def smn_load_train_data(dict_fn, data_fn, checkpoint_dir, max_utterance, max_sen
     return dataset, tokenizer, checkpoint_prefix, steps_per_epoch
 
 
-def load_smn_valid_data(data_fn, max_sentence, max_utterance, max_valid_data_size,
-                        token_dict=None, tokenizer=None, max_turn_utterances_num=10):
+def load_smn_valid_data(data_fn: str, max_sentence: int, max_utterance: int, max_valid_data_size: int,
+                        token_dict: dict = None, tokenizer: tf.keras.preprocessing.text.Tokenizer = None,
+                        max_turn_utterances_num: int = 10):
     """
     用于单独加载smn的评价数据，这个方法设计用于能够同时在train时进行评价，以及单独evaluate模式中使用
     注意了，这里token_dict和必传其一，同时传只使用tokenizer
@@ -260,6 +333,7 @@ def load_smn_valid_data(data_fn, max_sentence, max_utterance, max_valid_data_siz
         data_fn: 评价数据地址
         max_sentence: 最大句子长度
         max_utterance: 最大轮次语句数量
+        max_valid_data_size: 最大验证数据量
         token_dict: 字典地址
         tokenizer: 分词器实例
         max_turn_utterances_num: dataset的批量，最好取单轮对话正负样本数总和的倍数
@@ -310,7 +384,7 @@ def load_smn_valid_data(data_fn, max_sentence, max_utterance, max_valid_data_siz
     return dataset
 
 
-def get_tf_idf_top_k(history, k=5):
+def get_tf_idf_top_k(history: list, k: int = 5):
     """
     使用tf_idf算法计算权重最高的k个词，并返回
     Args:
@@ -335,7 +409,7 @@ def get_tf_idf_top_k(history, k=5):
     return top_k_key
 
 
-def creat_index_dataset(data_fn, database_fn, max_database_size):
+def creat_index_dataset(data_fn: str, database_fn: str, max_database_size: int):
     """
     生成轮次tf-idf为索引的候选回复
     Args:
