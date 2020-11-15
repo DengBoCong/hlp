@@ -1,16 +1,16 @@
 {
     "train": {
-        "if_is_first_train": false,
+        "if_is_first_train": true,
         "epochs": 10,
-        "wav_path": ".\\data\\wav_train",
-        "label_path": ".\\data\\data_train.txt",
-        "batch_size": 64,
-        "num_examples": 1926
+        "wav_path": ".\\data\\number\\wav_train",
+        "label_path": ".\\data\\number\\data_train.txt",
+        "batch_size": 32,
+        "num_examples": 100
     },
     "test": {
-        "wav_path": ".\\data\\wav_test",
-        "label_path": ".\\data\\data_test.txt",
-        "test_num": 80,
+        "wav_path": ".\\data\\number\\wav_test",
+        "label_path": ".\\data\\number\\data_test.txt",
+        "test_num": 20,
         "batch_size": 1,
         "warning": "batch_size can only be 1"
     },
@@ -19,7 +19,7 @@
         "units": 512
     },
     "checkpoint": {
-        "directory": "./checkpoints",
+        "directory": "./checkpoints_1",
         "prefix": "ckpt"
     },
     "recognition": {
