@@ -95,8 +95,6 @@ if __name__ == "__main__":
     input_ids = tf.convert_to_tensor(input_ids)
     print(input_ids)
 
-    exit(0)
-
     mel_gts, mel_len_wav = dataset_wave(wave_train_path, config)
 
     # 生成stop_token的参照值

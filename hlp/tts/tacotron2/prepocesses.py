@@ -93,14 +93,9 @@ def tokenize(texts, save_path, name):
 
 #恢复字典，用来预测
 def dataset_seq(texts, tokenizer, config):
-    print("tokenizer.word_index开头:", tokenizer.word_index)
     texts = process_text(texts)
-    print("texts:", texts)
-    #tokenizer.fit_on_texts(texts)
-    print("tokenizer.word_index:", tokenizer.word_index)
     sequences = tokenizer.texts_to_sequences(texts)  # 文本数字序列
     sequences = tf.keras.preprocessing.sequence.pad_sequences(sequences, maxlen=config.max_len_seq, padding='post')
-    print("sequences:", sequences)
     return sequences
 
 # 提取字典

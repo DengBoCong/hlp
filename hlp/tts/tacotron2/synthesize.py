@@ -42,7 +42,6 @@ if __name__ == "__main__":
 
     # 恢复字典
     tokenizer, vocab_size = get_tokenizer_keras(save_path_dictionary)
-    print("tokenizer:", tokenizer.word_index)
 
     # 模型初始化
     tacotron2 = Tacotron2(vocab_size + 1, config)
@@ -57,7 +56,6 @@ if __name__ == "__main__":
     sequences_list = []
     sequences_list.append(seq)
     input_ids = dataset_seq(sequences_list, tokenizer, config)
-    print("input_ids:", input_ids)
     input_ids = tf.convert_to_tensor(input_ids)
 
     # 预测
@@ -65,8 +63,6 @@ if __name__ == "__main__":
 
     # 生成预测声音
     wav = melspectrogram2wav(mel_outputs_postnet[0].numpy(), config.max_db, config.ref_db, config.sr, config.n_fft, config.n_mels, config.preemphasis, config.n_iter, config.hop_length, config.win_length)
-    print("wav:", wav)
-    print("wav.shape:", wav.shape)
 
     wave.write('generated.wav', rate=config.sr, data=wav)
     playsound('.\generated.wav')
