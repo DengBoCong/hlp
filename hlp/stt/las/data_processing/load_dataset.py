@@ -20,33 +20,24 @@ def build_train_data(audio_data_path_list, text_list):
     # 处理文本数据，格式变成如<start> z e r o <end>
     for text in text_list:
         process_text_list.append(preprocess_text.preprocess_en_sentence(text))
-    if config.if_is_first_train:
-        text_int_sequences, tokenizer = preprocess_text.tokenize(process_text_list)
-        # 获取音频和文本的最大length，从而进行数据补齐
-        max_input_length = get_max_audio_length(audio_data_path_list, config.audio_feature_type)
-        max_label_length = max_length(text_int_sequences)
+    
+    text_int_sequences, tokenizer = preprocess_text.tokenize(process_text_list)
+    # 获取音频和文本的最大length，从而进行数据补齐
+    max_input_length = get_max_audio_length(audio_data_path_list, config.audio_feature_type)
+    max_label_length = max_length(text_int_sequences)
 
-        # 若为初次训练，则将数据集的相关信息写入dataset_information.json文件
-        dataset_information_path = config.dataset_information_path
+    # 将数据集的相关信息写入dataset_information.json文件
+    dataset_information_path = config.dataset_information_path
 
-        dataset_information = {}
-        dataset_information["vocab_tar_size"] = len(tokenizer.index_word) + 1
-        dataset_information["max_input_length"] = max_input_length
-        dataset_information["max_label_length"] = max_label_length
-        dataset_information["index_word"] = tokenizer.index_word
-        dataset_information["word_index"] = tokenizer.word_index
+    dataset_information = {}
+    dataset_information["vocab_tar_size"] = len(tokenizer.index_word) + 1
+    dataset_information["max_input_length"] = max_input_length
+    dataset_information["max_label_length"] = max_label_length
+    dataset_information["index_word"] = tokenizer.index_word
+    dataset_information["word_index"] = tokenizer.word_index
 
-        with open(dataset_information_path, 'w', encoding="utf-8") as f:
-            json.dump(dataset_information, f, ensure_ascii=False, indent=4)
-        configs = config.get_config_json(config.json_path)
-        # 将是否为初次训练改为false
-        config.set_config_json(configs, "train", "if_is_first_train", False)
-
-    else:
-        # 不是初次训练就基于初次训练时写入的word_index构建文本
-        dataset_information = get_dataset_information()
-        text_int_sequences = preprocess_text.get_text_int_sequences(process_text_list,
-                                                                    dataset_information["word_index"])
+    with open(dataset_information_path, 'w', encoding="utf-8") as f:
+        json.dump(dataset_information, f, ensure_ascii=False, indent=4)
     vocab_tar_size = dataset_information["vocab_tar_size"]
     label_length_list = [[len(text_int)] for text_int in text_int_sequences]
     return audio_data_path_list, text_int_sequences, label_length_list, vocab_tar_size
