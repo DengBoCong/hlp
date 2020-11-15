@@ -14,8 +14,8 @@ from hlp.stt.las.data_processing import preprocess_text
 def data_generator(data, train_or_test, batchs, batch_size, audio_feature_type, max_input_length, max_label_length):
     if train_or_test == "train":
         audio_data_path_list, text_int_sequences, label_length_list, _ = data
-        print("数据量 ===== {}".format(len(audio_data_path_list)))
-        print("batchs ===== {}".format(batchs))
+        print("数据量: {}".format(len(audio_data_path_list)))
+        print("batchs: {}".format(batchs))
         # generator只能进行一次生成，故需要while True来进行多个epoch的数据生成
         while True:
             # 每epoch将所有数据进行一次shuffle
