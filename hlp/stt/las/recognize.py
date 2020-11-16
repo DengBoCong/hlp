@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """
 Created on Sat Nov  7 19:55:49 2020
-
 @author: 九童
 交互式语音识别
 """
@@ -79,11 +78,11 @@ def recognition(wav_path):
 
     for t in range(test_max_length_targ):  # 逐步解码或预测
         predictions, dec_hidden = model(wav_tensor, hidden, dec_input)
-        predicted_ids = tf.argmax(predictions, 1).numpy()  # 贪婪解码，取最大 
+        predicted_ids = tf.argmax(predictions, 1).numpy()  # 贪婪解码，取最大
         result += test_targ_tokenizer.index_word[predicted_ids[0]]  # 目标句子
         if test_targ_tokenizer.index_word[predicted_ids[0]] == '<end>':
             break
-        # 预测的 ID 被输送回模型            
+        # 预测的 ID 被输送回模型
         dec_input = tf.expand_dims(predicted_ids, 1)
     print('****************************')
     print('Speech recognition results=====================: {}'.format(result))
