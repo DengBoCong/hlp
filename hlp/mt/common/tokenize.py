@@ -239,20 +239,21 @@ def _create_encoded_sentences_keras(sentences, tokenizer, path):
     return max_sequence_length
 
 
-def create_encoded_sentences(sentences, tokenizer, language):
+def create_encoded_sentences(sentences, tokenizer, language, postfix=''):
     """
     根据所选语言将编码好的句子保存至文件，返回最大句子长度
     Args:
         sentences: 需要编码的句子
         tokenizer: 字典
         language: 语言类型 （en/zh）
+        postfix: 保存文本名字加标注后缀
 
     Returns:最大句子长度
     """
     # 根据所选语言确定mode、save_path
     if language == "en":
         mode = _config.en_tokenize_type
-        save_path = _config.encoded_sequences_path_prefix+language
+        save_path = _config.encoded_sequences_path_prefix+language+postfix
         if not os.path.exists(os.path.dirname(save_path)):
             os.makedirs(os.path.dirname(save_path), exist_ok=True)
         if mode == 'BPE':
@@ -261,7 +262,7 @@ def create_encoded_sentences(sentences, tokenizer, language):
             return _create_encoded_sentences_keras(sentences, tokenizer, save_path)
     elif language == "zh":
         mode = _config.zh_tokenize_type
-        save_path = _config.encoded_sequences_path_prefix+language
+        save_path = _config.encoded_sequences_path_prefix+language+postfix
         if not os.path.exists(os.path.dirname(save_path)):
             os.makedirs(os.path.dirname(save_path), exist_ok=True)
         if mode == 'CHAR':
