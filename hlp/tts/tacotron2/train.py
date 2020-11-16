@@ -16,7 +16,7 @@ def loss_function(mel_out, mel_out_postnet, mel_gts, tar_token, stop_token):
     binary_crossentropy = tf.keras.losses.BinaryCrossentropy(from_logits=True)
     stop_loss = binary_crossentropy(tar_token, stop_token)
     mel_loss = tf.keras.losses.MeanSquaredError()(mel_out, mel_gts) + tf.keras.losses.MeanSquaredError()(
-        mel_out_postnet, mel_gts) + stop_loss
+        mel_out_postnet, mel_gts)+stop_loss
     return mel_loss
 
 
@@ -51,7 +51,7 @@ def train(model, optimizer, dataset, epochs, steps_per_epoch, checkpoint):
                                                                   (time.time() - batch_start)), end='')
 
         # 每 2 个周期（epoch），保存（检查点）一次模型
-        if (epoch + 1) % 2 == 0:
+        if (epoch + 1) % 200 == 0:
             checkpoint.save()
 
         print(' - {:.0f}s/step - loss: {:.4f}'.format((time.time() - start)/steps_per_epoch, total_loss / steps_per_epoch))
@@ -93,6 +93,8 @@ if __name__ == "__main__":
     # 取数据
     input_ids, vocab_inp_size = dataset_txt(sentence_list, save_path_dictionary, "train")
     input_ids = tf.convert_to_tensor(input_ids)
+    print(input_ids)
+
     mel_gts, mel_len_wav = dataset_wave(wave_train_path, config)
 
     # 生成stop_token的参照值
@@ -118,5 +120,5 @@ if __name__ == "__main__":
         ckpt_manager = tf.train.CheckpointManager(checkpoint, checkpoint_dir, max_to_keep=config.max_to_keep)
         print('新的检查点已创建！')
 
-    epochs = 10
+    epochs = 1000
     mel_outputs = train(tacotron2, optimizer, dataset, epochs, steps_per_epoch, ckpt_manager)

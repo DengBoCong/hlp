@@ -91,6 +91,12 @@ def tokenize(texts, save_path, name):
         vocab_size = len(tokenizer.word_index) + 1
         return sequences, vocab_size
 
+#恢复字典，用来预测
+def dataset_seq(texts, tokenizer, config):
+    texts = process_text(texts)
+    sequences = tokenizer.texts_to_sequences(texts)  # 文本数字序列
+    sequences = tf.keras.preprocessing.sequence.pad_sequences(sequences, maxlen=config.max_len_seq, padding='post')
+    return sequences
 
 # 提取字典
 def get_tokenizer_keras(path):
@@ -138,7 +144,7 @@ def create_dataset(batch_size, input_ids, mel_gts, tar_token):
     BUFFER_SIZE = len(input_ids)
     steps_per_epoch = BUFFER_SIZE // batch_size
     # dataset = tf.data.Dataset.from_tensor_slices((input_ids, mel_gts)).shuffle(BUFFER_SIZE)
-    dataset = tf.data.Dataset.from_tensor_slices((input_ids, mel_gts, tar_token))
+    dataset = tf.data.Dataset.from_tensor_slices((input_ids, mel_gts, tar_token)).shuffle(BUFFER_SIZE)
     dataset = dataset.batch(batch_size, drop_remainder=True)
     return dataset, steps_per_epoch
 

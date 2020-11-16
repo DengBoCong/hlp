@@ -5,7 +5,7 @@ import numpy as np
 from playsound import playsound
 
 from config2 import Tacotron2Config
-from prepocesses import dataset_txt, get_tokenizer_keras
+from prepocesses import dataset_txt, get_tokenizer_keras, dataset_seq
 from tacotron2 import Tacotron2, load_checkpoint
 from audio_process import melspectrogram2wav
 
@@ -42,7 +42,6 @@ if __name__ == "__main__":
 
     # 恢复字典
     tokenizer, vocab_size = get_tokenizer_keras(save_path_dictionary)
-    print("vocab_size:", vocab_size)
 
     # 模型初始化
     tacotron2 = Tacotron2(vocab_size + 1, config)
@@ -56,7 +55,7 @@ if __name__ == "__main__":
     seq = input()
     sequences_list = []
     sequences_list.append(seq)
-    input_ids, vocab_inp_size = dataset_txt(sequences_list, save_path_dictionary, "predict")
+    input_ids = dataset_seq(sequences_list, tokenizer, config)
     input_ids = tf.convert_to_tensor(input_ids)
 
     # 预测
