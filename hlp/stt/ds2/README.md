@@ -15,8 +15,11 @@
     + 运行recognize.py
     + 控制台手动输入录音时长
 
-# 参数配置说明(模型参数、音频特征(mfcc、fbank)、text_process_mode文本切分方式(en_char、en_word、cn)等可选)
-+ number语料
+# 参数配置说明
++ 模型参数、音频特征(mfcc、fbank)、text_process_mode文本切分方式(en_char、en_word、cn)等可自选
+
++ number语料:
+```json
 {
     "train": {
         "train_epochs": 2,
@@ -53,7 +56,10 @@
         "text_process_mode": "cn"
     }
 }
+```
+
 + LibriSpeech语料
+```json
 {
     "train": {
         "train_epochs": 2,
@@ -90,7 +96,10 @@
         "text_process_mode": "en_char"
     }
 }
+```
+
 + thchs30语料
+```json
 {
     "train": {
         "train_epochs": 2,
@@ -127,6 +136,7 @@
         "text_process_mode": "cn"
     }
 }
+```
 
 # 模型效果
 待完善
