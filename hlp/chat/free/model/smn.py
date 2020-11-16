@@ -1,9 +1,10 @@
 import tensorflow as tf
 
 
-def accumulate(units, embedding_dim, max_utterance, max_sentence):
+def accumulate(units: int, embedding_dim: int,
+               max_utterance: int, max_sentence: int) -> tf.keras.Model:
     """
-    SMN的解码器，主要是对匹配对的两个相似度矩阵进行计
+    SMN的语义抽取层，主要是对匹配对的两个相似度矩阵进行计
     算，并返回最终的最后一层GRU的状态，用于计算分数
     Args:
         units: GRU单元数
@@ -14,9 +15,11 @@ def accumulate(units, embedding_dim, max_utterance, max_sentence):
     """
     utterance_inputs = tf.keras.Input(shape=(max_utterance, max_sentence, embedding_dim))
     response_inputs = tf.keras.Input(shape=(max_sentence, embedding_dim))
-    response_gru = tf.keras.Input(shape=(max_sentence, units))
     a_matrix = tf.keras.initializers.GlorotNormal()(shape=(units, units), dtype=tf.float32)
 
+    # 这里对response进行GRU的Word级关系建模，这里用正交矩阵初始化内核权重矩阵，用于输入的线性变换。
+    response_gru = tf.keras.layers.GRU(units=units, return_sequences=True,
+                                       kernel_initializer='orthogonal')(response_inputs)
     conv2d_layer = tf.keras.layers.Conv2D(filters=8, kernel_size=(3, 3), padding='valid',
                                           kernel_initializer='he_normal', activation='relu')
     max_polling2d_layer = tf.keras.layers.MaxPooling2D(pool_size=(3, 3), strides=(3, 3), padding='valid')
@@ -47,10 +50,11 @@ def accumulate(units, embedding_dim, max_utterance, max_sentence):
     vector = tf.stack(matching_vectors, axis=1)
     outputs = tf.keras.layers.GRU(units, kernel_initializer='orthogonal')(vector)
 
-    return tf.keras.Model(inputs=[utterance_inputs, response_inputs, response_gru], outputs=outputs)
+    return tf.keras.Model(inputs=[utterance_inputs, response_inputs], outputs=outputs)
 
 
-def smn(units, vocab_size, embedding_dim, max_utterance, max_sentence):
+def smn(units: int, vocab_size: int, embedding_dim: int,
+        max_utterance: int, max_sentence: int) -> tf.keras.Model:
     """
     SMN的模型，在这里将输入进行accumulate之后，得
     到匹配对的向量，然后通过这些向量计算最终的分类概率
@@ -69,13 +73,10 @@ def smn(units, vocab_size, embedding_dim, max_utterance, max_sentence):
     utterances_embeddings = embeddings(utterances)
     responses_embeddings = embeddings(responses)
 
-    # 这里对response进行GRU的Word级关系建模，这里用正交矩阵初始化内核权重矩阵，用于输入的线性变换。
-    responses_gru = tf.keras.layers.GRU(units=units, return_sequences=True,
-                                        kernel_initializer='orthogonal')(responses_embeddings)
-    dec_outputs = accumulate(units=units, embedding_dim=embedding_dim, max_utterance=max_utterance,
-                             max_sentence=max_sentence)(
-        inputs=[utterances_embeddings, responses_embeddings, responses_gru])
+    accumulate_outputs = accumulate(units=units, embedding_dim=embedding_dim, max_utterance=max_utterance,
+                                    max_sentence=max_sentence)(
+        inputs=[utterances_embeddings, responses_embeddings])
 
-    outputs = tf.keras.layers.Dense(2, kernel_initializer='glorot_normal')(dec_outputs)
+    outputs = tf.keras.layers.Dense(2, kernel_initializer='glorot_normal')(accumulate_outputs)
 
     return tf.keras.Model(inputs=[utterances, responses], outputs=outputs)

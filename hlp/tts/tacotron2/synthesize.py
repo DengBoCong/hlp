@@ -55,22 +55,21 @@ if __name__ == "__main__":
     # 抓取文本数据
     while True:
         i = i+1
-        b = str(i)
-        print("请输入您要合成的话：")
+        print("请输入您要合成的话，输入ESC结束：")
         seq = input()
-        if seq == 'end1':
+        if seq == 'ESC':
             break
         sequences_list = []
         sequences_list.append(seq)
         input_ids = dataset_seq(sequences_list, tokenizer, config)
         input_ids = tf.convert_to_tensor(input_ids)
-        print(input_ids)
+        # print(input_ids)
         # 预测
         mel_outputs, mel_outputs_postnet, gate_outputs, alignments = tacotron2.inference(input_ids)
 
         # 生成预测声音
         wav = melspectrogram2wav(mel_outputs_postnet[0].numpy(), config.max_db, config.ref_db, config.sr, config.n_fft, config.n_mels, config.preemphasis, config.n_iter, config.hop_length, config.win_length)
-        name = 'generated' + b +'.wav'
+        name = 'GENERATED-' + seq +'.wav'
         wave.write(name, rate=config.sr, data=wav)
         playsound(name)
     print("合成结束")

@@ -1,22 +1,23 @@
 import os
 import json
 
-seq2seq_config = os.path.dirname(__file__) + r'\config.json'
-path = os.path.dirname(__file__)[:-6]
 
+def config(config_file: str = ""):
+    """
+    Args:
+        config_file: 配置文件路径
+    Returns:
+        json: 加载的配置字典
+    """
+    if config_file is "":
+        config_file = os.path.dirname(__file__) + r'\config.json'
 
-def get_config_json(config_file='main.json'):
     with open(config_file, 'r') as file:
         return json.load(file)
 
 
-def config(config_file=seq2seq_config):
-    return get_config_json(config_file=config_file)
-
-
-conf = {}
-
 conf = config()
+path = os.path.dirname(__file__)[:-6]
 
 # 公共配置
 BATCH_SIZE = conf['batch_size']

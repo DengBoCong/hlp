@@ -41,4 +41,8 @@ if __name__ == "__main__":
 
     with open(dataset_information_path, 'w', encoding="utf-8") as f:
         json.dump(dataset_information, f, ensure_ascii=False, indent=4)
-        
+
+    print("语音文件数:", len(audio_data_path_list))
+    print("vocab_size:", dataset_information["vocab_size"])
+    print("最长语音:", dataset_information["max_input_length"])
+    print("最长转写文本:", dataset_information["max_label_length"])

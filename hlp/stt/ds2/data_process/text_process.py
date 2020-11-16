@@ -17,7 +17,7 @@ def text_row_process(str, text_row_style):
 # 此方法依据文本是中文文本还是英文文本，若为英文文本是按字符切分还是按单词切分
 def preprocess_sentence(str, mode):
     if mode.lower() == "cn":
-        return preprocess_sentence_ch(str)
+        return preprocess_sentence_cn(str)
     elif mode.lower() == "en_word":
         return preprocess_sentence_en_word(str)
     elif mode.lower() == "en_char":
@@ -30,16 +30,15 @@ def get_max_label_length(text_int_sequences):
         max_label_length = max(max_label_length, len(seq))
     return max_label_length
 
-# 构建训练所需的text_int_sequences和label_length_list
-def build_train_text_data(text_list, mode, word_index):
+# 构建训练所需的text_int_sequences
+def build_text_int_sequences(text_list, mode, word_index):
     # 基于文本按照某种mode切分文本
     process_text_list = get_process_text_list(text_list, mode)
 
     # 基于预处理时dataset_information中写入的word_index构建文本整形序列list
     text_int_sequences_list = get_text_int_sequences(process_text_list, word_index)
-    label_length_list = [[len(text_int)] for text_int in text_int_sequences_list]
     
-    return text_int_sequences_list, label_length_list
+    return text_int_sequences_list
 
 # 读取文本文件，并基于某种row_style来处理原始语料
 def get_text_list(text_path, text_row_style):
@@ -79,14 +78,18 @@ def tokenize(texts):
     return text_int_sequences, tokenizer
 
 # 基于原始text的整形数字序列list来构建补齐的label_tensor
-def get_text_label(text_int_sequences_list, max_label_length):
-    label_tensor_numpy = tf.keras.preprocessing.sequence.pad_sequences(
+def get_label_and_length(text_int_sequences_list, max_label_length):
+    target_length_list = []
+    for text_int_sequence in text_int_sequences_list:
+        target_length_list.append([len(text_int_sequence)])
+    target_tensor_numpy = tf.keras.preprocessing.sequence.pad_sequences(
         text_int_sequences_list,
         maxlen=max_label_length,
         padding='post'
         )
-    label_tensor = tf.convert_to_tensor(label_tensor_numpy)
-    return label_tensor
+    target_tensor = tf.convert_to_tensor(target_tensor_numpy)
+    target_length = tf.convert_to_tensor(target_length_list)
+    return target_tensor, target_length
 
 # 对英文句子：小写化，切分句子，添加开始和结束标记，按单词切分
 def preprocess_sentence_en_word(s):
@@ -121,7 +124,7 @@ def preprocess_sentence_en_char(s):
     return result.strip()
 
 # 对中文句子：按字切分句子，添加开始和结束标记
-def preprocess_sentence_ch(s):
+def preprocess_sentence_cn(s):
     s = s.lower().strip()
 
     s = [c for c in s]
