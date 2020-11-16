@@ -57,7 +57,7 @@ if __name__ == "__main__":
     sequences_list.append(seq)
     input_ids = dataset_seq(sequences_list, tokenizer, config)
     input_ids = tf.convert_to_tensor(input_ids)
-
+    print(input_ids)
     # 预测
     mel_outputs, mel_outputs_postnet, gate_outputs, alignments = tacotron2.inference(input_ids)
 

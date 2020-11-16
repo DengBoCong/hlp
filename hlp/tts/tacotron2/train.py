@@ -91,9 +91,8 @@ if __name__ == "__main__":
     sentence_list = map_to_text(csv_dir, wav_name_list)
 
     # 取数据
-    input_ids, vocab_inp_size = dataset_txt(sentence_list, save_path_dictionary, "train")
+    input_ids, vocab_inp_size = dataset_txt(sentence_list, save_path_dictionary)
     input_ids = tf.convert_to_tensor(input_ids)
-    print(input_ids)
 
     mel_gts, mel_len_wav = dataset_wave(wave_train_path, config)
 

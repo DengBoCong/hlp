@@ -2,12 +2,12 @@ import tensorflow as tf
 
 from config2 import Tacotron2Config
 from tacotron2 import load_checkpoint
-from prepocesses import dataset_txt, dataset_wave, process_wav_name, map_to_text, get_tokenizer_keras
+from prepocesses import dataset_seq, dataset_wave, process_wav_name, map_to_text, get_tokenizer_keras
 from tacotron2 import Tacotron2
 from audio_process import spec_distance
 
 
-def evluate(path, csv_dir, save_path_dictionary, vocab_size):
+def evluate(path, csv_dir, tokenizer, vocab_size, config):
     # 读取测试集的文本数据
     # 统计wav名称
     # a=1代表是number数据集
@@ -17,7 +17,7 @@ def evluate(path, csv_dir, save_path_dictionary, vocab_size):
     # 根据wav名称生成需要的列表
     sentence_list = map_to_text(csv_dir, wav_name_list)
     # 取数据
-    input_ids, vocab_inp_size = dataset_txt(sentence_list, save_path_dictionary, "evaluate")
+    input_ids = dataset_seq(sentence_list, tokenizer, config)
     input_ids = tf.convert_to_tensor(input_ids)
 
     # 读取测试集的音频数据
@@ -54,4 +54,4 @@ if __name__ == "__main__":
     csv_dir = config.csv_dir_number
     # 测试音频文件的路径
     path = config.wave_test_path_number
-    evluate(path, csv_dir, save_path_dictionary, vocab_size)
+    evluate(path, csv_dir, tokenizer, vocab_size, config)
