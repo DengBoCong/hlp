@@ -26,9 +26,10 @@ if __name__ == "__main__":
     dense_units = dataset_information["vocab_size"] + 2
 
     model = DS2(conv_layers, filters, kernel_size, strides, bi_gru_layers, gru_units, fc_units, dense_units)
+    optimizer = tf.keras.optimizers.Adam()
 
     # 加载模型检查点
-    checkpoint = tf.train.Checkpoint(model=model)
+    checkpoint = tf.train.Checkpoint(model=model, optimizer=optimizer)
     manager = tf.train.CheckpointManager(
         checkpoint,
         directory=configs["checkpoint"]['directory'],
@@ -94,8 +95,6 @@ if __name__ == "__main__":
         aver_wers += aver_wer
         aver_lers += aver_ler
         aver_norm_lers += norm_aver_ler
-        
-        print(batch)
     
     # 英文单词为token，则计算wer指标，其他(如中文、英文字符，计算ler指标)
     if mode == "en_word":

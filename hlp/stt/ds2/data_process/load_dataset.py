@@ -11,7 +11,9 @@ def load_data(dataset_name, data_path, text_row_style, num_examples):
         audio_data_path_list, text_list = load_dataset_number(data_path, text_row_style, num_examples)
     elif dataset_name.lower() == "librispeech":
         audio_data_path_list, text_list = load_dataset_librispeech(data_path, text_row_style, num_examples)
-    
+    elif dataset_name.lower() == "thchs30":
+        audio_data_path_list, text_list = load_dataset_thchs30(data_path, text_row_style, num_examples)
+
     return audio_data_path_list, text_list
     
 # 加载number语料，返回语音文件list和对应文本字符串list
@@ -57,6 +59,26 @@ def load_dataset_librispeech(data_path, text_row_style, num_examples = None):
     text_list = text_list[:num_examples]
     return audio_data_path_list, text_list
 
+def load_dataset_thchs30(data_path, text_row_style, num_examples = None):
+    # 音频文件绝对路径
+    pos = data_path.rindex("/")
+    librispeech_dataset_path = data_path[:pos]
+    files = os.listdir(data_path)[:2*num_examples]
+    audio_data_path_list = []
+    text_list = []
+    for f in files:
+        if os.path.splitext(f)[1] == ".wav":
+            # 音频文件
+            audio_path = data_path + "/" + f
+            audio_data_path_list.append(audio_path)
+            
+            # 对应的文本
+            with open(librispeech_dataset_path + "./data/" + f + '.trn', "r", encoding='UTF-8') as fl:
+                txt_content = fl.readlines()
+            text = "".join(txt_content[0].strip().split(" "))
+            text_list.append(text)
+
+    return audio_data_path_list, text_list
 
 if __name__ == "__main__":
     pass

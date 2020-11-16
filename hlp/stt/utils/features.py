@@ -19,7 +19,7 @@ def get_mfcc_feature(wavsignal, fs):
     
     # (timestep, 39), list
     wav_feature = np.column_stack((feat_mfcc, feat_mfcc_d, feat_mfcc_dd))
-    return wav_feature.tolist()
+    return wav_feature.astype(np.float32).tolist()
 
 def get_fbank_feature(wavsignal, fs):
     # 输入为wav文件数学表示和采样频率，输出为语音的FBANK特征
@@ -30,4 +30,4 @@ def get_fbank_feature(wavsignal, fs):
     wav_feature = np.column_stack((feat_fbank))
     return wav_feature.tolist()
     """
-    return feat_fbank.tolist()
+    return feat_fbank.astype(np.float32).tolist()

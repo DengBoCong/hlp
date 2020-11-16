@@ -29,7 +29,6 @@ def get_dataset_information():
 conf = get_config_json(json_path)
 
 # 对各变量赋值
-if_is_first_train = conf["train"]['if_is_first_train'] # 是否为第一次训练
 epochs = conf["train"]['epochs'] # 训练epochs数
 train_wav_path = conf["train"]['wav_path'] # 训练语音数据路径
 train_label_path = conf["train"]['label_path'] # 训练标签数据路径

@@ -25,9 +25,10 @@ if __name__ == "__main__":
     dense_units = dataset_information["vocab_size"] + 2
 
     model = DS2(conv_layers, filters, kernel_size, strides, bi_gru_layers, gru_units, fc_units, dense_units)
-    
+    optimizer = tf.keras.optimizers.Adam()
+
     # 加载模型检查点
-    checkpoint = tf.train.Checkpoint(model=model)
+    checkpoint = tf.train.Checkpoint(model=model, optimizer=optimizer)
     manager = tf.train.CheckpointManager(
         checkpoint,
         directory=configs["checkpoint"]['directory'],
@@ -52,8 +53,8 @@ if __name__ == "__main__":
             if record_duration <= 0:
                 break
             # 录音
-            record(record_path, record_duration)
-            # record_path = "./1088-134315-0000.flac"
+            # record(record_path, record_duration)
+            record_path = "./1088-134315-0000.flac"
 
             # 加载录音数据并预测
             x_test = wav_to_feature(record_path, audio_feature_type)

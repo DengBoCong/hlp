@@ -1,6 +1,6 @@
 {
     "train": {
-        "train_epochs": 2,
+        "train_epochs": 1,
         "data_path": "./data/LibriSpeech/train-clean-5",
         "batch_size": 36,
         "num_examples": 100

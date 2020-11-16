@@ -17,7 +17,7 @@ def text_row_process(str, text_row_style):
 # 此方法依据文本是中文文本还是英文文本，若为英文文本是按字符切分还是按单词切分
 def preprocess_sentence(str, mode):
     if mode.lower() == "cn":
-        return preprocess_sentence_ch(str)
+        return preprocess_sentence_cn(str)
     elif mode.lower() == "en_word":
         return preprocess_sentence_en_word(str)
     elif mode.lower() == "en_char":
@@ -124,7 +124,7 @@ def preprocess_sentence_en_char(s):
     return result.strip()
 
 # 对中文句子：按字切分句子，添加开始和结束标记
-def preprocess_sentence_ch(s):
+def preprocess_sentence_cn(s):
     s = s.lower().strip()
 
     s = [c for c in s]

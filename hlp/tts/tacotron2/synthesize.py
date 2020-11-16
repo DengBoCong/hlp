@@ -5,7 +5,7 @@ import numpy as np
 from playsound import playsound
 
 from config2 import Tacotron2Config
-from prepocesses import dataset_txt, get_tokenizer_keras
+from prepocesses import dataset_txt, get_tokenizer_keras, dataset_seq
 from tacotron2 import Tacotron2, load_checkpoint
 from audio_process import melspectrogram2wav
 
@@ -42,7 +42,6 @@ if __name__ == "__main__":
 
     # 恢复字典
     tokenizer, vocab_size = get_tokenizer_keras(save_path_dictionary)
-    print("vocab_size:", vocab_size)
 
     # 模型初始化
     tacotron2 = Tacotron2(vocab_size + 1, config)
@@ -51,19 +50,26 @@ if __name__ == "__main__":
     checkpoint = load_checkpoint(tacotron2, path, config)
     print('已恢复至最新的检查点！')
 
+    # 用于命名
+    i = 0
     # 抓取文本数据
-    print("请输入需要合成的话：")
-    seq = input()
-    sequences_list = []
-    sequences_list.append(seq)
-    input_ids, vocab_inp_size = dataset_txt(sequences_list, save_path_dictionary, "predict")
-    input_ids = tf.convert_to_tensor(input_ids)
+    while True:
+        i = i+1
+        print("请输入您要合成的话，输入ESC结束：")
+        seq = input()
+        if seq == 'ESC':
+            break
+        sequences_list = []
+        sequences_list.append(seq)
+        input_ids = dataset_seq(sequences_list, tokenizer, config)
+        input_ids = tf.convert_to_tensor(input_ids)
+        # print(input_ids)
+        # 预测
+        mel_outputs, mel_outputs_postnet, gate_outputs, alignments = tacotron2.inference(input_ids)
 
-    # 预测
-    mel_outputs, mel_outputs_postnet, gate_outputs, alignments = tacotron2.inference(input_ids)
-
-    # 生成预测声音
-    wav = melspectrogram2wav(mel_outputs_postnet[0].numpy(), config.max_db, config.ref_db, config.sr, config.n_fft, config.n_mels, config.preemphasis, config.n_iter, config.hop_length, config.win_length)
-
-    wave.write('generated.wav', rate=config.sr, data=wav)
-    playsound('.\generated.wav')
+        # 生成预测声音
+        wav = melspectrogram2wav(mel_outputs_postnet[0].numpy(), config.max_db, config.ref_db, config.sr, config.n_fft, config.n_mels, config.preemphasis, config.n_iter, config.hop_length, config.win_length)
+        name = 'GENERATED-' + seq +'.wav'
+        wave.write(name, rate=config.sr, data=wav)
+        playsound(name)
+    print("合成结束")
