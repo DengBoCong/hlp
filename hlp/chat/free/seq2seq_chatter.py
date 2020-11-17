@@ -6,7 +6,7 @@ from model.chatter import Chatter
 import model.seq2seq as seq2seq
 from common.utils import CmdParser
 import config.get_config as get_config
-from common.pre_treat import preprocess_raw_lccc_data
+from common.pre_treat import dispatch_tokenized_func_dict_single
 
 
 class Seq2SeqChatter(Chatter):
@@ -172,8 +172,8 @@ def main():
             response = chatter.respond(req=req)
             print("Agent: ", response)
     elif options.type == 'pre_treat':
-        preprocess_raw_lccc_data(raw_data=get_config.lccc_data,
-                                 tokenized_data=get_config.lccc_tokenized_data)
+        dispatch_tokenized_func_dict_single(operator="lccc", raw_data=get_config.lccc_data,
+                                            tokenized_data=get_config.lccc_tokenized_data, if_remove=True)
     else:
         parser.error(msg='')
 

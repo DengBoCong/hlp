@@ -7,7 +7,7 @@ from common.utils import CmdParser
 from common.utils import CustomSchedule
 import config.get_config as get_config
 import model.transformer as transformer
-from common.pre_treat import preprocess_raw_lccc_data
+from common.pre_treat import dispatch_tokenized_func_dict_single
 
 
 class TransformerChatter(Chatter):
@@ -180,8 +180,8 @@ def main():
             response = chatter.respond(req=req)
             print("Agent: ", response)
     elif options.type == 'pre_treat':
-        preprocess_raw_lccc_data(raw_data=get_config.lccc_data,
-                                 tokenized_data=get_config.lccc_tokenized_data)
+        dispatch_tokenized_func_dict_single(operator="lccc", raw_data=get_config.lccc_data,
+                                            tokenized_data=get_config.lccc_tokenized_data, if_remove=True)
     else:
         parser.error(msg='')
 
