@@ -5,11 +5,13 @@
 
 """
 import sys
+
 sys.path.append('..')
 from sklearn.model_selection import train_test_split
 from model import trainer
 import config.get_config as _config
 from model import nmt_model
+from common import checkpoint
 from pathlib import Path
 from common import tokenize
 import tensorflow as tf
@@ -61,7 +63,8 @@ def _preprocess_sentence_en_word(sentence, start_word=_config.start_word, end_wo
     return s
 
 
-def _preprocess_sentences_en(sentences, mode=_config.en_tokenize_type, start_word=_config.start_word, end_word=_config.end_word):
+def _preprocess_sentences_en(sentences, mode=_config.en_tokenize_type, start_word=_config.start_word,
+                             end_word=_config.end_word):
     """
     对英文句子列表进行指定mode的预处理
     返回处理好的句子列表
@@ -94,7 +97,8 @@ def _preprocess_sentence_zh_word(sentences, start_word=_config.start_word, end_w
     return sentences_word
 
 
-def _preprocess_sentences_zh(sentences, mode=_config.zh_tokenize_type, start_word=_config.start_word, end_word=_config.end_word):
+def _preprocess_sentences_zh(sentences, mode=_config.zh_tokenize_type, start_word=_config.start_word,
+                             end_word=_config.end_word):
     """
     对中文句子列表进行指定mode的预处理
     返回处理好的句子列表
@@ -116,17 +120,14 @@ def preprocess_sentences(sentences, language):
         return _preprocess_sentences_zh(sentences, mode)
 
 
-def split_batch():
+def _split_batch(input_path, target_path, train_size=_config.train_size):
     """
     根据配置文件语言对来确定文件路径，划分训练集与验证集
     """
 
-    input_path = _config.encoded_sequences_path_prefix + _config.source_lang
-    target_path = _config.encoded_sequences_path_prefix + _config.target_lang
-
     input_tensor = numpy.loadtxt(input_path, dtype='int32')
     target_tensor = numpy.loadtxt(target_path, dtype='int32')
-    x_train, x_test, y_train, y_test = train_test_split(input_tensor, target_tensor, test_size=_config.val_size)
+    x_train, x_test, y_train, y_test = train_test_split(input_tensor, target_tensor, train_size=train_size)
     train_dataset = tf.data.Dataset.from_tensor_slices((x_train, y_train))
     train_dataset = train_dataset.shuffle(_config.BUFFER_SIZE).batch(_config.BATCH_SIZE, drop_remainder=True)
     val_dataset = tf.data.Dataset.from_tensor_slices((x_test, y_test))
@@ -134,7 +135,7 @@ def split_batch():
     return train_dataset, val_dataset
 
 
-def generate_batch_from_file(num_steps, start_step, batch_size):
+def _generate_batch_from_file(input_path, target_path, num_steps, start_step, batch_size):
     """
     从编码文件中分batch读入数据集
     自动从配置文件设置确定input_path、target_path
@@ -145,15 +146,47 @@ def generate_batch_from_file(num_steps, start_step, batch_size):
     return:input_tensor shape=(batch_size, sentence_length), dtype=tf.int32
            , target_tensor shape=(batch_size, sentence_length), dtype=tf.int32
     """
-    input_path = _config.encoded_sequences_path_prefix + _config.source_lang
-    target_path = _config.encoded_sequences_path_prefix + _config.target_lang
 
     step = int(start_step)
     while step < num_steps:
-        input_tensor = numpy.loadtxt(input_path, dtype='int32', skiprows=0 + step*batch_size, max_rows=batch_size)
-        target_tensor = numpy.loadtxt(target_path, dtype='int32', skiprows=0 + step*batch_size, max_rows=batch_size)
+        input_tensor = numpy.loadtxt(input_path, dtype='int32', skiprows=0 + step * batch_size, max_rows=batch_size)
+        target_tensor = numpy.loadtxt(target_path, dtype='int32', skiprows=0 + step * batch_size, max_rows=batch_size)
         step += 1
         yield tf.cast(input_tensor, tf.int32), tf.cast(target_tensor, tf.int32)
+
+
+def get_dataset(steps, cache, train_size, validate_from_txt):
+    """
+
+    @param steps:训练集文本共含多少个batch
+    @param cache:是否一次性加载入内存
+    @param train_size:训练集比例
+    @param validate_from_txt:是否从指定文本加载验证集
+
+    返回训练可接收的训练集验证集
+    """
+    input_path = _config.encoded_sequences_path_prefix + _config.source_lang
+    target_path = _config.encoded_sequences_path_prefix + _config.target_lang
+    # 首先判断是否从指定文件读入，若为真，则从验证集文本读取验证集数据
+    if validate_from_txt == 'True':
+        train_size = 0.9999
+        val_dataset, _ = _split_batch(input_path + '_val', target_path + '_val', train_size)
+        # 判断训练数据是直接读取还是采用生成器读取
+        if cache:
+            train_dataset, _ = _split_batch(input_path, target_path, train_size)
+        else:
+            train_dataset = _generate_batch_from_file(input_path, target_path, steps, 0, _config.BATCH_SIZE)
+        return train_dataset, val_dataset
+    # 若为假，则从数据集中划分验证集
+    else:
+        if cache:
+            train_dataset, val_dataset = _split_batch(input_path, target_path, train_size)
+        else:
+            train_dataset = _generate_batch_from_file(input_path, target_path
+                                                      , steps * train_size, 0, _config.BATCH_SIZE)
+            val_dataset = _generate_batch_from_file(input_path, target_path
+                                                    , steps, steps * train_size, _config.BATCH_SIZE)
+        return train_dataset, val_dataset
 
 
 def _count_words(sentences):
@@ -179,6 +212,10 @@ def train_preprocess():
     # en = _pre.load_single_sentences(_config.path_to_train_file_en, _config.num_sentences, column=1)
     # ch = _pre.load_single_sentences(_config.path_to_train_file_zh, _config.num_sentences, column=1)
     source_sentences, target_sentences = load_sentences(_config.path_to_train_file, _config.num_sentences)
+    # 加载验证集
+    if _config.validate_from_txt == "True":
+        source_sentences_val, target_sentences_val = load_sentences(_config.path_to_val_file
+                                                                    , _config.num_validate_sentences)
 
     # 计算语料词数
     num_words = _count_words(source_sentences)
@@ -187,6 +224,9 @@ def train_preprocess():
     # 预处理句子
     source_sentences = preprocess_sentences(source_sentences, language=_config.source_lang)
     target_sentences = preprocess_sentences(target_sentences, language=_config.target_lang)
+    if _config.validate_from_txt == "True":
+        source_sentences_val = preprocess_sentences(source_sentences_val, language=_config.source_lang)
+        target_sentences_val = preprocess_sentences(target_sentences_val, language=_config.target_lang)
     print('已加载句子数量:%d' % _config.num_sentences)
     print('数据加载、预处理完毕！\n')
 
@@ -204,7 +244,7 @@ def train_preprocess():
     print('目标语言字典生成、保存完毕！\n')
 
     # 编码句子
-    print("正在编码句子...")
+    print("正在编码训练集句子...")
     max_sequence_length_source = tokenize.create_encoded_sentences(sentences=source_sentences
                                                                    , tokenizer=tokenizer_source
                                                                    , language=_config.source_lang)
@@ -213,6 +253,16 @@ def train_preprocess():
                                                                    , language=_config.target_lang)
     print('最大源语言(%s)句子长度:%d' % (_config.source_lang, max_sequence_length_source))
     print('最大目标语言(%s)句子长度:%d' % (_config.target_lang, max_sequence_length_target))
+    if _config.validate_from_txt == "True":
+        print("正在编码验证集句子...")
+        _ = tokenize.create_encoded_sentences(sentences=source_sentences_val
+                                              , tokenizer=tokenizer_source
+                                              , language=_config.source_lang
+                                              , postfix='_val')
+        _ = tokenize.create_encoded_sentences(sentences=target_sentences_val
+                                              , tokenizer=tokenizer_target
+                                              , language=_config.target_lang
+                                              , postfix='_val')
     print("句子编码完毕！\n")
 
     return vocab_size_source, vocab_size_target
@@ -240,7 +290,7 @@ def load_model():
     transformer = nmt_model.get_model(vocab_size_source, vocab_size_target)
 
     # 加载检查点
-    nmt_model.load_checkpoint(transformer, optimizer)
+    checkpoint.load_checkpoint(transformer, optimizer)
 
     return transformer, tokenizer_source, tokenizer_target
 
