@@ -16,7 +16,7 @@
     + 控制台手动输入录音时长
 
 # 参数配置说明
-+ 模型参数、音频特征(mfcc、fbank)、text_process_mode文本切分方式(en_char、en_word、cn)等可自选
++ 模型参数、音频特征(mfcc、fbank)、text_row_style(文本文件中每行的格式如1为"index string\n"、2为"index\tstring\n"、3为"string\n")、text_process_mode文本切分方式(en_char、en_word、cn)等可自选
 
 + number语料:
 ```json
@@ -55,7 +55,8 @@
         "save_interval": 2
     },
     "other": {
-        "audio_feature_type": "mfcc"
+        "audio_feature_type": "mfcc",
+        "history_img_dir": "./history_img/"
     },
     "preprocess": {
         "dataset_information_path": "./dataset_information.json",
@@ -103,7 +104,8 @@
         "save_interval": 2
     },
     "other": {
-        "audio_feature_type": "mfcc"
+        "audio_feature_type": "mfcc",
+        "history_img_dir": "./history_img/"
     },
     "preprocess": {
         "dataset_information_path": "./dataset_information.json",
@@ -151,7 +153,8 @@
         "save_interval": 2
     },
     "other": {
-        "audio_feature_type": "mfcc"
+        "audio_feature_type": "mfcc",
+        "history_img_dir": "./history_img/"
     },
     "preprocess": {
         "dataset_information_path": "./dataset_information.json",

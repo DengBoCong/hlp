@@ -33,7 +33,8 @@
         "save_epoch_freq": 2
     },
     "other": {
-        "audio_feature_type": "mfcc"
+        "audio_feature_type": "mfcc",
+        "history_img_dir": "./history_img/"
     },
     "preprocess": {
         "dataset_information_path": "./dataset_information.json",

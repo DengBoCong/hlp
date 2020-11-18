@@ -2,6 +2,7 @@ import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 import time
+from matplotlib import pyplot as plt
 from math import ceil
 import tensorflow as tf
 from model import DS2
@@ -81,6 +82,29 @@ def train(model, optimizer, train_data_generator, train_batchs, epochs, valid_da
             manager.save()
     
     return history
+
+def plot_history(history, valid_epoch_freq, history_img_path):
+    # 绘制loss
+    plt.subplot(2,1,1)
+    epoch1 = [i for i in range(1, 1+len(history["loss"]))]
+    plt.xlabel("epoch")
+    plt.ylabel("loss")
+    plt.plot(epoch1, history["loss"], "--*b")
+    plt.xticks(epoch1)
+
+    # 绘制metric(wers、lers、norm_lers)
+    plt.subplot(2,1,2)
+    epoch2 = [i*valid_epoch_freq for i in range(1, 1+len(history["wers"]))]
+    plt.xlabel("epoch")
+    plt.ylabel("metric")
+    plt.plot(epoch2, history["wers"], "--*r", label="wers")
+    plt.plot(epoch2, history["lers"], "--*g", label="lers")
+    plt.plot(epoch2, history["norm_lers"], "--*y", label="norm_lers")
+    plt.xticks(epoch2)
+
+    plt.legend()
+    plt.savefig(history_img_path)
+    plt.show()
 
 
 if __name__ == "__main__":
@@ -170,4 +194,10 @@ if __name__ == "__main__":
     index_word = dataset_information["index_word"]
     # 训练
     history = train(model, optimizer, train_data_generator, train_batchs, epochs, valid_data_generator, valid_batchs, valid_epoch_freq, stop_early_limits, text_process_mode, index_word, manager, save_epoch_freq)
-    # 绘图
+    
+    # 绘制history并保存
+    history_img_dir = configs["other"]["history_img_dir"]
+    if not os.path.exists(os.path.dirname(history_img_dir)):
+        os.makedirs(os.path.dirname(history_img_dir), exist_ok=True)
+    history_img_path = history_img_dir + dataset_name + time.strftime("%Y%m%d%H%M%S", time.localtime()) + ".png"
+    plot_history(history, valid_epoch_freq, history_img_path)
