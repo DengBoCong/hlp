@@ -27,6 +27,14 @@
         "batch_size": 36,
         "num_examples": null
     },
+    "valid":{
+        "data_path": null,
+        "batch_size": 36,
+        "num_examples": null,
+        "valid_epoch_freq": 2,
+        "valid_percent": 2,
+        "stop_early_limits": 5
+    },
     "test": {
         "data_path": "./data/number/dev",
         "batch_size": 36,
@@ -67,6 +75,14 @@
         "batch_size": 36,
         "num_examples": null
     },
+    "valid":{
+        "data_path": null,
+        "batch_size": 36,
+        "num_examples": null,
+        "valid_epoch_freq": 2,
+        "valid_percent": 2,
+        "stop_early_limits": 5
+    },
     "test": {
         "data_path": "./data/LibriSpeech/dev-clean-2",
         "batch_size": 36,
@@ -106,6 +122,14 @@
         "data_path": "./data/data_thchs30/train",
         "batch_size": 36,
         "num_examples": null
+    },
+    "valid":{
+        "data_path": "./data/data_thchs30/dev",
+        "batch_size": 36,
+        "num_examples": null,
+        "valid_epoch_freq": 2,
+        "valid_percent": 2,
+        "stop_early_limits": 5
     },
     "test": {
         "data_path": "./data/data_thchs30/test",
