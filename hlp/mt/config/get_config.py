@@ -12,6 +12,10 @@ def get_config_json(config_file='main.json'):
 conf = get_config_json(json_path)
 
 # 对各变量赋值
+num_validate_sentences = conf["num_validate_sentences"]  # 用来验证的句子数量
+path_to_val_file = conf["path_to_val_file"]  # 验证集文本路径
+validate_from_txt = conf["validate_from_txt"]  # 是否从给定文本数据集用来验证
+checkpoint_name = conf['checkpoint_name']  # 检查点名字
 validation_freq = conf['validation_freq']  # 验证频率，即每训练几个epoch进行验证
 checkpoints_save_freq = conf['checkpoints_save_freq']  # 检查点保存频率
 max_checkpoints_num = conf['max_checkpoints_num']  # 保存最大检查点数量
@@ -22,13 +26,14 @@ en_tokenize_type = conf['en_tokenize_type']  # 英文分词类型，可选：BPE
 zh_tokenize_type = conf['zh_tokenize_type']  # 中文分词类型，可选：TOKENIZE
 tokenizer_path_prefix = conf["tokenizer_path_prefix"]  # 字典保存路径前缀
 encoded_sequences_path_prefix = conf['encoded_sequences_path_prefix']  # 编码句子保存路径前缀
+result_save_dir = conf['result_save_dir']  # 训练过程指标变化图保存路径
 path_to_train_file = conf['path_to_train_file']  # 用于训练的文本路径
 path_to_eval_file = conf['path_to_eval_file']  # 用于评估计算指标的文本路径
 num_eval = conf['num_eval']  # 用于计算指标的句子对数量
 checkpoint_path = os.path.join(conf["checkpoint_path_dir"], conf['source_lang']+'_'+conf['target_lang'])   # 检查点路径
 BUFFER_SIZE = conf['BUFFER_SIZE']
 BATCH_SIZE = conf['BATCH_SIZE']
-val_size = conf['val_size']  # 训练数据中test数据占比
+train_size = conf['train_size']  # 训练数据中test数据占比
 num_sentences = conf["num_sentences"]  # 用于训练的句子对数量
 num_layers = conf["num_layers"]  # encoder 与 decoder 中包含的 encoder 与 decoder 层数
 d_model = conf["d_model"]  # embedding 的维度
