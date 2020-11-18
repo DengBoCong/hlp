@@ -4,10 +4,11 @@ import common.data_utils as data_utils
 sys.path.append(sys.path[0][:-10])
 from model.chatter import Chatter
 from common.utils import CmdParser
+from common.utils import log_operator
 from common.utils import CustomSchedule
 import config.get_config as get_config
 import model.transformer as transformer
-from common.pre_treat import preprocess_raw_lccc_data
+from common.pre_treat import dispatch_tokenized_func_dict_single
 
 
 class TransformerChatter(Chatter):
@@ -71,6 +72,12 @@ class TransformerChatter(Chatter):
             else:
                 print('不存在检查点，请先执行train模式，再进入chat模式')
                 exit(0)
+
+        logger = log_operator(level=10)
+        logger.info("启动SMN聊天器，执行类别为：{}，模型参数配置为：num_layers：{}，"
+                    "d_model：{}，num_heads：{}，units：{}，dropout：{}，vocab_size：{}，"
+                    "max_length：{}".format(execute_type, num_layers, d_model,
+                                           num_heads, units, dropout, vocab_size, max_length))
 
     def _init_loss_accuracy(self):
         """
@@ -180,8 +187,8 @@ def main():
             response = chatter.respond(req=req)
             print("Agent: ", response)
     elif options.type == 'pre_treat':
-        preprocess_raw_lccc_data(raw_data=get_config.lccc_data,
-                                 tokenized_data=get_config.lccc_tokenized_data)
+        dispatch_tokenized_func_dict_single(operator="lccc", raw_data=get_config.lccc_data,
+                                            tokenized_data=get_config.lccc_tokenized_data, if_remove=True)
     else:
         parser.error(msg='')
 
