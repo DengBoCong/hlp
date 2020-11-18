@@ -5,6 +5,7 @@ sys.path.append(sys.path[0][:-10])
 from model.chatter import Chatter
 import model.seq2seq as seq2seq
 from common.utils import CmdParser
+from common.utils import log_operator
 import config.get_config as get_config
 from common.pre_treat import dispatch_tokenized_func_dict_single
 
@@ -59,6 +60,11 @@ class Seq2SeqChatter(Chatter):
             else:
                 print('不存在检查点，请先执行train模式，再进入chat模式')
                 exit(0)
+
+        logger = log_operator(level=10)
+        logger.info("启动SMN聊天器，执行类别为：{}，模型参数配置为：vocab_size：{}，"
+                    "embedding_dim：{}，units：{}，max_length：{}".format(execute_type, vocab_size,
+                                                                     embedding_dim, units, max_length))
 
     def _train_step(self, inp: tf.Tensor, tar: tf.Tensor, weight: int, step_loss: float):
         """

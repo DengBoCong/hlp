@@ -1,6 +1,7 @@
 import os
 import json
 import jieba
+import pysolr
 import numpy as np
 import tensorflow as tf
 from pathlib import Path
@@ -394,7 +395,7 @@ def get_tf_idf_top_k(history: list, k: int = 5):
     """
     tf_idf = {}
 
-    vectorizer = TfidfVectorizer(analyzer='char_wb')
+    vectorizer = TfidfVectorizer(analyzer='word')
     weights = vectorizer.fit_transform(history).toarray()[-1]
     key_words = vectorizer.get_feature_names()
 
@@ -409,12 +410,12 @@ def get_tf_idf_top_k(history: list, k: int = 5):
     return top_k_key
 
 
-def creat_index_dataset(data_fn: str, database_fn: str, max_database_size: int):
+def creat_index_dataset(data_fn: str, solr_sever: str, max_database_size: int):
     """
     生成轮次tf-idf为索引的候选回复
     Args:
         data_fn: 文本数据路径
-        database_fn: 保存候选数据路径
+        solr_sever: solr服务的地址
         max_database_size: 从文本中读取最大数据量
     Returns:
     """
@@ -422,8 +423,10 @@ def creat_index_dataset(data_fn: str, database_fn: str, max_database_size: int):
         print("没有找到对应的文本数据，请确认文本数据存在")
         exit(0)
 
-    tf_idf = {}
+    responses = []
     count = 0
+    solr = pysolr.Solr(url=solr_sever, always_commit=True)
+    solr.ping()
 
     print("检测到对应文本，正在处理文本数据...")
     with open(data_fn, 'r', encoding='utf-8') as file:
@@ -431,21 +434,19 @@ def creat_index_dataset(data_fn: str, database_fn: str, max_database_size: int):
             lines = file.read().strip().split("\n")
         else:
             lines = file.read().strip().split("\n")[:max_database_size]
+        lines = lines[::2]
 
         for line in lines:
             count += 1
             apart = line.split("\t")[1:]
-            for i in range(len(apart) - 1):
-                key_words = get_tf_idf_top_k(apart[:i + 1], 5)
-                if tf_idf.get('-'.join(key_words), '[NONE]') is '[NONE]':
-                    tf_idf['-'.join(key_words)] = [apart[i + 1]]
-                else:
-                    tf_idf['-'.join(key_words)].append(apart[i + 1])
+            for i in range(len(apart)):
+                responses.append({
+                    "utterance": apart[i]
+                })
 
             if count % 100 == 0:
                 print("已处理了 {} 轮次对话".format(count))
+    solr.delete(q="*:*")
+    solr.add(docs=responses)
 
-    with open(database_fn, 'w', encoding='utf-8') as file:
-        file.write(json.dumps(tf_idf, indent=4, ensure_ascii=False))
-
-    print("文本处理完毕，已保存tf-idf候选回复集")
+    print("文本处理完毕，已更新候选回复集")

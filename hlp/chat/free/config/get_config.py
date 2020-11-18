@@ -35,6 +35,7 @@ douban_tokenized_data = path + conf['douban_tokenized_data']
 ubuntu_tokenized_data = path + conf['ubuntu_tokenized_data']
 ubuntu_valid_data = path + conf['ubuntu_valid_data']
 candidate_database = path + conf['candidate_database']
+solr_server = conf['solr_server']
 
 # seq2seq模型相关配置
 seq2seq_units = conf['seq2seq']['units']

@@ -4,6 +4,7 @@ import common.data_utils as data_utils
 sys.path.append(sys.path[0][:-10])
 from model.chatter import Chatter
 from common.utils import CmdParser
+from common.utils import log_operator
 from common.utils import CustomSchedule
 import config.get_config as get_config
 import model.transformer as transformer
@@ -71,6 +72,12 @@ class TransformerChatter(Chatter):
             else:
                 print('不存在检查点，请先执行train模式，再进入chat模式')
                 exit(0)
+
+        logger = log_operator(level=10)
+        logger.info("启动SMN聊天器，执行类别为：{}，模型参数配置为：num_layers：{}，"
+                    "d_model：{}，num_heads：{}，units：{}，dropout：{}，vocab_size：{}，"
+                    "max_length：{}".format(execute_type, num_layers, d_model,
+                                           num_heads, units, dropout, vocab_size, max_length))
 
     def _init_loss_accuracy(self):
         """

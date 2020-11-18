@@ -1,10 +1,12 @@
 import os
 import sys
 import time
+import pysolr
 import model.smn as smn
 import tensorflow as tf
 sys.path.append(sys.path[0][:-10])
 from common.utils import CmdParser
+from common.utils import log_operator
 import common.data_utils as data_utils
 import config.get_config as get_config
 
@@ -14,8 +16,9 @@ class SMNChatter():
     SMN的聊天器
     """
 
-    def __init__(self, units: int, vocab_size: int, execute_type: str, dict_fn: str, embedding_dim: int,
-                 checkpoint_dir: int, max_utterance: int, max_sentence: int, learning_rate: float, database_fn: str):
+    def __init__(self, units: int, vocab_size: int, execute_type: str, dict_fn: str,
+                 embedding_dim: int, checkpoint_dir: int, max_utterance: int, max_sentence: int,
+                 learning_rate: float, database_fn: str, solr_server: str):
         """
         SMN聊天器初始化，用于加载模型
         Args:
@@ -37,6 +40,7 @@ class SMNChatter():
         self.max_sentence = max_sentence
         self.database_fn = database_fn
         self.optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate)
+        self.solr = pysolr.Solr(url=solr_server, always_commit=True, timeout=10)
         self.train_loss = tf.keras.metrics.Mean()
 
         self.model = smn.smn(units=units, vocab_size=vocab_size,
@@ -53,8 +57,6 @@ class SMNChatter():
         if execute_type == "chat":
             print('正在从“{}”处加载字典...'.format(self.dict_fn))
             self.token = data_utils.load_token_dict(dict_fn=self.dict_fn)
-            print('正在从“{}”处加载候选回复数据库...'.format(self.database_fn))
-            self.database = data_utils.load_token_dict(self.database_fn)
         print('正在检查是否存在检查点...')
         if ckpt:
             print('存在检查点，正在从“{}”中加载检查点...'.format(checkpoint_dir))
@@ -65,6 +67,12 @@ class SMNChatter():
             else:
                 print('不存在检查点，请先执行train模式，再进入chat模式')
                 exit(0)
+
+        logger = log_operator(level=10)
+        logger.info("启动SMN聊天器，执行类别为：{}，模型参数配置为：embedding_dim：{}，"
+                    "max_sentence：{}，max_utterance：{}，units：{}，vocab_size：{}，"
+                    "learning_rate：{}".format(execute_type, embedding_dim, max_sentence,
+                                              max_utterance, units, vocab_size, learning_rate))
 
     def train(self, epochs: int, data_fn: str, max_train_data_size: int = 0, max_valid_data_size: int = 0):
         """
@@ -168,6 +176,7 @@ class SMNChatter():
             req: 输入的语句
         Returns: 系统回复字符串
         """
+        self.solr.ping()
         history = req[-self.max_utterance:]
         pad_sequences = [0] * self.max_sentence
         utterance = data_utils.dict_texts_to_sequences(history, self.token)
@@ -180,7 +189,12 @@ class SMNChatter():
                                                                   padding="post").tolist()
 
         tf_idf = data_utils.get_tf_idf_top_k(history)
-        candidates = self.database.get('-'.join(tf_idf), None)
+        query = "{!func}sum("
+        for key in tf_idf:
+            query += "product(idf(utterance," + key + "),tf(utterance," + key + ")),"
+        query += ")"
+        candidates = self.solr.search(q=query, start=0, rows=10).docs
+        candidates = [candidate['utterance'][0] for candidate in candidates]
 
         if candidates is None:
             return "Sorry! I didn't hear clearly, can you say it again?"
@@ -225,7 +239,7 @@ def get_chatter(execute_type):
         chatter: 返回对应的聊天器
     """
     chatter = SMNChatter(units=get_config.smn_units, vocab_size=get_config.smn_vocab_size,
-                         execute_type=execute_type, dict_fn=get_config.smn_dict_fn,
+                         execute_type=execute_type, dict_fn=get_config.smn_dict_fn, solr_server=get_config.solr_server,
                          embedding_dim=get_config.smn_embedding_dim, checkpoint_dir=get_config.smn_checkpoint,
                          max_utterance=get_config.smn_max_utterance, max_sentence=get_config.smn_max_sentence,
                          learning_rate=get_config.smn_learning_rate, database_fn=get_config.candidate_database)
@@ -249,7 +263,7 @@ def main():
 
     elif options.type == 'pre_treat':
         data_utils.creat_index_dataset(data_fn=get_config.ubuntu_tokenized_data,
-                                       database_fn=get_config.candidate_database,
+                                       solr_sever=get_config.solr_server,
                                        max_database_size=get_config.smn_max_database_size)
 
     elif options.type == 'evaluate':
