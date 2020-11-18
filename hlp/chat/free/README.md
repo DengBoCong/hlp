@@ -27,6 +27,9 @@
 
 + 正常执行顺序为pre_treat->train->evaluate->chat
 
+# SMN检索说明：
+检索部分已经部署到公网服务器上，可以直接使用。检索使用Solr和PySolr配合完成，篇幅原因，具体部署细节见我的博文-[搞定检索式对话系统的候选response检索--使用pysolr调用Solr](https://dengbocong.blog.csdn.net/article/details/109788782)
+
 # 模型效果
 #### SMN架构
 ![](https://img-blog.csdnimg.cn/20201108002649702.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L0RCQ18xMjE=,size_16,color_FFFFFF,t_70#pic_center)
