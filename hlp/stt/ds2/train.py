@@ -129,8 +129,8 @@ if __name__ == "__main__":
     else:
         valid_percent = configs["valid"]["valid_percent"]
         pos = ceil(len(train_audio_data_path_list)*valid_percent/100)
-        valid_audio_data_path_list, valid_text_list = train_audio_data_path_list[pos:], train_text_list[pos:]
-        train_audio_data_path_list, train_text_list = train_audio_data_path_list[:pos], train_text_list[:pos]
+        valid_audio_data_path_list, valid_text_list = train_audio_data_path_list[-pos:], train_text_list[-pos:]
+        train_audio_data_path_list, train_text_list = train_audio_data_path_list[:-pos], train_text_list[:-pos]
 
     # 构建train_data和valid_data
     text_process_mode = configs["preprocess"]["text_process_mode"]
