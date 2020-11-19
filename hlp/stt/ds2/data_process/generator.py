@@ -32,16 +32,17 @@ def train_generator(data, batchs, batch_size, audio_feature_type, max_input_leng
 def test_generator(data, batchs, batch_size, audio_feature_type, max_input_length):
     audio_data_path_list, text_list = data
     
-    for idx in range(batchs):
-        batch_input_tensor, batch_input_length = get_input_and_length(
-            audio_data_path_list[idx*batch_size : (idx+1)*batch_size],
-            audio_feature_type,
-            max_input_length
-            )
-        batch_text_list = text_list[idx*batch_size : (idx+1)*batch_size]
-        
-        #测试集只需要文本串list
-        yield batch_input_tensor, batch_input_length, batch_text_list
+    while True:
+        for idx in range(batchs):
+            batch_input_tensor, batch_input_length = get_input_and_length(
+                audio_data_path_list[idx*batch_size : (idx+1)*batch_size],
+                audio_feature_type,
+                max_input_length
+                )
+            batch_text_list = text_list[idx*batch_size : (idx+1)*batch_size]
+            
+            #测试集只需要文本串list
+            yield batch_input_tensor, batch_input_length, batch_text_list
 
 
 if __name__ == '__main__':
