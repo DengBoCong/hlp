@@ -10,6 +10,7 @@ __pycache__/
 .Python
 #data/
 free/checkpoint/
+free/debug.py
 task/checkpoint/
 build/
 develop-eggs/
