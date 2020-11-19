@@ -14,7 +14,7 @@ conf = get_config_json(json_path)
 # 对各变量赋值
 num_validate_sentences = conf["num_validate_sentences"]  # 用来验证的句子数量
 path_to_val_file = conf["path_to_val_file"]  # 验证集文本路径
-validate_from_txt = conf["validate_from_txt"]  # 是否从给定文本数据集用来验证
+validation_data = conf["validation_data"]  # 是否从给定文本数据集用来验证
 checkpoint_name = conf['checkpoint_name']  # 检查点名字
 validation_freq = conf['validation_freq']  # 验证频率，即每训练几个epoch进行验证
 checkpoints_save_freq = conf['checkpoints_save_freq']  # 检查点保存频率
