@@ -121,7 +121,7 @@ class Chatter(object):
         """
         # 对req进行初步处理
         inputs, dec_input = data_utils.preprocess_request(sentence=req, token=self.token, max_length=self.max_length)
-        self.beam_search_container.init_all_inner_variables(inputs=inputs, dec_input=dec_input)
+        self.beam_search_container.reset(inputs=inputs, dec_input=dec_input)
         inputs, dec_input = self.beam_search_container.expand_beam_size_inputs()
 
         for t in range(self.max_length):

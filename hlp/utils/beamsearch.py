@@ -2,33 +2,24 @@ import tensorflow as tf
 import copy
 
 
-# Beam search类
 class BeamSearch(object):
-    """
-    BeamSearch使用说明：
-    1.首先需要将问句编码成token向量并对齐，然后调用init_input方法进行初始化
-    2.对模型要求能够进行批量输入
-    3.BeamSearch使用实例已经集成到Chatter中，如果不进行自定义调用，
-    可以将聊天器继承Chatter，在满足上述两点的基础之上设计_create_predictions方法，并调用BeamSearch
-    """
 
     def __init__(self, beam_size, max_length, worst_score):
-        """
-        初始化BeamSearch的序列容器
-        """
-        self.remain_beam_size = beam_size  # 保存原始beam大小，用于重置
-        self.max_length = max_length - 1
-        self.remain_worst_score = worst_score  # 保留原始worst_score，用于重置
+        self.BEAM_SIZE = beam_size  # 保存原始beam大小，用于重置
+        self.MAX_LEN = max_length - 1
+        self.MIN_SCORE = worst_score  # 保留原始worst_score，用于重置
+
+        self.container = []  # 保存中间状态序列的容器，元素格式为(score, sequence)类型为(float, [])
+        self.result = []  # 用来保存已经遇到结束符的序列
 
     def __len__(self):
-        """
-        已存在BeamSearch的序列容器的大小
+        """当前候选结果数
         """
         return len(self.container)
 
-    def init_all_inner_variables(self, inputs, dec_input):
-        """
-        用来初始化输入
+    def reset(self, inputs, dec_input):
+        """重置搜索
+
         :param inputs: 已经序列化的输入句子
         :param dec_input: 编码器输入序列
         :return: 无返回值
@@ -37,8 +28,8 @@ class BeamSearch(object):
         self.container.append((1, dec_input))
         self.inputs = inputs
         self.dec_inputs = dec_input
-        self.beam_size = self.remain_beam_size  # 新一轮中，将beam_size重置为原beam大小
-        self.worst_score = self.remain_worst_score  # 新一轮中，worst_score重置
+        self.beam_size = self.BEAM_SIZE  # 新一轮中，将beam_size重置为原beam大小
+        self.worst_score = self.MIN_SCORE  # 新一轮中，worst_score重置
         self.result = []  # 用来保存已经遇到结束符的序列
 
     def expand_beam_size_inputs(self):
@@ -52,11 +43,13 @@ class BeamSearch(object):
         for i in range(len(self) - 1):
             inputs = tf.concat([inputs, self.inputs], 0)
         requests = inputs
+
         # 生成多beam的decoder的输入
         temp = self.container[0][1]
         for i in range(1, len(self)):
             temp = tf.concat([temp, self.container[i][1]], axis=0)
         self.dec_inputs = copy.deepcopy(temp)
+
         return requests, self.dec_inputs
 
     def _reduce_end(self, end_sign):
@@ -99,11 +92,9 @@ class BeamSearch(object):
         self._reduce_end(end_sign=end_sign)
 
     def get_result(self, top_k=1):
-        """
-        获取最终beam个序列
-        :return: beam个序列
+        """获得概率最高的top_k个结果
+
+        :return: 概率最高的top_k个结果
         """
         results = [element[1] for element in sorted(self.result)[-top_k:]]
-
-        # 每轮回答之后，需要重置容器内部的相关变量值
         return results
