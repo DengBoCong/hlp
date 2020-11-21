@@ -25,7 +25,7 @@ def _predict_index(inp_sentence, transformer, beam_search_container, input_token
     decoder_input = tf.expand_dims(start_token, 0)  # shape --> (1,1) 即(batch_size,sentence_length)
 
     beam_search_container.reset(inputs=inp_sequence, dec_input=decoder_input)
-    inputs, decoder_input = beam_search_container.expand_beam_size_inputs()
+    inputs, decoder_input = beam_search_container.get_search_inputs()
     for i in range(_config.max_target_length):
         enc_padding_mask, combined_mask, dec_padding_mask = _transformer.create_masks(inputs, decoder_input)
 
@@ -40,11 +40,11 @@ def _predict_index(inp_sentence, transformer, beam_search_container, input_token
         # 从 seq_len 维度选择最后一个词
         predictions = predictions[:, -1:, :]  # (batch_size, 1, vocab_size)
         predictions = tf.squeeze(predictions, axis=1)
-        beam_search_container.add(predictions=predictions, end_sign=end_token)
+        beam_search_container.expand(predictions=predictions, end_sign=end_token)
         if beam_search_container.beam_size == 0:
             break
         # predicted_id = tf.cast(tf.argmax(predictions, axis=-1), tf.int32)
-        inputs, decoder_input = beam_search_container.expand_beam_size_inputs()
+        inputs, decoder_input = beam_search_container.get_search_inputs()
     beam_search_result = beam_search_container.get_result()
 
     return beam_search_result
