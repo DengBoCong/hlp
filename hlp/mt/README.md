@@ -14,7 +14,16 @@
         - CHAR:使用字划分方法进行分词
         - WORD:使用jieba模块对词进行划分来分词
 
+- 配置文件参数提示：
+    - 验证集部分：
+        - 若想从训练数据中划分验证集，则validate_from_txt设置为False，并设置训练集比例train_size
+        - 若想从 ./data/en-zh_val.txt 中读取验证集，则validate_from_txt设置为True，并设置验证集句子数num_validate_sentences
+
 # 版本日志
+- 2020.11.16：version 1.5.1
+    - 训练完成根据history绘制图像并保存至./data/result
+    - 可使用./data/en-zh_val.txt中的数据集来进行训练时的验证
+    
 - 2020.11.09：version 1.5.0
     - 检查点保存最大数量及保存频率可在配置文件设置
     - 训练过程增加validation数据验证（可在配置文件设置验证频率及验证集大小划分比例）
