@@ -16,7 +16,7 @@
     + 控制台手动输入录音时长
 
 # 参数配置说明
-+ 模型参数、音频特征(mfcc、fbank)、text_process_mode文本切分方式(en_char、en_word、cn)等可自选
++ 模型参数、音频特征(mfcc、fbank)、text_row_style(文本文件中每行的格式如1为"index string\n"、2为"index\tstring\n"、3为"string\n")、text_process_mode文本切分方式(en_char、en_word、cn)等可自选
 
 + number语料:
 ```json
@@ -26,6 +26,14 @@
         "data_path": "./data/number/train",
         "batch_size": 36,
         "num_examples": null
+    },
+    "valid":{
+        "data_path": null,
+        "batch_size": 36,
+        "num_examples": null,
+        "valid_epoch_freq": 2,
+        "valid_percent": 2,
+        "stop_early_limits": 5
     },
     "test": {
         "data_path": "./data/number/dev",
@@ -47,7 +55,8 @@
         "save_interval": 2
     },
     "other": {
-        "audio_feature_type": "mfcc"
+        "audio_feature_type": "mfcc",
+        "history_img_dir": "./history_img/"
     },
     "preprocess": {
         "dataset_information_path": "./dataset_information.json",
@@ -66,6 +75,14 @@
         "data_path": "./data/LibriSpeech/train-clean-5",
         "batch_size": 36,
         "num_examples": null
+    },
+    "valid":{
+        "data_path": null,
+        "batch_size": 36,
+        "num_examples": null,
+        "valid_epoch_freq": 2,
+        "valid_percent": 2,
+        "stop_early_limits": 5
     },
     "test": {
         "data_path": "./data/LibriSpeech/dev-clean-2",
@@ -87,7 +104,8 @@
         "save_interval": 2
     },
     "other": {
-        "audio_feature_type": "mfcc"
+        "audio_feature_type": "mfcc",
+        "history_img_dir": "./history_img/"
     },
     "preprocess": {
         "dataset_information_path": "./dataset_information.json",
@@ -106,6 +124,14 @@
         "data_path": "./data/data_thchs30/train",
         "batch_size": 36,
         "num_examples": null
+    },
+    "valid":{
+        "data_path": "./data/data_thchs30/dev",
+        "batch_size": 36,
+        "num_examples": null,
+        "valid_epoch_freq": 2,
+        "valid_percent": 2,
+        "stop_early_limits": 5
     },
     "test": {
         "data_path": "./data/data_thchs30/test",
@@ -127,7 +153,8 @@
         "save_interval": 2
     },
     "other": {
-        "audio_feature_type": "mfcc"
+        "audio_feature_type": "mfcc",
+        "history_img_dir": "./history_img/"
     },
     "preprocess": {
         "dataset_information_path": "./dataset_information.json",

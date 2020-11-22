@@ -213,7 +213,7 @@ def train_preprocess():
     # ch = _pre.load_single_sentences(_config.path_to_train_file_zh, _config.num_sentences, column=1)
     source_sentences, target_sentences = load_sentences(_config.path_to_train_file, _config.num_sentences)
     # 加载验证集
-    if _config.validate_from_txt == "True":
+    if _config.validation_data == "True":
         source_sentences_val, target_sentences_val = load_sentences(_config.path_to_val_file
                                                                     , _config.num_validate_sentences)
 
@@ -224,7 +224,7 @@ def train_preprocess():
     # 预处理句子
     source_sentences = preprocess_sentences(source_sentences, language=_config.source_lang)
     target_sentences = preprocess_sentences(target_sentences, language=_config.target_lang)
-    if _config.validate_from_txt == "True":
+    if _config.validation_data == "True":
         source_sentences_val = preprocess_sentences(source_sentences_val, language=_config.source_lang)
         target_sentences_val = preprocess_sentences(target_sentences_val, language=_config.target_lang)
     print('已加载句子数量:%d' % _config.num_sentences)
@@ -253,7 +253,7 @@ def train_preprocess():
                                                                    , language=_config.target_lang)
     print('最大源语言(%s)句子长度:%d' % (_config.source_lang, max_sequence_length_source))
     print('最大目标语言(%s)句子长度:%d' % (_config.target_lang, max_sequence_length_target))
-    if _config.validate_from_txt == "True":
+    if _config.validation_data == "True":
         print("正在编码验证集句子...")
         _ = tokenize.create_encoded_sentences(sentences=source_sentences_val
                                               , tokenizer=tokenizer_source

@@ -1,9 +1,17 @@
 {
     "train": {
-        "train_epochs": 1,
+        "train_epochs": 4,
         "data_path": "./data/LibriSpeech/train-clean-5",
         "batch_size": 36,
-        "num_examples": 100
+        "num_examples": null
+    },
+    "valid":{
+        "data_path": null,
+        "batch_size": 36,
+        "num_examples": null,
+        "valid_epoch_freq": 2,
+        "valid_percent": 2,
+        "stop_early_limits": 5
     },
     "test": {
         "data_path": "./data/LibriSpeech/dev-clean-2",
@@ -22,10 +30,11 @@
     "checkpoint": {
         "directory": "./checkpoints",
         "max_to_keep": 5,
-        "save_interval": 2
+        "save_epoch_freq": 2
     },
     "other": {
-        "audio_feature_type": "mfcc"
+        "audio_feature_type": "mfcc",
+        "history_img_dir": "./history_img/"
     },
     "preprocess": {
         "dataset_information_path": "./dataset_information.json",
