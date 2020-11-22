@@ -187,9 +187,8 @@ class Decoder(tf.keras.layers.Layer):
         self.decoder_lstm_dim = config.decoder_lstm_dim
         self.embedding_hidden_size = config.embedding_hidden_size
         self.gate_threshold = config.gate_threshold
-        self.max_len = config.max_len
         self.n_mels = config.n_mels
-        self.max_len = config.max_len
+        self.max_input_length = config.max_input_length
         self.prenet2 = Prenet(config)
         self.postnet = Postnet(config)
         # 两个单层LSTM
@@ -336,7 +335,6 @@ class Decoder(tf.keras.layers.Layer):
             mel_outputs, gate_outputs, alignments)
         return mel_outputs, gate_outputs, alignments
 
-    # 预测 我觉得有问题 但是我还没有改好，它一直很让我头疼
     def inference(self, memory):
         """    参数
                memory: 编码器输出
@@ -345,7 +343,7 @@ class Decoder(tf.keras.layers.Layer):
         decoder_input = self.get_go_frame(memory)
         self.initialize_decoder_states(memory)
         mel_outputs, gate_outputs, alignments = [], [], []
-        while len(mel_outputs) < self.max_len:
+        while len(mel_outputs) < self.max_input_length:
             # 通过pre_net
             decoder_input = self.prenet2(decoder_input)
             # 解码
