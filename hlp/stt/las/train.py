@@ -9,7 +9,6 @@ formatted
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 import os
-
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 import time
 import tensorflow as tf
@@ -41,7 +40,7 @@ def train_step(inputx_1, targetx_2, enc_hidden, word_index, model, las_optimizer
 
         # 教师强制 - 将目标词作为下一个输入
         for t in range(1, targetx_2.shape[1]):
-            # 将编码器输出 （enc_output） 传送至解码器，解码 
+            # 将编码器输出 （enc_output） 传送至解码器，解码
             predictions, dec_hidden = model(inputx_1, enc_hidden, dec_input)
             loss += loss_function(targetx_2[:, t], predictions)  # 根据预测计算损失
 
@@ -71,7 +70,6 @@ if __name__ == "__main__":
     batch_size = config.train_batch_size
     dataset_name = config.dataset_name
     audio_feature_type = config.audio_feature_type
-
     print("加载数据并预处理......")
     train_data = load_dataset.load_data(dataset_name, wav_path,
                                         label_path,
@@ -98,9 +96,17 @@ if __name__ == "__main__":
     checkpoint_dir = config.checkpoint_dir
     checkpoint_prefix = os.path.join(checkpoint_dir, config.checkpoint_prefix)
     checkpoint = tf.train.Checkpoint(optimizer=optimizer, model=model)
-
+    manager = tf.train.CheckpointManager(
+        checkpoint,
+        directory=checkpoint_dir,
+        max_to_keep=config.max_to_keep
+    )
+    checkpoint_keep_interval = config.checkpoint_keep_interval
     print("恢复检查点目录 （checkpoint_dir） 中最新的检查点......")
-    checkpoint.restore(tf.train.latest_checkpoint(checkpoint_dir))
+    if manager.latest_checkpoint:
+        checkpoint.restore(manager.latest_checkpoint)
+
+    # checkpoint.restore(tf.train.latest_checkpoint(checkpoint_dir))
     EPOCHS = config.epochs
 
     word_index = dataset_information["word_index"]
@@ -125,9 +131,9 @@ if __name__ == "__main__":
                                                              batch_loss.numpy()))
                 print('Time taken for 2 batches {} sec\n'.format(time.time() - batch_start))
                 batch_start = time.time()
-        # 每 1 个周期（epoch），保存（检查点）一次模型
-        if (epoch + 1) % 1 == 0:
-            checkpoint.save(file_prefix=checkpoint_prefix)
+        # 每 checkpoint_keep_interval 个周期（epoch），保存（检查点）一次模型
+        if (epoch + 1) % checkpoint_keep_interval == 0:
+            manager.save()
 
         print('Epoch {} Loss {:.4f}'.format(epoch + 1, total_loss / batchs))
         print('Time taken for 1 epoch {} sec\n'.format(time.time() - start))

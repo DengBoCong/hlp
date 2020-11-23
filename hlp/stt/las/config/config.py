@@ -42,6 +42,8 @@ embedding_dim = conf["model"]['embedding_dim'] # 模型LSTM层维数
 units = conf["model"]['units'] # 隐藏层状态单元数
 checkpoint_dir = conf["checkpoint"]['directory'] # 检查点保存路径
 checkpoint_prefix = conf["checkpoint"]['prefix'] # 检查点前缀
+max_to_keep = conf["checkpoint"]['max_to_keep'] # 最多可保存检查点数
+checkpoint_keep_interval = conf["checkpoint"]['checkpoint_keep_interval'] #设定每隔多少epoch保存一次检查点
 CHUNK = conf["recognition"]['CHUNK'] 
 FORMAT = conf["recognition"]['FORMAT'] # 录音格式
 CHANNELS = conf["recognition"]['CHANNELS'] # 声道数，单声道或双声道
@@ -52,6 +54,7 @@ dataset_information_path = conf["data"]['dataset_information_path']
 dataset_name = conf["data"]['dataset_name'] # 数据集名称
 n_mfcc = conf["data"]['n_mfcc'] # 声音mfcc特征数
 audio_feature_type = conf["data"]['audio_feature_type'] # 声音特征类型
+
 
 
 
