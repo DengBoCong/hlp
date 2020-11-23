@@ -3,8 +3,14 @@
         "epochs": 12,
         "wav_path": ".\\data\\number\\wav_train",
         "label_path": ".\\data\\number\\data_train.txt",
-        "batch_size": 32,
-        "num_examples": 100
+        "val_wav_path": ".\\data\\number\\wav_validation",
+        "val_label_path": ".\\data\\number\\data_val.txt",
+        "train_batch_size": 32,
+        "num_examples": 100,
+        "validation_data": true,
+        "validation_size": 20,
+        "validation_percent": 2,
+        "val_batch_size": 1
     },
     "test": {
         "wav_path": ".\\data\\number\\wav_test",

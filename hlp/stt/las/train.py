@@ -9,13 +9,15 @@ formatted
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 import os
+
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 import time
 import tensorflow as tf
 from hlp.stt.las.model import las
 from hlp.stt.las.config import config
 from hlp.stt.las.data_processing import load_dataset
-from hlp.stt.las.data_processing.generator import data_generator
+from hlp.stt.las.data_processing.generator import data_generator, val_generator
+from hlp.stt.las.utils import compute_metric
 
 
 def loss_function(real, pred):
@@ -28,7 +30,7 @@ def loss_function(real, pred):
     return tf.reduce_mean(loss_)
 
 
-def train_step(inputx_1, targetx_2, enc_hidden, word_index, model, las_optimizer, batch_size):
+def train_step(inputx_1, targetx_2, enc_hidden, word_index, model, las_optimizer, train_batch_size):
     loss = 0
 
     with tf.GradientTape() as tape:
@@ -36,7 +38,7 @@ def train_step(inputx_1, targetx_2, enc_hidden, word_index, model, las_optimizer
         targetx_2 = tf.convert_to_tensor(targetx_2)
 
         # 解码器输入符号
-        dec_input = tf.expand_dims([word_index['<start>']] * batch_size, 1)
+        dec_input = tf.expand_dims([word_index['<start>']] * train_batch_size, 1)
 
         # 教师强制 - 将目标词作为下一个输入
         for t in range(1, targetx_2.shape[1]):
@@ -67,31 +69,66 @@ if __name__ == "__main__":
 
     embedding_dim = config.embedding_dim
     units = config.units
-    batch_size = config.train_batch_size
+    train_batch_size = config.train_batch_size
     dataset_name = config.dataset_name
     audio_feature_type = config.audio_feature_type
-    print("加载数据并预处理......")
-    train_data = load_dataset.load_data(dataset_name, wav_path,
-                                        label_path,
-                                        "train",
-                                        num_examples)
+    print("加载训练数据......")
+    train_wav_path_list, train_label_list = load_dataset.load_dataset_number(wav_path,
+                                                                             label_path,
+                                                                             num_examples)
+
+    # 构建训练数据
+    audio_data_path_list, text_int_sequences, _, _ = load_dataset.build_train_data(train_wav_path_list,
+                                                                                   train_label_list)
+    train_data = (audio_data_path_list, text_int_sequences)
+
     print("获取训练语料信息......")
     dataset_information = config.get_dataset_information()
     vocab_tar_size = dataset_information["vocab_tar_size"]
-    batchs = len(train_data[0]) // batch_size
+    batchs = len(audio_data_path_list) // train_batch_size
     optimizer = tf.keras.optimizers.Adam()
-    model = las.las_model(vocab_tar_size, embedding_dim, units, batch_size)
-
-    print("构建数据生成器......")
+    model = las.las_model(vocab_tar_size, embedding_dim, units, train_batch_size)
+    print("构建训练数据生成器......")
     train_data_generator = data_generator(
         train_data,
         "train",
         batchs,
-        batch_size,
+        train_batch_size,
         audio_feature_type,
         dataset_information["max_input_length"],
         dataset_information["max_label_length"]
     )
+    validation_data = config.validation_data
+    val_wav_path = config.val_wav_path
+    val_label_path = config.val_label_path
+    
+    # 若validation_data为真，则有验证数据集，val_wav_path非空，则从文件路径中加载
+    # 若validation_data为真，则有验证数据集，val_wav_path为空，则将训练数据按比例划分一部分为验证数据
+    # 若validation_data为假，则没有验证数据集
+    if validation_data:
+        if val_wav_path:
+            validation_size = config.validation_size
+            val_wav_path_list, val_label_list = load_dataset.load_dataset_number(val_wav_path, val_label_path,
+                                                                                 validation_size)
+        else:
+            validation_percent = config.validation_percent
+            index = len(train_wav_path_list) * validation_percent // 100
+            val_wav_path_list, val_label_list = train_wav_path_list[-index:], train_label_list[-index:]
+            train_wav_list, train_label_list = train_wav_path_list[:-index], train_label_list[:-index]
+        # 构建验证数据
+        val_data = (val_wav_path_list, val_label_list)
+
+        print("构建验证数据生成器......")
+        val_batch_size = config.val_batch_size
+        val_batchs = len(val_wav_path_list) // val_batch_size
+        val_data_generator = val_generator(
+            val_data,
+            val_batchs,
+            val_batch_size,
+            audio_feature_type,
+            dataset_information["max_input_length"]
+        )
+
     # 检查点
     checkpoint_dir = config.checkpoint_dir
     checkpoint_prefix = os.path.join(checkpoint_dir, config.checkpoint_prefix)
@@ -122,7 +159,7 @@ if __name__ == "__main__":
             batch_loss = train_step(x_1, x_2, enc_hidden, word_index,
                                     model,
                                     optimizer,
-                                    batch_size)  # 训练一个批次，返回批损失
+                                    train_batch_size)  # 训练一个批次，返回批损失
             total_loss += batch_loss
 
             if (batch + 1) % 2 == 0:
@@ -137,3 +174,12 @@ if __name__ == "__main__":
 
         print('Epoch {} Loss {:.4f}'.format(epoch + 1, total_loss / batchs))
         print('Time taken for 1 epoch {} sec\n'.format(time.time() - start))
+        # 验证
+        if validation_data:
+            rates_lers, aver_lers, norm_rates_lers, norm_aver_lers = compute_metric(model, val_data_generator,
+                                                                                    val_batchs, val_batch_size)
+            print("字母错误率: ")
+            print("每条语音字母错误数: ", rates_lers)
+            print("所有语音平均字母错误数: ", aver_lers)
+            print("每条语音字母错误率，错误字母数/标签字母数: ", norm_rates_lers)
+            print("所有语音平均字母错误率: ", norm_aver_lers)

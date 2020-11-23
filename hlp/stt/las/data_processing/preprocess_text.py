@@ -85,12 +85,17 @@ def load_text_data(path, num_examples=None):
     return target_tensor
 
 
-# 基于原始text和其label_length的整形数字list来补齐label_tensor
+# 基于原始text的整形数字序列list来构建补齐的label_tensor
 def get_text_label(text_int_sequences, max_label_length):
+    target_length_list = []
+    for text_int_sequence in text_int_sequences:
+        target_length_list.append([len(text_int_sequence)])
     label_tensor_numpy = tf.keras.preprocessing.sequence.pad_sequences(
         text_int_sequences,
         maxlen=max_label_length,
         padding='post'
     )
     label_tensor = tf.convert_to_tensor(label_tensor_numpy)
-    return label_tensor
+    label_length = tf.convert_to_tensor(target_length_list)
+
+    return label_tensor, label_length

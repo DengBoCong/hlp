@@ -9,7 +9,6 @@ import os
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 import tensorflow as tf
-from hlp.stt.las import train
 from hlp.stt.las.model import las
 from hlp.stt.utils.metric import lers
 from hlp.stt.las.config import config
