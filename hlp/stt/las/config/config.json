@@ -1,6 +1,6 @@
 {
     "train": {
-        "epochs": 10,
+        "epochs": 12,
         "wav_path": ".\\data\\number\\wav_train",
         "label_path": ".\\data\\number\\data_train.txt",
         "batch_size": 32,
@@ -19,7 +19,9 @@
     },
     "checkpoint": {
         "directory": "./checkpoints_1",
-        "prefix": "ckpt"
+        "prefix": "ckpt",
+        "max_to_keep": 6,
+        "checkpoint_keep_interval": 2 
     },
     "recognition": {
         "CHUNK": 1024,
