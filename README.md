@@ -15,6 +15,9 @@
 - 基于Listen-Attend-Spell的语音识别
 - 基于Tacotron2的语音合成
 - 基于检索的多轮闲聊系统
+- RNN-T流式语音识别
+- WaveRNN声码器
+- SpecAugment语音数据增强
 # 可使用
 - 基于Seq2Seq的闲聊系统
 - 基于Transformer的闲聊系统

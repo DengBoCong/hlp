@@ -121,17 +121,17 @@ class Chatter(object):
         """
         # 对req进行初步处理
         inputs, dec_input = data_utils.preprocess_request(sentence=req, token=self.token, max_length=self.max_length)
-        self.beam_search_container.init_all_inner_variables(inputs=inputs, dec_input=dec_input)
-        inputs, dec_input = self.beam_search_container.expand_beam_size_inputs()
+        self.beam_search_container.reset(inputs=inputs, dec_input=dec_input)
+        inputs, dec_input = self.beam_search_container.get_search_inputs()
 
         for t in range(self.max_length):
             predictions = self._create_predictions(inputs, dec_input, t)
-            self.beam_search_container.add(predictions=predictions, end_sign=self.token.get(self.end_sign))
+            self.beam_search_container.expand(predictions=predictions, end_sign=self.token.get(self.end_sign))
             # 注意了，如果BeamSearch容器里的beam_size为0了，说明已经找到了相应数量的结果，直接跳出循环
             if self.beam_search_container.beam_size == 0:
                 break
 
-            inputs, dec_input = self.beam_search_container.expand_beam_size_inputs()
+            inputs, dec_input = self.beam_search_container.get_search_inputs()
 
         beam_search_result = self.beam_search_container.get_result(top_k=3)
         result = ''

@@ -96,7 +96,7 @@ class Chatter(object):
         inputs, dec_input = self.beam_search_container.get_variables()
         for t in range(_config.max_length_tar):
             predictions = self._create_predictions(inputs, dec_input, t)
-            self.beam_search_container.add(predictions=predictions, end_sign=token.get('end'))
+            self.beam_search_container.expand(predictions=predictions, end_sign=token.get('end'))
             if self.beam_search_container.beam_size == 0:
                 break
 

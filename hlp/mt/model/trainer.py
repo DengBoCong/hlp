@@ -3,6 +3,9 @@ from model import transformer as _transformer
 from config import get_config as _config
 import time
 from common import preprocess
+import matplotlib.pyplot as plt
+import matplotlib.ticker as ticker
+import os
 
 
 # 自定义优化器（Optimizer）
@@ -68,26 +71,55 @@ def _train_epoch(dataset, transformer, optimizer, train_loss, train_accuracy, ba
     print('\r{}/{} [==============================]'.format(sample_sum, sample_sum), end='')
 
 
-def train(transformer, cache=True, min_delta=0.00003, patience=10):
+def _plot_history(history, validation_freq):
+    """根据history绘制训练效果图"""
+    # x轴
+    x_train = [i + 1 for i in range(len(history['loss']))]
+    x_validation = [(i + 1) * validation_freq for i in range(len(history['val_loss']))]
+    # 绘制
+    fig, ax = plt.subplots(1, 1)
+    tick_spacing = 1
+    if len(history['loss']) > 20:
+        tick_spacing = len(history['loss']) // 20
+    plt.plot(x_train, history['loss'], label='loss', marker='.')
+    plt.plot(x_train, history['accuracy'], label='accuracy', marker='.')
+    plt.plot(x_validation, history['val_loss'], label='val_loss', marker='.', linestyle='--')
+    plt.plot(x_validation, history['val_accuracy'], label='val_accuracy', marker='.', linestyle='--')
+    plt.xticks(x_validation)
+    plt.xlabel('epoch')
+    plt.legend()
+    ax.xaxis.set_major_locator(ticker.MultipleLocator(tick_spacing))
+    # 保存图片
+    save_path = _config.result_save_dir + 'history'
+    if not os.path.exists(os.path.dirname(save_path)):
+        os.makedirs(os.path.dirname(save_path), exist_ok=True)
+    plt.savefig(save_path)
+
+    plt.show()
+
+
+def train(transformer, validation_data='False', validation_split=0.0, cache=True, min_delta=0.00003, patience=10, validation_freq=1):
     """
-    cache:若为True则将数据集都加载进内存进行训练，否则分批次加载内存训练
-    min_delta:增大或减小的阈值，只有大于这个部分才算作improvement
-    patience：能够容忍多少个eval_accuracy都没有improvement
-    stop-early对val_accuracy进行监控，若连续patience个验证集上未超过min_delta增幅，则停止训练
+    @param transformer: 训练要使用的transformer模型
+    @param validation_data: 为‘True’则从指定文本加载训练集，
+    @param validation_split: 验证集划分比例
+    @param cache: 若为True则将数据集都加载进内存进行训练，否则使用生成器分批加载
+    @param min_delta: 增大或减小的阈值，只有大于这个部分才算作improvement
+    @param patience: 能够容忍多少个val_accuracy都没有improvement
+    @param validation_freq: 验证频率
+    @return: history，包含训练过程中所有的指标
     """
     # stop-early参数初始化
     max_acc = 0
     patience_num = 0
 
     # 模型变量初始化
+    train_size = 1 - validation_split
     learning_rate = CustomSchedule(_config.d_model)
     optimizer = tf.keras.optimizers.Adam(learning_rate, beta_1=0.9, beta_2=0.98, epsilon=1e-9)
     train_loss = tf.keras.metrics.Mean(name='train_loss')
     train_accuracy = tf.keras.metrics.SparseCategoricalAccuracy(name='train_accuracy')
     history = {'accuracy': [], 'loss': [], 'val_accuracy': [], 'val_loss': []}
-    if cache:
-        # 若为True，则将全部数据集加载进内存
-        train_dataset, val_dataset = preprocess.split_batch()
 
     # 检查点设置，如果检查点存在，则恢复最新的检查点。
     checkpoint_path = _config.checkpoint_path
@@ -100,9 +132,17 @@ def train(transformer, cache=True, min_delta=0.00003, patience=10):
 
     # 训练相关参数初始化
     batch_sum_train = 0
-    sample_sum_train = int((_config.num_sentences * (1 - _config.val_size)) // _config.BATCH_SIZE * _config.BATCH_SIZE)
-    sample_sum_val = int((_config.num_sentences * _config.val_size) // _config.BATCH_SIZE * _config.BATCH_SIZE)
+    sample_sum_val_txt = 0
+    if validation_data == 'True':
+        train_size = 1
+        sample_sum_val_txt = _config.num_validate_sentences
+    sample_sum_train = int((_config.num_sentences * train_size) // _config.BATCH_SIZE * _config.BATCH_SIZE)
+    sample_sum_val = int((_config.num_sentences * (1 - train_size)) // _config.BATCH_SIZE * _config.BATCH_SIZE)
     steps = _config.num_sentences // _config.BATCH_SIZE
+
+    # 读取数据
+    train_dataset, val_dataset = preprocess.get_dataset(steps, cache, train_size=train_size
+                                                        , validate_from_txt=validation_data)
 
     print("开始训练...")
     for epoch in range(_config.EPOCHS):
@@ -112,39 +152,28 @@ def train(transformer, cache=True, min_delta=0.00003, patience=10):
         train_loss.reset_states()
         train_accuracy.reset_states()
         # 训练部分
-        if cache:
-            # cache为True,从内存中train_dataset取batch进行训练
-            _train_epoch(train_dataset, transformer, optimizer, train_loss, train_accuracy
-                         , batch_sum_train, sample_sum_train)
-        else:
-            # cache为False,从生成器中取batch进行训练
-            generator_train = preprocess.generate_batch_from_file(steps * (1 - _config.val_size), 0, _config.BATCH_SIZE)
-            _train_epoch(generator_train, transformer, optimizer, train_loss, train_accuracy
-                         , batch_sum_train, sample_sum_train)
-        history['accuracy'].append(train_loss.result().numpy())
-        history['loss'].append(train_accuracy.result().numpy())
+        _train_epoch(train_dataset, transformer, optimizer, train_loss, train_accuracy
+                     , batch_sum_train, sample_sum_train)
+
+        history['accuracy'].append(train_accuracy.result().numpy())
+        history['loss'].append(train_loss.result().numpy())
         epoch_time = (time.time() - start)
         step_time = epoch_time * _config.BATCH_SIZE / sample_sum_train
 
         # 验证部分
-        # 若到达所设置验证频率或最后一个epoch，使用验证集验证
-        if (epoch + 1) % _config.validation_freq == 0 or (epoch + 1) == _config.EPOCHS:
+        # 若到达所设置验证频率或最后一个epoch，并且validate_from_txt为False和train_size不同时满足时使用验证集验证
+        if ((epoch + 1) % validation_freq == 0 or (epoch + 1) == _config.EPOCHS) \
+                and (validation_data == 'True' or train_size != 1):
             temp_loss = train_loss.result()
             temp_acc = train_accuracy.result()
             train_loss.reset_states()
             train_accuracy.reset_states()
-            if cache:
-                # cache为True,从内存中val_dataset取batch进行训练
-                _train_epoch(val_dataset, transformer, optimizer, train_loss, train_accuracy
-                             , sample_sum_train, sample_sum_train+sample_sum_val)
-            else:
-                # cache为False,从生成器中取batch进行训练
-                generator_val = preprocess.generate_batch_from_file(steps, steps * (1 - _config.val_size)
-                                                                    , _config.BATCH_SIZE)
-                _train_epoch(generator_val, transformer, optimizer, train_loss, train_accuracy
-                             , sample_sum_train, sample_sum_train+sample_sum_val)
-            history['val_accuracy'].append(train_loss.result().numpy())
-            history['val_loss'].append(train_accuracy.result().numpy())
+
+            _train_epoch(val_dataset, transformer, optimizer, train_loss, train_accuracy
+                         , sample_sum_train, sample_sum_train + sample_sum_val + sample_sum_val_txt)
+
+            history['val_accuracy'].append(train_accuracy.result().numpy())
+            history['val_loss'].append(train_loss.result().numpy())
             print(' - {:.0f}s - {:.0f}ms/step - loss: {:.4f} - accuracy {:.4f} - val_loss: {:.4f} - val_accuracy {:.4f}'
                   .format(epoch_time, step_time * 1000, temp_loss, temp_acc, train_loss.result(),
                           train_accuracy.result()))
@@ -171,5 +200,6 @@ def train(transformer, cache=True, min_delta=0.00003, patience=10):
         ckpt_save_path = ckpt_manager.save()
         print('检查点已保存至：{}'.format(ckpt_save_path))
 
+    _plot_history(history, validation_freq)
     print('训练完毕！')
     return history

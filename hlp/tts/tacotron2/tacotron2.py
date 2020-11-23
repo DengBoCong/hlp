@@ -88,15 +88,14 @@ class LocationLayer(tf.keras.layers.Layer):
 class Attention(tf.keras.layers.Layer):
     def __init__(self, config):
         super(Attention, self).__init__()
-        self.attention_rnn_dim = config.attention_dim
         self.attention_dim = config.attention_dim
         self.attention_location_n_filters = config.attention_filters
         self.attention_location_kernel_size = config.attention_kernel
-        self.query_layer = tf.keras.layers.Dense(self.attention_rnn_dim, use_bias=False, activation="tanh")
-        self.memory_layer = tf.keras.layers.Dense(self.attention_rnn_dim, use_bias=False, activation="tanh")
+        self.query_layer = tf.keras.layers.Dense(self.attention_dim, use_bias=False, activation="tanh")
+        self.memory_layer = tf.keras.layers.Dense(self.attention_dim, use_bias=False, activation="tanh")
         self.V = tf.keras.layers.Dense(1, use_bias=False)
         self.location_layer = LocationLayer(self.attention_location_n_filters, self.attention_location_kernel_size,
-                                            self.attention_rnn_dim)
+                                            self.attention_dim)
         self.score_mask_value = -float("inf")
 
     def get_alignment_energies(self, query, memory, attention_weights_cat):
@@ -115,7 +114,9 @@ class Attention(tf.keras.layers.Layer):
         attention_weights = tf.nn.softmax(alignment, axis=1)
         attention_context = tf.expand_dims(attention_weights, 1)
         attention_context = tf.matmul(attention_context, memory)
+        #print("attention_context1:", attention_context.shape)
         attention_context = tf.squeeze(attention_context, axis=1)
+        #print("attention_context2:", attention_context.shape)
         return attention_context, attention_weights
 
 
@@ -182,6 +183,7 @@ class Decoder(tf.keras.layers.Layer):
     def __init__(self, config):
         super(Decoder, self).__init__()
         self.attention_dim = config.attention_dim
+        self.attention_rnn_dim = config.attention_rnn_dim
         self.decoder_lstm_dim = config.decoder_lstm_dim
         self.embedding_hidden_size = config.embedding_hidden_size
         self.gate_threshold = config.gate_threshold
@@ -227,9 +229,9 @@ class Decoder(tf.keras.layers.Layer):
         B = tf.shape(memory)[0]
         MAX_TIME = tf.shape(memory)[1]
 
-        self.attention_hidden = tf.zeros(shape=[B, self.decoder_lstm_dim], dtype=tf.float32)
+        self.attention_hidden = tf.zeros(shape=[B, self.attention_rnn_dim], dtype=tf.float32)
 
-        self.attention_cell = tf.zeros(shape=[B, self.decoder_lstm_dim], dtype=tf.float32)
+        self.attention_cell = tf.zeros(shape=[B, self.attention_rnn_dim], dtype=tf.float32)
 
         self.decoder_hidden = tf.zeros(shape=[B, self.decoder_lstm_dim], dtype=tf.float32)
 
