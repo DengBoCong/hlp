@@ -9,13 +9,12 @@ import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 import tensorflow as tf
 from hlp.stt.utils.metric import lers
-from hlp.stt.las.config import config
+from config import config
 
 
 # 计算指标
 def compute_metric(model, val_data_generator, val_batchs, val_batch_size):
     dataset_information = config.get_dataset_information()
-
     units = config.units
     word_index = dataset_information["word_index"]
     index_word = dataset_information["index_word"]

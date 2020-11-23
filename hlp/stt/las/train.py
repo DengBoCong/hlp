@@ -13,11 +13,11 @@ import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 import time
 import tensorflow as tf
-from hlp.stt.las.model import las
-from hlp.stt.las.config import config
-from hlp.stt.las.data_processing import load_dataset
-from hlp.stt.las.data_processing.generator import data_generator, val_generator
-from hlp.stt.las.utils import compute_metric
+from model import las
+from config import config
+from data_processing import load_dataset
+from data_processing.generator import data_generator, val_generator
+from util import compute_metric
 
 
 def loss_function(real, pred):
