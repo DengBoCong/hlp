@@ -6,8 +6,8 @@ formatted
 LAS模型
 """
 import tensorflow as tf
-from hlp.stt.las.model import encoder
-from hlp.stt.las.model import decoder
+from model.encoder import Encoder
+from model.decoder import Decoder
 
 
 class las_model(tf.keras.Model):
@@ -17,8 +17,8 @@ class las_model(tf.keras.Model):
         self.embedding_dim = embedding_dim
         self.units = units
         self.batch_size = batch_size
-        self.encoder = encoder.Encoder(embedding_dim, units, batch_size)
-        self.decoder = decoder.Decoder(vocab_tar_size, embedding_dim, units)
+        self.encoder = Encoder(embedding_dim, units, batch_size)
+        self.decoder = Decoder(vocab_tar_size, embedding_dim, units)
 
     def call(self, inputx_1, enc_hidden, dec_input):
         enc_output, enc_hidden = self.encoder(inputx_1, enc_hidden)  # 前向计算，编码
