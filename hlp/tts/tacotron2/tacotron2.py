@@ -1,9 +1,10 @@
 import tensorflow as tf
 
 
-class ConvBatchDrop(tf.keras.layers.Layer):
+# 卷积-Dropout-BatchNormalization块
+class ConvDropBN(tf.keras.layers.Layer):
     def __init__(self, filters, kernel_size, activation, dropout_rate):
-        super(ConvBatchDrop, self).__init__()
+        super(ConvDropBN, self).__init__()
         self.conv1d = tf.keras.layers.Conv1D(
             filters,
             kernel_size,
@@ -24,40 +25,38 @@ class Encoder(tf.keras.layers.Layer):
     def __init__(self, vocab_size, config):
         super(Encoder, self).__init__()
         self.num_filters = config.encoder_conv_filters
-
         self.kernel_size = config.encoder_conv_kernel_sizes
-        self.lstm_unit = config.encoder_lstm_units
-        self.rate = config.encoder_conv_dropout_rate
-
-        self.vocab_size = vocab_size
-        self.embedding_dim = config.embedding_hidden_size
         self.encoder_conv_activation = config.encoder_conv_activation
-        # 定义嵌入层
+
+        self.lstm_unit = config.encoder_lstm_units
+
+        self.rate = config.encoder_conv_dropout_rate
+        self.vocab_size = vocab_size
+
+        self.embedding_dim = config.embedding_hidden_size
         self.embedding = tf.keras.layers.Embedding(self.vocab_size, self.embedding_dim, mask_zero=True)
 
-        # 定义三层卷积层
         self.conv_batch_norm = []
         for i in range(config.n_conv_encoder):
-            conv = ConvBatchDrop(
+            conv = ConvDropBN(
                 filters=self.num_filters,
                 kernel_size=self.kernel_size,
                 activation=self.encoder_conv_activation,
-                dropout_rate=self.rate,
-            )
+                dropout_rate=self.rate)
             self.conv_batch_norm.append(conv)
 
-        # 定义两次LSTM
+        # 双向LSTM
         self.forward_layer = tf.keras.layers.LSTM(units=self.lstm_unit, return_sequences=True)
         self.backward_layer = tf.keras.layers.LSTM(units=self.lstm_unit, return_sequences=True,
                                                    go_backwards=True)
-        self.bidir = tf.keras.layers.Bidirectional(layer=self.forward_layer,
-                                                   backward_layer=self.backward_layer)
+        self.bi_lstm = tf.keras.layers.Bidirectional(layer=self.forward_layer,
+                                                     backward_layer=self.backward_layer)
 
     def call(self, x):
         x = self.embedding(x)
         for conv in self.conv_batch_norm:
             x = conv(x)
-        output = self.bidir(x)
+        output = self.bi_lstm(x)
         return output
 
 
@@ -70,15 +69,13 @@ class LocationLayer(tf.keras.layers.Layer):
             kernel_size=attention_kernel_size,
             padding="same",
             use_bias=False,
-            name="location_conv",
-        )
-        self.location_layer1 = tf.keras.layers.Dense(
-            units=attention_dim1, use_bias=False, activation="tanh", name="location_layer"
-        )
+            name="location_conv")
+        self.location_layer = tf.keras.layers.Dense(
+            units=attention_dim1, use_bias=False, activation="tanh", name="location_layer")
 
     def call(self, attention_weights_cat):
         processed_attention = self.location_convolution(attention_weights_cat)
-        processed_attention = self.location_layer1(processed_attention)
+        processed_attention = self.location_layer(processed_attention)
         return processed_attention
 
 
@@ -150,14 +147,14 @@ class Postnet(tf.keras.layers.Layer):
         self.conv_batch_norm = []
         for i in range(config.n_conv_encoder):
             if i == config.n_conv_postnet - 1:
-                conv = ConvBatchDrop(
+                conv = ConvDropBN(
                     filters=config.postnet_conv_filters,
                     kernel_size=config.postnet_conv_kernel_sizes,
                     activation=None,
                     dropout_rate=config.postnet_dropout_rate,
                 )
             else:
-                conv = ConvBatchDrop(
+                conv = ConvDropBN(
                     filters=config.postnet_conv_filters,
                     kernel_size=config.postnet_conv_kernel_sizes,
                     activation=config.postnet_conv_activation,
