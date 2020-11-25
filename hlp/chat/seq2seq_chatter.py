@@ -1,7 +1,5 @@
-import sys
 import tensorflow as tf
 import common.data_utils as data_utils
-sys.path.append(sys.path[0][:-10])
 from model.chatter import Chatter
 import model.seq2seq as seq2seq
 from common.utils import CmdParser

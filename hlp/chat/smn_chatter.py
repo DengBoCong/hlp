@@ -4,7 +4,6 @@ import time
 import pysolr
 import model.smn as smn
 import tensorflow as tf
-sys.path.append(sys.path[0][:-10])
 from common.utils import CmdParser
 from common.utils import log_operator
 import common.data_utils as data_utils
