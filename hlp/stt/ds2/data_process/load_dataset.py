@@ -23,7 +23,7 @@ def load_dataset_number(data_path, text_row_style, num_examples = None):
         files = os.listdir(data_path)
         with open(data_path + "/text.txt", "a") as f:
             for path in files:
-                f.write(path.split(".")[0] +" "+ path[0] + "\n")
+                f.write(path.split(".")[0] + " " + path[0] + "\n")
 
     # 获取number语料中训练集语音路径和文本的列表
     text_data_path, audio_path_list = get_all_data_path(data_path)

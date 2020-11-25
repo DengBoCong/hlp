@@ -10,7 +10,7 @@ import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 import json
 from hlp.stt.las.config import config
-from hlp.stt.las.data_processing import preprocess_text
+from . import preprocess_text
 from hlp.stt.utils import features
 
 

@@ -1,12 +1,10 @@
-import os
 import tensorflow as tf
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
-# 自己的模型
-class ConvBatchDrop(tf.keras.layers.Layer):
+# 卷积-Dropout-BatchNormalization块
+class ConvDropBN(tf.keras.layers.Layer):
     def __init__(self, filters, kernel_size, activation, dropout_rate):
-        super(ConvBatchDrop, self).__init__()
+        super(ConvDropBN, self).__init__()
         self.conv1d = tf.keras.layers.Conv1D(
             filters,
             kernel_size,
@@ -27,40 +25,38 @@ class Encoder(tf.keras.layers.Layer):
     def __init__(self, vocab_size, config):
         super(Encoder, self).__init__()
         self.num_filters = config.encoder_conv_filters
-
         self.kernel_size = config.encoder_conv_kernel_sizes
-        self.lstm_unit = config.encoder_lstm_units
-        self.rate = config.encoder_conv_dropout_rate
-
-        self.vocab_size = vocab_size
-        self.embedding_dim = config.embedding_hidden_size
         self.encoder_conv_activation = config.encoder_conv_activation
-        # 定义嵌入层
+
+        self.lstm_unit = config.encoder_lstm_units
+
+        self.rate = config.encoder_conv_dropout_rate
+        self.vocab_size = vocab_size
+
+        self.embedding_dim = config.embedding_hidden_size
         self.embedding = tf.keras.layers.Embedding(self.vocab_size, self.embedding_dim, mask_zero=True)
 
-        # 定义三层卷积层
         self.conv_batch_norm = []
         for i in range(config.n_conv_encoder):
-            conv = ConvBatchDrop(
+            conv = ConvDropBN(
                 filters=self.num_filters,
                 kernel_size=self.kernel_size,
                 activation=self.encoder_conv_activation,
-                dropout_rate=self.rate,
-            )
+                dropout_rate=self.rate)
             self.conv_batch_norm.append(conv)
 
-        # 定义两次LSTM
+        # 双向LSTM
         self.forward_layer = tf.keras.layers.LSTM(units=self.lstm_unit, return_sequences=True)
         self.backward_layer = tf.keras.layers.LSTM(units=self.lstm_unit, return_sequences=True,
                                                    go_backwards=True)
-        self.bidir = tf.keras.layers.Bidirectional(layer=self.forward_layer,
-                                                   backward_layer=self.backward_layer)
+        self.bi_lstm = tf.keras.layers.Bidirectional(layer=self.forward_layer,
+                                                     backward_layer=self.backward_layer)
 
     def call(self, x):
         x = self.embedding(x)
         for conv in self.conv_batch_norm:
             x = conv(x)
-        output = self.bidir(x)
+        output = self.bi_lstm(x)
         return output
 
 
@@ -73,15 +69,13 @@ class LocationLayer(tf.keras.layers.Layer):
             kernel_size=attention_kernel_size,
             padding="same",
             use_bias=False,
-            name="location_conv",
-        )
-        self.location_layer1 = tf.keras.layers.Dense(
-            units=attention_dim1, use_bias=False, activation="tanh", name="location_layer"
-        )
+            name="location_conv")
+        self.location_layer = tf.keras.layers.Dense(
+            units=attention_dim1, use_bias=False, activation="tanh", name="location_layer")
 
     def call(self, attention_weights_cat):
         processed_attention = self.location_convolution(attention_weights_cat)
-        processed_attention = self.location_layer1(processed_attention)
+        processed_attention = self.location_layer(processed_attention)
         return processed_attention
 
 
@@ -114,9 +108,9 @@ class Attention(tf.keras.layers.Layer):
         attention_weights = tf.nn.softmax(alignment, axis=1)
         attention_context = tf.expand_dims(attention_weights, 1)
         attention_context = tf.matmul(attention_context, memory)
-        #print("attention_context1:", attention_context.shape)
+        # print("attention_context1:", attention_context.shape)
         attention_context = tf.squeeze(attention_context, axis=1)
-        #print("attention_context2:", attention_context.shape)
+        # print("attention_context2:", attention_context.shape)
         return attention_context, attention_weights
 
 
@@ -152,15 +146,15 @@ class Postnet(tf.keras.layers.Layer):
         super().__init__()
         self.conv_batch_norm = []
         for i in range(config.n_conv_encoder):
-            if i == config.n_conv_postnet-1:
-                conv = ConvBatchDrop(
+            if i == config.n_conv_postnet - 1:
+                conv = ConvDropBN(
                     filters=config.postnet_conv_filters,
                     kernel_size=config.postnet_conv_kernel_sizes,
                     activation=None,
                     dropout_rate=config.postnet_dropout_rate,
                 )
             else:
-                conv = ConvBatchDrop(
+                conv = ConvDropBN(
                     filters=config.postnet_conv_filters,
                     kernel_size=config.postnet_conv_kernel_sizes,
                     activation=config.postnet_conv_activation,
@@ -187,9 +181,8 @@ class Decoder(tf.keras.layers.Layer):
         self.decoder_lstm_dim = config.decoder_lstm_dim
         self.embedding_hidden_size = config.embedding_hidden_size
         self.gate_threshold = config.gate_threshold
-        self.max_len = config.max_len
         self.n_mels = config.n_mels
-        self.max_len = config.max_len
+        self.max_input_length = config.max_input_length
         self.prenet2 = Prenet(config)
         self.postnet = Postnet(config)
         # 两个单层LSTM
@@ -336,7 +329,6 @@ class Decoder(tf.keras.layers.Layer):
             mel_outputs, gate_outputs, alignments)
         return mel_outputs, gate_outputs, alignments
 
-    # 预测 我觉得有问题 但是我还没有改好，它一直很让我头疼
     def inference(self, memory):
         """    参数
                memory: 编码器输出
@@ -345,7 +337,7 @@ class Decoder(tf.keras.layers.Layer):
         decoder_input = self.get_go_frame(memory)
         self.initialize_decoder_states(memory)
         mel_outputs, gate_outputs, alignments = [], [], []
-        while len(mel_outputs) < self.max_len:
+        while len(mel_outputs) < self.max_input_length:
             # 通过pre_net
             decoder_input = self.prenet2(decoder_input)
             # 解码
