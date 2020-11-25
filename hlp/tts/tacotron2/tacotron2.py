@@ -1,9 +1,6 @@
-import os
 import tensorflow as tf
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
-# 自己的模型
 class ConvBatchDrop(tf.keras.layers.Layer):
     def __init__(self, filters, kernel_size, activation, dropout_rate):
         super(ConvBatchDrop, self).__init__()
@@ -114,9 +111,9 @@ class Attention(tf.keras.layers.Layer):
         attention_weights = tf.nn.softmax(alignment, axis=1)
         attention_context = tf.expand_dims(attention_weights, 1)
         attention_context = tf.matmul(attention_context, memory)
-        #print("attention_context1:", attention_context.shape)
+        # print("attention_context1:", attention_context.shape)
         attention_context = tf.squeeze(attention_context, axis=1)
-        #print("attention_context2:", attention_context.shape)
+        # print("attention_context2:", attention_context.shape)
         return attention_context, attention_weights
 
 
@@ -152,7 +149,7 @@ class Postnet(tf.keras.layers.Layer):
         super().__init__()
         self.conv_batch_norm = []
         for i in range(config.n_conv_encoder):
-            if i == config.n_conv_postnet-1:
+            if i == config.n_conv_postnet - 1:
                 conv = ConvBatchDrop(
                     filters=config.postnet_conv_filters,
                     kernel_size=config.postnet_conv_kernel_sizes,

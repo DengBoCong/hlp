@@ -5,14 +5,13 @@ Created on Sat Nov  7 19:55:49 2020
 交互式语音识别
 """
 # -*- coding: utf-8 -*-
-import os
 import wave
 import pyaudio
 from tqdm import tqdm
 import tensorflow as tf
-from hlp.stt.las import train
-from hlp.stt.las.model import las
-from hlp.stt.las.data_processing import librosa_mfcc
+import train
+from model import las
+from data_processing import librosa_mfcc
 
 
 def record_audio(wave_out_path, record_second):

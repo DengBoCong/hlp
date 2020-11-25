@@ -72,24 +72,6 @@
     - 下一步考虑对代码结构进一步调整，并添加Beam search
 
 
-    
-# 运行效果
-
-使用BLEU指标进行评估
-
-![](./image/test_eval_bleu.png)
-
-
-交互式翻译
-
-![](./image/test_translate.png)
-
 # 数据集
 
 github上传为测试数据集
-
-若需完整数据集请自行下载：
-
-链接：https://pan.baidu.com/s/1cXPHJXFtMLJSJv-_Qn9cQA
-提取码：mt66 
-复制这段内容后打开百度网盘手机App，操作更方便哦
