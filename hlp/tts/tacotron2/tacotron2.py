@@ -73,8 +73,8 @@ class LocationLayer(tf.keras.layers.Layer):
         self.location_layer = tf.keras.layers.Dense(
             units=attention_dim1, use_bias=False, activation="tanh", name="location_layer")
 
-    def call(self, attention_weights_cat):
-        processed_attention = self.location_convolution(attention_weights_cat)
+    def call(self, attention_weights_concat):
+        processed_attention = self.location_convolution(attention_weights_concat)
         processed_attention = self.location_layer(processed_attention)
         return processed_attention
 
@@ -88,23 +88,24 @@ class Attention(tf.keras.layers.Layer):
         self.query_layer = tf.keras.layers.Dense(self.attention_dim, use_bias=False, activation="tanh")
         self.memory_layer = tf.keras.layers.Dense(self.attention_dim, use_bias=False, activation="tanh")
         self.V = tf.keras.layers.Dense(1, use_bias=False)
-        self.location_layer = LocationLayer(self.attention_location_n_filters, self.attention_location_kernel_size,
+        self.location_layer = LocationLayer(self.attention_location_n_filters,
+                                            self.attention_location_kernel_size,
                                             self.attention_dim)
         self.score_mask_value = -float("inf")
 
-    def get_alignment_energies(self, query, memory, attention_weights_cat):
+    def get_alignment_energies(self, query, memory, attention_weights_concat):
         # print("query:", query.shape)
         processed_query = self.query_layer(tf.expand_dims(query, axis=1))
         processed_memory = self.memory_layer(memory)
 
-        attention_weights_cat = tf.transpose(attention_weights_cat, (0, 2, 1))
-        processed_attention_weights = self.location_layer(attention_weights_cat)
+        attention_weights_concat = tf.transpose(attention_weights_concat, (0, 2, 1))
+        processed_attention_weights = self.location_layer(attention_weights_concat)
         energies = tf.squeeze(self.V(tf.nn.tanh(processed_query + processed_attention_weights + processed_memory)), -1)
         return energies
 
-    def __call__(self, attention_hidden_state, memory, attention_weights_cat):
+    def __call__(self, attention_hidden_state, memory, attention_weights_concat):
         alignment = self.get_alignment_energies(
-            attention_hidden_state, memory, attention_weights_cat)
+            attention_hidden_state, memory, attention_weights_concat)
         attention_weights = tf.nn.softmax(alignment, axis=1)
         attention_context = tf.expand_dims(attention_weights, 1)
         attention_context = tf.matmul(attention_context, memory)
@@ -114,7 +115,6 @@ class Attention(tf.keras.layers.Layer):
         return attention_context, attention_weights
 
 
-# attention结束
 class Prenet(tf.keras.layers.Layer):
     def __init__(self, config):
         super().__init__()
@@ -122,18 +122,11 @@ class Prenet(tf.keras.layers.Layer):
         self.n_prenet_layers = config.n_prenet_layers
         self.prenet_dropout_rate = config.prenet_dropout_rate
         self.prenet_dense = [
-            tf.keras.layers.Dense(
-                units=self.prenet_units,
-                activation='relu'
-            )
-            for i in range(self.n_prenet_layers)
-        ]
-        self.dropout = tf.keras.layers.Dropout(
-            rate=self.prenet_dropout_rate
-        )
+            tf.keras.layers.Dense(units=self.prenet_units, activation='relu')
+            for i in range(self.n_prenet_layers)]
+        self.dropout = tf.keras.layers.Dropout(rate=self.prenet_dropout_rate)
 
     def __call__(self, inputs):
-        """Call logic."""
         outputs = inputs
         for layer in self.prenet_dense:
             outputs = layer(outputs)
@@ -151,15 +144,13 @@ class Postnet(tf.keras.layers.Layer):
                     filters=config.postnet_conv_filters,
                     kernel_size=config.postnet_conv_kernel_sizes,
                     activation=None,
-                    dropout_rate=config.postnet_dropout_rate,
-                )
+                    dropout_rate=config.postnet_dropout_rate)
             else:
                 conv = ConvDropBN(
                     filters=config.postnet_conv_filters,
                     kernel_size=config.postnet_conv_kernel_sizes,
                     activation=config.postnet_conv_activation,
-                    dropout_rate=config.postnet_dropout_rate,
-                )
+                    dropout_rate=config.postnet_dropout_rate)
             self.conv_batch_norm.append(conv)
 
         self.fc = tf.keras.layers.Dense(units=config.n_mels, activation=None, name="frame_projection1")
@@ -183,19 +174,22 @@ class Decoder(tf.keras.layers.Layer):
         self.gate_threshold = config.gate_threshold
         self.n_mels = config.n_mels
         self.max_input_length = config.max_input_length
+
         self.prenet2 = Prenet(config)
         self.postnet = Postnet(config)
+
         # 两个单层LSTM
         self.decoder_lstms1 = tf.keras.layers.LSTMCell(self.decoder_lstm_dim, dropout=config.decoder_lstm_rate)
         self.decoder_lstms2 = tf.keras.layers.LSTMCell(self.decoder_lstm_dim, dropout=config.decoder_lstm_rate)
+
         # 线性变换投影成目标帧
         self.frame_projection = tf.keras.layers.Dense(
-            units=self.n_mels, activation=None, name="frame_projection"
-        )
+            units=self.n_mels, activation=None, name="frame_projection")
+
         # 停止记号
         self.stop_projection = tf.keras.layers.Dense(
-            units=1, activation='sigmoid', name="stop_projection"
-        )
+            units=1, activation='sigmoid', name="stop_projection")
+
         # 用于注意力
         self.attention_layer = Attention(config)
 
