@@ -39,7 +39,7 @@
         "record_second": 2
     },
     "data": {
-        "dataset_information_path": "./dataset_information.json",
+        "dataset_information_path": "./ds_info.json",
         "dataset_name": "number",
         "n_mfcc": 39,
         "audio_feature_type": "mfcc",

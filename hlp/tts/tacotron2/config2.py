@@ -3,8 +3,8 @@ class Tacotron2Config(object):
 
     def __init__(
             self,
-            max_len_seq=5,
-            max_len=128,
+            max_len_seq=200,
+            max_input_length=1000,
             embedding_hidden_size=512,
 
             # encoder-conv1d层数
@@ -65,13 +65,14 @@ class Tacotron2Config(object):
             ref_db=20,
             top_db=15,
             # 其他
-            batch_size=32,
+            batch_size=2,
+            test_batch_size=1,
             #最大检查点保存数目
-            max_to_keep=5,
+            max_to_keep=2,
     ):
         """tacotron2参数."""
         self.max_len_seq = max_len_seq
-        self.max_len = max_len
+        self.max_input_length = max_input_length
         self.embedding_hidden_size = embedding_hidden_size
         self.n_conv_encoder = n_conv_encoder
         self.encoder_conv_filters = encoder_conv_filters
@@ -132,4 +133,5 @@ class Tacotron2Config(object):
 
         # 其他
         self.batch_size = batch_size
+        self.test_batch_size = test_batch_size
         self.max_to_keep = max_to_keep
