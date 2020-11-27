@@ -14,7 +14,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 import time
 import tensorflow as tf
 from model import las
-from model.las_d_w import las_d_w
+from model import las_d_w
 from config import config
 from data_processing import load_dataset
 from data_processing.generator import data_generator, val_generator
