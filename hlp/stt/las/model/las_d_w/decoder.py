@@ -15,8 +15,8 @@ class Decoder(tf.keras.Model):
         super(Decoder, self).__init__()
         self.dec_units = dec_units
         self.embedding = tf.keras.layers.Embedding(vocab_size, embedding_dim)
-        self.rnn1 = tf.keras.layers.LSTM(w)
-        self.rnn2 = tf.keras.layers.LSTM(w, return_state=True)
+        self.rnn1 = tf.keras.layers.LSTM(w, return_sequences=True)
+        self.rnn2 = tf.keras.layers.LSTM(w, return_sequences=True)
         self.fc = tf.keras.layers.Dense(vocab_size)
         # 用于注意力
         self.attention = BahdanauAttention(self.dec_units)
@@ -33,12 +33,11 @@ class Decoder(tf.keras.Model):
 
         # 将合并后的向量传送到 RNN
         x = self.rnn1(x)
-        output, state = self.rnn2(x)
-
+        output = self.rnn2(x)
         # 输出的形状 == （批大小 * 1，隐藏层大小）
         output = tf.reshape(output, (-1, output.shape[2]))
 
         # 输出的形状 == （批大小，vocab）
         x = self.fc(output)
 
-        return x, state, attention_weights
+        return x, attention_weights

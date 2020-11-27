@@ -22,12 +22,12 @@ def compute_metric(model, val_data_generator, val_batchs, val_batch_size):
     results = []
     labels_list = []
     for batch, (input_tensor, text_list) in zip(range(1, val_batchs + 1), val_data_generator):
-        hidden = tf.zeros((val_batch_size, units))
+        hidden = tf.zeros((1, 256))
         dec_input = tf.expand_dims([word_index['<start>']] * val_batch_size, 1)
         result = ''  # 识别结果字符串
 
         for t in range(max_label_length):  # 逐步解码或预测
-            predictions, dec_hidden = model(input_tensor, hidden, dec_input)
+            predictions, _ = model(input_tensor, hidden, dec_input)
             predicted_ids = tf.argmax(predictions, 1).numpy()  # 贪婪解码，取最大 
             idx = str(predicted_ids[0])
             if index_word[idx] == '<end>':

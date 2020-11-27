@@ -14,6 +14,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 import time
 import tensorflow as tf
 from model import las
+from model.las_d_w import las_d_w
 from config import config
 from data_processing import load_dataset
 from data_processing.generator import data_generator, val_generator
@@ -43,7 +44,7 @@ def train_step(inputx_1, targetx_2, enc_hidden, word_index, model, las_optimizer
         # 教师强制 - 将目标词作为下一个输入
         for t in range(1, targetx_2.shape[1]):
             # 将编码器输出 （enc_output） 传送至解码器，解码
-            predictions, dec_hidden = model(inputx_1, enc_hidden, dec_input)
+            predictions, _ = model(inputx_1, enc_hidden, dec_input)
             loss += loss_function(targetx_2[:, t], predictions)  # 根据预测计算损失
 
             # 使用教师强制，下一步输入符号是训练集中对应目标符号
@@ -87,7 +88,12 @@ if __name__ == "__main__":
     vocab_tar_size = dataset_information["vocab_tar_size"]
     batchs = len(audio_data_path_list) // train_batch_size
     optimizer = tf.keras.optimizers.Adam()
-    model = las.las_model(vocab_tar_size, embedding_dim, units, train_batch_size)
+    #model = las.las_model(vocab_tar_size, embedding_dim, units, train_batch_size)
+    d = 2
+    w = 256
+    embedding_dim = 256
+    dec_units = 256
+    model = las_d_w.las_d_w_model(vocab_tar_size, d, w, embedding_dim, dec_units, train_batch_size)
     print("构建训练数据生成器......")
     train_data_generator = data_generator(
         train_data,
