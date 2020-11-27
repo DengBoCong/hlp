@@ -1,11 +1,11 @@
 import tensorflow as tf
 import common.data_utils as data_utils
+import config.get_config as get_config
 from model.chatter import Chatter
 import model.seq2seq as seq2seq
 from common.utils import CmdParser
 from common.utils import log_operator
-import config.get_config as get_config
-from common.pre_treat import dispatch_tokenized_func_dict_single
+from common.pre_treat import dispatch_tokenized_func_dict_single, preprocess_raw_data_qa_single
 
 
 class Seq2SeqChatter(Chatter):
@@ -42,6 +42,8 @@ class Seq2SeqChatter(Chatter):
         self.decoder = seq2seq.Decoder(vocab_size, embedding_dim, units,
                                        batch_size)
         self.optimizer = tf.keras.optimizers.Adam()
+        self.train_loss = tf.keras.metrics.Mean()
+        self.train_accuracy = tf.keras.metrics.SparseCategoricalAccuracy()
         self.loss_object = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True, reduction='none')
         self.checkpoint = tf.train.Checkpoint(optimizer=self.optimizer, encoder=self.encoder, decoder=self.decoder)
 
@@ -64,13 +66,19 @@ class Seq2SeqChatter(Chatter):
                     "embedding_dim：{}，units：{}，max_length：{}".format(execute_type, vocab_size,
                                                                      embedding_dim, units, max_length))
 
-    def _train_step(self, inp: tf.Tensor, tar: tf.Tensor, weight: int, step_loss: float):
+    def _init_loss_accuracy(self):
+        """
+        重置损失和精度
+        """
+        self.train_loss.reset_states()
+        self.train_accuracy.reset_states()
+
+    def _train_step(self, inp: tf.Tensor, tar: tf.Tensor, weight: tf.Tensor = None):
         """
         Args:
             inp: 输入序列
             tar: 目标序列
             weight: 样本权重序列
-            step_loss: 每步损失
         Returns:
             step_loss: 每步损失
         """
@@ -88,14 +96,14 @@ class Seq2SeqChatter(Chatter):
                 loss += self._loss_function(tar[:, t], predictions, weight)
                 # 这一步使用teacher forcing
                 dec_input = tf.expand_dims(tar[:, t], 1)
+                self.train_accuracy(tar[:, t], predictions)
 
-        batch_loss = (loss / int(tar.shape[1]))
+        self.train_loss(loss)
         variables = self.encoder.trainable_variables + self.decoder.trainable_variables
         gradients = tape.gradient(loss, variables)
         self.optimizer.apply_gradients(zip(gradients, variables))
 
-        step_loss += batch_loss
-        return step_loss
+        return self.train_loss.result(), self.train_accuracy.result()
 
     def _create_predictions(self, inputs: tf.Tensor, dec_input: tf.Tensor, t: int):
         """
@@ -114,7 +122,7 @@ class Seq2SeqChatter(Chatter):
         predictions, _, _ = self.decoder(dec_input, dec_hidden, enc_out)
         return predictions
 
-    def _loss_function(self, real: tf.Tensor, pred: tf.Tensor, weights: tf.Tensor):
+    def _loss_function(self, real: tf.Tensor, pred: tf.Tensor, weights: tf.Tensor = None):
         """
         用于计算预测损失，注意要将填充的0进行mask，不纳入损失计算
         Args:
@@ -126,7 +134,11 @@ class Seq2SeqChatter(Chatter):
         """
         # 这里进来的real和pred的shape为（128,）
         mask = tf.math.logical_not(tf.math.equal(real, 0))
-        loss_ = self.loss_object(real, pred, sample_weight=weights)
+
+        if weights is not None:
+            loss_ = self.loss_object(real, pred, sample_weight=weights)
+        else:
+            loss_ = self.loss_object(real, pred)
         # 这里要注意了，因为前面我们对于短的句子进行了填充，所
         # 以对于填充的部分，我们不能用于计算损失，所以要mask
         mask = tf.cast(mask, dtype=loss_.dtype)
@@ -160,11 +172,13 @@ def main():
 
     if options.type == 'train':
         chatter = get_chatter(execute_type=options.type)
-        chatter.train(chatter.checkpoint,
-                      dict_fn=get_config.seq2seq_dict_fn,
-                      data_fn=get_config.lccc_tokenized_data,
+        chatter.train(chatter.checkpoint, dict_fn=get_config.seq2seq_dict_fn,
+                      data_fn=get_config.qa_tokenized_data, batch_size=get_config.BATCH_SIZE,
+                      buffer_size=get_config.BUFFER_SIZE, epochs=get_config.epochs,
+                      max_valid_data_size=get_config.seq2seq_max_valid_data_size,
                       max_train_data_size=get_config.seq2seq_max_train_data_size,
-                      epochs=get_config.epochs)
+                      valid_data_split=get_config.valid_data_split, valid_data_fn="",
+                      save_dir=get_config.history_image_dir + "seq2seq\\", valid_freq=get_config.valid_freq)
     elif options.type == 'chat':
         chatter = get_chatter(options.type)
         print("Agent: 你好！结束聊天请输入ESC。")
@@ -178,6 +192,8 @@ def main():
     elif options.type == 'pre_treat':
         dispatch_tokenized_func_dict_single(operator="lccc", raw_data=get_config.lccc_data,
                                             tokenized_data=get_config.lccc_tokenized_data, if_remove=True)
+        preprocess_raw_data_qa_single(raw_data=get_config.lccc_tokenized_data,
+                                      qa_data=get_config.qa_tokenized_data)
     else:
         parser.error(msg='')
 
