@@ -175,7 +175,7 @@ class Decoder(tf.keras.layers.Layer):
         self.n_mels = config.n_mels
         self.max_input_length = config.max_input_length
 
-        self.prenet2 = Prenet(config)
+        self.prenet = Prenet(config)
         self.postnet = Postnet(config)
 
         # 两个单层LSTM
@@ -217,11 +217,9 @@ class Decoder(tf.keras.layers.Layer):
         MAX_TIME = tf.shape(memory)[1]
 
         self.attention_hidden = tf.zeros(shape=[B, self.attention_rnn_dim], dtype=tf.float32)
-
         self.attention_cell = tf.zeros(shape=[B, self.attention_rnn_dim], dtype=tf.float32)
 
         self.decoder_hidden = tf.zeros(shape=[B, self.decoder_lstm_dim], dtype=tf.float32)
-
         self.decoder_cell = tf.zeros(shape=[B, self.decoder_lstm_dim], dtype=tf.float32)
 
         self.attention_weights = tf.zeros(shape=[B, MAX_TIME], dtype=tf.float32)
@@ -242,15 +240,18 @@ class Decoder(tf.keras.layers.Layer):
         # (T_out, B) -> (B, T_out)
         alignments = tf.stack(alignments)
         alignments = tf.transpose(alignments, (1, 0, 2))
+
         # (T_out, B) -> (B, T_out)
         gate_outputs = tf.stack(gate_outputs)
         gate_outputs = tf.transpose(gate_outputs, (1, 0))
+
         # (T_out, B, n_mel_channels) -> (B, T_out, n_mel_channels)
         mel_outputs = tf.stack(mel_outputs)
         mel_outputs = tf.transpose(mel_outputs, (1, 0, 2))
         mel_outputs = tf.reshape(mel_outputs, (mel_outputs.shape[0], -1, self.n_mels))
         # (B, T_out, n_mel_channels) -> (B, n_mel_channels, T_out)
         mel_outputs = tf.transpose(mel_outputs, (0, 2, 1))
+
         return mel_outputs, gate_outputs, alignments
 
     def decode(self, decoder_input):
@@ -259,7 +260,7 @@ class Decoder(tf.keras.layers.Layer):
                decoder_input: 先前的mel output
                -------
                """
-        # 拼接
+        # 拼接解码器输入和注意上下文
         cell_input = tf.concat((decoder_input, self.attention_context), -1)
         # 第一次过lstmcell
         cell_output, (self.attention_hidden, self.attention_cell) = self.decoder_lstms1(cell_input, (
@@ -268,18 +269,16 @@ class Decoder(tf.keras.layers.Layer):
         self.attention_hidden = tf.keras.layers.Dropout(rate=0.1)(self.attention_hidden)
 
         # 拼接
-        attention_weights_cat = tf.concat(
+        attention_weights_concat = tf.concat(
             ((tf.expand_dims(self.attention_weights, axis=1)), (tf.expand_dims(self.attention_weights_cum, axis=1))),
             axis=1)
-
         # 注意力
         self.attention_context, self.attention_weights = self.attention_layer(self.attention_hidden, self.memory,
-                                                                              attention_weights_cat)
+                                                                              attention_weights_concat)
         self.attention_weights_cum += self.attention_weights
 
         # 拼接
         decoder_input = tf.concat((self.attention_hidden, self.attention_context), -1)
-
         # 第2次lstmcell
         decoder_output, (self.decoder_hidden, self.decoder_cell) = self.decoder_lstms2(decoder_input, (
             self.decoder_hidden, self.decoder_cell))
@@ -294,6 +293,7 @@ class Decoder(tf.keras.layers.Layer):
 
         # 投影stop_token
         gate_prediction = self.stop_projection(decoder_hidden_attention_context)
+
         return decoder_output, gate_prediction, self.attention_weights
 
     def call(self, memory, decoder_inputs):
@@ -303,22 +303,25 @@ class Decoder(tf.keras.layers.Layer):
                """
         # go_frame
         decoder_input = self.get_go_frame(memory)
-        decoder_input = tf.expand_dims((decoder_input), axis=0)
+        decoder_input = tf.expand_dims(decoder_input, axis=0)
+
         decoder_inputs = self.parse_decoder_inputs(decoder_inputs)
         decoder_inputs = tf.concat((decoder_input, decoder_inputs), axis=0)
-        decoder_inputs = self.prenet2(decoder_inputs)
+
+        decoder_inputs = self.prenet(decoder_inputs)
+
         self.initialize_decoder_states(memory)
         mel_outputs, gate_outputs, alignments = [], [], []
         # 教师强制
         while len(mel_outputs) < decoder_inputs.shape[0] - 1:
             decoder_input = decoder_inputs[len(mel_outputs)]
-            mel_output, gate_output, attention_weights = self.decode(
-                decoder_input)
+            mel_output, gate_output, attention_weights = self.decode(decoder_input)
             # 拼接
             mel_outputs += [tf.squeeze(mel_output)]
             gate_outputs += [tf.squeeze(gate_output, axis=1)]
             alignments += [attention_weights]
-            # 调整维度输出
+
+        # 调整维度输出
         mel_outputs, gate_outputs, alignments = self.parse_decoder_outputs(
             mel_outputs, gate_outputs, alignments)
         return mel_outputs, gate_outputs, alignments
@@ -329,20 +332,21 @@ class Decoder(tf.keras.layers.Layer):
         """
         # go frame
         decoder_input = self.get_go_frame(memory)
+
         self.initialize_decoder_states(memory)
         mel_outputs, gate_outputs, alignments = [], [], []
         while len(mel_outputs) < self.max_input_length:
             # 通过pre_net
-            decoder_input = self.prenet2(decoder_input)
+            decoder_input = self.prenet(decoder_input)
             # 解码
-            mel_output, gate_output, attention_weights = self.decode(
-                decoder_input)
+            mel_output, gate_output, attention_weights = self.decode(decoder_input)
             # 拼接
             mel_outputs += [tf.squeeze(mel_output)]
             gate_outputs += [tf.squeeze(gate_output, axis=1)]
             alignments += [attention_weights]
             # 将自己预测的作为下一步的输入
             decoder_input = mel_output
+
         # 拓展维度
         mel_outputs = tf.expand_dims(mel_outputs, axis=1)
         # 变维度输出
