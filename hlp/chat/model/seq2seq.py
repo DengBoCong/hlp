@@ -1,5 +1,5 @@
 import tensorflow as tf
-import utils.layers as layers
+import hlp.utils.layers as layers
 
 
 class Encoder(tf.keras.Model):
