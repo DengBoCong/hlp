@@ -16,14 +16,20 @@ from config import config
 def compute_metric(model, val_data_generator, val_batchs, val_batch_size):
     dataset_information = config.get_dataset_information()
     units = config.units
+    dec_units = config.dec_units
+    # 确定使用的model类型
+    model_type = config.model_type
     word_index = dataset_information["word_index"]
     index_word = dataset_information["index_word"]
     max_label_length = dataset_information["max_label_length"]
     results = []
     labels_list = []
     for batch, (input_tensor, text_list) in zip(range(1, val_batchs + 1), val_data_generator):
-        hidden = tf.zeros((1, 256))
-        dec_input = tf.expand_dims([word_index['<start>']] * val_batch_size, 1)
+        if model_type == "las_d_w":
+            hidden = tf.zeros((val_batch_size, dec_units))
+        elif model_type == "las":
+            hidden = tf.zeros((val_batch_size, units))
+        dec_input = tf.expand_dims([word_index['<start>']] * val_batch_size, 1)            
         result = ''  # 识别结果字符串
 
         for t in range(max_label_length):  # 逐步解码或预测
