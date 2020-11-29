@@ -90,7 +90,7 @@ class las_model(tf.keras.Model):
         self.decoder = Decoder(vocab_tar_size, embedding_dim, units)
 
     def call(self, inputx_1, enc_hidden, dec_input):
-        enc_output, enc_hidden = self.encoder(inputx_1)  # 前向计算，编码
+        enc_output = self.encoder(inputx_1)  # 前向计算，编码
         dec_hidden = enc_hidden  # 编码器状态作为解码器初始状态？
         predictions, dec_hidden, _ = self.decoder(dec_input, dec_hidden, enc_output)
         return predictions, dec_hidden
