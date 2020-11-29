@@ -59,7 +59,6 @@ checkpoint_prefix = conf["checkpoint"]['prefix']  # 检查点前缀
 max_to_keep = conf["checkpoint"]['max_to_keep']  # 最多可保存检查点数
 checkpoint_keep_interval = conf["checkpoint"]['checkpoint_keep_interval']  # 设定每隔多少epoch保存一次检查点
 CHUNK = conf["recognition"]['CHUNK']
-FORMAT = conf["recognition"]['FORMAT']  # 录音格式
 CHANNELS = conf["recognition"]['CHANNELS']  # 声道数，单声道或双声道
 RATE = conf["recognition"]['RATE']  # 声音采样率
 file_path = conf["recognition"]['file_path']  # 录音文件路径

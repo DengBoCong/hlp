@@ -1,6 +1,6 @@
 {
     "train": {
-        "epochs": 12,
+        "epochs": 50,
         "wav_path": ".\\data\\number\\wav_train",
         "label_path": ".\\data\\number\\data_train.txt",
         "val_wav_path": ".\\data\\number\\wav_validation",
@@ -38,9 +38,8 @@
     },
     "recognition": {
         "CHUNK": 1024,
-        "FORMAT": "pyaudio.paInt16",
-        "CHANNELS": 2,
-        "RATE": 44100,
+        "CHANNELS": 1,
+        "RATE": 16000,
         "file_path": ".\\",
         "file_name": "output.wav",
         "record_second": 2
