@@ -65,12 +65,8 @@ if __name__ == "__main__":
     label_path = config.train_label_path
     # 尝试实验不同大小的数据集
     num_examples = config.num_examples
-    # 每一步mfcc所取得特征数
-    n_mfcc = config.n_mfcc
-
     # 确定使用的model类型
     model_type = config.model_type
-
     embedding_dim = config.embedding_dim
     units = config.units
     d = config.d
@@ -95,6 +91,7 @@ if __name__ == "__main__":
     vocab_tar_size = dataset_information["vocab_tar_size"]
     batchs = len(audio_data_path_list) // train_batch_size
     optimizer = tf.keras.optimizers.Adam()
+    
     # 选择模型类型
     if model_type == "las":
         model = las.las_model(vocab_tar_size, embedding_dim, units, train_batch_size)

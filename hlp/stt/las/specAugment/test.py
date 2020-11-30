@@ -11,26 +11,26 @@ import librosa
 from hlp.stt.las.specAugment import spec_augment
 import numpy as np
 
-parser = argparse.ArgumentParser(description='Spec Augment')
-parser.add_argument('--audio-path', default='../data/number/wav_test/0_jackson_1.wav',
-                    help='The audio file.')
-parser.add_argument('--time-warp-para', default=80,
-                    help='time warp parameter W')
-parser.add_argument('--frequency-mask-para', default=100,
-                    help='frequency mask parameter F')
-parser.add_argument('--time-mask-para', default=27,
-                    help='time mask parameter T')
-parser.add_argument('--masking-line-number', default=1,
-                    help='masking line number')
-
-args = parser.parse_args()
-audio_path = args.audio_path
-time_warping_para = args.time_warp_para
-time_masking_para = args.frequency_mask_para
-frequency_masking_para = args.time_mask_para
-masking_line_number = args.masking_line_number
-
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='Spec Augment')
+    parser.add_argument('--audio-path', default='../data/number/wav_test/0_jackson_1.wav',
+                        help='The audio file.')
+    parser.add_argument('--time-warp-para', default=80,
+                        help='time warp parameter W')
+    parser.add_argument('--frequency-mask-para', default=100,
+                        help='frequency mask parameter F')
+    parser.add_argument('--time-mask-para', default=27,
+                        help='time mask parameter T')
+    parser.add_argument('--masking-line-number', default=1,
+                        help='masking line number')
+
+    args = parser.parse_args()
+    audio_path = args.audio_path
+    time_warping_para = args.time_warp_para
+    time_masking_para = args.frequency_mask_para
+    frequency_masking_para = args.time_mask_para
+    masking_line_number = args.masking_line_number
+
     audio, sampling_rate = librosa.load(audio_path)
 
     mel_spectrogram = librosa.feature.melspectrogram(y=audio,
