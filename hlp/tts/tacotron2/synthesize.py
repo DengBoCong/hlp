@@ -4,10 +4,10 @@ import scipy.io.wavfile as wave
 import tensorflow as tf
 from playsound import playsound
 
-from .audio_process import melspectrogram2wav
-from .config2 import Tacotron2Config
-from .prepocesses import get_tokenizer_keras, dataset_seq
-from .tacotron2 import Tacotron2, load_checkpoint
+from audio_process import melspectrogram2wav
+from config2 import Tacotron2Config
+from prepocesses import get_tokenizer_keras, dataset_seq
+from tacotron2 import Tacotron2, load_checkpoint
 
 
 # 下面两个方法没使用，暂时保留

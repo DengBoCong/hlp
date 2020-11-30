@@ -1,7 +1,7 @@
 import numpy as np
 import tensorflow as tf
 
-from .prepocesses import map_to_text, dataset_seq, dataset_mel
+from prepocesses import map_to_text, dataset_seq, dataset_mel
 
 
 # train数据生成器

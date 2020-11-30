@@ -6,7 +6,7 @@ import re
 import numpy as np
 import tensorflow as tf
 
-from .audio_process import get_spectrograms
+from audio_process import get_spectrograms
 
 
 # 按字符切

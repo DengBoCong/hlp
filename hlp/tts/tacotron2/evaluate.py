@@ -1,11 +1,11 @@
 
 import tensorflow as tf
-from .audio_process import spec_distance
-from .config2 import Tacotron2Config
-from .generator import test_generator
-from .prepocesses import process_wav_name, get_tokenizer_keras
-from .tacotron2 import Tacotron2
-from .tacotron2 import load_checkpoint
+from audio_process import spec_distance
+from config2 import Tacotron2Config
+from generator import test_generator
+from prepocesses import process_wav_name, get_tokenizer_keras
+from tacotron2 import Tacotron2
+from tacotron2 import load_checkpoint
 
 
 def evluate(test_data_generator, vocab_size, config, test_batchs):

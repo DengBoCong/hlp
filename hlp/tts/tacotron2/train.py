@@ -3,11 +3,11 @@ import time
 
 import tensorflow as tf
 
-from .config2 import Tacotron2Config
-from .generator import train_generator
-from .prepocesses import dataset_txt, tar_stop_token, process_wav_name, map_to_text, get_tokenizer_keras
-from .tacotron2 import Tacotron2
-from .tacotron2 import load_checkpoint
+from config2 import Tacotron2Config
+from generator import train_generator
+from prepocesses import dataset_txt, tar_stop_token, process_wav_name, map_to_text, get_tokenizer_keras
+from tacotron2 import Tacotron2
+from tacotron2 import load_checkpoint
 
 
 # 损失函数
