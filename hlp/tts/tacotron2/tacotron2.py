@@ -138,7 +138,7 @@ class Postnet(tf.keras.layers.Layer):
     def __init__(self, config):
         super().__init__()
         self.conv_batch_norm = []
-        for i in range(config.n_conv_encoder):
+        for i in range(config.n_conv_postnet):
             if i == config.n_conv_postnet - 1:
                 conv = ConvDropBN(
                     filters=config.postnet_conv_filters,
