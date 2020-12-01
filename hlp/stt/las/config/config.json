@@ -18,7 +18,8 @@
         "label_path": ".\\data\\number\\data_test.txt",
         "test_num": 20,
         "batch_size": 1,
-        "warning": "batch_size can only be 1"
+        "warning": "batch_size can only be 1",
+        "beam_size": 2
     },
     "las_model": {
         "embedding_dim": 256,
