@@ -31,9 +31,9 @@
     "max_database_size": 0
   },
   "seq2seq_dict_fn": "data\\seq2seq_dict.json",
-  "seq2seq_checkpoint": "checkpoint\\seq2seq",
+  "seq2seq_checkpoint": "checkpoints\\seq2seq",
   "transformer_dict_fn": "data\\transformer_dict.json",
-  "transformer_checkpoint": "checkpoint\\transformer",
+  "transformer_checkpoint": "checkpoints\\transformer",
   "smn_dict_fn": "data\\smn_dict_fn",
   "smn_checkpoint": "checkpoint\\smn",
   "resource_data": "data\\xiao_huang_jie.txt",

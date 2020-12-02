@@ -1,6 +1,6 @@
 {
     "train": {
-        "epochs": 12,
+        "epochs": 50,
         "wav_path": ".\\data\\number\\wav_train",
         "label_path": ".\\data\\number\\data_train.txt",
         "val_wav_path": ".\\data\\number\\wav_validation",
@@ -10,7 +10,8 @@
         "validation_data": true,
         "validation_size": 20,
         "validation_percent": 2,
-        "val_batch_size": 1
+        "val_batch_size": 1,
+        "model_type": "las_d_w"
     },
     "test": {
         "wav_path": ".\\data\\number\\wav_test",
@@ -19,9 +20,15 @@
         "batch_size": 1,
         "warning": "batch_size can only be 1"
     },
-    "model": {
+    "las_model": {
         "embedding_dim": 256,
         "units": 512
+    },
+    "las_d_w_model": {
+        "d": 2,
+        "w": 256,
+        "emb_dim": 256,
+        "dec_units": 256
     },
     "checkpoint": {
         "directory": "./checkpoints_1",
@@ -31,15 +38,14 @@
     },
     "recognition": {
         "CHUNK": 1024,
-        "FORMAT": "pyaudio.paInt16",
-        "CHANNELS": 2,
-        "RATE": 44100,
+        "CHANNELS": 1,
+        "RATE": 16000,
         "file_path": ".\\",
         "file_name": "output.wav",
         "record_second": 2
     },
     "data": {
-        "dataset_information_path": "./dataset_information.json",
+        "dataset_information_path": "./ds_info.json",
         "dataset_name": "number",
         "n_mfcc": 39,
         "audio_feature_type": "mfcc",

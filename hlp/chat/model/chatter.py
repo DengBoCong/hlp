@@ -5,7 +5,8 @@ import tensorflow as tf
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import common.data_utils as data_utils
-from utils.beamsearch import BeamSearch
+
+from hlp.utils.beamsearch import BeamSearch
 
 
 class Chatter(object):

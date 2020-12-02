@@ -1,3 +1,4 @@
+
 class Tacotron2Config(object):
     """Initialize Tacotron-2 Config."""
 
@@ -30,7 +31,7 @@ class Tacotron2Config(object):
             prenet_dropout_rate=0.1,
             gate_threshold=0.5,
 
-            #postnet-conv1d层数
+            # postnet-conv1d层数
             n_conv_postnet=3,
             postnet_conv_filters=256,
             postnet_conv_kernel_sizes=5,
@@ -67,7 +68,7 @@ class Tacotron2Config(object):
             # 其他
             batch_size=2,
             test_batch_size=1,
-            #最大检查点保存数目
+            # 最大检查点保存数目
             max_to_keep=2,
     ):
         """tacotron2参数."""

@@ -27,9 +27,9 @@
   "end_word": "<end>",
   "target_vocab_size": 8192,
   "result_save_dir": "./data/result/",
-  "path_to_train_file": "./data/corpus/en-zh_train.txt",
-  "path_to_eval_file": "./data/corpus/en-zh_eval.txt",
-  "path_to_val_file": "./data/corpus/en-zh_val.txt",
+  "path_to_train_file": "./data/anki/anki-cmn-eng.txt",
+  "path_to_eval_file": "./data/anki/en-zh_eval.txt",
+  "path_to_val_file": "./data/anki/en-zh_val.txt",
   "encoded_sequences_path_prefix": "./data/encoded_corpus/encoded_sequences_",
   "tokenizer_path_prefix": "./data/tokenizer/tokenizer_",
   "checkpoint_path_dir": "./checkpoints"
