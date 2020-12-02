@@ -1,12 +1,14 @@
 import os
 import time
+
 import tensorflow as tf
 
 from config2 import Tacotron2Config
-from tacotron2 import load_checkpoint
+from generator import train_generator
 from prepocesses import dataset_txt, tar_stop_token, process_wav_name, map_to_text, get_tokenizer_keras
 from tacotron2 import Tacotron2
-from generator import train_generator
+from tacotron2 import load_checkpoint
+
 
 # 损失函数
 def loss_function(mel_out, mel_out_postnet, mel_gts, tar_token, stop_token):
@@ -16,8 +18,9 @@ def loss_function(mel_out, mel_out_postnet, mel_gts, tar_token, stop_token):
     binary_crossentropy = tf.keras.losses.BinaryCrossentropy(from_logits=True)
     stop_loss = binary_crossentropy(tar_token, stop_token)
     mel_loss = tf.keras.losses.MeanSquaredError()(mel_out, mel_gts) + tf.keras.losses.MeanSquaredError()(
-        mel_out_postnet, mel_gts)+stop_loss
+        mel_out_postnet, mel_gts) + stop_loss
     return mel_loss
+
 
 # 单次训练
 def train_step(input_ids, mel_gts, model, optimizer, tar_token):
@@ -45,16 +48,16 @@ def train(model, optimizer, train_data_generator, epochs, checkpoint, batchs):
             batch_loss, mel_outputs = train_step(input_ids, mel_gts, model, optimizer, tar_token)  # 训练一个批次，返回批损失
             total_loss += batch_loss
             print('\r{}/{} [Batch {} Loss {:.4f} {:.1f}s]'.format((batch + 1),
-                                                                 batchs,
-                                                                 batch + 1,
-                                                                 batch_loss.numpy(),
+                                                                  batchs,
+                                                                  batch + 1,
+                                                                  batch_loss.numpy(),
                                                                   (time.time() - batch_start)), end='')
 
         # 每 2 个周期（epoch），保存（检查点）一次模型
         if (epoch + 1) % 2 == 0:
             checkpoint.save()
 
-        print(' - {:.0f}s/step - loss: {:.4f}'.format((time.time() - start)/batchs, total_loss / batchs))
+        print(' - {:.0f}s/step - loss: {:.4f}'.format((time.time() - start) / batchs, total_loss / batchs))
 
     return mel_outputs
 
@@ -82,22 +85,22 @@ if __name__ == "__main__":
     save_path_dictionary = config.save_path_dictionary
     # csv文件的路径
     csv_dir = config.csv_dir
-    #a=1代表他是number数据集等于其他表示他是ljspeech
+    # a=1代表他是number数据集等于其他表示他是ljspeech
     a = 2
     batch_size = config.batch_size
 
     # 统计wav名称
     wav_name_list = process_wav_name(wave_train_path, a)
-    batchs = len(wav_name_list)//batch_size
+    batchs = len(wav_name_list) // batch_size
 
-    #获取所有文本，以用来制作字典
+    # 获取所有文本，以用来制作字典
     sentence_list = map_to_text(csv_dir, wav_name_list)
 
-    #保存字典，获取vocab_size
+    # 保存字典，获取vocab_size
     en_seqs, vocab_size = dataset_txt(sentence_list, save_path_dictionary, config)
     tokenizer, vocab_size = get_tokenizer_keras(save_path_dictionary)
 
-    #生成器初始化
+    # 生成器初始化
     train_data_generator = train_generator(wav_name_list, batch_size, csv_dir, tokenizer, wave_train_path, config)
 
     # 初始化模型和优化器
@@ -107,7 +110,7 @@ if __name__ == "__main__":
     # 如果检查点存在就恢复，如果不存在就重新创建一个
     if os.path.exists(checkpoint_dir):
         ckpt_manager = load_checkpoint(tacotron2, checkpoint_dir, config)
-        #checkpoint_prefix = os.path.join(checkpoint_dir, "ckpt")
+        # checkpoint_prefix = os.path.join(checkpoint_dir, "ckpt")
         print('已恢复至最新的检查点！')
     else:
         checkpoint_prefix = os.path.join(checkpoint_dir, "ckpt")

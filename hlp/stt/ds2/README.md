@@ -59,7 +59,7 @@
         "history_img_dir": "./history_img/"
     },
     "preprocess": {
-        "dataset_information_path": "./dataset_information.json",
+        "dataset_information_path": "./ds_info.json",
         "dataset_name": "number",
         "text_row_style": 1,
         "text_process_mode": "cn"
@@ -108,7 +108,7 @@
         "history_img_dir": "./history_img/"
     },
     "preprocess": {
-        "dataset_information_path": "./dataset_information.json",
+        "dataset_information_path": "./ds_info.json",
         "dataset_name": "librispeech",
         "text_row_style": 1,
         "text_process_mode": "en_char"
@@ -157,7 +157,7 @@
         "history_img_dir": "./history_img/"
     },
     "preprocess": {
-        "dataset_information_path": "./dataset_information.json",
+        "dataset_information_path": "./ds_info.json",
         "dataset_name": "thchs30",
         "text_row_style": 1,
         "text_process_mode": "cn"

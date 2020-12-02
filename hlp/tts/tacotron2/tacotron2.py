@@ -73,8 +73,8 @@ class LocationLayer(tf.keras.layers.Layer):
         self.location_layer = tf.keras.layers.Dense(
             units=attention_dim1, use_bias=False, activation="tanh", name="location_layer")
 
-    def call(self, attention_weights_cat):
-        processed_attention = self.location_convolution(attention_weights_cat)
+    def call(self, attention_weights_concat):
+        processed_attention = self.location_convolution(attention_weights_concat)
         processed_attention = self.location_layer(processed_attention)
         return processed_attention
 
@@ -88,23 +88,24 @@ class Attention(tf.keras.layers.Layer):
         self.query_layer = tf.keras.layers.Dense(self.attention_dim, use_bias=False, activation="tanh")
         self.memory_layer = tf.keras.layers.Dense(self.attention_dim, use_bias=False, activation="tanh")
         self.V = tf.keras.layers.Dense(1, use_bias=False)
-        self.location_layer = LocationLayer(self.attention_location_n_filters, self.attention_location_kernel_size,
+        self.location_layer = LocationLayer(self.attention_location_n_filters,
+                                            self.attention_location_kernel_size,
                                             self.attention_dim)
         self.score_mask_value = -float("inf")
 
-    def get_alignment_energies(self, query, memory, attention_weights_cat):
+    def get_alignment_energies(self, query, memory, attention_weights_concat):
         # print("query:", query.shape)
         processed_query = self.query_layer(tf.expand_dims(query, axis=1))
         processed_memory = self.memory_layer(memory)
 
-        attention_weights_cat = tf.transpose(attention_weights_cat, (0, 2, 1))
-        processed_attention_weights = self.location_layer(attention_weights_cat)
+        attention_weights_concat = tf.transpose(attention_weights_concat, (0, 2, 1))
+        processed_attention_weights = self.location_layer(attention_weights_concat)
         energies = tf.squeeze(self.V(tf.nn.tanh(processed_query + processed_attention_weights + processed_memory)), -1)
         return energies
 
-    def __call__(self, attention_hidden_state, memory, attention_weights_cat):
+    def __call__(self, attention_hidden_state, memory, attention_weights_concat):
         alignment = self.get_alignment_energies(
-            attention_hidden_state, memory, attention_weights_cat)
+            attention_hidden_state, memory, attention_weights_concat)
         attention_weights = tf.nn.softmax(alignment, axis=1)
         attention_context = tf.expand_dims(attention_weights, 1)
         attention_context = tf.matmul(attention_context, memory)
@@ -114,7 +115,6 @@ class Attention(tf.keras.layers.Layer):
         return attention_context, attention_weights
 
 
-# attention结束
 class Prenet(tf.keras.layers.Layer):
     def __init__(self, config):
         super().__init__()
@@ -122,18 +122,11 @@ class Prenet(tf.keras.layers.Layer):
         self.n_prenet_layers = config.n_prenet_layers
         self.prenet_dropout_rate = config.prenet_dropout_rate
         self.prenet_dense = [
-            tf.keras.layers.Dense(
-                units=self.prenet_units,
-                activation='relu'
-            )
-            for i in range(self.n_prenet_layers)
-        ]
-        self.dropout = tf.keras.layers.Dropout(
-            rate=self.prenet_dropout_rate
-        )
+            tf.keras.layers.Dense(units=self.prenet_units, activation='relu')
+            for i in range(self.n_prenet_layers)]
+        self.dropout = tf.keras.layers.Dropout(rate=self.prenet_dropout_rate)
 
     def __call__(self, inputs):
-        """Call logic."""
         outputs = inputs
         for layer in self.prenet_dense:
             outputs = layer(outputs)
@@ -145,21 +138,19 @@ class Postnet(tf.keras.layers.Layer):
     def __init__(self, config):
         super().__init__()
         self.conv_batch_norm = []
-        for i in range(config.n_conv_encoder):
-            if i == config.n_conv_postnet - 1:
+        for i in range(config.n_conv_postnet):
+            if i == config.n_conv_postnet - 1:  # 最后一层无激活
                 conv = ConvDropBN(
                     filters=config.postnet_conv_filters,
                     kernel_size=config.postnet_conv_kernel_sizes,
                     activation=None,
-                    dropout_rate=config.postnet_dropout_rate,
-                )
+                    dropout_rate=config.postnet_dropout_rate)
             else:
                 conv = ConvDropBN(
                     filters=config.postnet_conv_filters,
                     kernel_size=config.postnet_conv_kernel_sizes,
                     activation=config.postnet_conv_activation,
-                    dropout_rate=config.postnet_dropout_rate,
-                )
+                    dropout_rate=config.postnet_dropout_rate)
             self.conv_batch_norm.append(conv)
 
         self.fc = tf.keras.layers.Dense(units=config.n_mels, activation=None, name="frame_projection1")
@@ -183,19 +174,21 @@ class Decoder(tf.keras.layers.Layer):
         self.gate_threshold = config.gate_threshold
         self.n_mels = config.n_mels
         self.max_input_length = config.max_input_length
-        self.prenet2 = Prenet(config)
-        self.postnet = Postnet(config)
+
+        self.prenet = Prenet(config)
+
         # 两个单层LSTM
         self.decoder_lstms1 = tf.keras.layers.LSTMCell(self.decoder_lstm_dim, dropout=config.decoder_lstm_rate)
         self.decoder_lstms2 = tf.keras.layers.LSTMCell(self.decoder_lstm_dim, dropout=config.decoder_lstm_rate)
+
         # 线性变换投影成目标帧
         self.frame_projection = tf.keras.layers.Dense(
-            units=self.n_mels, activation=None, name="frame_projection"
-        )
+            units=self.n_mels, activation=None, name="frame_projection")
+
         # 停止记号
         self.stop_projection = tf.keras.layers.Dense(
-            units=1, activation='sigmoid', name="stop_projection"
-        )
+            units=1, activation='sigmoid', name="stop_projection")
+
         # 用于注意力
         self.attention_layer = Attention(config)
 
@@ -223,11 +216,9 @@ class Decoder(tf.keras.layers.Layer):
         MAX_TIME = tf.shape(memory)[1]
 
         self.attention_hidden = tf.zeros(shape=[B, self.attention_rnn_dim], dtype=tf.float32)
-
         self.attention_cell = tf.zeros(shape=[B, self.attention_rnn_dim], dtype=tf.float32)
 
         self.decoder_hidden = tf.zeros(shape=[B, self.decoder_lstm_dim], dtype=tf.float32)
-
         self.decoder_cell = tf.zeros(shape=[B, self.decoder_lstm_dim], dtype=tf.float32)
 
         self.attention_weights = tf.zeros(shape=[B, MAX_TIME], dtype=tf.float32)
@@ -248,15 +239,18 @@ class Decoder(tf.keras.layers.Layer):
         # (T_out, B) -> (B, T_out)
         alignments = tf.stack(alignments)
         alignments = tf.transpose(alignments, (1, 0, 2))
+
         # (T_out, B) -> (B, T_out)
         gate_outputs = tf.stack(gate_outputs)
         gate_outputs = tf.transpose(gate_outputs, (1, 0))
+
         # (T_out, B, n_mel_channels) -> (B, T_out, n_mel_channels)
         mel_outputs = tf.stack(mel_outputs)
         mel_outputs = tf.transpose(mel_outputs, (1, 0, 2))
         mel_outputs = tf.reshape(mel_outputs, (mel_outputs.shape[0], -1, self.n_mels))
         # (B, T_out, n_mel_channels) -> (B, n_mel_channels, T_out)
         mel_outputs = tf.transpose(mel_outputs, (0, 2, 1))
+
         return mel_outputs, gate_outputs, alignments
 
     def decode(self, decoder_input):
@@ -265,7 +259,7 @@ class Decoder(tf.keras.layers.Layer):
                decoder_input: 先前的mel output
                -------
                """
-        # 拼接
+        # 拼接解码器输入和注意上下文
         cell_input = tf.concat((decoder_input, self.attention_context), -1)
         # 第一次过lstmcell
         cell_output, (self.attention_hidden, self.attention_cell) = self.decoder_lstms1(cell_input, (
@@ -274,18 +268,16 @@ class Decoder(tf.keras.layers.Layer):
         self.attention_hidden = tf.keras.layers.Dropout(rate=0.1)(self.attention_hidden)
 
         # 拼接
-        attention_weights_cat = tf.concat(
+        attention_weights_concat = tf.concat(
             ((tf.expand_dims(self.attention_weights, axis=1)), (tf.expand_dims(self.attention_weights_cum, axis=1))),
             axis=1)
-
         # 注意力
         self.attention_context, self.attention_weights = self.attention_layer(self.attention_hidden, self.memory,
-                                                                              attention_weights_cat)
+                                                                              attention_weights_concat)
         self.attention_weights_cum += self.attention_weights
 
         # 拼接
         decoder_input = tf.concat((self.attention_hidden, self.attention_context), -1)
-
         # 第2次lstmcell
         decoder_output, (self.decoder_hidden, self.decoder_cell) = self.decoder_lstms2(decoder_input, (
             self.decoder_hidden, self.decoder_cell))
@@ -300,6 +292,7 @@ class Decoder(tf.keras.layers.Layer):
 
         # 投影stop_token
         gate_prediction = self.stop_projection(decoder_hidden_attention_context)
+
         return decoder_output, gate_prediction, self.attention_weights
 
     def call(self, memory, decoder_inputs):
@@ -309,22 +302,25 @@ class Decoder(tf.keras.layers.Layer):
                """
         # go_frame
         decoder_input = self.get_go_frame(memory)
-        decoder_input = tf.expand_dims((decoder_input), axis=0)
+        decoder_input = tf.expand_dims(decoder_input, axis=0)
+
         decoder_inputs = self.parse_decoder_inputs(decoder_inputs)
         decoder_inputs = tf.concat((decoder_input, decoder_inputs), axis=0)
-        decoder_inputs = self.prenet2(decoder_inputs)
+
+        decoder_inputs = self.prenet(decoder_inputs)
+
         self.initialize_decoder_states(memory)
         mel_outputs, gate_outputs, alignments = [], [], []
         # 教师强制
         while len(mel_outputs) < decoder_inputs.shape[0] - 1:
             decoder_input = decoder_inputs[len(mel_outputs)]
-            mel_output, gate_output, attention_weights = self.decode(
-                decoder_input)
+            mel_output, gate_output, attention_weights = self.decode(decoder_input)
             # 拼接
             mel_outputs += [tf.squeeze(mel_output)]
             gate_outputs += [tf.squeeze(gate_output, axis=1)]
             alignments += [attention_weights]
-            # 调整维度输出
+
+        # 调整维度输出
         mel_outputs, gate_outputs, alignments = self.parse_decoder_outputs(
             mel_outputs, gate_outputs, alignments)
         return mel_outputs, gate_outputs, alignments
@@ -335,20 +331,21 @@ class Decoder(tf.keras.layers.Layer):
         """
         # go frame
         decoder_input = self.get_go_frame(memory)
+
         self.initialize_decoder_states(memory)
         mel_outputs, gate_outputs, alignments = [], [], []
         while len(mel_outputs) < self.max_input_length:
             # 通过pre_net
-            decoder_input = self.prenet2(decoder_input)
+            decoder_input = self.prenet(decoder_input)
             # 解码
-            mel_output, gate_output, attention_weights = self.decode(
-                decoder_input)
+            mel_output, gate_output, attention_weights = self.decode(decoder_input)
             # 拼接
             mel_outputs += [tf.squeeze(mel_output)]
             gate_outputs += [tf.squeeze(gate_output, axis=1)]
             alignments += [attention_weights]
             # 将自己预测的作为下一步的输入
             decoder_input = mel_output
+
         # 拓展维度
         mel_outputs = tf.expand_dims(mel_outputs, axis=1)
         # 变维度输出

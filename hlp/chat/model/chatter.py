@@ -3,7 +3,8 @@ import sys
 import time
 import tensorflow as tf
 import common.data_utils as data_utils
-from utils.beamsearch import BeamSearch
+
+from hlp.utils.beamsearch import BeamSearch
 
 
 class Chatter(object):
