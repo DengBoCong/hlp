@@ -1,6 +1,6 @@
 import tensorflow as tf
-import common.layers as layers
-import common.data_utils as data_utils
+import utils.layers as layers
+import common.layers as self_layers
 
 
 def encoder(vocab_size: int, num_layers: int, units: int, d_model: int,
@@ -25,13 +25,14 @@ def encoder(vocab_size: int, num_layers: int, units: int, d_model: int,
     padding_mask = tf.keras.Input(shape=(1, 1, None), name="padding_mask")
     embeddings = tf.keras.layers.Embedding(vocab_size, d_model)(inputs)
     embeddings *= tf.math.sqrt(tf.cast(d_model, tf.float32))
-    embeddings = layers.PositionalEncoding(vocab_size, d_model)(embeddings)
+    pos_encoding = layers.positional_encoding(vocab_size, d_model)
+    embeddings = embeddings + pos_encoding[:, :tf.shape(embeddings)[1], :]
 
     outputs = tf.keras.layers.Dropout(rate=dropout)(embeddings)
 
     # 这里layer使用的name是为了调试的时候答应信息方便查看，也可以不写
     for i in range(num_layers):
-        outputs = layers.transformer_encoder_layer(
+        outputs = self_layers.transformer_encoder_layer(
             units=units,
             d_model=d_model,
             num_heads=num_heads,
@@ -65,12 +66,13 @@ def decoder(vocab_size: int, num_layers: int, units: int, d_model: int,
 
     embeddings = tf.keras.layers.Embedding(vocab_size, d_model)(inputs)
     embeddings *= tf.math.sqrt(tf.cast(d_model, tf.float32))
-    embeddings = layers.PositionalEncoding(vocab_size, d_model)(embeddings)
+    pos_encoding = layers.positional_encoding(vocab_size, d_model)
+    embeddings = embeddings + pos_encoding[:, :tf.shape(embeddings)[1], :]
 
     outputs = tf.keras.layers.Dropout(rate=dropout)(embeddings)
 
     for i in range(num_layers):
-        outputs = layers.transformer_decoder_layer(
+        outputs = self_layers.transformer_decoder_layer(
             units=units, d_model=d_model, num_heads=num_heads,
             dropout=dropout, name="transformer_decoder_layer_{}".format(i),
         )(inputs=[outputs, enc_outputs, look_ahead_mask, padding_mask])
@@ -101,17 +103,17 @@ def transformer(vocab_size: int, num_layers: int, units: int, d_model: int,
 
     # 使用了Lambda将方法包装成层，为的是满足函数式API的需要
     enc_padding_mask = tf.keras.layers.Lambda(
-        data_utils.create_padding_mask, output_shape=(1, 1, None),
+        layers.create_padding_mask, output_shape=(1, 1, None),
         name="enc_padding_mask"
     )(inputs)
 
     look_ahead_mask = tf.keras.layers.Lambda(
-        data_utils.create_look_ahead_mask, output_shape=(1, None, None),
+        _combine_mask, output_shape=(1, None, None),
         name="look_ahead_mask"
     )(dec_inputs)
 
     dec_padding_mask = tf.keras.layers.Lambda(
-        data_utils.create_padding_mask, output_shape=(1, 1, None),
+        layers.create_padding_mask, output_shape=(1, 1, None),
         name="dec_padding_mask"
     )(inputs)
 
@@ -181,17 +183,17 @@ def transformer_scheduled_sample(vocab_size, num_layers, units, d_model, num_hea
 
     # 使用了Lambda将方法包装成层，为的是满足函数式API的需要
     enc_padding_mask = tf.keras.layers.Lambda(
-        data_utils.create_padding_mask, output_shape=(1, 1, None),
+        layers.create_padding_mask, output_shape=(1, 1, None),
         name="enc_padding_mask"
     )(inputs)
 
     look_ahead_mask = tf.keras.layers.Lambda(
-        data_utils.create_look_ahead_mask, output_shape=(1, None, None),
+        _combine_mask, output_shape=(1, None, None),
         name="look_ahead_mask"
     )(dec_inputs)
 
     dec_padding_mask = tf.keras.layers.Lambda(
-        data_utils.create_padding_mask, output_shape=(1, 1, None),
+        layers.create_padding_mask, output_shape=(1, 1, None),
         name="dec_padding_mask"
     )(inputs)
 
@@ -224,3 +226,15 @@ def transformer_scheduled_sample(vocab_size, num_layers, units, d_model, num_hea
 def accuracy(real, pred):
     real = tf.reshape(real, shape=(-1, 40 - 1))
     return tf.keras.metrics.sparse_categorical_accuracy(real, pred)
+
+
+def _combine_mask(seq: tf.Tensor):
+    """
+    对input中的不能见单位进行mask
+    Args:
+        seq: 输入序列
+    Returns: mask
+    """
+    look_ahead_mask = layers.create_look_ahead_mask(seq)
+    padding_mask = layers.create_padding_mask(seq)
+    return tf.maximum(look_ahead_mask, padding_mask)

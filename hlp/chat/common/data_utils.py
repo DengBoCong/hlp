@@ -132,30 +132,6 @@ def tokenize(input_lang: list, target_lang: list, max_length: int,
     return input_tensor, target_tensor, lang_tokenizer
 
 
-def create_padding_mask(input: tf.Tensor):
-    """
-    对input中的padding单位进行mask
-    Args:
-        input: 输入序列
-    Returns: mask
-    """
-    mask = tf.cast(tf.math.equal(input, 0), tf.float32)
-    return mask[:, tf.newaxis, tf.newaxis, :]
-
-
-def create_look_ahead_mask(input: tf.Tensor):
-    """
-    对input中的不能见单位进行mask
-    Args:
-        input: 输入序列
-    Returns: mask
-    """
-    seq_len = tf.shape(input)[1]
-    look_ahead_mask = 1 - tf.linalg.band_part(tf.ones((seq_len, seq_len)), -1, 0)
-    padding_mask = create_padding_mask(input)
-    return tf.maximum(look_ahead_mask, padding_mask)
-
-
 def load_data(dict_fn: str, data_fn: str, start_sign: str, end_sign: str, buffer_size: int,
               batch_size: int, checkpoint_dir: str, max_length: int, valid_data_split: float = 0.0,
               valid_data_fn: str = "", max_train_data_size: int = 0, max_valid_data_size: int = 0):
