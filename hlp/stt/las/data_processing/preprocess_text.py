@@ -7,7 +7,6 @@ formatted
 """
 import io
 import re
-import numpy as np
 import tensorflow as tf
 
 
@@ -43,7 +42,7 @@ def preprocess_en_sentence(s):
     return s
 
 
-def create_input_dataset(path, num_examples):
+def create_input_text(path, num_examples):
     lines = io.open(path, encoding='UTF-8').read().strip().split('\n')
     en_sentences = [l.split('\t')[1] for l in lines[:num_examples]]
     en_sentences = [preprocess_en_sentence(s) for s in en_sentences]
@@ -61,13 +60,42 @@ def tokenize(texts):
     return sequences, tokenizer
 
 
-def max_length(texts):
-    return max(len(t) for t in texts)
+# 非初次训练时，基于word_index和处理好的文本list得到数字list
+def get_text_int_sequences(process_text_list, word_index):
+    text_int_sequences = []
+    for process_text in process_text_list:
+        text_int_sequences.append(text_to_int_sequence(process_text, word_index))
+    return text_int_sequences
 
 
-def load_dataset(path, num_examples=None):
+# process_text转token序列
+def text_to_int_sequence(process_text, word_index):
+    int_sequence = []
+    for c in process_text.split(" "):
+        int_sequence.append(int(word_index[c]))
+    return int_sequence
+
+
+def load_text_data(path, num_examples=None):
     # 创建清理过的输入输出对    
     print("开始处理文本标签数据......")
-    targ_lang = create_input_dataset(path, num_examples)
+    targ_lang = create_input_text(path, num_examples)
     target_tensor, targ_lang_tokenizer = tokenize(targ_lang)
-    return target_tensor, targ_lang_tokenizer
+    print("文本标签数据处理完毕！")
+    return target_tensor
+
+
+# 基于原始text的整形数字序列list来构建补齐的label_tensor
+def get_text_label(text_int_sequences, max_label_length):
+    target_length_list = []
+    for text_int_sequence in text_int_sequences:
+        target_length_list.append([len(text_int_sequence)])
+    label_tensor_numpy = tf.keras.preprocessing.sequence.pad_sequences(
+        text_int_sequences,
+        maxlen=max_label_length,
+        padding='post'
+    )
+    label_tensor = tf.convert_to_tensor(label_tensor_numpy)
+    label_length = tf.convert_to_tensor(target_length_list)
+
+    return label_tensor, label_length

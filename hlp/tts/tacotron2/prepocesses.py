@@ -2,6 +2,7 @@ import io
 import json
 import os
 import re
+
 import numpy as np
 import tensorflow as tf
 
@@ -69,27 +70,26 @@ def process_text(sentence_list):
     return sentences_list2
 
 
-def tokenize(texts, save_path, name):
-    if name == "train":
-        # 准备train之前要保存字典
-        tokenizer = tf.keras.preprocessing.text.Tokenizer(filters='', oov_token='UNK')  # 无过滤字符
-        tokenizer.fit_on_texts(texts)
-        sequences = tokenizer.texts_to_sequences(texts)  # 文本数字序列
-        # 保存字典
-        json_string = tokenizer.to_json()
-        with open(save_path, 'w') as f:
-            json.dump(json_string, f)
-        vocab_size = len(tokenizer.word_index) + 1
-        sequences = tf.keras.preprocessing.sequence.pad_sequences(sequences, padding='post')
-        return sequences, vocab_size
-    else:
-        tokenizer = tf.keras.preprocessing.text.Tokenizer(filters='')  # 无过滤字符
-        tokenizer.fit_on_texts(texts)
-        sequences = tokenizer.texts_to_sequences(texts)  # 文本数字序列
-        # print(sequences[-1])
-        sequences = tf.keras.preprocessing.sequence.pad_sequences(sequences, padding='post')
-        vocab_size = len(tokenizer.word_index) + 1
-        return sequences, vocab_size
+def tokenize(texts, maxlen_text, save_path):
+    # 准备train之前要保存字典
+    tokenizer = tf.keras.preprocessing.text.Tokenizer(filters='', oov_token='UNK')  # 无过滤字符
+    tokenizer.fit_on_texts(texts)
+    sequences = tokenizer.texts_to_sequences(texts)  # 文本数字序列
+    # 保存字典
+    json_string = tokenizer.to_json()
+    with open(save_path, 'w') as f:
+        json.dump(json_string, f)
+    vocab_size = len(tokenizer.word_index) + 1
+    sequences = tf.keras.preprocessing.sequence.pad_sequences(sequences, maxlen=maxlen_text, padding='post')
+    return sequences, vocab_size
+
+
+# 恢复字典，用来预测
+def dataset_seq(texts, tokenizer, config):
+    texts = process_text(texts)
+    sequences = tokenizer.texts_to_sequences(texts)  # 文本数字序列
+    sequences = tf.keras.preprocessing.sequence.pad_sequences(sequences, maxlen=config.max_len_seq, padding='post')
+    return sequences
 
 
 # 提取字典
@@ -98,15 +98,37 @@ def get_tokenizer_keras(path):
     with open(path) as f:
         json_string = json.load(f)
     tokenizer = tf.keras.preprocessing.text.tokenizer_from_json(json_string)
-    vocab_size = len(tokenizer.word_index)
+    vocab_size = len(tokenizer.word_index) + 1
     return tokenizer, vocab_size
 
 
 # 训练的时候对取得的句子列表处理
-def dataset_txt(sentence_list, save_path, name):
+def dataset_txt(sentence_list, save_path, config):
     en = process_text(sentence_list)
-    en_seqs, vocab_size = tokenize(en, save_path, name)
+    en_seqs, vocab_size = tokenize(en, config.max_len_seq, save_path)
     return en_seqs, vocab_size
+
+
+def dataset_mel(path, maxlen, wav_name_list2, config):
+    audio_feature_list = []
+    input_length_list = []
+    for file in wav_name_list2:
+        logmelspec, sr = get_spectrograms(path + file + '.wav', config.preemphasis, config.n_fft, config.n_mels,
+                                          config.hop_length, config.win_length, config.max_db, config.ref_db,
+                                          config.top_db)
+        audio_feature_list.append(logmelspec)
+        input_length_list.append([len(logmelspec)])
+
+    audio_feature_numpy = tf.keras.preprocessing.sequence.pad_sequences(
+        audio_feature_list,
+        maxlen=maxlen,
+        dtype='float32',
+        padding='post'
+    )
+    input_tensor = tf.convert_to_tensor(audio_feature_numpy)
+    input_length = tf.convert_to_tensor(input_length_list)
+    input_tensor = tf.transpose(input_tensor, [0, 2, 1])
+    return input_tensor, input_length
 
 
 def dataset_wave(path, config):
@@ -114,7 +136,9 @@ def dataset_wave(path, config):
     mel_len_wav = []
     dirs = os.listdir(path)
     for file in dirs:
-        logmelspec, sr = get_spectrograms(path + file, config.preemphasis, config.n_fft, config.n_mels, config.hop_length, config.win_length, config.max_db, config.ref_db, config.top_db)
+        logmelspec, sr = get_spectrograms(path + file, config.preemphasis, config.n_fft, config.n_mels,
+                                          config.hop_length, config.win_length, config.max_db, config.ref_db,
+                                          config.top_db)
         mel_len_wav.append(len(logmelspec))
         mel_list.append(logmelspec.tolist())
 
@@ -128,19 +152,11 @@ def dataset_wave(path, config):
 # 用于训练stop_token
 def tar_stop_token(mel_len_wav, mel_gts, max_len):
     tar_token = np.zeros((mel_gts.shape[0], max_len))
-    for i in range(len(mel_len_wav)):
+    for i in range(len(mel_len_wav[0])):
         j = mel_len_wav[i]
-        tar_token[i, (j - 1):] = 1
+        j = int(j - 1)
+        tar_token[i, j:] = 1
     return tar_token
-
-
-def create_dataset(batch_size, input_ids, mel_gts, tar_token):
-    BUFFER_SIZE = len(input_ids)
-    steps_per_epoch = BUFFER_SIZE // batch_size
-    # dataset = tf.data.Dataset.from_tensor_slices((input_ids, mel_gts)).shuffle(BUFFER_SIZE)
-    dataset = tf.data.Dataset.from_tensor_slices((input_ids, mel_gts, tar_token))
-    dataset = dataset.batch(batch_size, drop_remainder=True)
-    return dataset, steps_per_epoch
 
 
 if __name__ == '__main__':

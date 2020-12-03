@@ -13,14 +13,3 @@ def get_model(vocab_size_source, vocab_size_target):
     return transformer
 
 
-def load_checkpoint(transformer, optimizer):
-    """获取检查点"""
-    # 加载检查点
-    checkpoint_path = _config.checkpoint_path
-    ckpt = tf.train.Checkpoint(transformer=transformer,
-                               optimizer=optimizer)
-    ckpt_manager = tf.train.CheckpointManager(ckpt, checkpoint_path, max_to_keep=_config.max_checkpoints_num)
-    if ckpt_manager.latest_checkpoint:
-        ckpt.restore(ckpt_manager.latest_checkpoint)
-        # ckpt.restore('./checkpoints/en_zh/ckpt-10')
-        print('已恢复至最新的检查点！')
