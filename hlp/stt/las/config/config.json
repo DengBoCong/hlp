@@ -42,14 +42,12 @@
         "CHANNELS": 1,
         "RATE": 16000,
         "file_path": ".\\",
-        "file_name": "output.wav",
-        "record_second": 2
+        "file_name": "output.wav"
     },
     "data": {
         "dataset_information_path": "./ds_info.json",
         "dataset_name": "number",
         "n_mfcc": 39,
-        "audio_feature_type": "mfcc",
-        "index_word_json_path": "index_word_json.json"
+        "audio_feature_type": "mfcc"
     }
 }
