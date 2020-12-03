@@ -4,7 +4,7 @@ import config.get_config as get_config
 from model.chatter import Chatter
 from common.utils import CmdParser
 from common.utils import log_operator
-from common.utils import CustomSchedule
+from utils.optimizers import CustomSchedule
 import model.transformer as transformer
 from common.pre_treat import preprocess_raw_data_qa_single, dispatch_tokenized_func_dict_single
 
