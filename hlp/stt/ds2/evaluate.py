@@ -1,59 +1,69 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Fri Sep 25 16:42:28 2020
-
-@author: 彭康
-"""
-
-import config
 import tensorflow as tf
-from data_process import data_process
+from math import ceil
 from model import DS2
-from utils import int_to_text_sequence, wers, lers, get_index_and_char_map
+from util import get_config, get_dataset_information, compute_metric
+
+from data_process.load_dataset import load_data
+from data_process.generator import test_generator
+
 
 if __name__ == "__main__":
+    configs = get_config()
+    dataset_information = get_dataset_information()
+    
+    # 获取模型配置，加载模型
+    conv_layers = configs["model"]["conv_layers"]
+    filters = configs["model"]["conv_filters"]
+    kernel_size = configs["model"]["conv_kernel_size"]
+    strides = configs["model"]["conv_strides"]
+    bi_gru_layers = configs["model"]["bi_gru_layers"]
+    gru_units = configs["model"]["gru_units"]
+    fc_units = configs["model"]["fc_units"]
+    dense_units = dataset_information["vocab_size"] + 2
+
+    model = DS2(conv_layers, filters, kernel_size, strides, bi_gru_layers, gru_units, fc_units, dense_units)
+    optimizer = tf.keras.optimizers.Adam()
+
     # 加载模型检查点
-    model = DS2()
-    # 加载检查点
-    checkpoint = tf.train.Checkpoint(model=model)
+    checkpoint = tf.train.Checkpoint(model=model, optimizer=optimizer)
     manager = tf.train.CheckpointManager(
         checkpoint,
-        directory=config.configs_checkpoint()['directory'],
-        max_to_keep=config.configs_checkpoint()['max_to_keep']
+        directory=configs["checkpoint"]['directory'],
+        max_to_keep=configs["checkpoint"]['max_to_keep']
     )
     if manager.latest_checkpoint:
         checkpoint.restore(manager.latest_checkpoint)
 
-    # 评价
-    test_data_path = config.configs_test()["data_path"]
-    batch_size = config.configs_test()['batch_size']
-    inputs, labels_list = data_process(
-        data_path=test_data_path,
-        batch_size=batch_size,
-        if_train_or_test='test'
-    )
-    originals = labels_list
-    results = []
-    y_pred = model(inputs)
-    output = tf.keras.backend.ctc_decode(
-        y_pred=y_pred,
-        input_length=tf.fill([y_pred.shape[0]], y_pred.shape[1]),
-        greedy=True
-    )
-    results_int_list = output[0][0].numpy().tolist()
+    dataset_name = configs["preprocess"]["dataset_name"]
+    test_data_path = configs["test"]["data_path"]
+    text_row_style = configs["preprocess"]["text_row_style"]
+    num_examples = configs["test"]["num_examples"]
 
-    # 构建字符集对象
-    index_map = get_index_and_char_map()[0]
-    for i in range(len(results_int_list)):
-        str = "".join(int_to_text_sequence(results_int_list[i], index_map)).strip()
-        results.append(str)
-    rates_wers, aver_wers = wers(originals, results)
-    rates_lers, aver_lers, norm_rates_lers, norm_aver_lers = lers(originals, results)
-    print("wers:")
-    print("rates_wers:", rates_wers)
-    print("aver_wers:", aver_wers)
-    print("lers:")
-    print("rates_lers:", rates_lers)
-    print("aver_lers:", aver_lers)
-    print("norm_rates_lers:", norm_rates_lers)
-    print("norm_aver_lers:", norm_aver_lers)
+    # 加载测试集数据(audio_data_path_list, text_list)
+    test_data = load_data(dataset_name, test_data_path, text_row_style, num_examples)
+
+    batch_size = configs["test"]["batch_size"]
+    batchs = ceil(len(test_data[0]) / batch_size)
+    audio_feature_type = configs["other"]["audio_feature_type"]
+    max_input_length = dataset_information["max_input_length"]
+
+    # 构建测试数据生成器
+    test_data_generator = test_generator(
+        test_data,
+        batchs,
+        batch_size,
+        audio_feature_type,
+        max_input_length
+    )
+
+    # 获取index_word
+    index_word = dataset_information["index_word"]
+    text_process_mode = configs["preprocess"]["text_process_mode"]
+
+    # 计算指标并打印
+    wers, lers, norm_lers = compute_metric(model, test_data_generator, batchs, text_process_mode, index_word)
+    print("WER:")
+    print("平均WER:", wers)
+    print("LER:")
+    print("平均LER:", lers)
+    print("规范化平均LER:", norm_lers)
