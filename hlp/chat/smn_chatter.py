@@ -4,7 +4,6 @@ import time
 import pysolr
 import model.smn as smn
 import tensorflow as tf
-sys.path.append(sys.path[0][:-10])
 from common.utils import CmdParser
 from common.utils import log_operator
 import common.data_utils as data_utils
@@ -74,24 +73,25 @@ class SMNChatter():
                     "learning_rate：{}".format(execute_type, embedding_dim, max_sentence,
                                               max_utterance, units, vocab_size, learning_rate))
 
-    def train(self, epochs: int, data_fn: str, max_train_data_size: int = 0, max_valid_data_size: int = 0):
+    def train(self, epochs: int, data_fn: str, batch_size: int, buffer_size: int,
+              max_train_data_size: int = 0, max_valid_data_size: int = 0):
         """
         训练功能
         Args:
             epochs: 训练执行轮数
             data_fn: 数据文本路径
+            buffer_size: Dataset加载缓存大小
+            batch_size: Dataset加载批大小
             max_train_data_size: 最大训练数据量
             max_valid_data_size: 最大验证数据量
         Returns:
         """
         # 处理并加载训练数据，
         dataset, tokenizer, checkpoint_prefix, steps_per_epoch = \
-            data_utils.smn_load_train_data(dict_fn=self.dict_fn,
-                                           data_fn=data_fn,
-                                           checkpoint_dir=self.checkpoint_dir,
-                                           max_utterance=self.max_utterance,
-                                           max_sentence=self.max_sentence,
-                                           max_train_data_size=max_train_data_size)
+            data_utils.smn_load_train_data(dict_fn=self.dict_fn, data_fn=data_fn,
+                                           buffer_size=buffer_size, batch_size=batch_size,
+                                           checkpoint_dir=self.checkpoint_dir, max_utterance=self.max_utterance,
+                                           max_sentence=self.max_sentence, max_train_data_size=max_train_data_size)
 
         for epoch in range(epochs):
             print('Epoch {}/{}'.format(epoch + 1, epochs))
@@ -256,8 +256,8 @@ def main():
 
     if options.type == 'train':
         chatter = get_chatter(execute_type=options.type)
-        chatter.train(epochs=get_config.epochs,
-                      data_fn=get_config.ubuntu_tokenized_data,
+        chatter.train(epochs=get_config.epochs, data_fn=get_config.ubuntu_tokenized_data,
+                      batch_size=get_config.BATCH_SIZE, buffer_size=get_config.BUFFER_SIZE,
                       max_train_data_size=get_config.smn_max_train_data_size,
                       max_valid_data_size=get_config.smn_max_valid_data_size)
 
