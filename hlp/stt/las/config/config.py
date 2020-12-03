@@ -48,6 +48,7 @@ test_wav_path = conf["test"]['wav_path']  # 测试语音数据路径
 test_label_path = conf["test"]['label_path']  # 测试标签数据路径
 test_num = conf["test"]['test_num']  # 测试wav文件数
 test_batch_size = conf["test"]['batch_size']  # 测试batch_size
+beam_size = conf["test"]['beam_size']  # 测试beam_size
 embedding_dim = conf["las_model"]['embedding_dim']  # 模型LSTM层维数
 units = conf["las_model"]['units']  # 隐藏层状态单元数
 d = conf["las_d_w_model"]['d']  # encoder中d层的Bi-LSTM(cell=w)
