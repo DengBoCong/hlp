@@ -5,20 +5,23 @@ Created on Sat Nov  7 19:55:49 2020
 交互式语音识别
 """
 # -*- coding: utf-8 -*-
+import os
+
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 import wave
 import pyaudio
 from tqdm import tqdm
 import tensorflow as tf
-import train
-from model import las
-from data_processing import librosa_mfcc
+from config import config
+from model import las, las_d_w
+from hlp.stt.utils.features import wav_to_feature
 
 
 def record_audio(wave_out_path, record_second):
-    CHUNK = 1024
+    CHUNK = config.CHUNK
     FORMAT = pyaudio.paInt16
-    CHANNELS = 2
-    RATE = 44100
+    CHANNELS = config.CHANNELS
+    RATE = config.RATE
     p = pyaudio.PyAudio()
     stream = p.open(format=FORMAT,
                     channels=CHANNELS,
@@ -41,46 +44,53 @@ def record_audio(wave_out_path, record_second):
 
 
 def recognition(wav_path):
-    test_path = ".\\data\\wav_test"
-
-    # 测试集文本标签
-    test_path_to_file = ".\\data\\data_test.txt"
-    # 每一步mfcc所取得特征数
-    n_mfcc = 39
-    test_num = 80
-    embedding_dim = 256
-    units = 512
+    model_type = config.model_type
+    embedding_dim = config.embedding_dim
+    units = config.units
+    d = config.d
+    w = config.w
+    emb_dim = config.emb_dim
+    dec_units = config.dec_units
     BATCH_SIZE = 1  # 只支持BATCH_SIZE为1的评估
-    steps_per_epoch, test_targ_tokenizer, test_max_length_targ, test_max_length_inp, _ = train.create_dataset(test_path,
-                                                                                                              test_path_to_file,
-                                                                                                              test_num,
-                                                                                                              n_mfcc,
-                                                                                                              BATCH_SIZE)
-    test_vocab_tar_size = len(test_targ_tokenizer.word_index) + 1  # 含填充的0
+    dataset_information = config.get_dataset_information()
+    vocab_tar_size = dataset_information["vocab_tar_size"]
+    word_index = dataset_information["word_index"]
+    max_label_length = dataset_information["max_label_length"]
+    index_word = dataset_information["index_word"]
     optimizer = tf.keras.optimizers.Adam()
-
-    # vocab_tar_size应从配置文件中得到，此处暂用test_vocab_tar_size代替试试
-    model = las.las_model(test_vocab_tar_size, embedding_dim, units, BATCH_SIZE)
+    
+    # 选择模型类型
+    if model_type == "las":
+        model = las.las_model(vocab_tar_size, embedding_dim, units, BATCH_SIZE)
+    elif model_type == "las_d_w":
+        model = las_d_w.las_d_w_model(vocab_tar_size, d, w, emb_dim, dec_units, BATCH_SIZE)
 
     # 检查点
-    checkpoint_dir = './checkpoints'
+    checkpoint_dir = config.checkpoint_dir
     checkpoint = tf.train.Checkpoint(optimizer=optimizer, model=model)
+    manager = tf.train.CheckpointManager(
+        checkpoint,
+        directory=checkpoint_dir,
+        max_to_keep=config.max_to_keep
+    )
+    print("恢复检查点目录 （checkpoint_dir） 中最新的检查点......")
+    if manager.latest_checkpoint:
+        checkpoint.restore(manager.latest_checkpoint)
 
-    # 恢复检查点目录 （checkpoint_dir） 中最新的检查点
-    checkpoint.restore(tf.train.latest_checkpoint(checkpoint_dir))
-
-
-    hidden = tf.zeros((BATCH_SIZE, units))
-    wav_tensor = librosa_mfcc.wav_to_mfcc(wav_path, n_mfcc)
-    dec_input = tf.expand_dims([test_targ_tokenizer.word_index['<start>']] * BATCH_SIZE, 1)
+    enc_hidden = model.initialize_hidden_state()
+    wav_tensor = wav_to_feature(wav_path, "mfcc")
+    wav_tensor = tf.expand_dims(wav_tensor * BATCH_SIZE, 0)
+    dec_input = tf.expand_dims([word_index['<start>']] * BATCH_SIZE, 1)
     result = ''  # 识别结果字符串
 
-    for t in range(test_max_length_targ):  # 逐步解码或预测
-        predictions, dec_hidden = model(wav_tensor, hidden, dec_input)
+    for t in range(max_label_length):  # 逐步解码或预测
+        predictions, _ = model(wav_tensor, enc_hidden, dec_input)
         predicted_ids = tf.argmax(predictions, 1).numpy()  # 贪婪解码，取最大
-        result += test_targ_tokenizer.index_word[predicted_ids[0]]  # 目标句子
-        if test_targ_tokenizer.index_word[predicted_ids[0]] == '<end>':
+        idx = str(predicted_ids[0])
+        if index_word[idx] == '<end>':
             break
+        else:
+            result += index_word[idx]  # 目标句子
         # 预测的 ID 被输送回模型
         dec_input = tf.expand_dims(predicted_ids, 1)
     print('****************************')
@@ -89,5 +99,5 @@ def recognition(wav_path):
 
 if __name__ == "__main__":
     record_audio("output.wav", record_second=2)
-    file_path = ".\\"
+    file_path = ".\\output.wav"
     recognition(file_path)

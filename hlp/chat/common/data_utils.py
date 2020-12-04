@@ -5,7 +5,6 @@ import pysolr
 import numpy as np
 import tensorflow as tf
 from pathlib import Path
-import config.get_config as _config
 from sklearn.feature_extraction.text import TfidfVectorizer
 
 
@@ -23,23 +22,25 @@ def preprocess_sentence(start_sign: str, end_sign: str, sentence: str):
     return sentence
 
 
-def preprocess_request(sentence: str, token: dict, max_length: int):
+def preprocess_request(sentence: str, token: dict, max_length: int, start_sign: str, end_sign: str):
     """
     用于处理回复功能的输入句子，返回模型使用的序列
     Args:
         sentence: 待处理句子
         token: 字典
         max_length: 单个句子最大长度
+        start_sign: 开始标记
+        end_sign: 结束标记
     Returns:
         inputs: 处理好的句子
         dec_input: decoder输入
     """
     sentence = " ".join(jieba.cut(sentence))
-    sentence = preprocess_sentence(sentence, _config.start_sign, _config.end_sign)
+    sentence = preprocess_sentence(sentence, start_sign, end_sign)
     inputs = [token.get(i, 3) for i in sentence.split(' ')]
     inputs = tf.keras.preprocessing.sequence.pad_sequences([inputs], maxlen=max_length, padding='post')
     inputs = tf.convert_to_tensor(inputs)
-    dec_input = tf.expand_dims([token[_config.start_sign]], 0)
+    dec_input = tf.expand_dims([token[start_sign]], 0)
 
     return inputs, dec_input
 
@@ -80,7 +81,8 @@ def create_dataset(path: str, num_examples: int, start_sign: str, end_sign: str)
     return zip(*word_pairs), diag_weight
 
 
-def read_data(path: str, num_examples: int, start_sign: str, end_sign: str, max_length: int):
+def read_data(path: str, num_examples: int, start_sign: str, end_sign: str, max_length: int,
+              tokenizer: tf.keras.preprocessing.text.Tokenizer = None):
     """
     读取数据，将input和target进行分词后返回
     Args:
@@ -89,30 +91,36 @@ def read_data(path: str, num_examples: int, start_sign: str, end_sign: str, max_
         start_sign: 开始标记
         end_sign: 结束标记
         max_length: 最大序列长度
+        tokenizer: 传入现有的分词器，默认重新生成
     Returns:
         input_tensor: 输入序列张量
         target_tensor: 目标序列张量
         lang_tokenizer: 分词器
     """
     (input_lang, target_lang), diag_weight = create_dataset(path, num_examples, start_sign, end_sign)
-    input_tensor, target_tensor, lang_tokenizer = tokenize(input_lang, target_lang, max_length)
+    input_tensor, target_tensor, lang_tokenizer = tokenize(input_lang, target_lang, max_length, tokenizer)
     return input_tensor, target_tensor, lang_tokenizer, diag_weight
 
 
-def tokenize(input_lang: list, target_lang: list, max_length: int):
+def tokenize(input_lang: list, target_lang: list, max_length: int,
+             tokenizer: tf.keras.preprocessing.text.Tokenizer = None):
     """
     分词方法，使用Keras API中的Tokenizer进行分词操作
     Args:
         input_lang: 输入序列
         target_lang: 目标序列
         max_length: 最大序列长度
+        tokenizer: 传入现有的分词器，默认重新生成
     Returns:
         input_tensor: 输入序列张量
         target_tensor: 目标序列张量
         lang_tokenizer: 分词器
     """
     lang = np.hstack((input_lang, target_lang))
-    lang_tokenizer = tf.keras.preprocessing.text.Tokenizer(filters='', oov_token=3)
+    if tokenizer is not None:
+        lang_tokenizer = tokenizer
+    else:
+        lang_tokenizer = tf.keras.preprocessing.text.Tokenizer(filters='', oov_token=3)
     lang_tokenizer.fit_on_texts(lang)
     input_tensor = lang_tokenizer.texts_to_sequences(input_lang)
     target_tensor = lang_tokenizer.texts_to_sequences(target_lang)
@@ -124,32 +132,9 @@ def tokenize(input_lang: list, target_lang: list, max_length: int):
     return input_tensor, target_tensor, lang_tokenizer
 
 
-def create_padding_mask(input: tf.Tensor):
-    """
-    对input中的padding单位进行mask
-    Args:
-        input: 输入序列
-    Returns: mask
-    """
-    mask = tf.cast(tf.math.equal(input, 0), tf.float32)
-    return mask[:, tf.newaxis, tf.newaxis, :]
-
-
-def create_look_ahead_mask(input: tf.Tensor):
-    """
-    对input中的不能见单位进行mask
-    Args:
-        input: 输入序列
-    Returns: mask
-    """
-    seq_len = tf.shape(input)[1]
-    look_ahead_mask = 1 - tf.linalg.band_part(tf.ones((seq_len, seq_len)), -1, 0)
-    padding_mask = create_padding_mask(input)
-    return tf.maximum(look_ahead_mask, padding_mask)
-
-
-def load_data(dict_fn: str, data_fn: str, start_sign: str, end_sign: str,
-              checkpoint_dir: str, max_length: int, max_train_data_size: int = 0):
+def load_data(dict_fn: str, data_fn: str, start_sign: str, end_sign: str, buffer_size: int,
+              batch_size: int, checkpoint_dir: str, max_length: int, valid_data_split: float = 0.0,
+              valid_data_fn: str = "", max_train_data_size: int = 0, max_valid_data_size: int = 0):
     """
     数据加载方法，含四个元素的元组，包括如下：
     Args:
@@ -157,30 +142,58 @@ def load_data(dict_fn: str, data_fn: str, start_sign: str, end_sign: str,
         data_fn: 文本数据路径
         start_sign: 开始标记
         end_sign: 结束标记
+        buffer_size: Dataset加载缓存大小
+        batch_size: Dataset加载批大小
         checkpoint_dir: 检查点保存路径
         max_length: 单个句子最大长度
+        valid_data_split: 用于从训练数据中划分验证数据
+        valid_data_fn: 验证数据文本路径
         max_train_data_size: 最大训练数据量
+        max_valid_data_size: 最大验证数据量
     Returns:
-        input_tensor: 输入序列张量
-        target_tensor: 目标序列张量
-        lang_tokenizer: 分词器
-        dataset: tensorflow的数据加载类
-        steps_per_epoch: 总共的步数
+        train_dataset: 训练Dataset
+        valid_dataset: 验证Dataset
+        steps_per_epoch: 训练数据总共的步数
+        valid_steps_per_epoc: 验证数据总共的步数
         checkpoint_prefix: 检查点前缀
     """
-    input_tensor, target_tensor, lang_tokenizer, diag_weight = read_data(data_fn, max_train_data_size, start_sign,
-                                                                         end_sign, max_length)
+    train_input, train_target, lang_tokenizer, diag_weight = read_data(data_fn, max_train_data_size,
+                                                                       start_sign, end_sign, max_length)
+    valid_flag = True  # 是否开启验证标记
+    valid_steps_per_epoch = 0
+
+    if valid_data_fn != "":
+        valid_input, valid_target, _, _ = read_data(valid_data_fn, max_valid_data_size, start_sign,
+                                                    end_sign, max_length, tokenizer=lang_tokenizer)
+    elif valid_data_split != 0.0:
+        train_size = int(len(train_input) * (1.0 - valid_data_split))
+        valid_input = train_input[train_size:]
+        valid_target = train_target[train_size:]
+        train_input = train_input[:train_size]
+        train_target = train_target[:train_size]
+        diag_weight = diag_weight[:train_size]
+    else:
+        valid_flag = False
 
     with open(dict_fn, 'w', encoding='utf-8') as file:
         file.write(json.dumps(lang_tokenizer.word_index, indent=4, ensure_ascii=False))
 
-    dataset = tf.data.Dataset.from_tensor_slices((input_tensor, target_tensor, diag_weight)).cache().shuffle(
-        _config.BUFFER_SIZE).prefetch(tf.data.experimental.AUTOTUNE)
-    dataset = dataset.batch(_config.BATCH_SIZE, drop_remainder=True)
-    checkpoint_prefix = os.path.join(checkpoint_dir, "ckpt")
-    steps_per_epoch = len(input_tensor) // _config.BATCH_SIZE
+    train_dataset = tf.data.Dataset.from_tensor_slices((train_input, train_target, diag_weight)).cache().shuffle(
+        buffer_size).prefetch(tf.data.experimental.AUTOTUNE)
+    train_dataset = train_dataset.batch(batch_size, drop_remainder=True)
 
-    return input_tensor, target_tensor, lang_tokenizer, dataset, steps_per_epoch, checkpoint_prefix
+    if valid_flag:
+        valid_dataset = tf.data.Dataset.from_tensor_slices((valid_input, valid_target)).cache().shuffle(
+            buffer_size).prefetch(tf.data.experimental.AUTOTUNE)
+        valid_dataset = valid_dataset.batch(batch_size, drop_remainder=True)
+        valid_steps_per_epoch = len(valid_input) // batch_size
+    else:
+        valid_dataset = None
+
+    checkpoint_prefix = os.path.join(checkpoint_dir, "ckpt")
+    steps_per_epoch = len(train_input) // batch_size
+
+    return train_dataset, valid_dataset, steps_per_epoch, valid_steps_per_epoch, checkpoint_prefix
 
 
 def load_token_dict(dict_fn: str):
@@ -238,13 +251,15 @@ def dict_texts_to_sequences(texts: list, token_dict: dict):
     return result
 
 
-def smn_load_train_data(dict_fn: str, data_fn: str, checkpoint_dir: str,
-                        max_utterance: int, max_sentence: int, max_train_data_size: int = 0):
+def smn_load_train_data(dict_fn: str, data_fn: str, checkpoint_dir: str, buffer_size: int,
+                        batch_size: int, max_utterance: int, max_sentence: int, max_train_data_size: int = 0):
     """
     用于SMN的训练数据加载
     Args:
         dict_fn: 字典文本路径
         data_fn: 数据文本路径
+        buffer_size: Dataset加载缓存大小
+        batch_size: Dataset加载批大小
         checkpoint_dir: 检查点保存路径
         max_utterance: 每轮对话最大对话数
         max_sentence: 单个句子最大长度
@@ -315,10 +330,10 @@ def smn_load_train_data(dict_fn: str, data_fn: str, checkpoint_dir: str,
 
     print('数据生成完毕，正在转换为Dataset...')
     dataset = tf.data.Dataset.from_tensor_slices((utterances, response, label)).cache().shuffle(
-        _config.BUFFER_SIZE).prefetch(tf.data.experimental.AUTOTUNE)
-    dataset = dataset.batch(_config.BATCH_SIZE, drop_remainder=True)
+        buffer_size).prefetch(tf.data.experimental.AUTOTUNE)
+    dataset = dataset.batch(batch_size, drop_remainder=True)
     checkpoint_prefix = os.path.join(checkpoint_dir, 'ckpt')
-    steps_per_epoch = len(utterances) // _config.BATCH_SIZE
+    steps_per_epoch = len(utterances) // batch_size
     print('训练数据处理完成，正在进行训练...')
 
     return dataset, tokenizer, checkpoint_prefix, steps_per_epoch

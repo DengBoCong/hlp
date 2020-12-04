@@ -1,4 +1,5 @@
 import os
+import sys
 import json
 
 
@@ -18,6 +19,9 @@ def config(config_file: str = ""):
 
 conf = config()
 path = os.path.dirname(__file__)[:-6]
+top_pack = os.path.dirname(__file__)
+top_pack = top_pack[:top_pack.find("\\chat\\")]
+sys.path.append(top_pack)
 
 # 公共配置
 BATCH_SIZE = conf['batch_size']
@@ -35,7 +39,12 @@ douban_tokenized_data = path + conf['douban_tokenized_data']
 ubuntu_tokenized_data = path + conf['ubuntu_tokenized_data']
 ubuntu_valid_data = path + conf['ubuntu_valid_data']
 candidate_database = path + conf['candidate_database']
+qa_tokenized_data = path + conf['qa_tokenized_data']
 solr_server = conf['solr_server']
+valid_data_split = conf['valid_data_split']
+valid_data = path + conf['valid_data_fn']
+valid_freq = conf['valid_freq']
+history_image_dir = path + conf['history_image_dir']
 
 # seq2seq模型相关配置
 seq2seq_units = conf['seq2seq']['units']
@@ -43,6 +52,7 @@ seq2seq_checkpoint = path + conf['seq2seq_checkpoint']  # 训练结果保存位�
 seq2seq_dict_fn = path + conf['seq2seq_dict_fn']  # 字典保存位置
 seq2seq_vocab_size = conf['seq2seq']['vocab_size']
 seq2seq_embedding_dim = conf['seq2seq']['embedding_dim']
+seq2seq_max_valid_data_size = conf['seq2seq']['max_valid_data_size']
 seq2seq_max_train_data_size = conf['seq2seq']['max_train_data_size']
 seq2seq_max_length = conf['seq2seq']['max_length']  # 最大文本长度
 
@@ -56,6 +66,7 @@ transformer_units = conf['transformer']['units']
 transformer_dropout = conf['transformer']['dropout']
 transformer_dict_fn = path + conf['transformer_dict_fn']  # 字典保存位置
 transformer_max_train_data_size = conf['transformer']['max_train_data_size']
+transformer_max_valid_data_size = conf['transformer']['max_valid_data_size']
 transformer_max_length = conf['transformer']['max_length']  # 最大文本长度
 
 # smn模型相关配置

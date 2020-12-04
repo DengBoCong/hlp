@@ -14,6 +14,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 import time
 import tensorflow as tf
 from model import las
+from model import las_d_w
 from config import config
 from data_processing import load_dataset
 from data_processing.generator import data_generator, val_generator
@@ -43,7 +44,7 @@ def train_step(inputx_1, targetx_2, enc_hidden, word_index, model, las_optimizer
         # 教师强制 - 将目标词作为下一个输入
         for t in range(1, targetx_2.shape[1]):
             # 将编码器输出 （enc_output） 传送至解码器，解码
-            predictions, dec_hidden = model(inputx_1, enc_hidden, dec_input)
+            predictions, _ = model(inputx_1, enc_hidden, dec_input)
             loss += loss_function(targetx_2[:, t], predictions)  # 根据预测计算损失
 
             # 使用教师强制，下一步输入符号是训练集中对应目标符号
@@ -64,11 +65,14 @@ if __name__ == "__main__":
     label_path = config.train_label_path
     # 尝试实验不同大小的数据集
     num_examples = config.num_examples
-    # 每一步mfcc所取得特征数
-    n_mfcc = config.n_mfcc
-
+    # 确定使用的model类型
+    model_type = config.model_type
     embedding_dim = config.embedding_dim
     units = config.units
+    d = config.d
+    w = config.w
+    emb_dim = config.emb_dim
+    dec_units = config.dec_units
     train_batch_size = config.train_batch_size
     dataset_name = config.dataset_name
     audio_feature_type = config.audio_feature_type
@@ -87,7 +91,13 @@ if __name__ == "__main__":
     vocab_tar_size = dataset_information["vocab_tar_size"]
     batchs = len(audio_data_path_list) // train_batch_size
     optimizer = tf.keras.optimizers.Adam()
-    model = las.las_model(vocab_tar_size, embedding_dim, units, train_batch_size)
+    
+    # 选择模型类型
+    if model_type == "las":
+        model = las.las_model(vocab_tar_size, embedding_dim, units, train_batch_size)
+    elif model_type == "las_d_w":
+        model = las_d_w.las_d_w_model(vocab_tar_size, d, w, emb_dim, dec_units, train_batch_size)
+
     print("构建训练数据生成器......")
     train_data_generator = data_generator(
         train_data,
@@ -101,7 +111,7 @@ if __name__ == "__main__":
     validation_data = config.validation_data
     val_wav_path = config.val_wav_path
     val_label_path = config.val_label_path
-    
+
     # 若validation_data为真，则有验证数据集，val_wav_path非空，则从文件路径中加载
     # 若validation_data为真，则有验证数据集，val_wav_path为空，则将训练数据按比例划分一部分为验证数据
     # 若validation_data为假，则没有验证数据集
@@ -143,7 +153,6 @@ if __name__ == "__main__":
     if manager.latest_checkpoint:
         checkpoint.restore(manager.latest_checkpoint)
 
-    # checkpoint.restore(tf.train.latest_checkpoint(checkpoint_dir))
     EPOCHS = config.epochs
 
     word_index = dataset_information["word_index"]
