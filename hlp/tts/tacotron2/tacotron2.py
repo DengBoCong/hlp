@@ -138,8 +138,8 @@ class Postnet(tf.keras.layers.Layer):
     def __init__(self, config):
         super().__init__()
         self.conv_batch_norm = []
-        for i in range(config.n_conv_encoder):
-            if i == config.n_conv_postnet - 1:
+        for i in range(config.n_conv_postnet):
+            if i == config.n_conv_postnet - 1:  # 最后一层无激活
                 conv = ConvDropBN(
                     filters=config.postnet_conv_filters,
                     kernel_size=config.postnet_conv_kernel_sizes,
@@ -176,7 +176,6 @@ class Decoder(tf.keras.layers.Layer):
         self.max_input_length = config.max_input_length
 
         self.prenet = Prenet(config)
-        self.postnet = Postnet(config)
 
         # 两个单层LSTM
         self.decoder_lstms1 = tf.keras.layers.LSTMCell(self.decoder_lstm_dim, dropout=config.decoder_lstm_rate)

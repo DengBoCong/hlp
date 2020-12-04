@@ -1,14 +1,12 @@
-import sys
 import tensorflow as tf
 import common.data_utils as data_utils
-sys.path.append(sys.path[0][:-10])
+import config.get_config as get_config
 from model.chatter import Chatter
 from common.utils import CmdParser
 from common.utils import log_operator
 from common.utils import CustomSchedule
-import config.get_config as get_config
 import model.transformer as transformer
-from common.pre_treat import dispatch_tokenized_func_dict_single
+from common.pre_treat import preprocess_raw_data_qa_single, dispatch_tokenized_func_dict_single
 
 
 class TransformerChatter(Chatter):
@@ -86,15 +84,13 @@ class TransformerChatter(Chatter):
         self.train_loss.reset_states()
         self.train_accuracy.reset_states()
 
-    def _train_step(self, inp: tf.Tensor, tar: tf.Tensor, weight: int, step_loss: float):
+    def _train_step(self, inp: tf.Tensor, tar: tf.Tensor, weight: tf.Tensor = None):
         """
         Args:
             inp: 输入序列
             tar: 目标序列
             weight: 样本权重序列
-            step_loss: 每步损失
         Returns:
-            step_loss: 每步损失
         """
         tar_inp = tar[:, :-1]
         tar_real = tar[:, 1:]
@@ -107,7 +103,7 @@ class TransformerChatter(Chatter):
         self.train_loss(loss)
         self.train_accuracy(tar_real, predictions)
 
-        return self.train_loss.result()
+        return self.train_loss.result(), self.train_accuracy.result()
 
     def _create_predictions(self, inputs: tf.Tensor, dec_input: tf.Tensor, t: int):
         """
@@ -125,7 +121,7 @@ class TransformerChatter(Chatter):
         predictions = tf.squeeze(predictions, axis=1)
         return predictions
 
-    def _loss_function(self, real: tf.Tensor, pred: tf.Tensor, weights: tf.Tensor):
+    def _loss_function(self, real: tf.Tensor, pred: tf.Tensor, weights: tf.Tensor = None):
         """
         用于计算预测损失，注意要将填充的0进行mask，不纳入损失计算
         Args:
@@ -136,8 +132,13 @@ class TransformerChatter(Chatter):
             loss: 该batch的平均损失
         """
         real = tf.reshape(real, shape=(-1, self.max_length - 1))
-        loss = tf.keras.losses.SparseCategoricalCrossentropy(
-            from_logits=True, reduction='none')(real, pred, sample_weight=weights)
+        if weights is not None:
+            loss = tf.keras.losses.SparseCategoricalCrossentropy(
+                from_logits=True, reduction='none')(real, pred, sample_weight=weights)
+        else:
+            loss = tf.keras.losses.SparseCategoricalCrossentropy(
+                from_logits=True, reduction='none')(real, pred)
+
         mask = tf.cast(tf.not_equal(real, 0), tf.float32)
         loss = tf.multiply(loss, mask)
 
@@ -171,11 +172,13 @@ def main():
 
     if options.type == 'train':
         chatter = get_chatter(execute_type=options.type)
-        chatter.train(chatter.checkpoint,
-                      dict_fn=get_config.transformer_dict_fn,
-                      data_fn=get_config.lccc_tokenized_data,
+        chatter.train(chatter.checkpoint, dict_fn=get_config.transformer_dict_fn,
+                      data_fn=get_config.qa_tokenized_data, batch_size=get_config.BATCH_SIZE,
+                      buffer_size=get_config.BUFFER_SIZE, epochs=get_config.epochs,
+                      max_valid_data_size=get_config.transformer_max_valid_data_size,
                       max_train_data_size=get_config.transformer_max_train_data_size,
-                      epochs=get_config.epochs)
+                      valid_data_split=get_config.valid_data_split, valid_data_fn="",
+                      save_dir=get_config.history_image_dir + "transformer\\", valid_freq=get_config.valid_freq)
     elif options.type == 'chat':
         chatter = get_chatter(options.type)
         print("Agent: 你好！结束聊天请输入ESC。")
@@ -189,6 +192,8 @@ def main():
     elif options.type == 'pre_treat':
         dispatch_tokenized_func_dict_single(operator="lccc", raw_data=get_config.lccc_data,
                                             tokenized_data=get_config.lccc_tokenized_data, if_remove=True)
+        preprocess_raw_data_qa_single(raw_data=get_config.lccc_tokenized_data,
+                                      qa_data=get_config.qa_tokenized_data)
     else:
         parser.error(msg='')
 
