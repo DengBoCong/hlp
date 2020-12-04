@@ -3,9 +3,8 @@ import common.data_utils as data_utils
 import config.get_config as get_config
 from model.chatter import Chatter
 import model.seq2seq as seq2seq
-from common.utils import CmdParser
-from common.utils import log_operator
-from common.pre_treat import dispatch_tokenized_func_dict_single, preprocess_raw_data_qa_single
+import common.utils as utils
+import common.pre_treat as pre_treat
 
 
 class Seq2SeqChatter(Chatter):
@@ -61,7 +60,7 @@ class Seq2SeqChatter(Chatter):
                 print('不存在检查点，请先执行train模式，再进入chat模式')
                 exit(0)
 
-        logger = log_operator(level=10)
+        logger = utils.log_operator(level=10)
         logger.info("启动SMN聊天器，执行类别为：{}，模型参数配置为：vocab_size：{}，"
                     "embedding_dim：{}，units：{}，max_length：{}".format(execute_type, vocab_size,
                                                                      embedding_dim, units, max_length))
@@ -164,7 +163,7 @@ def get_chatter(execute_type: str):
 
 
 def main():
-    parser = CmdParser(version='%seq2seq chatbot V1.0')
+    parser = utils.CmdParser(version='%seq2seq chatbot V1.0')
     parser.add_option("-t", "--type", action="store", type="string",
                       dest="type", default="pre_treat",
                       help="execute type, pre_treat/train/chat")
@@ -177,6 +176,8 @@ def main():
                       buffer_size=get_config.BUFFER_SIZE, epochs=get_config.epochs,
                       max_valid_data_size=get_config.seq2seq_max_valid_data_size,
                       max_train_data_size=get_config.seq2seq_max_train_data_size,
+                      checkpoint_save_freq=get_config.checkpoint_save_freq,
+                      checkpoint_save_size=get_config.checkpoint_save_size,
                       valid_data_split=get_config.valid_data_split, valid_data_fn="",
                       save_dir=get_config.history_image_dir + "seq2seq\\", valid_freq=get_config.valid_freq)
     elif options.type == 'chat':
@@ -190,10 +191,10 @@ def main():
             response = chatter.respond(req=req)
             print("Agent: ", response)
     elif options.type == 'pre_treat':
-        dispatch_tokenized_func_dict_single(operator="lccc", raw_data=get_config.lccc_data,
-                                            tokenized_data=get_config.lccc_tokenized_data, if_remove=True)
-        preprocess_raw_data_qa_single(raw_data=get_config.lccc_tokenized_data,
-                                      qa_data=get_config.qa_tokenized_data)
+        pre_treat.dispatch_tokenized_func_dict_single(operator="lccc", raw_data=get_config.lccc_data,
+                                                      tokenized_data=get_config.lccc_tokenized_data, if_remove=True)
+        pre_treat.preprocess_raw_data_qa_single(raw_data=get_config.lccc_tokenized_data,
+                                                qa_data=get_config.qa_tokenized_data)
     else:
         parser.error(msg='')
 

@@ -48,6 +48,8 @@
   "history_image_dir": "data\\history\\",
   "valid_data_fn": "data\\valid_lccc.txt",
   "valid_freq": 5,
+  "checkpoint_save_freq": 5,
+  "checkpoint_save_size": 1,
   "solr_server": "http://49.235.33.100:8983/solr/smn/",
   "batch_size": 32,
   "buffer_size": 20000,

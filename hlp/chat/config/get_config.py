@@ -45,6 +45,8 @@ valid_data_split = conf['valid_data_split']
 valid_data = path + conf['valid_data_fn']
 valid_freq = conf['valid_freq']
 history_image_dir = path + conf['history_image_dir']
+checkpoint_save_freq = conf['checkpoint_save_freq']
+checkpoint_save_size = conf['checkpoint_save_size']
 
 # seq2seq模型相关配置
 seq2seq_units = conf['seq2seq']['units']
