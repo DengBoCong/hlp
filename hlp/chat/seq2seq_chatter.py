@@ -13,7 +13,8 @@ class Seq2SeqChatter(Chatter):
     """
 
     def __init__(self, execute_type: str, checkpoint_dir: str, units: int, embedding_dim: int, batch_size: int,
-                 start_sign: str, end_sign: str, beam_size: int, vocab_size: int, dict_fn: str, max_length: int):
+                 start_sign: str, end_sign: str, beam_size: int, vocab_size: int, dict_fn: str, max_length: int,
+                 encoder_layers: int, decoder_layers: int, cell_type: str, if_bidirectional: bool = True):
         """
         Seq2Seq聊天器初始化，用于加载模型
         Args:
@@ -28,6 +29,10 @@ class Seq2SeqChatter(Chatter):
             vocab_size: 词汇量大小
             dict_fn: 保存字典路径
             max_length: 单个句子最大长度
+            encoder_layers: encoder中内部RNN层数
+            decoder_layers: decoder中内部RNN层数
+            cell_type: cell类型，lstm/gru， 默认lstm
+            if_bidirectional: 是否双向
         Returns:
         """
         super().__init__(checkpoint_dir, beam_size, max_length)
@@ -35,11 +40,15 @@ class Seq2SeqChatter(Chatter):
         self.start_sign = start_sign
         self.end_sign = end_sign
         self.batch_size = batch_size
+        self.enc_units = units
 
-        self.encoder = seq2seq.Encoder(vocab_size, embedding_dim, units,
-                                       batch_size)
-        self.decoder = seq2seq.Decoder(vocab_size, embedding_dim, units,
-                                       batch_size)
+        self.encoder = seq2seq.encoder(vocab_size=vocab_size, embedding_dim=embedding_dim,
+                                       enc_units=int(units/2), layer_size=encoder_layers,
+                                       cell_type=cell_type, if_bidirectional=if_bidirectional)
+        self.decoder = seq2seq.decoder(vocab_size=vocab_size, embedding_dim=embedding_dim,
+                                       enc_units=units, dec_units=units,
+                                       layer_size=decoder_layers, cell_type=cell_type)
+
         self.optimizer = tf.keras.optimizers.Adam()
         self.train_loss = tf.keras.metrics.Mean()
         self.train_accuracy = tf.keras.metrics.SparseCategoricalAccuracy()
@@ -60,10 +69,10 @@ class Seq2SeqChatter(Chatter):
                 print('不存在检查点，请先执行train模式，再进入chat模式')
                 exit(0)
 
-        logger = utils.log_operator(level=10)
-        logger.info("启动SMN聊天器，执行类别为：{}，模型参数配置为：vocab_size：{}，"
-                    "embedding_dim：{}，units：{}，max_length：{}".format(execute_type, vocab_size,
-                                                                     embedding_dim, units, max_length))
+        utils.log_operator(level=10).info("启动SMN聊天器，执行类别为：{}，模型参数配置为：vocab_size：{}，"
+                                          "embedding_dim：{}，units：{}，max_length：{}".format(execute_type, vocab_size,
+                                                                                           embedding_dim, units,
+                                                                                           max_length))
 
     def _init_loss_accuracy(self):
         """
@@ -82,16 +91,15 @@ class Seq2SeqChatter(Chatter):
             step_loss: 每步损失
         """
         loss = 0
-        enc_hidden = self.encoder.initialize_hidden_state()
 
         with tf.GradientTape() as tape:
-            enc_output, enc_hidden = self.encoder(inp, enc_hidden)
+            enc_output, enc_hidden = self.encoder(inputs=inp)
             dec_hidden = enc_hidden
             # 这里初始化decoder的输入，首个token为start，shape为（128, 1）
             dec_input = tf.expand_dims([2] * self.batch_size, 1)
             # 这里针对每个训练出来的结果进行损失计算
             for t in range(1, tar.shape[1]):
-                predictions, dec_hidden, _ = self.decoder(dec_input, dec_hidden, enc_output)
+                predictions, dec_hidden, attention_weight = self.decoder(inputs=[dec_input, enc_output, dec_hidden])
                 loss += self._loss_function(tar[:, t], predictions, weight)
                 # 这一步使用teacher forcing
                 dec_input = tf.expand_dims(tar[:, t], 1)
@@ -115,10 +123,10 @@ class Seq2SeqChatter(Chatter):
             predictions: 预测
         """
         hidden = tf.zeros((inputs.shape[0], self.units))
-        enc_out, enc_hidden = self.encoder(inputs, hidden)
+        enc_output, enc_hidden = self.encoder(inputs, hidden)
         dec_hidden = enc_hidden
         dec_input = tf.expand_dims(dec_input[:, t], 1)
-        predictions, _, _ = self.decoder(dec_input, dec_hidden, enc_out)
+        predictions, _, _ = self.decoder(inputs=[dec_input, enc_output, dec_hidden])
         return predictions
 
     def _loss_function(self, real: tf.Tensor, pred: tf.Tensor, weights: tf.Tensor = None):
@@ -158,7 +166,9 @@ def get_chatter(execute_type: str):
                              embedding_dim=get_config.seq2seq_embedding_dim, batch_size=get_config.BATCH_SIZE,
                              start_sign=get_config.start_sign, end_sign=get_config.end_sign,
                              vocab_size=get_config.seq2seq_vocab_size, dict_fn=get_config.seq2seq_dict_fn,
-                             max_length=get_config.seq2seq_max_length)
+                             max_length=get_config.seq2seq_max_length, encoder_layers=get_config.seq2seq_encoder_layers,
+                             decoder_layers=get_config.seq2seq_decoder_layers, cell_type='lstm',
+                             if_bidirectional=True)
     return chatter
 
 
