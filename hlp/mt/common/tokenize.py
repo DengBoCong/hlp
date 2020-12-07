@@ -51,31 +51,49 @@ def _create_tokenizer_keras(sentences, save_path):
     return tokenizer, vocab_size
 
 
+def _get_mode_and_path_tokenize(language, model_type):
+    """根据语言及模型确定字典的编码模式及保存路径"""
+    if language == "en":
+        if model_type == "nmt":
+            mode = _config.en_tokenize_type
+            path = _config.tokenizer_path_prefix + language + '_' + mode.lower()
+        elif model_type == "lm":
+            mode = _config.lm_en_tokenize_type
+            path = _config.tokenizer_path_prefix + language + '_' + mode.lower()+"_lm"
+    elif language == "zh":
+        if model_type == "nmt":
+            mode = _config.zh_tokenize_type
+            path = _config.tokenizer_path_prefix + language + '_' + mode.lower()
+        elif model_type == "lm":
+            mode = _config.lm_zh_tokenize_type
+            path = _config.tokenizer_path_prefix + language + '_' + mode.lower() + "_lm"
+    return mode, path
+
+
 # 根据指定模型生成及保存字典
-def create_tokenizer(sentences, language):
+def create_tokenizer(sentences, language, model_type="nmt"):
     """
     生成和保存指定语言的字典
     所使用的模式为配置文件中设置的该语言的模式
     支持的语言：en,zh
+    @param sentences:
+    @param language:
+    @param model_type:
+    @return:
     """
     # 生成英文字典
+    mode, save_path = _get_mode_and_path_tokenize(language, model_type)
     if language == "en":
-        mode = _config.en_tokenize_type
-        save_path = _config.tokenizer_path_prefix+language+'_'+mode.lower()
         if not os.path.exists(os.path.dirname(save_path)):
             os.makedirs(os.path.dirname(save_path), exist_ok=True)
-        # 确定英文分词mode
         if mode == 'BPE':
             return _create_tokenizer_bpe(sentences, save_path=save_path)
         elif mode == 'WORD':
             return _create_tokenizer_keras(sentences, save_path=save_path)
     # 生成中文字典
     elif language == "zh":
-        mode = _config.zh_tokenize_type
-        save_path = _config.tokenizer_path_prefix+language+'_'+mode.lower()
         if not os.path.exists(os.path.dirname(save_path)):
             os.makedirs(os.path.dirname(save_path), exist_ok=True)
-        # 确定中文分词mode
         if mode == 'CHAR':
             return _create_tokenizer_keras(sentences, save_path=save_path)
         elif mode == 'WORD':
@@ -98,22 +116,19 @@ def _get_tokenizer_keras(path):
 
 
 # 取字典
-def get_tokenizer(language):
+def get_tokenizer(language, model_type="nmt"):
     """
     根据语言获取保存的字典
     支持的语言：en、zh
     """
     # 根据所选语言确定mode、save_path
+    mode,path = _get_mode_and_path_tokenize(language, model_type)
     if language == "en":
-        mode = _config.en_tokenize_type
-        path = _config.tokenizer_path_prefix+language+'_'+mode.lower()
         if mode == 'BPE':
             return _get_tokenizer_bpe(path)
         elif mode == 'WORD':
             return _get_tokenizer_keras(path)
     elif language == "zh":
-        mode = _config.zh_tokenize_type
-        path = _config.tokenizer_path_prefix+language+'_'+mode.lower()
         if mode == 'CHAR':
             return _get_tokenizer_keras(path)
         elif mode == 'WORD':
@@ -162,20 +177,19 @@ def _encode_sentences_keras(sentences, tokenizer):
     return sequences, max_sequence_length
 
 
-def encode_sentences(sentences, tokenizer, language):
+def encode_sentences(sentences, tokenizer, language, model_type="nmt"):
     """
     sentence:要编码的句子列表
     tokenizer:字典
     language:句子的语言
     """
+    mode, _ = _get_mode_and_path_tokenize(language, model_type)
     if language == "en":
-        mode = _config.en_tokenize_type
         if mode == 'BPE':
             return _encode_sentences_bpe(sentences, tokenizer)
         elif mode == 'WORD':
             return _encode_sentences_keras(sentences, tokenizer)
     elif language == "zh":
-        mode = _config.zh_tokenize_type
         if mode == 'CHAR':
             return _encode_sentences_keras(sentences, tokenizer)
         elif mode == 'WORD':
@@ -239,7 +253,24 @@ def _create_encoded_sentences_keras(sentences, tokenizer, path):
     return max_sequence_length
 
 
-def create_encoded_sentences(sentences, tokenizer, language, postfix=''):
+def get_mode_and_path_sentences(language, model_type, postfix):
+    """根据语言及模型确定编码句子的编码模式及保存路径"""
+    if language == "en":
+        if model_type == "nmt":
+            mode = _config.en_tokenize_type
+        elif model_type == "lm":
+            mode = _config.lm_en_tokenize_type
+    elif language == "zh":
+        if model_type == "nmt":
+            mode = _config.zh_tokenize_type
+        elif model_type == "lm":
+            mode = _config.lm_zh_tokenize_type
+    path = _config.encoded_sequences_path_prefix + language + '_' + mode.lower() + postfix
+
+    return mode, path
+
+
+def create_encoded_sentences(sentences, tokenizer, language, postfix='', model_type='nmt'):
     """
     根据所选语言将编码好的句子保存至文件，返回最大句子长度
     Args:
@@ -247,13 +278,13 @@ def create_encoded_sentences(sentences, tokenizer, language, postfix=''):
         tokenizer: 字典
         language: 语言类型 （en/zh）
         postfix: 保存文本名字加标注后缀
+        model_type: 模型
 
     Returns:最大句子长度
     """
     # 根据所选语言确定mode、save_path
+    mode, save_path = get_mode_and_path_sentences(language, model_type, postfix)
     if language == "en":
-        mode = _config.en_tokenize_type
-        save_path = _config.encoded_sequences_path_prefix+language+postfix
         if not os.path.exists(os.path.dirname(save_path)):
             os.makedirs(os.path.dirname(save_path), exist_ok=True)
         if mode == 'BPE':
@@ -261,8 +292,6 @@ def create_encoded_sentences(sentences, tokenizer, language, postfix=''):
         elif mode == 'WORD':
             return _create_encoded_sentences_keras(sentences, tokenizer, save_path)
     elif language == "zh":
-        mode = _config.zh_tokenize_type
-        save_path = _config.encoded_sequences_path_prefix+language+postfix
         if not os.path.exists(os.path.dirname(save_path)):
             os.makedirs(os.path.dirname(save_path), exist_ok=True)
         if mode == 'CHAR':
@@ -282,16 +311,15 @@ def _decode_sentence_tokenizer(sequence, tokenizer, join_str=''):
     return sentence
 
 
-def decode_sentence(sentence, tokenizer, language):
+def decode_sentence(sentence, tokenizer, language, model_type="nmt"):
     # 根据语言判断mode，支持语言：en、zh
+    mode, _ = _get_mode_and_path_tokenize(language, model_type)
     if language == "en":
-        mode = _config.en_tokenize_type
         if mode == 'BPE':
             return _decode_sentence_bpe(sentence, tokenizer)
         elif mode == 'WORD':
             return _decode_sentence_tokenizer(sentence, tokenizer, join_str=' ')
     elif language == "zh":
-        mode = _config.zh_tokenize_type
         if mode == 'CHAR':
             return _decode_sentence_tokenizer(sentence, tokenizer)
         elif mode == 'WORD':
