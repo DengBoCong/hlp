@@ -18,6 +18,7 @@
 - RNN-T流式语音识别
 - WaveRNN声码器
 - SpecAugment语音数据增强
+- 基于Transformer的语音合成
 # 可使用
 - 基于Seq2Seq的闲聊系统
 - 基于Transformer的闲聊系统
