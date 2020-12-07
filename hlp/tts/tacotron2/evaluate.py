@@ -1,11 +1,11 @@
-
 import tensorflow as tf
-from audio_process import spec_distance
+
 from config2 import Tacotron2Config
-from generator import test_generator
+from tacotron2 import load_checkpoint
 from prepocesses import process_wav_name, get_tokenizer_keras
 from tacotron2 import Tacotron2
-from tacotron2 import load_checkpoint
+from audio_process import spec_distance
+from generator import generator
 
 
 def evluate(test_data_generator, vocab_size, config, test_batchs):
@@ -26,9 +26,9 @@ def evluate(test_data_generator, vocab_size, config, test_batchs):
             mel2 = tf.transpose(mel2, [0, 2, 1])
             score = spec_distance(mel_outputs_postnet, mel2)
             score_sum += score
-            j = j + 1
+            j = j+1
             print('第{}个样本的欧式距离为：{}'.format(j, score))
-    print("样本平均欧式距离为：", score_sum / j)
+    print("样本平均欧式距离为：", score_sum/j)
 
 
 if __name__ == "__main__":
@@ -45,9 +45,10 @@ if __name__ == "__main__":
     path = config.wave_test_path
     a = 2
     wav_name_list = process_wav_name(path, a)
-    test_batchs = len(wav_name_list) // batch_size
+    test_batchs = len(wav_name_list)//batch_size
 
     # 测试生成器
-    test_data_generator = test_generator(wav_name_list, batch_size, csv_dir, tokenizer, path, config)
-    # 评估
+    mode = 'evluate'
+    test_data_generator = generator(wav_name_list, batch_size, csv_dir, tokenizer, path, config, mode)
+    #评估
     evluate(test_data_generator, vocab_size, config, test_batchs)

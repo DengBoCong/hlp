@@ -1,4 +1,3 @@
-
 class Tacotron2Config(object):
     """Initialize Tacotron-2 Config."""
 
@@ -6,18 +5,21 @@ class Tacotron2Config(object):
             self,
             max_len_seq=200,
             max_input_length=1000,
-            embedding_hidden_size=512,
+            embedding_hidden_size=64,
 
-            # encoder-conv1d层数
+            # encoder层数
             n_conv_encoder=3,
             encoder_conv_filters=256,
             encoder_conv_kernel_sizes=5,
             encoder_conv_activation="relu",
             encoder_conv_dropout_rate=0.1,
             encoder_lstm_units=256,
+
+            # decode(限制条件:initial_hidden_size==2*encoder_lstm_units)
             attention_rnn_dim=512,
             decoder_lstm_dim=512,
             decoder_lstm_rate=0.1,
+            initial_hidden_size=512,
 
             # Attention parameters
             attention_dim=128,
@@ -31,7 +33,7 @@ class Tacotron2Config(object):
             prenet_dropout_rate=0.1,
             gate_threshold=0.5,
 
-            # postnet-conv1d层数
+            #postnet-conv1d层数
             n_conv_postnet=3,
             postnet_conv_filters=256,
             postnet_conv_kernel_sizes=5,
@@ -40,16 +42,16 @@ class Tacotron2Config(object):
             checkpoingt_dir=r"./checkpoints",
 
             # ljspeech的path
-            wave_train_path=r"./data/LJSpeech-1.1/train/wavs/",
-            wave_test_path=r"./data/LJSpeech-1.1/test/wavs/",
-            csv_dir=r"./data/LJSpeech-1.1/metadata.csv",
-            save_path_dictionary=r"./data/LJSpeech-1.1/dictionary.json",
+            wave_train_path=r"../data/LJSpeech-1.1/train/wavs/",
+            wave_test_path=r"../data/LJSpeech-1.1/test/wavs/",
+            csv_dir=r"../data/LJSpeech-1.1/metadata.csv",
+            save_path_dictionary=r"../data/LJSpeech-1.1/dictionary.json",
 
             # number的path
-            wave_train_path_number=r"./data/number/train/wavs/",
-            wave_test_path_number=r"./data/number/test/wavs/",
-            csv_dir_number=r"./data/number/metadata.csv",
-            save_path_dictionary_number=r"./data/number/dictionary.json",
+            wave_train_path_number=r"../data/number/train/wavs/",
+            wave_test_path_number=r"../data/number/test/wavs/",
+            csv_dir_number=r"../data/number/metadata.csv",
+            save_path_dictionary_number=r"../data/number/dictionary.json",
 
             # 关于音频的参数
             sr=22050,
@@ -68,7 +70,7 @@ class Tacotron2Config(object):
             # 其他
             batch_size=2,
             test_batch_size=1,
-            # 最大检查点保存数目
+            #最大检查点保存数目
             max_to_keep=2,
     ):
         """tacotron2参数."""
@@ -94,6 +96,7 @@ class Tacotron2Config(object):
         self.decoder_lstm_dim = decoder_lstm_dim
         self.decoder_lstm_rate = decoder_lstm_rate
         self.gate_threshold = gate_threshold
+        self.initial_hidden_size = initial_hidden_size
 
         # postnet网络
         self.n_conv_postnet = n_conv_postnet
