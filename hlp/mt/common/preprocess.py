@@ -11,7 +11,7 @@ from sklearn.model_selection import train_test_split
 from model import trainer
 import config.get_config as _config
 from model import nmt_model
-from common import checkpoint
+from model import checkpoint
 from pathlib import Path
 from common import tokenize
 import tensorflow as tf
@@ -117,6 +117,20 @@ def preprocess_sentences(sentences, language):
         return _preprocess_sentences_en(sentences, mode)
     elif language == "zh":
         mode = _config.zh_tokenize_type
+        return _preprocess_sentences_zh(sentences, mode)
+
+
+def preprocess_sentences_lm(sentences, language):
+    """
+    语言模型使用的句子预处理
+    @param sentences: 句子列表
+    @param language: 语言类型
+    """
+    if language == "en":
+        mode = _config.lm_en_tokenize_type
+        return _preprocess_sentences_en(sentences, mode)
+    elif language == "zh":
+        mode = _config.lm_zh_tokenize_type
         return _preprocess_sentences_zh(sentences, mode)
 
 
