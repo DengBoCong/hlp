@@ -1,13 +1,15 @@
 import os
+import sys
+sys.path.append('..')
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 from model import translator
-from common import preprocess as _pre
+from model import nmt_model
 
 
 def main():
-    if _pre.check_point():  # 检测是否有检查点
+    if nmt_model.check_point():  # 检测是否有检查点
         # 读取保存的需要的配置
-        transformer, tokenizer_source, tokenizer_target = _pre.load_model()
+        transformer, tokenizer_source, tokenizer_target = nmt_model.load_model()
 
         # translate
         while True:

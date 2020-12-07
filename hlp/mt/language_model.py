@@ -5,6 +5,7 @@ from common import tokenize
 import numpy
 from sklearn.model_selection import train_test_split
 import time
+from model import nmt_model
 
 
 class LanguageModel(tf.keras.Model):
@@ -140,7 +141,7 @@ def train(epochs=_config.lm_EPOCHS):
     ckpt = tf.train.Checkpoint(language_model=language_model,
                                optimizer=optimizer)
     ckpt_manager = tf.train.CheckpointManager(ckpt, _config.lm_checkpoint_path, max_to_keep=_config.max_checkpoints_num)
-    if preprocess.check_point():
+    if nmt_model.check_point(model_type='lm'):
         ckpt.restore(ckpt_manager.latest_checkpoint)
         print('已恢复至最新检查点！')
 
@@ -176,6 +177,8 @@ def train(epochs=_config.lm_EPOCHS):
     if (epoch + 1) % _config.checkpoints_save_freq != 0:
         ckpt_save_path = ckpt_manager.save()
         print('检查点已保存至：{}'.format(ckpt_save_path))
+
+    return history
 
 
 def main():

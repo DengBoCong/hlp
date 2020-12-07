@@ -1,9 +1,12 @@
 import os
+import sys
+sys.path.append('..')
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 from common import preprocess as _pre
 from common import bleu as _bleu
 import config.get_config as _config
 from model import translator
+from model import nmt_model
 from common import preprocess
 
 """
@@ -35,9 +38,9 @@ def _calc_bleu(path, transformer, tokenizer_source, tokenizer_target):
 
 
 def main():
-    if _pre.check_point():  # 检测是否有检查点
+    if nmt_model.check_point():  # 检测是否有检查点
         # 读取保存的需要的配置
-        transformer, tokenizer_source, tokenizer_target = _pre.load_model()
+        transformer, tokenizer_source, tokenizer_target = nmt_model.load_model()
         _calc_bleu(_config.path_to_eval_file, transformer, tokenizer_source, tokenizer_target)
     else:
         print('请先训练才可使用evaluate功能...')
