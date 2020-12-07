@@ -1,6 +1,7 @@
 
 
-# 输入的两个参数均是字符串的list,是wer计算的入口
+# originals是原始语料中的文本串list，results是模型解码后的文本串list
+# 进行wer指标的计算
 def wers(originals, results):
     count = len(originals)
     try:
@@ -18,6 +19,7 @@ def wers(originals, results):
     
     return rates, mean / float(count)
 
+# 单个原始语料文本和模型解码文本的wer指标计算
 def _wer(original, result):
     """
     WER的定义是在单词水平上编辑/Levenshtein距离除以原文中的单词量。
@@ -31,6 +33,8 @@ def _wer(original, result):
 
     return _levenshtein(original, result) / float(len(original))
 
+# originals是原始语料中的文本串list，results是模型解码后的文本串list
+# 进行ler指标的计算
 def lers(originals, results):
     count = len(originals)
     assert count > 0
@@ -54,8 +58,8 @@ def lers(originals, results):
 
     return rates, (mean / float(count)), norm_rates, (norm_mean / float(count))
 
+# 计算a和b之间的Levenshtein距离
 def _levenshtein(a, b):
-    # 计算a和b之间的Levenshtein距离
     n, m = len(a), len(b)
     if n > m:
         # 确保n <= m, 使用O(min(n, m))

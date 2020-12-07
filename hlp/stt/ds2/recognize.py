@@ -1,13 +1,15 @@
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+
 import tensorflow as tf
 import numpy as np
 from model import DS2, decode_output
 from util import get_config, get_dataset_information, compute_ctc_input_length
 
-from data_process.audio_process import record
-
 import sys
 sys.path.append("..")
 from utils.features import wav_to_feature
+from utils.record import record
 
 
 if __name__ == "__main__":

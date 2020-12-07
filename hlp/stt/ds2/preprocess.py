@@ -1,3 +1,6 @@
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+
 import json
 from data_process.load_dataset import load_data
 from data_process.audio_process import get_max_audio_length
