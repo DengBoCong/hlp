@@ -35,6 +35,8 @@ def get_all_data_path(data_path):
     return text_data_path, audio_data_path_list
 
 # 计算ctc api中的参数input_length，基于https://github.com/tensorflow/models/blob/master/research/deep_speech
+# 将ctc相关的api函数(ctc_loss,ctc_decode)所需要的参数input_length进行一个按比例缩减
+# 这个比例是input_tensor的max_timestep:模型输出outputs的time_step
 def compute_ctc_input_length(max_time_steps, ctc_time_steps, input_length):
     ctc_input_length = tf.cast(
         tf.multiply(

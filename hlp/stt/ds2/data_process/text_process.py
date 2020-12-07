@@ -6,10 +6,10 @@ import tensorflow as tf
 def text_row_process(str, text_row_style):
     if text_row_style == 1:
         # 当前数据文本的每行为'index string\n'
-        return str.strip().split(" ",1)[1].lower()
+        return str.strip().split(" ", 1)[1].lower()
     elif text_row_style == 2:
         # 当前数据文本的每行为'index\tstring\n'
-        return str.strip().split("\t",1)[1].lower()
+        return str.strip().split("\t", 1)[1].lower()
     elif text_row_style == 3:
         # 当前数据文本的每行为"string\n"
         return str.strip().lower()
@@ -87,9 +87,8 @@ def get_label_and_length(text_int_sequences_list, max_label_length):
         maxlen=max_label_length,
         padding='post'
         )
-    target_tensor = tf.convert_to_tensor(target_tensor_numpy)
     target_length = tf.convert_to_tensor(target_length_list)
-    return target_tensor, target_length
+    return target_tensor_numpy, target_length
 
 # 对英文句子：小写化，切分句子，添加开始和结束标记，按单词切分
 def preprocess_sentence_en_word(s):
