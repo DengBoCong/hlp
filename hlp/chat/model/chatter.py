@@ -5,8 +5,8 @@ import tensorflow as tf
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import common.data_utils as data_utils
-
 from utils.beamsearch import BeamSearch
+from collections import deque
 
 
 class Chatter(object):
@@ -70,7 +70,8 @@ class Chatter(object):
 
     def train(self, checkpoint: tf.train.Checkpoint, dict_fn: str, data_fn: str, batch_size: int,
               buffer_size: int, max_train_data_size: int, epochs: int, max_valid_data_size: int,
-              save_dir: str, valid_data_split: float = 0.0, valid_data_fn: str = "", valid_freq: int = 1):
+              checkpoint_save_freq: int, checkpoint_save_size: int, save_dir: str,
+              valid_data_split: float = 0.0, valid_data_fn: str = "", valid_freq: int = 1):
         """
         对模型进行训练，验证数据集优先级为：预设验证文本>训练划分文本>无验证
         Args:
@@ -81,6 +82,8 @@ class Chatter(object):
             batch_size: Dataset加载批大小
             max_train_data_size: 最大训练数据量
             epochs: 执行训练轮数
+            checkpoint_save_freq: 检查点保存频率
+            checkpoint_save_size: 检查点最大保存数
             save_dir: 历史指标显示图片保存位置
             max_valid_data_size: 最大验证数据量
             valid_data_split: 用于从训练数据中划分验证数据，默认0.1
@@ -98,6 +101,7 @@ class Chatter(object):
                                  max_valid_data_size=max_valid_data_size)
 
         valid_epochs_count = 0  # 用于记录验证轮次
+        checkpoint_queue = deque(maxlen=checkpoint_save_size + 1) # 用于保存该次训练产生的检查点名
         history = {'accuracy': [], 'loss': [], 'val_accuracy': [], 'val_loss': []}
 
         for epoch in range(epochs):
@@ -125,7 +129,14 @@ class Chatter(object):
             sys.stdout.write(' - {:.4f}s/step - train_loss: {:.4f} - train_accuracy: {:.4f}\n'
                              .format(step_time, step_loss, step_accuracy))
             sys.stdout.flush()
-            checkpoint.save(file_prefix=checkpoint_prefix)
+
+            if valid_epochs_count % checkpoint_save_freq == 0:
+                checkpoint.save(file_prefix=checkpoint_prefix)
+                checkpoint_queue.append(tf.train.latest_checkpoint(checkpoint_dir=self.checkpoint_dir))
+                if len(checkpoint_queue) == checkpoint_save_size:
+                    checkpoint_name = checkpoint_queue[0]
+                    os.remove(checkpoint_name + '.index')
+                    os.remove(checkpoint_name + '.data-00000-of-00001')
 
             if valid_dataset is not None and valid_epochs_count % valid_freq == 0:
                 valid_loss, valid_accuracy = self._valid_step(valid_dataset=valid_dataset,
