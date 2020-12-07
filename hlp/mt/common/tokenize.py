@@ -265,7 +265,7 @@ def get_mode_and_path_sentences(language, model_type, postfix):
             mode = _config.zh_tokenize_type
         elif model_type == "lm":
             mode = _config.lm_zh_tokenize_type
-    path = _config.encoded_sequences_path_prefix + language + '_' + mode.lower() + postfix
+    path = _config.encoded_sequences_path_prefix + language + postfix
 
     return mode, path
 
