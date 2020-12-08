@@ -1,7 +1,7 @@
 import numpy as np
 
-from data_process.audio_process import get_input_and_length
-from data_process.text_process import get_label_and_length
+from audio_process import get_input_and_length
+from text_process import get_label_and_length
 
 
 # train数据生成器

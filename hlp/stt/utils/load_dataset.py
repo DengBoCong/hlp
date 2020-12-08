@@ -1,7 +1,7 @@
 import os
 import posixpath
 
-from data_process.text_process import get_text_list
+from text_process import get_text_list
 from util import get_all_data_path
 
 
