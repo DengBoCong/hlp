@@ -4,8 +4,7 @@ import time
 import pysolr
 import model.smn as smn
 import tensorflow as tf
-from common.utils import CmdParser
-from common.utils import log_operator
+import common.utils as utils
 import common.data_utils as data_utils
 import config.get_config as get_config
 
@@ -67,7 +66,7 @@ class SMNChatter():
                 print('不存在检查点，请先执行train模式，再进入chat模式')
                 exit(0)
 
-        logger = log_operator(level=10)
+        logger = utils.log_operator(level=10)
         logger.info("启动SMN聊天器，执行类别为：{}，模型参数配置为：embedding_dim：{}，"
                     "max_sentence：{}，max_utterance：{}，units：{}，vocab_size：{}，"
                     "learning_rate：{}".format(execute_type, embedding_dim, max_sentence,
@@ -248,7 +247,7 @@ def get_chatter(execute_type):
 
 
 def main():
-    parser = CmdParser(version='%smn chatbot V1.0')
+    parser = utils.CmdParser(version='%smn chatbot V1.0')
     parser.add_option("-t", "--type", action="store", type="string",
                       dest="type", default="pre_treat",
                       help="execute type, train/chat")

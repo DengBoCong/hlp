@@ -1,5 +1,6 @@
-import pyaudio
 import wave
+
+import pyaudio
 
 
 def record(record_path, record_duration):

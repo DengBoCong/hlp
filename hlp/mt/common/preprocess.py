@@ -8,16 +8,11 @@ import sys
 
 sys.path.append('..')
 from sklearn.model_selection import train_test_split
-from model import trainer
 import config.get_config as _config
-from model import nmt_model
-from common import checkpoint
-from pathlib import Path
 from common import tokenize
 import tensorflow as tf
 import numpy
 import re
-import os
 import jieba
 
 
@@ -117,6 +112,20 @@ def preprocess_sentences(sentences, language):
         return _preprocess_sentences_en(sentences, mode)
     elif language == "zh":
         mode = _config.zh_tokenize_type
+        return _preprocess_sentences_zh(sentences, mode)
+
+
+def preprocess_sentences_lm(sentences, language):
+    """
+    语言模型使用的句子预处理
+    @param sentences: 句子列表
+    @param language: 语言类型
+    """
+    if language == "en":
+        mode = _config.lm_en_tokenize_type
+        return _preprocess_sentences_en(sentences, mode)
+    elif language == "zh":
+        mode = _config.lm_zh_tokenize_type
         return _preprocess_sentences_zh(sentences, mode)
 
 
@@ -266,46 +275,6 @@ def train_preprocess():
     print("句子编码完毕！\n")
 
     return vocab_size_source, vocab_size_target
-
-
-def load_model():
-    """
-    进行翻译或评估前数据恢复工作
-    """
-    # 加载源语言字典
-    print("正在加载源语言(%s)字典..." % _config.source_lang)
-    tokenizer_source, vocab_size_source = tokenize.get_tokenizer(language=_config.source_lang)
-    print('源语言字典大小:%d' % vocab_size_source)
-    print('源语言字典加载完毕！\n')
-
-    # 加载目标语言字典
-    print("正在加载目标语言(%s)字典..." % _config.target_lang)
-    tokenizer_target, vocab_size_target = tokenize.get_tokenizer(language=_config.target_lang)
-    print('目标语言字典大小:%d' % vocab_size_target)
-    print('目标语言字典加载完毕！\n')
-
-    # 创建模型及相关变量
-    learning_rate = trainer.CustomSchedule(_config.d_model)
-    optimizer = tf.keras.optimizers.Adam(learning_rate, beta_1=0.9, beta_2=0.98, epsilon=1e-9)
-    transformer = nmt_model.get_model(vocab_size_source, vocab_size_target)
-
-    # 加载检查点
-    checkpoint.load_checkpoint(transformer, optimizer)
-
-    return transformer, tokenizer_source, tokenizer_target
-
-
-def check_point():
-    """
-    检测检查点目录下是否有文件
-    """
-    # 进行语言对判断从而确定检查点路径
-    checkpoint_dir = _config.checkpoint_path
-    is_exist = Path(checkpoint_dir)
-    if not is_exist.exists():
-        os.makedirs(checkpoint_dir, exist_ok=True)
-    if_ckpt = tf.io.gfile.listdir(checkpoint_dir)
-    return if_ckpt
 
 
 def main():
