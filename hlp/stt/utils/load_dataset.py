@@ -1,5 +1,8 @@
+'''
+Author: PengKang6
+Description: 加载数据集, 获取音频路径list和转写文本list
+'''
 import os
-import posixpath
 
 from text_process import get_text_list
 
@@ -28,9 +31,9 @@ def _get_data_librispeech(data_path, text_row_style, num_examples=None):
     data_folder_list = []
     folders_first = os.listdir(data_path)
     for folder_first in folders_first:
-        folders_second = os.listdir(posixpath.join(data_path, folder_first))
+        folders_second = os.listdir(os.path.join(data_path, folder_first))
         for folder_second in folders_second:
-            data_folder_list.append(posixpath.join(data_path, folder_first, folder_second))
+            data_folder_list.append(os.path.join(data_path, folder_first, folder_second))
 
     audio_data_path_list = []
     text_list = []
@@ -41,8 +44,8 @@ def _get_data_librispeech(data_path, text_row_style, num_examples=None):
         text_data_path, audio_path_list = _get_text_audio_files(data_folder)
 
         # 获取语音路径list和文本list
-        audio_data_path_list.extend([posixpath.join(data_folder, audio_path) for audio_path in audio_path_list])
-        text_list.extend(get_text_list(posixpath.join(data_folder, text_data_path), text_row_style))
+        audio_data_path_list.extend([os.path.join(data_folder, audio_path) for audio_path in audio_path_list])
+        text_list.extend(get_text_list(os.path.join(data_folder, text_data_path), text_row_style))
 
     audio_data_path_list = audio_data_path_list[:num_examples]
     text_list = text_list[:num_examples]
@@ -58,11 +61,11 @@ def _get_data_thchs30(data_path, num_examples=None):
     for f in files:
         if os.path.splitext(f)[1] == ".wav":
             # 音频文件
-            audio_path = posixpath.join(data_path, f)
+            audio_path = os.path.join(data_path, f)
             audio_data_path_list.append(audio_path)
 
             # 对应的文本
-            with open(posixpath.join(thchs30_dataset_path, "data", f + ".trn"), encoding='UTF-8') as fl:
+            with open(os.path.join(thchs30_dataset_path, "data", f + ".trn"), encoding='UTF-8') as fl:
                 txt_content = fl.readlines()
             text = "".join(txt_content[0].strip().split(" "))
             text_list.append(text)

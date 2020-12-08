@@ -1,5 +1,4 @@
 import os
-
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 import time
@@ -9,9 +8,11 @@ import tensorflow as tf
 from model import DS2
 from util import get_config, get_dataset_information, compute_ctc_input_length, compute_metric, earlyStopCheck
 
-from data_process.generator import train_generator, test_generator
-from data_process.load_dataset import load_data
-from data_process.text_process import build_text_int_sequences
+import sys
+sys.path.append("..")
+from utils.load_dataset import load_data
+from utils.text_process import build_text_int_sequences
+from utils.generator import train_generator, test_generator
 
 
 def train_step(model, optimizer, input_tensor, target_tensor, input_length, target_length):
@@ -191,6 +192,8 @@ if __name__ == "__main__":
 
     # 加载检查点
     checkpoint = tf.train.Checkpoint(model=model, optimizer=optimizer)
+    if not os.path.exists(configs["checkpoint"]['directory']):
+        os.mkdir(configs["checkpoint"]['directory'])
     manager = tf.train.CheckpointManager(
         checkpoint,
         directory=configs["checkpoint"]['directory'],
