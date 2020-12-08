@@ -1,9 +1,22 @@
+'''
+Author: PengKang6
+Description: 文本的处理相关方法
+'''
+
 import re
 import tensorflow as tf
 
 
-# 基于数据文本规则的行获取
 def text_row_process(line, text_row_style):
+    '''
+    MSG: 
+        基于数据文本规则的行获取
+    Param: 
+        line: 语料文件中每行索引及其对应文本
+        text_row_style: 基于语料中的文本格式进行处理的方式
+    Return: 
+        音频对应的转写文本
+    '''
     if text_row_style == 1:
         # 当前数据文本的每行为'index string\n'
         return line.strip().split(" ", 1)[1].lower()
@@ -15,14 +28,22 @@ def text_row_process(line, text_row_style):
         return line.strip().lower()
 
 
-# 此方法依据文本是中文文本还是英文文本，若为英文文本是按字符切分还是按单词切分
 def split_sentence(line, mode):
+    '''
+    MSG: 
+        此方法依据文本是中文文本还是英文文本，若为英文文本是按字符切分还是按单词切分
+    Param: 
+        line: 语料文件中每行对应文本
+        mode: 语料文本的切分方法
+    Return: 
+        切分后的文本
+    '''
     if mode.lower() == "cn":
-        return split_sentence_cn(line)
+        return _split_sentence_cn(line)
     elif mode.lower() == "en_word":
-        return split_sentence_en_word(line)
+        return _split_sentence_en_word(line)
     elif mode.lower() == "en_char":
-        return split_sentence_en_char(line)
+        return _split_sentence_en_char(line)
 
 
 # 获取最长的label_length
@@ -89,7 +110,7 @@ def get_label_and_length(text_int_sequences_list, max_label_length):
     return target_tensor_numpy, target_length
 
 
-def split_sentence_en_word(s):
+def _split_sentence_en_word(s):
     s = s.lower().strip()
     # 在单词与跟在其后的标点符号之间插入一个空格
     # 例如： "he is a boy." => "he is a boy ."
@@ -102,7 +123,7 @@ def split_sentence_en_word(s):
     return s
 
 
-def split_sentence_en_char(s):
+def _split_sentence_en_char(s):
     s = s.lower().strip()
 
     result = ""
@@ -114,7 +135,7 @@ def split_sentence_en_char(s):
     return result.strip()
 
 
-def split_sentence_cn(s):
+def _split_sentence_cn(s):
     s = s.lower().strip()
 
     s = [c for c in s]

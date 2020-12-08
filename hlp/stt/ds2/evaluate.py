@@ -1,5 +1,8 @@
+'''
+Author: PengKang6
+Description: 通过测试集数据进行指标的计算
+'''
 import os
-
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 import tensorflow as tf
@@ -7,8 +10,11 @@ from math import ceil
 from model import DS2
 from util import get_config, get_dataset_information, compute_metric
 
-from data_process.load_dataset import load_data
-from data_process.generator import test_generator
+import sys
+sys.path.append("..")
+from utils.load_dataset import load_data
+from utils.generator import test_generator
+
 
 if __name__ == "__main__":
     configs = get_config()
