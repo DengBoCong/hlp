@@ -1,5 +1,4 @@
 import json
-import os
 import sys
 
 import tensorflow as tf
@@ -28,15 +27,6 @@ def get_dataset_information():
     with open("dataset_information.json", "r", encoding="utf-8") as f:
         dataset_information = json.load(f)
     return dataset_information
-
-
-# 根据数据文件夹名获取所有的文件名，包括文本文件名和音频文件名列表
-def get_all_data_path(data_path):
-    # data_path是数据文件夹的路径
-    files = os.listdir(data_path)  # 得到数据文件夹下的所有文件名称list
-    text_data_path = files.pop()
-    audio_data_path_list = files
-    return text_data_path, audio_data_path_list
 
 
 # 计算ctc api中的参数input_length，基于https://github.com/tensorflow/models/blob/master/research/deep_speech

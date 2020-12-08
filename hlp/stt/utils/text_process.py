@@ -4,26 +4,26 @@ import tensorflow as tf
 
 
 # 基于数据文本规则的行获取
-def text_row_process(str, text_row_style):
+def text_row_process(line, text_row_style):
     if text_row_style == 1:
         # 当前数据文本的每行为'index string\n'
-        return str.strip().split(" ", 1)[1].lower()
+        return line.strip().split(" ", 1)[1].lower()
     elif text_row_style == 2:
         # 当前数据文本的每行为'index\tstring\n'
-        return str.strip().split("\t", 1)[1].lower()
+        return line.strip().split("\t", 1)[1].lower()
     elif text_row_style == 3:
         # 当前数据文本的每行为"string\n"
-        return str.strip().lower()
+        return line.strip().lower()
 
 
 # 此方法依据文本是中文文本还是英文文本，若为英文文本是按字符切分还是按单词切分
-def preprocess_sentence(str, mode):
+def preprocess_sentence(line, mode):
     if mode.lower() == "cn":
-        return preprocess_sentence_cn(str)
+        return preprocess_sentence_cn(line)
     elif mode.lower() == "en_word":
-        return preprocess_sentence_en_word(str)
+        return preprocess_sentence_en_word(line)
     elif mode.lower() == "en_char":
-        return preprocess_sentence_en_char(str)
+        return preprocess_sentence_en_char(line)
 
 
 # 获取最长的label_length
@@ -79,14 +79,6 @@ def get_process_text_list(text_list, mode):
     return process_text_list
 
 
-# 初次训练时基于处理好的文本数据来获取文本数字list，并返回tokenizer对象以进行word_index和index_word的保存
-def tokenize(texts):
-    tokenizer = tf.keras.preprocessing.text.Tokenizer(filters='')  # 无过滤字符
-    tokenizer.fit_on_texts(texts)
-    text_int_sequences = tokenizer.texts_to_sequences(texts)  # 文本数字序列
-    return text_int_sequences, tokenizer
-
-
 # 基于原始text的整形数字序列list来构建补齐的label_tensor
 def get_label_and_length(text_int_sequences_list, max_label_length):
     target_length_list = []
@@ -106,16 +98,12 @@ def preprocess_sentence_en_word(s):
     s = s.lower().strip()
     # 在单词与跟在其后的标点符号之间插入一个空格
     # 例如： "he is a boy." => "he is a boy ."
-    # 参考：https://stackoverflow.com/questions/3645931/python-padding-punctuation-with-white-spaces-keeping-punctuation
     s = re.sub(r"([?.!,])", r" \1 ", s)  # 切分断句的标点符号
     s = re.sub(r'[" "]+', " ", s)  # 合并多个空格
 
     # 除了 (a-z, A-Z, ".", "?", "!", ",")，将所有字符替换为空格
     s = re.sub(r"[^a-zA-Z?.!,]+", " ", s)
     s = s.strip()
-    """
-    s = '<start> ' + s + ' <end>'
-    """
     return s
 
 
@@ -129,9 +117,6 @@ def preprocess_sentence_en_char(s):
             result += "<space> "
         else:
             result += i + " "
-    """
-    result = "<start> " + result.strip() + " <end>"
-    """
     return result.strip()
 
 
@@ -142,9 +127,6 @@ def preprocess_sentence_cn(s):
     s = [c for c in s]
     s = ' '.join(s)
     s = re.sub(r'[" "]+', " ", s)  # 合并多个空格
-
     s = s.strip()
-    """
-    s = '<start> ' + s + ' <end>'
-    """
+
     return s

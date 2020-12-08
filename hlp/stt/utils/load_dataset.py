@@ -2,7 +2,15 @@ import os
 import posixpath
 
 from text_process import get_text_list
-from util import get_all_data_path
+
+
+# 根据数据文件夹名获取所有的文件名，包括文本文件名和音频文件名列表
+def get_all_data_path(data_path):
+    # data_path是数据文件夹的路径
+    files = os.listdir(data_path)  # 得到数据文件夹下的所有文件名称list
+    text_data_path = files.pop()
+    audio_data_path_list = files
+    return text_data_path, audio_data_path_list
 
 
 # 加载数据
