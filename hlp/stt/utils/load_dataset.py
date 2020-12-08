@@ -15,32 +15,11 @@ def _get_text_audio_files(data_path):
 
 # 获得语音文件名和转写列表
 def load_data(dataset_name, data_path, text_row_style, num_examples):
-    # 基于某种语料获取其中语音路径和文本的list
-    if dataset_name.lower() == "number":
-        audio_data_path_list, text_list = _get_data_number(data_path, text_row_style, num_examples)
-    elif dataset_name.lower() == "librispeech":
+    if dataset_name.lower() == "librispeech":
         audio_data_path_list, text_list = _get_data_librispeech(data_path, text_row_style, num_examples)
     elif dataset_name.lower() == "thchs30":
         audio_data_path_list, text_list = _get_data_thchs30(data_path, num_examples)
 
-    return audio_data_path_list, text_list
-
-
-# 加载number语料，返回语音文件list和对应文本字符串list
-def _get_data_number(data_path, text_row_style, num_examples=None):
-    # number语料里没有文本集，故先通过audio文件名构建文本文件
-    if not os.path.exists(posixpath.join(data_path, "text.txt")):
-        files = os.listdir(data_path)
-        with open(posixpath.join(data_path, "text.txt"), "a") as f:
-            for path in files:
-                f.write(path.split(".")[0] + " " + path[0] + "\n")
-
-    # 获取number语料中训练集语音路径和文本的列表
-    text_data_path, audio_path_list = _get_text_audio_files(data_path)
-
-    # 获取语音路径list和文本list
-    audio_data_path_list = [posixpath.join(data_path, audio_path) for audio_path in audio_path_list[:num_examples]]
-    text_list = get_text_list(posixpath.join(data_path, text_data_path), text_row_style)[:num_examples]
     return audio_data_path_list, text_list
 
 
