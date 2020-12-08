@@ -15,13 +15,6 @@ def get_config():
     return configs
 
 
-# 写入配置文件
-def set_config(configs, config_class, key, value):
-    configs[config_class][key] = value
-    with open("config.json", 'w', encoding="utf-8") as f:
-        json.dump(configs, f, ensure_ascii=False, indent=4)
-
-
 # 获取预处理得到的语料集信息
 def get_dataset_information():
     with open("dataset_information.json", "r", encoding="utf-8") as f:
