@@ -1,5 +1,4 @@
 import re
-
 import tensorflow as tf
 
 
@@ -17,13 +16,13 @@ def text_row_process(line, text_row_style):
 
 
 # 此方法依据文本是中文文本还是英文文本，若为英文文本是按字符切分还是按单词切分
-def preprocess_sentence(line, mode):
+def split_sentence(line, mode):
     if mode.lower() == "cn":
-        return preprocess_sentence_cn(line)
+        return split_sentence_cn(line)
     elif mode.lower() == "en_word":
-        return preprocess_sentence_en_word(line)
+        return split_sentence_en_word(line)
     elif mode.lower() == "en_char":
-        return preprocess_sentence_en_char(line)
+        return split_sentence_en_char(line)
 
 
 # 获取最长的label_length
@@ -34,13 +33,12 @@ def get_max_label_length(text_int_sequences):
     return max_label_length
 
 
-# 构建训练所需的text_int_sequences
-def build_text_int_sequences(text_list, mode, word_index):
+def build_text_int_sequences(sentences, mode, word_index):
     # 基于文本按照某种mode切分文本
-    process_text_list = get_process_text_list(text_list, mode)
+    splitted_sentences = split_sentences(sentences, mode)
 
     # 基于预处理时dataset_information中写入的word_index构建文本整形序列list
-    text_int_sequences_list = get_text_int_sequences(process_text_list, word_index)
+    text_int_sequences_list = get_text_int_sequences(splitted_sentences, word_index)
 
     return text_int_sequences_list
 
@@ -56,9 +54,9 @@ def get_text_list(text_path, text_row_style):
 
 
 # 基于word_index和切割好的文本list得到数字序列list
-def get_text_int_sequences(process_text_list, word_index):
+def get_text_int_sequences(splitted_sentences, word_index):
     text_int_sequences = []
-    for process_text in process_text_list:
+    for process_text in splitted_sentences:
         text_int_sequences.append(text_to_int_sequence(process_text, word_index))
     return text_int_sequences
 
@@ -71,15 +69,13 @@ def text_to_int_sequence(process_text, word_index):
     return int_sequence
 
 
-# 基于某种mode(en_word,en_char,cn等)来处理原始的文本语料
-def get_process_text_list(text_list, mode):
-    process_text_list = []
-    for text in text_list:
-        process_text_list.append(preprocess_sentence(text, mode))
-    return process_text_list
+def split_sentences(sentences, mode):
+    text_list = []
+    for text in sentences:
+        text_list.append(split_sentence(text, mode))
+    return text_list
 
 
-# 基于原始text的整形数字序列list来构建补齐的label_tensor
 def get_label_and_length(text_int_sequences_list, max_label_length):
     target_length_list = []
     for text_int_sequence in text_int_sequences_list:
@@ -93,8 +89,7 @@ def get_label_and_length(text_int_sequences_list, max_label_length):
     return target_tensor_numpy, target_length
 
 
-# 对英文句子：小写化，切分句子，添加开始和结束标记，按单词切分
-def preprocess_sentence_en_word(s):
+def split_sentence_en_word(s):
     s = s.lower().strip()
     # 在单词与跟在其后的标点符号之间插入一个空格
     # 例如： "he is a boy." => "he is a boy ."
@@ -107,8 +102,7 @@ def preprocess_sentence_en_word(s):
     return s
 
 
-# 对英文句子：小写化，切分句子，添加开始和结束标记，将空格转为<space>，按字符切分
-def preprocess_sentence_en_char(s):
+def split_sentence_en_char(s):
     s = s.lower().strip()
 
     result = ""
@@ -120,8 +114,7 @@ def preprocess_sentence_en_char(s):
     return result.strip()
 
 
-# 对中文句子：按字切分句子，添加开始和结束标记
-def preprocess_sentence_cn(s):
+def split_sentence_cn(s):
     s = s.lower().strip()
 
     s = [c for c in s]
