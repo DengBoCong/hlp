@@ -1,4 +1,5 @@
 import os
+
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 import json
@@ -7,7 +8,6 @@ from data_process.audio_process import get_max_audio_length
 from data_process.text_process import get_process_text_list, get_max_label_length, tokenize
 
 from util import get_config
-
 
 if __name__ == "__main__":
     configs = get_config()
@@ -34,7 +34,7 @@ if __name__ == "__main__":
 
     # 将数据集的相关信息写入dataset_information.json文件
     dataset_information_path = configs["preprocess"]["dataset_information_path"]
-    
+
     dataset_information = {}
     dataset_information["vocab_size"] = len(tokenizer.index_word)
     dataset_information["max_input_length"] = max_input_length

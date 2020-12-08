@@ -1,4 +1,5 @@
 import re
+
 import tensorflow as tf
 
 
@@ -14,6 +15,7 @@ def text_row_process(str, text_row_style):
         # 当前数据文本的每行为"string\n"
         return str.strip().lower()
 
+
 # 此方法依据文本是中文文本还是英文文本，若为英文文本是按字符切分还是按单词切分
 def preprocess_sentence(str, mode):
     if mode.lower() == "cn":
@@ -23,12 +25,14 @@ def preprocess_sentence(str, mode):
     elif mode.lower() == "en_char":
         return preprocess_sentence_en_char(str)
 
+
 # 获取最长的label_length
 def get_max_label_length(text_int_sequences):
     max_label_length = 0
     for seq in text_int_sequences:
         max_label_length = max(max_label_length, len(seq))
     return max_label_length
+
 
 # 构建训练所需的text_int_sequences
 def build_text_int_sequences(text_list, mode, word_index):
@@ -37,8 +41,9 @@ def build_text_int_sequences(text_list, mode, word_index):
 
     # 基于预处理时dataset_information中写入的word_index构建文本整形序列list
     text_int_sequences_list = get_text_int_sequences(process_text_list, word_index)
-    
+
     return text_int_sequences_list
+
 
 # 读取文本文件，并基于某种row_style来处理原始语料
 def get_text_list(text_path, text_row_style):
@@ -49,12 +54,14 @@ def get_text_list(text_path, text_row_style):
         text_list.append(text_row_process(sentence, text_row_style))
     return text_list
 
+
 # 基于word_index和切割好的文本list得到数字序列list
 def get_text_int_sequences(process_text_list, word_index):
     text_int_sequences = []
     for process_text in process_text_list:
         text_int_sequences.append(text_to_int_sequence(process_text, word_index))
     return text_int_sequences
+
 
 # 对单行文本进行process_text转token整形序列
 def text_to_int_sequence(process_text, word_index):
@@ -63,6 +70,7 @@ def text_to_int_sequence(process_text, word_index):
         int_sequence.append(int(word_index[c]))
     return int_sequence
 
+
 # 基于某种mode(en_word,en_char,cn等)来处理原始的文本语料
 def get_process_text_list(text_list, mode):
     process_text_list = []
@@ -70,12 +78,14 @@ def get_process_text_list(text_list, mode):
         process_text_list.append(preprocess_sentence(text, mode))
     return process_text_list
 
+
 # 初次训练时基于处理好的文本数据来获取文本数字list，并返回tokenizer对象以进行word_index和index_word的保存
 def tokenize(texts):
     tokenizer = tf.keras.preprocessing.text.Tokenizer(filters='')  # 无过滤字符
     tokenizer.fit_on_texts(texts)
     text_int_sequences = tokenizer.texts_to_sequences(texts)  # 文本数字序列
     return text_int_sequences, tokenizer
+
 
 # 基于原始text的整形数字序列list来构建补齐的label_tensor
 def get_label_and_length(text_int_sequences_list, max_label_length):
@@ -86,9 +96,10 @@ def get_label_and_length(text_int_sequences_list, max_label_length):
         text_int_sequences_list,
         maxlen=max_label_length,
         padding='post'
-        )
+    )
     target_length = tf.convert_to_tensor(target_length_list)
     return target_tensor_numpy, target_length
+
 
 # 对英文句子：小写化，切分句子，添加开始和结束标记，按单词切分
 def preprocess_sentence_en_word(s):
@@ -107,7 +118,8 @@ def preprocess_sentence_en_word(s):
     """
     return s
 
-#对英文句子：小写化，切分句子，添加开始和结束标记，将空格转为<space>，按字符切分
+
+# 对英文句子：小写化，切分句子，添加开始和结束标记，将空格转为<space>，按字符切分
 def preprocess_sentence_en_char(s):
     s = s.lower().strip()
 
@@ -121,6 +133,7 @@ def preprocess_sentence_en_char(s):
     result = "<start> " + result.strip() + " <end>"
     """
     return result.strip()
+
 
 # 对中文句子：按字切分句子，添加开始和结束标记
 def preprocess_sentence_cn(s):
