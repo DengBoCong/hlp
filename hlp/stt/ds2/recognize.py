@@ -1,16 +1,16 @@
 import os
+
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 import tensorflow as tf
-import numpy as np
 from model import DS2, decode_output
 from util import get_config, get_dataset_information, compute_ctc_input_length
 
 import sys
+
 sys.path.append("..")
 from utils.features import wav_to_feature
 from utils.record import record
-
 
 if __name__ == "__main__":
     configs = get_config()
@@ -45,7 +45,7 @@ if __name__ == "__main__":
     index_word = dataset_information["index_word"]
     mode = configs["preprocess"]["text_process_mode"]
     max_input_length = dataset_information["max_input_length"]
-    
+
     while True:
         try:
             record_duration = int(input("请设定录音时长(秒, <=0则结束):"))
@@ -61,21 +61,21 @@ if __name__ == "__main__":
             # 加载录音数据并预测
             x_test = wav_to_feature(record_path, audio_feature_type)
             x_test_input_tensor = tf.keras.preprocessing.sequence.pad_sequences(
-                    [x_test],
-                    padding='post',
-                    maxlen=max_input_length,
-                    dtype='float32'
-                    )
+                [x_test],
+                padding='post',
+                maxlen=max_input_length,
+                dtype='float32'
+            )
             y_test_pred = model(x_test_input_tensor)
-            ctc_input_length = compute_ctc_input_length(x_test_input_tensor.shape[1], y_test_pred.shape[1], tf.convert_to_tensor([[len(x_test)]]))
-            
+            ctc_input_length = compute_ctc_input_length(x_test_input_tensor.shape[1], y_test_pred.shape[1],
+                                                        tf.convert_to_tensor([[len(x_test)]]))
+
             output = tf.keras.backend.ctc_decode(
                 y_pred=y_test_pred,
-                input_length=tf.reshape(ctc_input_length,[ctc_input_length.shape[0]]),
+                input_length=tf.reshape(ctc_input_length, [ctc_input_length.shape[0]]),
                 greedy=True
             )
-            
+
             # 解码
             str = decode_output(output[0][0].numpy()[0], index_word, mode)
             print("Output:" + str)
-         

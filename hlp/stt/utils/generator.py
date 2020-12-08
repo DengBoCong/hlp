@@ -1,13 +1,13 @@
 import numpy as np
-import tensorflow as tf
 
-from data_process.audio_process import get_input_and_length
-from data_process.text_process import get_label_and_length
+from audio_process import get_input_and_length
+from text_process import get_label_and_length
+
 
 # train数据生成器
 def train_generator(data, batchs, batch_size, audio_feature_type, max_input_length, max_label_length):
     audio_data_path_list, text_int_sequences_list = data
-    
+
     # generator只能进行一次生成，故需要while True来进行多个epoch的数据生成
     while True:
         # 每epoch将所有数据进行一次shuffle
@@ -17,31 +17,32 @@ def train_generator(data, batchs, batch_size, audio_feature_type, max_input_leng
 
         for idx in range(batchs):
             batch_input_tensor, batch_input_length = get_input_and_length(
-                audio_data_path_list[idx*batch_size : (idx+1)*batch_size],
+                audio_data_path_list[idx * batch_size: (idx + 1) * batch_size],
                 audio_feature_type,
                 max_input_length
-                )
+            )
             batch_label_tensor, batch_label_length = get_label_and_length(
-                text_int_sequences_list[idx*batch_size : (idx+1)*batch_size],
+                text_int_sequences_list[idx * batch_size: (idx + 1) * batch_size],
                 max_label_length
             )
-            
+
             yield batch_input_tensor, batch_label_tensor, batch_input_length, batch_label_length
+
 
 # 测试数据生成器
 def test_generator(data, batchs, batch_size, audio_feature_type, max_input_length):
     audio_data_path_list, text_list = data
-    
+
     while True:
         for idx in range(batchs):
             batch_input_tensor, batch_input_length = get_input_and_length(
-                audio_data_path_list[idx*batch_size : (idx+1)*batch_size],
+                audio_data_path_list[idx * batch_size: (idx + 1) * batch_size],
                 audio_feature_type,
                 max_input_length
-                )
-            batch_text_list = text_list[idx*batch_size : (idx+1)*batch_size]
-            
-            #测试集只需要文本串list
+            )
+            batch_text_list = text_list[idx * batch_size: (idx + 1) * batch_size]
+
+            # 测试集只需要文本串list
             yield batch_input_tensor, batch_input_length, batch_text_list
 
 
