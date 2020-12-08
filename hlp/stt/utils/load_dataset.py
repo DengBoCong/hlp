@@ -5,7 +5,7 @@ from text_process import get_text_list
 
 
 # 根据数据文件夹名获取所有的文件名，包括文本文件名和音频文件名列表
-def get_all_data_path(data_path):
+def _get_text_audio_files(data_path):
     # data_path是数据文件夹的路径
     files = os.listdir(data_path)  # 得到数据文件夹下的所有文件名称list
     text_data_path = files.pop()
@@ -13,21 +13,21 @@ def get_all_data_path(data_path):
     return text_data_path, audio_data_path_list
 
 
-# 加载数据
+# 获得语音文件名和转写列表
 def load_data(dataset_name, data_path, text_row_style, num_examples):
     # 基于某种语料获取其中语音路径和文本的list
     if dataset_name.lower() == "number":
-        audio_data_path_list, text_list = load_dataset_number(data_path, text_row_style, num_examples)
+        audio_data_path_list, text_list = _get_data_number(data_path, text_row_style, num_examples)
     elif dataset_name.lower() == "librispeech":
-        audio_data_path_list, text_list = load_dataset_librispeech(data_path, text_row_style, num_examples)
+        audio_data_path_list, text_list = _get_data_librispeech(data_path, text_row_style, num_examples)
     elif dataset_name.lower() == "thchs30":
-        audio_data_path_list, text_list = load_dataset_thchs30(data_path, text_row_style, num_examples)
+        audio_data_path_list, text_list = _get_data_thchs30(data_path, num_examples)
 
     return audio_data_path_list, text_list
 
 
 # 加载number语料，返回语音文件list和对应文本字符串list
-def load_dataset_number(data_path, text_row_style, num_examples=None):
+def _get_data_number(data_path, text_row_style, num_examples=None):
     # number语料里没有文本集，故先通过audio文件名构建文本文件
     if not os.path.exists(posixpath.join(data_path, "text.txt")):
         files = os.listdir(data_path)
@@ -36,7 +36,7 @@ def load_dataset_number(data_path, text_row_style, num_examples=None):
                 f.write(path.split(".")[0] + " " + path[0] + "\n")
 
     # 获取number语料中训练集语音路径和文本的列表
-    text_data_path, audio_path_list = get_all_data_path(data_path)
+    text_data_path, audio_path_list = _get_text_audio_files(data_path)
 
     # 获取语音路径list和文本list
     audio_data_path_list = [posixpath.join(data_path, audio_path) for audio_path in audio_path_list[:num_examples]]
@@ -44,8 +44,7 @@ def load_dataset_number(data_path, text_row_style, num_examples=None):
     return audio_data_path_list, text_list
 
 
-# 加载librispeech语料
-def load_dataset_librispeech(data_path, text_row_style, num_examples=None):
+def _get_data_librispeech(data_path, text_row_style, num_examples=None):
     # 获取librispeech数据文件下(train或test)所有的数据folder
     data_folder_list = []
     folders_first = os.listdir(data_path)
@@ -60,7 +59,7 @@ def load_dataset_librispeech(data_path, text_row_style, num_examples=None):
     # 基于每个数据文件夹进行语音路径和文本的获取
     for data_folder in data_folder_list:
         # 获取number语料中训练集语音路径和文本的列表
-        text_data_path, audio_path_list = get_all_data_path(data_folder)
+        text_data_path, audio_path_list = _get_text_audio_files(data_folder)
 
         # 获取语音路径list和文本list
         audio_data_path_list.extend([posixpath.join(data_folder, audio_path) for audio_path in audio_path_list])
@@ -71,7 +70,7 @@ def load_dataset_librispeech(data_path, text_row_style, num_examples=None):
     return audio_data_path_list, text_list
 
 
-def load_dataset_thchs30(data_path, text_row_style, num_examples=None):
+def _get_data_thchs30(data_path, num_examples=None):
     # 音频文件绝对路径
     thchs30_dataset_path = os.path.dirname(data_path)
     files = os.listdir(data_path)[:2 * num_examples]
