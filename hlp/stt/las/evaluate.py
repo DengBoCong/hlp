@@ -11,7 +11,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 import tensorflow as tf
 from model import las, las_d_w
 from config import config
-from hlp.utils import beamsearch
+from hlp.utils import decoder_beamsearch
 from hlp.stt.utils.metric import lers
 from data_processing import load_dataset
 from data_processing.generator import data_generator
@@ -84,7 +84,7 @@ if __name__ == "__main__":
     word_index = dataset_information["word_index"]
     index_word = dataset_information["index_word"]
     max_label_length = dataset_information["max_label_length"]
-    beam_search_container = beamsearch.BeamSearch(
+    beam_search_container = decoder_beamsearch.DecoderBeamSearch(
         beam_size=config.beam_size,
         max_length=max_label_length,
         worst_score=0)
@@ -92,21 +92,18 @@ if __name__ == "__main__":
     for batch, (inp, targ) in zip(range(1, batchs + 1), test_data_generator):
         hidden = model.initialize_hidden_state()
         dec_input = tf.expand_dims([word_index['<start>']] * batch_size, 1)
-        beam_search_container.reset(inputs=inp, dec_input=dec_input)
-        inputs, decoder_input = beam_search_container.get_search_inputs()
-
+        beam_search_container.reset(dec_input=dec_input)
+        decoder_input = beam_search_container.get_search_inputs()
         result = ''  # 识别结果字符串
 
         for t in range(max_label_length):  # 逐步解码或预测
             # predictions, dec_hidden = model(inp, hidden, dec_input)
             decoder_input = decoder_input[:, -1:]
-            predictions, dec_hidden = model(inputs, hidden, decoder_input)
-
+            predictions, dec_hidden = model(inp, hidden, decoder_input, len(beam_search_container))
             beam_search_container.expand(predictions=predictions, end_sign=word_index['<end>'])
             if beam_search_container.beam_size == 0:
                 break
-            inputs, decoder_input = beam_search_container.get_search_inputs()
-
+            decoder_input = beam_search_container.get_search_inputs()
         beam_search_result = beam_search_container.get_result()
         beam_search_result = tf.squeeze(beam_search_result)
         for i in range(len(beam_search_result)):
@@ -118,12 +115,8 @@ if __name__ == "__main__":
 
         results.append(result)
         labels_list.append(targ[0])
-    print('results: {}'.format(results))
-    print('labels_list: {}'.format(labels_list))
     rates_lers, aver_lers, norm_rates_lers, norm_aver_lers = lers(labels_list, results)
 
     print("字母错误率: ")
-    print("每条语音字母错误数: ", rates_lers)
     print("所有语音平均字母错误数: ", aver_lers)
-    print("每条语音字母错误率，错误字母数/标签字母数: ", norm_rates_lers)
     print("所有语音平均字母错误率: ", norm_aver_lers)
