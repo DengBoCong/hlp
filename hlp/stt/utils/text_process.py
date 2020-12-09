@@ -9,14 +9,11 @@ import tensorflow as tf
 
 
 def split_sentence(line, mode):
-    '''
-    MSG: 
-        此方法依据文本是中文文本还是英文文本，若为英文文本是按字符切分还是按单词切分
-    Param: 
-        line: 语料文件中每行对应文本
-        mode: 语料文本的切分方法
-    Return: 
-        切分后的文本
+    '''此方法依据文本是中文文本还是英文文本，若为英文文本是按字符切分还是按单词切分
+
+    :param text: 语料文件中每行对应文本
+    :param mode: 语料文本的切分方法
+    :return: 切分后的文本
     '''
     if mode.lower() == "cn":
         return _split_sentence_cn(line)
@@ -28,10 +25,7 @@ def split_sentence(line, mode):
 
 # 获取最长的label_length
 def get_max_label_length(text_int_sequences):
-    max_label_length = 0
-    for seq in text_int_sequences:
-        max_label_length = max(max_label_length, len(seq))
-    return max_label_length
+    return max(len(seq) for seq in text_int_sequences)
 
 
 def build_text_int_sequences(sentences, mode, word_index):

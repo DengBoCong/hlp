@@ -16,15 +16,12 @@ def load_data(dataset_name, data_path, num_examples):
 
 
 def get_text(line, colum_sep=" "):
-    """
-    MSG:
-        基于数据文本规则的行获取
-    Param:
-        line: 语料文件中每行索引及其对应文本
-        colum_sep: 可能的语音文件名和转写文本间的分隔符
-    Return:
-        音频对应的转写文本
-    """
+    '''基于数据文本规则的行获取
+
+    :param line: 语料文件中每行索引及其对应文本
+    :param text_row_style: 可能的语音文件名和转写文本间的分隔符
+    :return: 音频对应的转写文本
+    '''
     if colum_sep is None:
         return line.strip().lower()
 
@@ -44,10 +41,10 @@ def get_text_list(text_path, colum_sep=" "):
 def get_data_librispeech(data_path, num_examples=None):
     """ 获得librispeech数据集的语音文件和转写列表
 
-        :param data_path: librispeech数据集路径
-        :param num_examples: 最大语音文件数
-        :return: (语音文件列表，转写列表)
-        """
+    :param data_path: librispeech数据集路径
+    :param num_examples: 最大语音文件数
+    :return: (语音文件列表，转写列表)
+    """
     data_folder_list = []
     folders_first = os.listdir(data_path)
     for folder_first in folders_first:

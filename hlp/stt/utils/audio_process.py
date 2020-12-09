@@ -1,3 +1,7 @@
+'''
+Author: PengKang6
+Description: 本模块主要作用
+'''
 import tensorflow as tf
 from features import wav_to_feature
 
@@ -24,13 +28,7 @@ def get_input_and_length(audio_data_path_list, audio_feature_type, maxlen):
 
 # 获取最长的音频length(timesteps)
 def get_max_audio_length(audio_data_path_list, audio_feature_type):
-    max_audio_length = 0
-
-    for audio_path in audio_data_path_list:
-        audio_feature = wav_to_feature(audio_path, audio_feature_type)
-        max_audio_length = max(max_audio_length, audio_feature.shape[0])
-
-    return max_audio_length
+    return max(wav_to_feature(audio_path, audio_feature_type).shape[0] for audio_path in audio_data_path_list)
 
 
 if __name__ == "__main__":
