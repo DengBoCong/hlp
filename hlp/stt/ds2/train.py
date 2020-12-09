@@ -127,7 +127,6 @@ if __name__ == "__main__":
     data_path = configs["train"]["data_path"]
     num_examples = configs["train"]["num_examples"]
     dataset_name = configs["preprocess"]["dataset_name"]
-    text_row_style = configs["preprocess"]["text_row_style"]
 
     # 加载训练数据
     train_audio_data_path_list, train_text_list = load_data(dataset_name, data_path, num_examples)
@@ -136,7 +135,8 @@ if __name__ == "__main__":
     # 是否含有验证valid数据集,若有则加载，若没有，则将train数据按比例切分一部分为valid数据
     if valid_data_path:
         valid_num_examples = configs["valid"]["num_examples"]
-        valid_audio_data_path_list, valid_text_list = load_data(dataset_name, valid_data_path, text_row_style,
+        valid_audio_data_path_list, valid_text_list = load_data(dataset_name,
+                                                                valid_data_path,
                                                                 valid_num_examples)
     else:
         valid_percent = configs["valid"]["valid_percent"]
