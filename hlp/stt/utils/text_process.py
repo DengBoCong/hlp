@@ -4,28 +4,8 @@ Description: 文本的处理相关方法
 '''
 
 import re
+
 import tensorflow as tf
-
-
-def text_row_process(line, text_row_style):
-    '''
-    MSG: 
-        基于数据文本规则的行获取
-    Param: 
-        line: 语料文件中每行索引及其对应文本
-        text_row_style: 基于语料中的文本格式进行处理的方式
-    Return: 
-        音频对应的转写文本
-    '''
-    if text_row_style == 1:
-        # 当前数据文本的每行为'index string\n'
-        return line.strip().split(" ", 1)[1].lower()
-    elif text_row_style == 2:
-        # 当前数据文本的每行为'index\tstring\n'
-        return line.strip().split("\t", 1)[1].lower()
-    elif text_row_style == 3:
-        # 当前数据文本的每行为"string\n"
-        return line.strip().lower()
 
 
 def split_sentence(line, mode):
@@ -62,16 +42,6 @@ def build_text_int_sequences(sentences, mode, word_index):
     text_int_sequences_list = get_text_int_sequences(splitted_sentences, word_index)
 
     return text_int_sequences_list
-
-
-# 读取文本文件，并基于某种row_style来处理原始语料
-def get_text_list(text_path, text_row_style):
-    text_list = []
-    with open(text_path, "r") as f:
-        sentence_list = f.readlines()
-    for sentence in sentence_list:
-        text_list.append(text_row_process(sentence, text_row_style))
-    return text_list
 
 
 # 基于word_index和切割好的文本list得到数字序列list
