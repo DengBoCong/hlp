@@ -1,11 +1,14 @@
+import os
+import sys
+sys.path.append(os.getcwd()[:os.getcwd().rfind("\\hlp\\")])
 import tensorflow as tf
-import common.data_utils as data_utils
-import config.get_config as get_config
-from model.chatter import Chatter
-import common.utils as utils
-import utils.optimizers as optimizers
-import model.transformer as transformer
-import common.pre_treat as pre_treat
+import hlp.utils.optimizers as optimizers
+import hlp.chat.common.utils as utils
+import hlp.chat.common.pre_treat as pre_treat
+import hlp.chat.common.data_utils as data_utils
+import hlp.chat.config.get_config as get_config
+import hlp.chat.model.transformer as transformer
+from hlp.chat.model.chatter import Chatter
 
 
 class TransformerChatter(Chatter):
@@ -18,21 +21,20 @@ class TransformerChatter(Chatter):
                  end_sign: str, beam_size: int, vocab_size: int, dict_fn: str, max_length: int):
         """
         Transformer聊天器初始化，用于加载模型
-        Args:
-            execute_type: 对话执行模式
-            checkpoint_dir: 检查点保存目录路径
-            num_layers: transformer内部层数
-            units: 单元数
-            d_model: 嵌入层维度
-            num_heads: 注意力头数
-            dropout: 采样率
-            start_sign: 开始标记
-            end_sign: 结束标记
-            beam_size: batch大小
-            vocab_size: 词汇量大小
-            dict_fn: 保存字典路径
-            max_length: 单个句子最大长度
-        Returns:
+        :param execute_type: 对话执行模式
+        :param checkpoint_dir: 检查点保存目录路径
+        :param num_layers: transformer内部层数
+        :param units: 单元数
+        :param d_model: 嵌入层维度
+        :param num_heads: 注意力头数
+        :param dropout: 采样率
+        :param start_sign: 开始标记
+        :param end_sign: 结束标记
+        :param beam_size: batch大小
+        :param vocab_size: 词汇量大小
+        :param dict_fn: 保存字典路径
+        :param max_length: 单个句子最大长度
+        :return: 无返回值
         """
         super().__init__(checkpoint_dir, beam_size, max_length)
         self.start_sign = start_sign
@@ -84,11 +86,10 @@ class TransformerChatter(Chatter):
 
     def _train_step(self, inp: tf.Tensor, tar: tf.Tensor, weight: tf.Tensor = None):
         """
-        Args:
-            inp: 输入序列
-            tar: 目标序列
-            weight: 样本权重序列
-        Returns:
+        :param inp: 输入序列
+        :param tar: 目标序列
+        :param weight: 样本权重序列
+        :return: 返回训练损失和精度
         """
         tar_inp = tar[:, :-1]
         tar_real = tar[:, 1:]
@@ -106,12 +107,10 @@ class TransformerChatter(Chatter):
     def _create_predictions(self, inputs: tf.Tensor, dec_input: tf.Tensor, t: int):
         """
         获取目前已经保存在容器中的序列
-        Args:
-            inputs: 对话中的问句
-            dec_input: 对话中的答句
-            t: 记录时间步
-        Returns:
-            predictions: 预测
+        :param inputs: 对话中的问句
+        :param dec_input: 对话中的答句
+        :param t: 记录时间步
+        :return: predictions预测
         """
         predictions = self.model(inputs=[inputs, dec_input], training=False)
         predictions = tf.nn.softmax(predictions, axis=-1)
@@ -123,10 +122,8 @@ class TransformerChatter(Chatter):
 def get_chatter(execute_type: str):
     """
     初始化要使用的聊天器
-    Args:
-        execute_type: 对话执行模型
-    Returns:
-        chatter: 返回对应的聊天器
+    :param execute_type: 对话执行模型
+    :return: 返回对应的聊天器
     """
     chatter = TransformerChatter(execute_type=execute_type, checkpoint_dir=get_config.transformer_checkpoint,
                                  num_layers=get_config.transformer_num_layers, units=get_config.transformer_units,

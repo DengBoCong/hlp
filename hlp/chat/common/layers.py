@@ -1,18 +1,17 @@
 import tensorflow as tf
-import utils.layers as layers
+import hlp.utils.layers as layers
 
 
 def transformer_encoder_layer(units: int, d_model: int, num_heads: int,
                               dropout: float, name: str = "transformer_encoder_layer"):
     """
     Transformer的encoder层，使用函数式API
-    Args:
-        units: 词汇量大小
-        d_model: 深度，词嵌入维度
-        num_heads: 注意力头数
-        dropout: dropout的权重
-        name: 名称
-    Returns:
+    :param units: 词汇量大小
+    :param d_model: 深度，词嵌入维度
+    :param num_heads: 注意力头数
+    :param dropout: dropout的权重
+    :param name: 名称
+    :return: Transformer的Encoder内部层
     """
     inputs = tf.keras.Input(shape=(None, d_model), name="inputs")
     padding_mask = tf.keras.Input(shape=(1, 1, None), name="padding_mask")
@@ -34,13 +33,12 @@ def transformer_decoder_layer(units: int, d_model: int, num_heads: int,
                               dropout: float, name: str = "transformer_decoder_layer"):
     """
     Transformer的decoder层，使用函数式API
-    Args:
-        units: 词汇量大小
-        d_model: 深度，词嵌入维度
-        num_heads: 注意力头数
-        dropout: dropout的权重
-        name: 名称
-    Returns:
+    :param units: 词汇量大小
+    :param d_model: 深度，词嵌入维度
+    :param num_heads: 注意力头数
+    :param dropout: dropout的权重
+    :param name: 名称
+    :return: Transformer的Decoder内部层
     """
     inputs = tf.keras.Input(shape=(None, d_model), name="inputs")
     enc_outputs = tf.keras.Input(shape=(None, d_model), name="encoder_outputs")

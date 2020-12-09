@@ -19,9 +19,6 @@ def config(config_file: str = ""):
 
 conf = config()
 path = os.path.dirname(__file__)[:-6]
-top_pack = os.path.dirname(__file__)
-top_pack = top_pack[:top_pack.find("\\chat\\")]
-sys.path.append(top_pack)
 
 # 公共配置
 BATCH_SIZE = conf['batch_size']

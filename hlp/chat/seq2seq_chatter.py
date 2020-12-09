@@ -1,10 +1,13 @@
+import os
+import sys
+sys.path.append(os.getcwd()[:os.getcwd().rfind("\\hlp\\")])
 import tensorflow as tf
-import common.data_utils as data_utils
-import config.get_config as get_config
-from model.chatter import Chatter
-import model.seq2seq as seq2seq
-import common.utils as utils
-import common.pre_treat as pre_treat
+import hlp.chat.common.data_utils as data_utils
+import hlp.chat.common.utils as utils
+import hlp.chat.common.pre_treat as pre_treat
+import hlp.chat.config.get_config as get_config
+import hlp.chat.model.seq2seq as seq2seq
+from hlp.chat.model.chatter import Chatter
 
 
 class Seq2SeqChatter(Chatter):
@@ -17,23 +20,22 @@ class Seq2SeqChatter(Chatter):
                  encoder_layers: int, decoder_layers: int, cell_type: str, if_bidirectional: bool = True):
         """
         Seq2Seq聊天器初始化，用于加载模型
-        Args:
-            execute_type: 对话执行模式
-            checkpoint_dir: 检查点保存目录路径
-            units: 单元数
-            embedding_dim: 嵌入层维度
-            batch_size: batch大小
-            start_sign: 开始标记
-            end_sign: 结束标记
-            beam_size: batch大小
-            vocab_size: 词汇量大小
-            dict_fn: 保存字典路径
-            max_length: 单个句子最大长度
-            encoder_layers: encoder中内部RNN层数
-            decoder_layers: decoder中内部RNN层数
-            cell_type: cell类型，lstm/gru， 默认lstm
-            if_bidirectional: 是否双向
-        Returns:
+        :param execute_type: 对话执行模式
+        :param checkpoint_dir: 检查点保存目录路径
+        :param units: 单元数
+        :param embedding_dim: 嵌入层维度
+        :param batch_size: batch大小
+        :param start_sign: 开始标记
+        :param end_sign: 结束标记
+        :param beam_size: batch大小
+        :param vocab_size: 词汇量大小
+        :param dict_fn: 保存字典路径
+        :param max_length: 单个句子最大长度
+        :param encoder_layers: encoder中内部RNN层数
+        :param decoder_layers: decoder中内部RNN层数
+        :param cell_type: cell类型，lstm/gru， 默认lstm
+        :param if_bidirectional: 是否双向
+        :return: 无返回值
         """
         super().__init__(checkpoint_dir, beam_size, max_length)
         self.units = units
@@ -43,7 +45,7 @@ class Seq2SeqChatter(Chatter):
         self.enc_units = units
 
         self.encoder = seq2seq.encoder(vocab_size=vocab_size, embedding_dim=embedding_dim,
-                                       enc_units=int(units/2), layer_size=encoder_layers,
+                                       enc_units=int(units / 2), layer_size=encoder_layers,
                                        cell_type=cell_type, if_bidirectional=if_bidirectional)
         self.decoder = seq2seq.decoder(vocab_size=vocab_size, embedding_dim=embedding_dim,
                                        enc_units=units, dec_units=units,
@@ -83,12 +85,10 @@ class Seq2SeqChatter(Chatter):
 
     def _train_step(self, inp: tf.Tensor, tar: tf.Tensor, weight: tf.Tensor = None):
         """
-        Args:
-            inp: 输入序列
-            tar: 目标序列
-            weight: 样本权重序列
-        Returns:
-            step_loss: 每步损失
+        :param inp: 输入序列
+        :param tar: 目标序列
+        :param weight: 样本权重序列
+        :return: 每步损失和精度
         """
         loss = 0
 
@@ -115,12 +115,10 @@ class Seq2SeqChatter(Chatter):
     def _create_predictions(self, inputs: tf.Tensor, dec_input: tf.Tensor, t: int):
         """
         获取目前已经保存在容器中的序列
-        Args:
-            inputs: 对话中的问句
-            dec_input: 对话中的答句
-            t: 记录时间步
-        Returns:
-            predictions: 预测
+        :param inputs: 对话中的问句
+        :param dec_input: 对话中的答句
+        :param t: 记录时间步
+        :return: predictions预测
         """
         hidden = tf.zeros((inputs.shape[0], self.units))
         enc_output, enc_hidden = self.encoder(inputs, hidden)
@@ -132,12 +130,10 @@ class Seq2SeqChatter(Chatter):
     def _loss_function(self, real: tf.Tensor, pred: tf.Tensor, weights: tf.Tensor = None):
         """
         用于计算预测损失，注意要将填充的0进行mask，不纳入损失计算
-        Args:
-            real: 真实序列
-            pred: 预测序列
-            weights: 样本数据的权重
-        Returns:
-            loss: 该batch的平均损失
+        :param real: 真实序列
+        :param pred: 预测序列
+        :param weights: 样本数据的权重
+        :return: 该batch的平均损失
         """
         # 这里进来的real和pred的shape为（128,）
         mask = tf.math.logical_not(tf.math.equal(real, 0))
@@ -156,10 +152,8 @@ class Seq2SeqChatter(Chatter):
 def get_chatter(execute_type: str):
     """
     初始化要使用的聊天器
-    Args:
-        execute_type: 对话执行模型
-    Returns:
-        chatter: 返回对应的聊天器
+    :param execute_type: 对话执行模型
+    :return: 返回对应的聊天器
     """
     chatter = Seq2SeqChatter(execute_type=execute_type, checkpoint_dir=get_config.seq2seq_checkpoint,
                              beam_size=get_config.beam_size, units=get_config.seq2seq_units,

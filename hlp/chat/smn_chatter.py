@@ -1,12 +1,13 @@
 import os
 import sys
+sys.path.append(os.getcwd()[:os.getcwd().rfind("\\hlp\\")])
 import time
 import pysolr
-import model.smn as smn
 import tensorflow as tf
-import common.utils as utils
-import common.data_utils as data_utils
-import config.get_config as get_config
+import hlp.chat.model.smn as smn
+import hlp.chat.common.utils as utils
+import hlp.chat.common.data_utils as data_utils
+import hlp.chat.config.get_config as get_config
 
 
 class SMNChatter():
@@ -19,18 +20,17 @@ class SMNChatter():
                  learning_rate: float, database_fn: str, solr_server: str):
         """
         SMN聊天器初始化，用于加载模型
-        Args:
-            units: 单元数
-            vocab_size: 词汇量大小
-            execute_type: 对话执行模式
-            dict_fn: 保存字典路径
-            embedding_dim: 嵌入层维度
-            checkpoint_dir: 检查点保存目录路径
-            max_utterance: 每轮句子数量
-            max_sentence: 单个句子最大长度
-            learning_rate: 学习率
-            database_fn: 候选数据库路径
-        Returns:
+        :param units: 单元数
+        :param vocab_size: 词汇量大小
+        :param execute_type: 对话执行模式
+        :param dict_fn: 保存字典路径
+        :param embedding_dim: 嵌入层维度
+        :param checkpoint_dir: 检查点保存目录路径
+        :param max_utterance: 每轮句子数量
+        :param max_sentence: 单个句子最大长度
+        :param learning_rate: 学习率
+        :param database_fn: 候选数据库路径
+        :return: 无返回值
         """
         self.dict_fn = dict_fn
         self.checkpoint_dir = checkpoint_dir
@@ -76,14 +76,13 @@ class SMNChatter():
               max_train_data_size: int = 0, max_valid_data_size: int = 0):
         """
         训练功能
-        Args:
-            epochs: 训练执行轮数
-            data_fn: 数据文本路径
-            buffer_size: Dataset加载缓存大小
-            batch_size: Dataset加载批大小
-            max_train_data_size: 最大训练数据量
-            max_valid_data_size: 最大验证数据量
-        Returns:
+        :param epochs: 训练执行轮数
+        :param data_fn: 数据文本路径
+        :param buffer_size: Dataset加载缓存大小
+        :param batch_size: Dataset加载批大小
+        :param max_train_data_size: 最大训练数据量
+        :param max_valid_data_size: 最大验证数据量
+        :return: 无返回值
         """
         # 处理并加载训练数据，
         dataset, tokenizer, checkpoint_prefix, steps_per_epoch = \
@@ -130,14 +129,12 @@ class SMNChatter():
                  max_turn_utterances_num: int = 10, max_valid_data_size: int = 0):
         """
         验证功能，注意了dict_fn和tokenizer两个比传其中一个
-        Args:
-            valid_fn: 验证数据集路径
-            dict_fn: 字典路径
-            tokenizer: 分词器
-            max_turn_utterances_num: 最大训练数据量
-            max_valid_data_size: 最大验证数据量
-        Returns:
-            r2_1, r10_1
+        :param valid_fn: 验证数据集路径
+        :param dict_fn: 字典路径
+        :param tokenizer: 分词器
+        :param max_turn_utterances_num: 最大训练数据量
+        :param max_valid_data_size: 最大验证数据量
+        :return: r2_1, r10_1指标
         """
         token_dict = None
         step = max_valid_data_size // max_turn_utterances_num
@@ -171,9 +168,8 @@ class SMNChatter():
         """
         对外部聊天请求进行回复
         子类需要利用模型进行推断和搜索以产生回复。
-        Args:
-            req: 输入的语句
-        Returns: 系统回复字符串
+        :param req: 输入的语句
+        :return: 系统回复字符串
         """
         self.solr.ping()
         history = req[-self.max_utterance:]
@@ -212,11 +208,10 @@ class SMNChatter():
     def _metrics_rn_1(self, scores: float, labels: tf.Tensor, num: int = 10):
         """
         计算Rn@k指标
-        Args:
-            scores: 训练所得分数
-            labels: 数据标签
-            num: n
-        Returns:
+        :param scores: 训练所得分数
+        :param labels: 数据标签
+        :param num: n
+        :return: rn_1指标
         """
         total = 0
         correct = 0
@@ -232,10 +227,8 @@ class SMNChatter():
 def get_chatter(execute_type):
     """
     初始化要使用的聊天器
-    Args:
-        execute_type: 对话执行模型
-    Returns:
-        chatter: 返回对应的聊天器
+    :param execute_type: 对话执行模型
+    :return: 返回对应的聊天器
     """
     chatter = SMNChatter(units=get_config.smn_units, vocab_size=get_config.smn_vocab_size,
                          execute_type=execute_type, dict_fn=get_config.smn_dict_fn, solr_server=get_config.solr_server,
