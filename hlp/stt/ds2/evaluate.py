@@ -45,11 +45,10 @@ if __name__ == "__main__":
 
     dataset_name = configs["preprocess"]["dataset_name"]
     test_data_path = configs["test"]["data_path"]
-    text_row_style = configs["preprocess"]["text_row_style"]
     num_examples = configs["test"]["num_examples"]
 
     # 加载测试集数据(audio_data_path_list, text_list)
-    test_data = load_data(dataset_name, test_data_path, text_row_style, num_examples)
+    test_data = load_data(dataset_name, test_data_path, num_examples)
 
     batch_size = configs["test"]["batch_size"]
     batchs = ceil(len(test_data[0]) / batch_size)

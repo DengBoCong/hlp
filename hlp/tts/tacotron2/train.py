@@ -99,7 +99,7 @@ if __name__ == "__main__":
     mode = 'train'
 
     #生成器初始化
-    train_data_generator = generator(wav_name_list, batch_size, csv_dir, tokenizer, wave_train_path, config, mode)
+    train_data_generator = generator(wav_name_list, batch_size, csv_dir, tokenizer, wave_train_path, config)
 
     # 初始化模型和优化器
     tacotron2 = Tacotron2(vocab_size, config)
