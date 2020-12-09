@@ -121,7 +121,7 @@ def plot_history(history, valid_epoch_freq, history_img_path):
 if __name__ == "__main__":
     # 获取训练配置和语料信息
     configs = get_config()
-    dataset_information = get_dataset_information()
+    dataset_information = get_dataset_information(configs["preprocess"]["dataset_information_path"])
 
     epochs = configs["train"]["train_epochs"]
     data_path = configs["train"]["data_path"]

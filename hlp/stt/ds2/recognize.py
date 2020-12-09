@@ -17,7 +17,7 @@ from utils.record import record
 
 if __name__ == "__main__":
     configs = get_config()
-    dataset_information = get_dataset_information()
+    dataset_information = get_dataset_information(configs["preprocess"]["dataset_information_path"])
 
     # 获取模型配置，加载模型
     conv_layers = configs["model"]["conv_layers"]

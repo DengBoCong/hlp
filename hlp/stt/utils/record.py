@@ -8,14 +8,11 @@ import pyaudio
 
 
 def record(record_path, record_duration):
-    '''
-    MSG: 
-        从麦克风录音声音道文件
-    Param: 
-        record_path: 声音文件保存路径
-        record_duration: 录制时间，秒
-    Return: 
-        无
+    '''从麦克风录音声音道文件
+    
+    :param record_path: 声音文件保存路径
+    :param record_duration: 录制时间，秒
+    :return: 无
     '''
     CHUNK = 1024
     FORMAT = pyaudio.paInt16
