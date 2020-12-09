@@ -7,6 +7,14 @@ import os
 
 # 获得语音文件名和转写列表
 def load_data(dataset_name, data_path, num_examples):
+    '''加载数据集
+    
+    :param dataset_name: 数据集名字
+    :param data_path: 数据集路径
+    :param text_row_style: 文本每行的格式
+    :param num_examples: 数据量
+    :return: 语音文件路径list和对应转写文本list
+    '''
     if dataset_name.lower() == "librispeech":
         audio_data_path_list, text_list = get_data_librispeech(data_path, num_examples)
     elif dataset_name.lower() == "thchs30":

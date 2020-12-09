@@ -1,9 +1,5 @@
 '''
 Author: PengKang6
-Description: 本模块主要作用
-'''
-'''
-Author: PengKang6
 Description: 通过测试集数据进行指标的计算
 '''
 import os
