@@ -130,7 +130,7 @@ if __name__ == "__main__":
     text_row_style = configs["preprocess"]["text_row_style"]
 
     # 加载训练数据
-    train_audio_data_path_list, train_text_list = load_data(dataset_name, data_path, text_row_style, num_examples)
+    train_audio_data_path_list, train_text_list = load_data(dataset_name, data_path, num_examples)
 
     valid_data_path = configs["valid"]["data_path"]
     # 是否含有验证valid数据集,若有则加载，若没有，则将train数据按比例切分一部分为valid数据
