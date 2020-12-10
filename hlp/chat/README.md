@@ -8,21 +8,10 @@
    + seq2seq_chatter.py为seq2seq的执行入口文件：指令需要附带运行参数
    + transformer_chatter.py为transformer的执行入口文件：指令需要附带运行参数
    + smn_chatter.py为smn的执行入口文件：指令需要附带运行参数
-+ 执行的指令格式：
-   + seq2seq：python seq2seq_chatter.py -t/--type [执行模式]
-   + transformer：python transformer_chatter.py -t/--type [执行模式]
-   + smn：python smn_chatter.py -t/--type [执行模式/pre_treat/train/evaluate/chat]
-+ 执行类别：pre_treat(默认)/train/chat
-+ 执行指令示例：
-   + python seq2seq_chatter.py
-   + python seq2seq_chatter.py -t pre_treat
-   + python transformer_chatter.py
-   + python transformer_chatter.py -t pre_treat
-   + python smn_chatter.py
-   + python smn_chatter.py -t pre_treat
-+ pre_treat模式为文本预处理模式，如果在没有分词结果集的情况下，需要先运行pre_treat模式
-+ train模式为训练模式
-+ chat模式为对话模式。chat模式下运行时，输入exit即退出对话。
+
+详细指令参数见各chatter文件
+**注意：程序同时支持json配置文件和命令行参数执行，接送配置文件的使用，只需要使**
+**用--config_file参数进行指定配置文件即可，如果指定了配置文件，则以配置文件中的配置优先**
 
 + 正常执行顺序为pre_treat->train->evaluate->chat
 
@@ -39,133 +28,6 @@
 以SMN模型为例，利用启发式方法从索引中获取候选response，将前一轮的utterances（也就是对话的历史）和 u 进行计算，根据他们的tf-idf得分，从 utterances 中提取前 5 个关键字，然后将扩展后的message用于索引，并使用索引的内联检索算法来检索候选response。模型结构和训练至关重要，但是检索候选回复也是使得整个对话流程实现闭环的关键。
 
 **说明**
-
-+ Docker部署Solr的Dockerfile如下：
-```
-FROM openjdk:11-jre
-
-LABEL maintainer="The Apache Lucene/Solr Project"
-LABEL repository="https://github.com/docker-solr/docker-solr"
-
-ARG SOLR_VERSION="8.6.3"
-ARG SOLR_SHA512="f040d4489118b655bd27451a717c1f22f180c398638d944a53889a1a449e7032b016cecbff1979c2e8bfd51fc037dd613f3b968254001d34fe0e8fc4f6761dcf"
-ARG SOLR_KEYS="902CC51935C140BF820230961FD5295281436075"
-# If specified, this will override SOLR_DOWNLOAD_SERVER and all ASF mirrors. Typically used downstream for custom builds
-ARG SOLR_DOWNLOAD_URL
-
-# Override the solr download location with e.g.:
-#   docker build -t mine --build-arg SOLR_DOWNLOAD_SERVER=http://www-eu.apache.org/dist/lucene/solr .
-ARG SOLR_DOWNLOAD_SERVER
-
-RUN set -ex; \
-  apt-get update; \
-  apt-get -y install acl dirmngr gpg lsof procps wget netcat gosu tini; \
-  rm -rf /var/lib/apt/lists/*; \
-  cd /usr/local/bin; wget -nv https://github.com/apangin/jattach/releases/download/v1.5/jattach; chmod 755 jattach; \
-  echo >jattach.sha512 "d8eedbb3e192a8596c08efedff99b9acf1075331e1747107c07cdb1718db2abe259ef168109e46bd4cf80d47d43028ff469f95e6ddcbdda4d7ffa73a20e852f9  jattach"; \
-  sha512sum -c jattach.sha512; rm jattach.sha512
-
-ENV SOLR_USER="solr" \
-    SOLR_UID="8983" \
-    SOLR_GROUP="solr" \
-    SOLR_GID="8983" \
-    SOLR_CLOSER_URL="http://www.apache.org/dyn/closer.lua?filename=lucene/solr/$SOLR_VERSION/solr-$SOLR_VERSION.tgz&action=download" \
-    SOLR_DIST_URL="https://www.apache.org/dist/lucene/solr/$SOLR_VERSION/solr-$SOLR_VERSION.tgz" \
-    SOLR_ARCHIVE_URL="https://archive.apache.org/dist/lucene/solr/$SOLR_VERSION/solr-$SOLR_VERSION.tgz" \
-    PATH="/opt/solr/bin:/opt/docker-solr/scripts:$PATH" \
-    SOLR_INCLUDE=/etc/default/solr.in.sh \
-    SOLR_HOME=/var/solr/data \
-    SOLR_PID_DIR=/var/solr \
-    SOLR_LOGS_DIR=/var/solr/logs \
-    LOG4J_PROPS=/var/solr/log4j2.xml
-
-RUN set -ex; \
-  groupadd -r --gid "$SOLR_GID" "$SOLR_GROUP"; \
-  useradd -r --uid "$SOLR_UID" --gid "$SOLR_GID" "$SOLR_USER"
-
-RUN set -ex; \
-  export GNUPGHOME="/tmp/gnupg_home"; \
-  mkdir -p "$GNUPGHOME"; \
-  chmod 700 "$GNUPGHOME"; \
-  echo "disable-ipv6" >> "$GNUPGHOME/dirmngr.conf"; \
-  for key in $SOLR_KEYS; do \
-    found=''; \
-    for server in \
-      OpenPGP Keyserver \
-      hkp://keyserver.ubuntu.com:80 \
-      hkp://p80.pool.sks-keyservers.net:80 \
-      MIT PGP Key Server \
-    ; do \
-      echo "  trying $server for $key"; \
-      gpg --batch --keyserver "$server" --keyserver-options timeout=10 --recv-keys "$key" && found=yes && break; \
-      gpg --batch --keyserver "$server" --keyserver-options timeout=10 --recv-keys "$key" && found=yes && break; \
-    done; \
-    test -z "$found" && echo >&2 "error: failed to fetch $key from several disparate servers -- network issues?" && exit 1; \
-  done; \
-  exit 0
-
-RUN set -ex; \
-  export GNUPGHOME="/tmp/gnupg_home"; \
-  MAX_REDIRECTS=1; \
-  if [ -n "$SOLR_DOWNLOAD_URL" ]; then \
-    # If a custom URL is defined, we download from non-ASF mirror URL and allow more redirects and skip GPG step
-    # This takes effect only if the SOLR_DOWNLOAD_URL build-arg is specified, typically in downstream Dockerfiles
-    MAX_REDIRECTS=4; \
-    SKIP_GPG_CHECK=true; \
-  elif [ -n "$SOLR_DOWNLOAD_SERVER" ]; then \
-    SOLR_DOWNLOAD_URL="$SOLR_DOWNLOAD_SERVER/$SOLR_VERSION/solr-$SOLR_VERSION.tgz"; \
-  fi; \
-  for url in $SOLR_DOWNLOAD_URL $SOLR_CLOSER_URL $SOLR_DIST_URL $SOLR_ARCHIVE_URL; do \
-    if [ -f "/opt/solr-$SOLR_VERSION.tgz" ]; then break; fi; \
-    echo "downloading $url"; \
-    if wget -t 10 --max-redirect $MAX_REDIRECTS --retry-connrefused -nv "$url" -O "/opt/solr-$SOLR_VERSION.tgz"; then break; else rm -f "/opt/solr-$SOLR_VERSION.tgz"; fi; \
-  done; \
-  if [ ! -f "/opt/solr-$SOLR_VERSION.tgz" ]; then echo "failed all download attempts for solr-$SOLR_VERSION.tgz"; exit 1; fi; \
-  if [ -z "$SKIP_GPG_CHECK" ]; then \
-    echo "downloading $SOLR_ARCHIVE_URL.asc"; \
-    wget -nv "$SOLR_ARCHIVE_URL.asc" -O "/opt/solr-$SOLR_VERSION.tgz.asc"; \
-    echo "$SOLR_SHA512 */opt/solr-$SOLR_VERSION.tgz" | sha512sum -c -; \
-    (>&2 ls -l "/opt/solr-$SOLR_VERSION.tgz" "/opt/solr-$SOLR_VERSION.tgz.asc"); \
-    gpg --batch --verify "/opt/solr-$SOLR_VERSION.tgz.asc" "/opt/solr-$SOLR_VERSION.tgz"; \
-  else \
-    echo "Skipping GPG validation due to non-Apache build"; \
-  fi; \
-  tar -C /opt --extract --file "/opt/solr-$SOLR_VERSION.tgz"; \
-  (cd /opt; ln -s "solr-$SOLR_VERSION" solr); \
-  rm "/opt/solr-$SOLR_VERSION.tgz"*; \
-  rm -Rf /opt/solr/docs/ /opt/solr/dist/{solr-core-$SOLR_VERSION.jar,solr-solrj-$SOLR_VERSION.jar,solrj-lib,solr-test-framework-$SOLR_VERSION.jar,test-framework}; \
-  mkdir -p /opt/solr/server/solr/lib /docker-entrypoint-initdb.d /opt/docker-solr; \
-  chown -R 0:0 "/opt/solr-$SOLR_VERSION"; \
-  find "/opt/solr-$SOLR_VERSION" -type d -print0 | xargs -0 chmod 0755; \
-  find "/opt/solr-$SOLR_VERSION" -type f -print0 | xargs -0 chmod 0644; \
-  chmod -R 0755 "/opt/solr-$SOLR_VERSION/bin" "/opt/solr-$SOLR_VERSION/contrib/prometheus-exporter/bin/solr-exporter" /opt/solr-$SOLR_VERSION/server/scripts/cloud-scripts; \
-  cp /opt/solr/bin/solr.in.sh /etc/default/solr.in.sh; \
-  mv /opt/solr/bin/solr.in.sh /opt/solr/bin/solr.in.sh.orig; \
-  mv /opt/solr/bin/solr.in.cmd /opt/solr/bin/solr.in.cmd.orig; \
-  chown root:0 /etc/default/solr.in.sh; \
-  chmod 0664 /etc/default/solr.in.sh; \
-  mkdir -p /var/solr/data /var/solr/logs; \
-  (cd /opt/solr/server/solr; cp solr.xml zoo.cfg /var/solr/data/); \
-  cp /opt/solr/server/resources/log4j2.xml /var/solr/log4j2.xml; \
-  find /var/solr -type d -print0 | xargs -0 chmod 0770; \
-  find /var/solr -type f -print0 | xargs -0 chmod 0660; \
-  sed -i -e "s/\"\$(whoami)\" == \"root\"/\$(id -u) == 0/" /opt/solr/bin/solr; \
-  sed -i -e 's/lsof -PniTCP:/lsof -t -PniTCP:/' /opt/solr/bin/solr; \
-  chown -R "0:0" /opt/solr-$SOLR_VERSION /docker-entrypoint-initdb.d /opt/docker-solr; \
-  chown -R "$SOLR_USER:0" /var/solr; \
-  { command -v gpgconf; gpgconf --kill all || :; }; \
-  rm -r "$GNUPGHOME"
-
-COPY --chown=0:0 scripts /opt/docker-solr/scripts
-
-VOLUME /var/solr
-EXPOSE 8983
-WORKDIR /opt/solr
-USER $SOLR_USER
-
-ENTRYPOINT ["docker-entrypoint.sh"]
-CMD ["solr-foreground"]
-```
 Dockerfile从[docker-solr](https://github.com/docker-solr/docker-solr)中拉取，随后执行如下：
 
 ```

@@ -1,16 +1,5 @@
 import os
 import logging
-from optparse import OptionParser
-
-
-class CmdParser(OptionParser):
-    def error(self, msg):
-        print('Error!提示信息如下：')
-        self.print_help()
-        self.exit(0)
-
-    def exit(self, status=0, msg=None):
-        exit(status)
 
 
 def log_operator(level: str, log_file: str = None,
@@ -33,7 +22,7 @@ def log_operator(level: str, log_file: str = None,
     :return: 日志记录器
     """
     if log_file is None:
-        log_file = os.path.dirname(__file__)[:-6] + 'data\\runtime.log'
+        log_file = os.getcwd() + '\\data\\runtime.log'
 
     logger = logging.getLogger()
     logger.setLevel(level)

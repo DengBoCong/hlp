@@ -4,7 +4,6 @@ import jieba
 import pysolr
 import numpy as np
 import tensorflow as tf
-from pathlib import Path
 from sklearn.feature_extraction.text import TfidfVectorizer
 
 
@@ -49,10 +48,10 @@ def create_dataset(path: str, num_examples: int, start_sign: str, end_sign: str)
     :param end_sign: 结束标记
     :return: 整理好的问答对和样本权重
     """
-    is_exist = Path(path)
-    if not is_exist.exists():
+    if not os.path.exists(path):
         print('不存在已经分词好的文件，请先执行pre_treat模式')
         exit(0)
+
     with open(path, 'r', encoding="utf-8") as file:
         lines = file.read().strip().split('\n')
         diag_weight = []
