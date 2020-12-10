@@ -1,5 +1,8 @@
+'''
+Author: PengKang6
+Description: 录音并进行识别成文本
+'''
 import os
-
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 import tensorflow as tf
@@ -7,14 +10,14 @@ from model import DS2, decode_output
 from util import get_config, get_dataset_information, compute_ctc_input_length
 
 import sys
-
 sys.path.append("..")
 from utils.features import wav_to_feature
 from utils.record import record
 
+
 if __name__ == "__main__":
     configs = get_config()
-    dataset_information = get_dataset_information()
+    dataset_information = get_dataset_information(configs["preprocess"]["dataset_information_path"])
 
     # 获取模型配置，加载模型
     conv_layers = configs["model"]["conv_layers"]

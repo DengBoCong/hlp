@@ -49,6 +49,6 @@ if __name__ == "__main__":
 
     # 测试生成器
     mode = 'evluate'
-    test_data_generator = generator(wav_name_list, batch_size, csv_dir, tokenizer, path, config, mode)
+    test_data_generator = generator(wav_name_list, batch_size, csv_dir, tokenizer, path, config)
     #评估
     evluate(test_data_generator, vocab_size, config, test_batchs)

@@ -93,7 +93,6 @@ class Attention(tf.keras.layers.Layer):
         self.score_mask_value = -float("inf")
 
     def get_alignment_energies(self, query, memory, attention_weights_cat):
-        # print("query:", query.shape)
         processed_query = self.query_layer(tf.expand_dims(query, axis=1))
         processed_memory = self.memory_layer(memory)
 
@@ -107,14 +106,12 @@ class Attention(tf.keras.layers.Layer):
             attention_hidden_state, memory, attention_weights_cat)
         attention_weights = tf.nn.softmax(alignment, axis=1)
         attention_context = tf.expand_dims(attention_weights, 1)
+
         attention_context = tf.matmul(attention_context, memory)
-        # print("attention_context1:", attention_context.shape)
         attention_context = tf.squeeze(attention_context, axis=1)
-        # print("attention_context2:", attention_context.shape)
         return attention_context, attention_weights
 
 
-# attention结束
 class Prenet(tf.keras.layers.Layer):
     def __init__(self, config):
         super().__init__()
@@ -186,17 +183,21 @@ class Decoder(tf.keras.layers.Layer):
         self.initial_hidden_size = config.initial_hidden_size
         self.prenet2 = Prenet(config)
         self.postnet = Postnet(config)
+
         # 两个单层LSTM
         self.decoder_lstms1 = tf.keras.layers.LSTMCell(self.decoder_lstm_dim, dropout=config.decoder_lstm_rate)
         self.decoder_lstms2 = tf.keras.layers.LSTMCell(self.decoder_lstm_dim, dropout=config.decoder_lstm_rate)
+
         # 线性变换投影成目标帧
         self.frame_projection = tf.keras.layers.Dense(
             units=self.n_mels, activation=None, name="frame_projection"
         )
+
         # 停止记号
         self.stop_projection = tf.keras.layers.Dense(
             units=1, activation='sigmoid', name="stop_projection"
         )
+
         # 用于注意力
         self.attention_layer = Attention(config)
 
@@ -268,9 +269,11 @@ class Decoder(tf.keras.layers.Layer):
                """
         # 拼接
         cell_input = tf.concat((decoder_input, self.attention_context), -1)
+
         # 第一次过lstmcell
         cell_output, (self.attention_hidden, self.attention_cell) = self.decoder_lstms1(cell_input, (
             self.attention_hidden, self.attention_cell))
+
         # dropout
         self.attention_hidden = tf.keras.layers.Dropout(rate=0.1)(self.attention_hidden)
 
@@ -290,6 +293,7 @@ class Decoder(tf.keras.layers.Layer):
         # 第2次lstmcell
         decoder_output, (self.decoder_hidden, self.decoder_cell) = self.decoder_lstms2(decoder_input, (
             self.decoder_hidden, self.decoder_cell))
+
         # dropout
         self.decoder_hidden = tf.keras.layers.Dropout(rate=0.1)(self.decoder_hidden)
 

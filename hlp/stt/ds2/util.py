@@ -1,3 +1,7 @@
+'''
+Author: PengKang6
+Description: 项目相关util
+'''
 import json
 import sys
 
@@ -16,8 +20,8 @@ def get_config():
 
 
 # 获取预处理得到的语料集信息
-def get_dataset_information():
-    with open("dataset_information.json", "r", encoding="utf-8") as f:
+def get_dataset_information(path):
+    with open(path, "r", encoding="utf-8") as f:
         dataset_information = json.load(f)
     return dataset_information
 

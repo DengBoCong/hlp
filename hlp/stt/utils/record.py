@@ -1,15 +1,19 @@
+'''
+Author: PengKang6
+Description: 录音方法
+'''
 import wave
 
 import pyaudio
 
 
 def record(record_path, record_duration):
-    """ 从麦克风录音声音道文件
-
+    '''从麦克风录音声音道文件
+    
     :param record_path: 声音文件保存路径
     :param record_duration: 录制时间，秒
     :return: 无
-    """
+    '''
     CHUNK = 1024
     FORMAT = pyaudio.paInt16
     CHANNELS = 1  # 声道数

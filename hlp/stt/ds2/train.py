@@ -1,5 +1,4 @@
 import os
-
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 import time
@@ -9,9 +8,11 @@ import tensorflow as tf
 from model import DS2
 from util import get_config, get_dataset_information, compute_ctc_input_length, compute_metric, earlyStopCheck
 
-from data_process.generator import train_generator, test_generator
-from data_process.load_dataset import load_data
-from data_process.text_process import build_text_int_sequences
+import sys
+sys.path.append("..")
+from utils.load_dataset import load_data
+from utils.text_process import build_text_int_sequences
+from utils.generator import train_generator, test_generator
 
 
 def train_step(model, optimizer, input_tensor, target_tensor, input_length, target_length):
@@ -120,22 +121,22 @@ def plot_history(history, valid_epoch_freq, history_img_path):
 if __name__ == "__main__":
     # 获取训练配置和语料信息
     configs = get_config()
-    dataset_information = get_dataset_information()
+    dataset_information = get_dataset_information(configs["preprocess"]["dataset_information_path"])
 
     epochs = configs["train"]["train_epochs"]
     data_path = configs["train"]["data_path"]
     num_examples = configs["train"]["num_examples"]
     dataset_name = configs["preprocess"]["dataset_name"]
-    text_row_style = configs["preprocess"]["text_row_style"]
 
     # 加载训练数据
-    train_audio_data_path_list, train_text_list = load_data(dataset_name, data_path, text_row_style, num_examples)
+    train_audio_data_path_list, train_text_list = load_data(dataset_name, data_path, num_examples)
 
     valid_data_path = configs["valid"]["data_path"]
     # 是否含有验证valid数据集,若有则加载，若没有，则将train数据按比例切分一部分为valid数据
     if valid_data_path:
         valid_num_examples = configs["valid"]["num_examples"]
-        valid_audio_data_path_list, valid_text_list = load_data(dataset_name, valid_data_path, text_row_style,
+        valid_audio_data_path_list, valid_text_list = load_data(dataset_name,
+                                                                valid_data_path,
                                                                 valid_num_examples)
     else:
         valid_percent = configs["valid"]["valid_percent"]
@@ -191,6 +192,8 @@ if __name__ == "__main__":
 
     # 加载检查点
     checkpoint = tf.train.Checkpoint(model=model, optimizer=optimizer)
+    if not os.path.exists(configs["checkpoint"]['directory']):
+        os.mkdir(configs["checkpoint"]['directory'])
     manager = tf.train.CheckpointManager(
         checkpoint,
         directory=configs["checkpoint"]['directory'],
