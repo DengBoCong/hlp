@@ -23,7 +23,7 @@
 {
     "train": {
         "train_epochs": 2,
-        "data_path": "./data/number/train",
+        "data_path": "../data/number/train",
         "batch_size": 36,
         "num_examples": null
     },
@@ -36,7 +36,7 @@
         "stop_early_limits": 5
     },
     "test": {
-        "data_path": "./data/number/dev",
+        "data_path": "../data/number/dev",
         "batch_size": 36,
         "num_examples": null
     },
@@ -72,7 +72,7 @@
 {
     "train": {
         "train_epochs": 2,
-        "data_path": "./data/LibriSpeech/train-clean-5",
+        "data_path": "../data/LibriSpeech/train-clean-5",
         "batch_size": 36,
         "num_examples": null
     },
@@ -85,7 +85,7 @@
         "stop_early_limits": 5
     },
     "test": {
-        "data_path": "./data/LibriSpeech/dev-clean-2",
+        "data_path": "../data/LibriSpeech/dev-clean-2",
         "batch_size": 36,
         "num_examples": null
     },
@@ -121,12 +121,12 @@
 {
     "train": {
         "train_epochs": 2,
-        "data_path": "./data/data_thchs30/train",
+        "data_path": "../data/data_thchs30/train",
         "batch_size": 36,
         "num_examples": null
     },
     "valid":{
-        "data_path": "./data/data_thchs30/dev",
+        "data_path": "../data/data_thchs30/dev",
         "batch_size": 36,
         "num_examples": null,
         "valid_epoch_freq": 2,

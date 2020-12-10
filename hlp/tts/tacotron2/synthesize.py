@@ -1,13 +1,13 @@
 import matplotlib.pyplot as plt
-import numpy as np
 import scipy.io.wavfile as wave
 import tensorflow as tf
+import numpy as np
 from playsound import playsound
 
-from audio_process import melspectrogram2wav
 from config2 import Tacotron2Config
 from prepocesses import get_tokenizer_keras, dataset_seq
 from tacotron2 import Tacotron2, load_checkpoint
+from audio_process import melspectrogram2wav
 
 
 # 下面两个方法没使用，暂时保留
@@ -54,7 +54,7 @@ if __name__ == "__main__":
     i = 0
     # 抓取文本数据
     while True:
-        i = i + 1
+        i = i+1
         b = str(i)
         print("请输入您要合成的话，输入ESC结束：")
         seq = input()
@@ -69,9 +69,8 @@ if __name__ == "__main__":
         mel_outputs, mel_outputs_postnet, gate_outputs, alignments = tacotron2.inference(input_ids)
 
         # 生成预测声音
-        wav = melspectrogram2wav(mel_outputs_postnet[0].numpy(), config.max_db, config.ref_db, config.sr, config.n_fft,
-                                 config.n_mels, config.preemphasis, config.n_iter, config.hop_length, config.win_length)
-        name = 'generated' + b + '.wav'
+        wav = melspectrogram2wav(mel_outputs_postnet[0].numpy(), config.max_db, config.ref_db, config.sr, config.n_fft, config.n_mels, config.preemphasis, config.n_iter, config.hop_length, config.win_length)
+        name = 'generated' + b +'.wav'
         wave.write(name, rate=config.sr, data=wav)
         playsound(name)
         print("已合成")

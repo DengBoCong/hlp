@@ -5,7 +5,8 @@
     - nmt_evaluate : 使用 ./data/corpus/en-zh_eval.txt 对模型进行测试,需对指标类型进行选择
         - bleu指标
     - nmt_translate : 对输入句子进行翻译，输入0退出
-
+    - language_model : 对语言模型进行训练
+    
 - 分词方法(在配置文件中进行选择)：
     - 英文分词:
         - BPE:使用子词分词器（subwords tokenizer）对英文进行BPE(Byte Pair Encoding)分词
@@ -20,6 +21,10 @@
         - 若想从 ./data/en-zh_val.txt 中读取验证集，则validate_from_txt设置为True，并设置验证集句子数num_validate_sentences
 
 # 版本日志
+- 2020.12.7：version 1.6.0
+    - 添加语言模型，暂只支持训练
+    - 优化代码，使用公共代码
+
 - 2020.11.16：version 1.5.1
     - 训练完成根据history绘制图像并保存至./data/result
     - 可使用./data/en-zh_val.txt中的数据集来进行训练时的验证

@@ -22,8 +22,8 @@ def load_checkpoint(transformer, optimizer):
 
 # TODO:完成检查点平均方法
 def average_checkpoints_v1(checkpoints_dir
-                        , output_dir=_config.checkpoint_path+'_avg_ckpts'
-                        , max_count=8):
+                           , output_dir=_config.checkpoint_path + '_avg_ckpts'
+                           , max_count=8):
     """
 
     @param checkpoints_dir: 用来生成平均检查点的检查点路径
@@ -88,17 +88,17 @@ def average_checkpoints(model_dir,
     :func:`opennmt.utils.average_checkpoints_into_layer`
     """
     if model_dir == output_dir:
-     raise ValueError("Model and output directory must be different")
+        raise ValueError("Model and output directory must be different")
     model = trackables.get(model_key)
     if model is None:
-     raise ValueError("%s not found in trackables %s" % (model_key, trackables))
+        raise ValueError("%s not found in trackables %s" % (model_key, trackables))
 
     checkpoint_state = tf.train.get_checkpoint_state(model_dir)
     if checkpoint_state is None:
-      raise ValueError("No checkpoints found in %s" % model_dir)
+        raise ValueError("No checkpoints found in %s" % model_dir)
     checkpoints_path = checkpoint_state.all_model_checkpoint_paths
     if len(checkpoints_path) > max_count:
-     checkpoints_path = checkpoints_path[-max_count:]
+        checkpoints_path = checkpoints_path[-max_count:]
 
     average_checkpoints_into_layer(checkpoints_path, model, model_key)
 
@@ -110,49 +110,49 @@ def average_checkpoints(model_dir,
 
 
 def average_checkpoints_into_layer(checkpoints, layer, layer_prefix):
-  """Updates the layer weights with their average value in the checkpoints.
+    """Updates the layer weights with their average value in the checkpoints.
 
-  Args:
-    checkpoints: A non empty list of checkpoint paths.
-    layer: A ``tf.keras.layers.Layer`` instance.
-    layer_prefix: The name/scope that prefixes the layer variables names in the
-      checkpoints.
+    Args:
+      checkpoints: A non empty list of checkpoint paths.
+      layer: A ``tf.keras.layers.Layer`` instance.
+      layer_prefix: The name/scope that prefixes the layer variables names in the
+        checkpoints.
 
-  Raises:
-    ValueError: if :obj:`checkpoints` is empty.
-    ValueError: if :obj:`layer` is not already built.
+    Raises:
+      ValueError: if :obj:`checkpoints` is empty.
+      ValueError: if :obj:`layer` is not already built.
 
-  See Also:
-    :func:`opennmt.utils.average_checkpoints`
-  """
-  if not checkpoints:
-    raise ValueError("There should be at least one checkpoint")
-  if not layer.built:
-    raise ValueError("The layer should be built before calling this function")
+    See Also:
+      :func:`opennmt.utils.average_checkpoints`
+    """
+    if not checkpoints:
+        raise ValueError("There should be at least one checkpoint")
+    if not layer.built:
+        raise ValueError("The layer should be built before calling this function")
 
-  # Reset the layer variables to 0.
-  for variable in layer.variables:
-    variable.assign(tf.zeros_like(variable))
+    # Reset the layer variables to 0.
+    for variable in layer.variables:
+        variable.assign(tf.zeros_like(variable))
 
-  # Get a map from variable names in the checkpoint to variables in the layer.
-  _, names_to_variables = get_variables_name_mapping(layer, root_key=layer_prefix)
+    # Get a map from variable names in the checkpoint to variables in the layer.
+    _, names_to_variables = get_variables_name_mapping(layer, root_key=layer_prefix)
 
-  num_checkpoints = len(checkpoints)
-  tf.get_logger().info("Averaging %d checkpoints...", num_checkpoints)
-  for checkpoint_path in checkpoints:
-    tf.get_logger().info("Reading checkpoint %s...", checkpoint_path)
-    reader = tf.train.load_checkpoint(checkpoint_path)
-    for path in reader.get_variable_to_shape_map().keys():
-      if not path.startswith(layer_prefix) or ".OPTIMIZER_SLOT" in path:
-        continue
-      variable = names_to_variables[path]
-      value = reader.get_tensor(path)
-      variable.assign_add(value / num_checkpoints)
+    num_checkpoints = len(checkpoints)
+    tf.get_logger().info("Averaging %d checkpoints...", num_checkpoints)
+    for checkpoint_path in checkpoints:
+        tf.get_logger().info("Reading checkpoint %s...", checkpoint_path)
+        reader = tf.train.load_checkpoint(checkpoint_path)
+        for path in reader.get_variable_to_shape_map().keys():
+            if not path.startswith(layer_prefix) or ".OPTIMIZER_SLOT" in path:
+                continue
+            variable = names_to_variables[path]
+            value = reader.get_tensor(path)
+            variable.assign_add(value / num_checkpoints)
 
 
 def get_step_from_checkpoint_prefix(prefix):
-  """Extracts the training step from the checkpoint file prefix."""
-  return int(prefix.split("-")[-1])
+    """Extracts the training step from the checkpoint file prefix."""
+    return int(prefix.split("-")[-1])
 
 
 def get_variables_name_mapping(root, root_key=None):
@@ -174,12 +174,12 @@ def get_variables_name_mapping(root, root_key=None):
     for saveable_object in named_variables:
         variable = saveable_object.op
         if not hasattr(variable, "ref"):  # Ignore non Tensor-like objects.
-          continue
-    name = saveable_object.name
-    if root_key is not None:
-      name = "%s/%s" % (root_key, name)
-    variables_to_names[variable.ref()] = name
-    names_to_variables[name] = variable
+            continue
+        name = saveable_object.name
+        if root_key is not None:
+            name = "%s/%s" % (root_key, name)
+        variables_to_names[variable.ref()] = name
+        names_to_variables[name] = variable
     return variables_to_names, names_to_variables
 
 
@@ -195,7 +195,7 @@ def main():
         os.makedirs(output_dir, exist_ok=True)
     trainer.train(transformer
                   , validation_data=_config.validate_from_txt
-                  , validation_split=1-_config.train_size
+                  , validation_split=1 - _config.train_size
                   , validation_freq=_config.validation_freq)
     path = average_checkpoints(model_dir, output_dir, trackables, max_count=8, model_key=model_key)
     print(path)
