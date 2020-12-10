@@ -1,16 +1,25 @@
+'''
+Author: PengKang6
+Description: 通过测试集数据进行指标的计算
+'''
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+
 import tensorflow as tf
 from math import ceil
 from model import DS2
 from util import get_config, get_dataset_information, compute_metric
 
-from data_process.load_dataset import load_data
-from data_process.generator import test_generator
+import sys
+sys.path.append("..")
+from utils.load_dataset import load_data
+from utils.generator import test_generator
 
 
 if __name__ == "__main__":
     configs = get_config()
-    dataset_information = get_dataset_information()
-    
+    dataset_information = get_dataset_information(configs["preprocess"]["dataset_information_path"])
+
     # 获取模型配置，加载模型
     conv_layers = configs["model"]["conv_layers"]
     filters = configs["model"]["conv_filters"]
@@ -36,11 +45,10 @@ if __name__ == "__main__":
 
     dataset_name = configs["preprocess"]["dataset_name"]
     test_data_path = configs["test"]["data_path"]
-    text_row_style = configs["preprocess"]["text_row_style"]
     num_examples = configs["test"]["num_examples"]
 
     # 加载测试集数据(audio_data_path_list, text_list)
-    test_data = load_data(dataset_name, test_data_path, text_row_style, num_examples)
+    test_data = load_data(dataset_name, test_data_path, num_examples)
 
     batch_size = configs["test"]["batch_size"]
     batchs = ceil(len(test_data[0]) / batch_size)

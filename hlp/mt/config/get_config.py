@@ -47,3 +47,18 @@ start_word = conf["start_word"]  # 句子开始标志
 end_word = conf["end_word"]  # 句子结束标志
 BEAM_SIZE = conf["BEAM_SIZE"]  # BEAM_SIZE
 
+lm_path_to_train_file = conf["language_model"]["path_to_train_file_lm"]  # 语言模型训练文本路径
+lm_language = conf["language_model"]["language"]
+lm_en_tokenize_type = conf["language_model"]["en_tokenize_type"]
+lm_zh_tokenize_type = conf["language_model"]["zh_tokenize_type"]
+lm_EPOCHS = conf["language_model"]["EPOCHS"]
+lm_num_sentences = conf["language_model"]["num_sentences"]
+lm_BATCH_SIZE = conf["language_model"]["BATCH_SIZE"]
+lm_train_size = conf["language_model"]["train_size"]
+lm_checkpoint_path = os.path.join(conf["checkpoint_path_dir"], 'lm')
+lm_d_embedding = conf["language_model"]["d_embedding"]
+lm_d_rnn = conf["language_model"]["d_rnn"]
+lm_max_checkpoints_num = conf["language_model"]["max_checkpoints_num"]
+lm_checkpoints_save_freq = conf["language_model"]["checkpoints_save_freq"]
+lm_validation_freq = conf["language_model"]["validation_freq"]
+
