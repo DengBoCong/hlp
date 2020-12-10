@@ -12,8 +12,8 @@ import wave
 import pyaudio
 from tqdm import tqdm
 import tensorflow as tf
-from config import config
-from model import las, las_d_w
+from hlp.stt.las.config import config
+from hlp.stt.las.model import las, las_d_w
 from hlp.stt.utils.features import wav_to_feature
 
 
