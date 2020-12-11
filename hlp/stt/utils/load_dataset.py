@@ -24,7 +24,7 @@ def get_text(line, colum_sep=" "):
     """基于数据文本规则的行获取
 
     :param line: 语料文件中每行索引及其对应文本
-    :param text_row_style: 可能的语音文件名和转写文本间的分隔符
+    :param colum_sep: 可能的语音文件名和转写文本间的分隔符
     :return: 音频对应的转写文本
     """
     if colum_sep is None:

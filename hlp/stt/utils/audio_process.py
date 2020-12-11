@@ -1,5 +1,5 @@
 import tensorflow as tf
-from features import wav_to_feature
+from hlp.stt.utils.features import wav_to_feature
 
 
 # 基于语音路径序列，处理成模型的输入tensor,以及获取输入的时间步长
