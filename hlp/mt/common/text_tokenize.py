@@ -9,14 +9,14 @@
 - create_encoded_sentences(sentence, tokenizer, language): 编码并保存句子列表
 - decode_sentence(sentence, tokenizer, language): 解码句子
 """
-import sys
-sys.path.append('..')
-import config.get_config as _config
-import tensorflow_datasets as tfds
+import os
+
 import tensorflow as tf
 import numpy
 import json
-import os
+import tensorflow_datasets as tfds
+
+from hlp.mt.config import get_config as _config
 
 
 def _create_tokenizer_bpe(sentences, save_path, start_word=_config.start_word
@@ -122,7 +122,7 @@ def get_tokenizer(language, model_type="nmt"):
     支持的语言：en、zh
     """
     # 根据所选语言确定mode、save_path
-    mode,path = _get_mode_and_path_tokenize(language, model_type)
+    mode, path = _get_mode_and_path_tokenize(language, model_type)
     if language == "en":
         if mode == 'BPE':
             return _get_tokenizer_bpe(path)
@@ -324,3 +324,9 @@ def decode_sentence(sentence, tokenizer, language, model_type="nmt"):
             return _decode_sentence_tokenizer(sentence, tokenizer)
         elif mode == 'WORD':
             return _decode_sentence_tokenizer(sentence, tokenizer)
+
+
+def main():
+    """
+    模块方法测试
+    """

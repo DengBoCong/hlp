@@ -1,12 +1,12 @@
-from model import transformer as _transformer
-import tensorflow as tf
-from config import get_config as _config
-from common import tokenize
-from model import trainer
-from model import checkpoint
 import os
+
 from pathlib import Path
-import utils.optimizers as _optimizers
+import tensorflow as tf
+
+from hlp.mt.model import transformer as _transformer
+from hlp.mt.config import get_config as _config
+from hlp.mt.common import text_tokenize
+from hlp.utils import optimizers as _optimizers
 
 
 def get_model(vocab_size_source, vocab_size_target):
@@ -25,13 +25,13 @@ def load_model():
     """
     # 加载源语言字典
     print("正在加载源语言(%s)字典..." % _config.source_lang)
-    tokenizer_source, vocab_size_source = tokenize.get_tokenizer(language=_config.source_lang)
+    tokenizer_source, vocab_size_source = text_tokenize.get_tokenizer(language=_config.source_lang)
     print('源语言字典大小:%d' % vocab_size_source)
     print('源语言字典加载完毕！\n')
 
     # 加载目标语言字典
     print("正在加载目标语言(%s)字典..." % _config.target_lang)
-    tokenizer_target, vocab_size_target = tokenize.get_tokenizer(language=_config.target_lang)
+    tokenizer_target, vocab_size_target = text_tokenize.get_tokenizer(language=_config.target_lang)
     print('目标语言字典大小:%d' % vocab_size_target)
     print('目标语言字典加载完毕！\n')
 
@@ -40,10 +40,7 @@ def load_model():
     optimizer = tf.keras.optimizers.Adam(learning_rate, beta_1=0.9, beta_2=0.98, epsilon=1e-9)
     transformer = get_model(vocab_size_source, vocab_size_target)
 
-    # 加载检查点
-    checkpoint.load_checkpoint(transformer, optimizer)
-
-    return transformer, tokenizer_source, tokenizer_target
+    return transformer, optimizer, tokenizer_source, tokenizer_target
 
 
 def check_point(model_type='nmt'):

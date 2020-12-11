@@ -7,6 +7,7 @@
   "train_size": 0.8,
   "BEAM_SIZE": 3,
   "validation_data": "True",
+  "checkpoint_ensembling": "False",
   "num_validate_sentences": 200,
   "validation_freq": 1,
   "max_checkpoints_num": 5,

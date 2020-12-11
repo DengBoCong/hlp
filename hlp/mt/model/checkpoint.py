@@ -1,63 +1,50 @@
-import tensorflow as tf
-from config import get_config as _config
-import numpy as np
-from tensorflow.python.training.tracking import graph_view
-from model import nmt_model
-from model import trainer
 import os
 
+import tensorflow as tf
+from tensorflow.python.training.tracking import graph_view
 
-def load_checkpoint(transformer, optimizer):
-    """获取检查点"""
+from hlp.mt.config import get_config as _config
+from hlp.mt.model import nmt_model, trainer
+
+
+def load_checkpoint(transformer, optimizer, checkpoint_path=_config.checkpoint_path):
+    """
+    获取检查点
+    @param transformer: 模型实例
+    @param optimizer: 优化器
+    @param checkpoint_path:检查点的路径
+    """
     # 加载检查点
-    checkpoint_path = _config.checkpoint_path
+    checkpoint_dir = os.path.dirname(checkpoint_path)
     ckpt = tf.train.Checkpoint(transformer=transformer,
                                optimizer=optimizer)
-    ckpt_manager = tf.train.CheckpointManager(ckpt, checkpoint_path, max_to_keep=_config.max_checkpoints_num)
+    ckpt_manager = tf.train.CheckpointManager(ckpt, checkpoint_dir, max_to_keep=_config.max_checkpoints_num)
     if ckpt_manager.latest_checkpoint:
-        ckpt.restore(ckpt_manager.latest_checkpoint)
-        # ckpt.restore('./checkpoints/en_zh/ckpt-10')
-        print('已恢复至最新的检查点！')
+        # ckpt.restore(ckpt_manager.latest_checkpoint)
+        ckpt.restore(checkpoint_path)
+        # print('已恢复至最新的检查点！')
+        print('翻译模型使用检查点:'+checkpoint_path)
 
 
-# TODO:完成检查点平均方法
-def average_checkpoints_v1(checkpoints_dir
-                           , output_dir=_config.checkpoint_path + '_avg_ckpts'
-                           , max_count=8):
+def get_checkpoints_path(model_dir=_config.checkpoint_path):
     """
-
-    @param checkpoints_dir: 用来生成平均检查点的检查点路径
-    @param output_dir:输出平均检查点的路径
-    @param max_count:最大用来生成平均检查点的检查点数量
+    获取检查点路径列表
+    @param model_dir:
+    @return:
     """
-    # 获取检查点列表
-    checkpoint_state = tf.train.get_checkpoint_state(checkpoints_dir)
+    checkpoint_state = tf.train.get_checkpoint_state(model_dir)
     if checkpoint_state is None:
-        raise ValueError("No checkpoints found in %s" % checkpoints_dir)
-    checkpoints_path = checkpoint_state.all_model_checkpoint_paths
-    if len(checkpoints_path) > max_count:
-        checkpoints_path = checkpoints_path[-max_count:]
-    # 生成检查点变量列表
-    var_list = tf.contrib.framework.list_variables(checkpoints_path[0])
+        raise ValueError("未在目录：%s 中发现检查点！" % model_dir)
+    return checkpoint_state.all_model_checkpoint_paths
 
-    # 对checkpoint里的每个参数求平均
-    var_values, var_dtypes = {}, {}
 
-    for (name, shape) in var_list:
-        var_values[name] = np.zeros(shape)
+def checkpoint_ensembling(model, model_dir):
+    """
+    @param model:使用的模型对象
+    @param model_dir:包含用来生成检查点的目录
+    """
 
-    for ckpt in checkpoints_path:
-        reader = tf.contrib.framework.load_checkpoint(ckpt)
-        for name in var_values:
-            tensor = reader.get_tensor(name)
-            var_dtypes[name] = tensor.dtype
-            var_values[name] += tensor
-
-    for name in var_values:
-        var_values[name] /= len(checkpoints_path)
-
-    # 将平均后的参数保存在一个新的checkpoint里面
-    tf_vars = [tf.get_variable(name, dtype=var_dtypes[name], initializer=var_values[name]) for name in var_values]
+    pass
 
 
 def average_checkpoints(model_dir,
@@ -68,15 +55,15 @@ def average_checkpoints(model_dir,
     """Averages object-based checkpoints.
 
     Args:
-    model_dir: The directory containing checkpoints.
-    output_dir: The directory that will contain the averaged checkpoint.
+    model_dir: The directory containing checkpoints.包含检查点的目录
+    output_dir: The directory that will contain the averaged checkpoint.平均后检查点的保存路径
     trackables: A dictionary containing the trackable objects included in the
-      checkpoint.
-    max_count: The maximum number of checkpoints to average.
-    model_key: The key in :obj:`trackables` that references the model.
+      checkpoint.可追踪的对象的字典
+    max_count: The maximum number of checkpoints to average.用来生成平均检查点的最大检查点数量
+    model_key: The key in :obj:`trackables` that references the model.模型的key？
 
     Returns:
-    The path to the directory containing the averaged checkpoint.
+    The path to the directory containing the averaged checkpoint. 包含平均检查点的路径
 
     Raises:
     ValueError: if :obj:`output_dir` is the same as :obj:`model_dir`.
@@ -93,6 +80,7 @@ def average_checkpoints(model_dir,
     if model is None:
         raise ValueError("%s not found in trackables %s" % (model_key, trackables))
 
+    # 取检查点路径列表
     checkpoint_state = tf.train.get_checkpoint_state(model_dir)
     if checkpoint_state is None:
         raise ValueError("No checkpoints found in %s" % model_dir)
@@ -100,16 +88,16 @@ def average_checkpoints(model_dir,
     if len(checkpoints_path) > max_count:
         checkpoints_path = checkpoints_path[-max_count:]
 
-    average_checkpoints_into_layer(checkpoints_path, model, model_key)
+    _average_checkpoints_into_layer(checkpoints_path, model, model_key)
 
-    last_step = get_step_from_checkpoint_prefix(checkpoints_path[-1])
+    last_step = _get_step_from_checkpoint_prefix(checkpoints_path[-1])
     checkpoint = tf.train.Checkpoint(**trackables)
     new_checkpoint_manager = tf.train.CheckpointManager(checkpoint, output_dir, max_to_keep=None)
     new_checkpoint_manager.save(checkpoint_number=last_step)
     return output_dir
 
 
-def average_checkpoints_into_layer(checkpoints, layer, layer_prefix):
+def _average_checkpoints_into_layer(checkpoints, layer, layer_prefix):
     """Updates the layer weights with their average value in the checkpoints.
 
     Args:
@@ -135,7 +123,7 @@ def average_checkpoints_into_layer(checkpoints, layer, layer_prefix):
         variable.assign(tf.zeros_like(variable))
 
     # Get a map from variable names in the checkpoint to variables in the layer.
-    _, names_to_variables = get_variables_name_mapping(layer, root_key=layer_prefix)
+    _, names_to_variables = _get_variables_name_mapping(layer, root_key=layer_prefix)
 
     num_checkpoints = len(checkpoints)
     tf.get_logger().info("Averaging %d checkpoints...", num_checkpoints)
@@ -150,12 +138,12 @@ def average_checkpoints_into_layer(checkpoints, layer, layer_prefix):
             variable.assign_add(value / num_checkpoints)
 
 
-def get_step_from_checkpoint_prefix(prefix):
+def _get_step_from_checkpoint_prefix(prefix):
     """Extracts the training step from the checkpoint file prefix."""
     return int(prefix.split("-")[-1])
 
 
-def get_variables_name_mapping(root, root_key=None):
+def _get_variables_name_mapping(root, root_key=None):
     """Returns mapping between variables and their name in the object-based
     representation.
 
@@ -193,10 +181,10 @@ def main():
     output_dir = _config.checkpoint_path + '_avg_ckpts'
     if not os.path.exists(output_dir):
         os.makedirs(output_dir, exist_ok=True)
-    trainer.train(transformer
-                  , validation_data=_config.validate_from_txt
-                  , validation_split=1 - _config.train_size
-                  , validation_freq=_config.validation_freq)
+    trainer.train(transformer,
+                  validation_data=_config.validate_from_txt,
+                  validation_split=1 - _config.train_size,
+                  validation_freq=_config.validation_freq)
     path = average_checkpoints(model_dir, output_dir, trackables, max_count=8, model_key=model_key)
     print(path)
 
