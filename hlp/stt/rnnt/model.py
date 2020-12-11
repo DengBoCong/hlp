@@ -24,39 +24,26 @@ class TimeReduction(tf.keras.layers.Layer):
 
 # 编码器
 class Encoder(tf.keras.layers.Layer):
-    def __init__(self, configs, **kwargs):
+    def __init__(self, encoder_layers, encoder_lstm_units,
+                 proj_size, dropout, reduction_factor, **kwargs):
         super(Encoder, self).__init__(**kwargs)
 
-        self.bn = tf.keras.layers.BatchNormalization(
-            axis=-1,
-            momentum=0.99,
-            epsilon=0.001
-        )
+        self.bn = tf.keras.layers.BatchNormalization(axis=-1,
+                                                     momentum=0.99,
+                                                     epsilon=0.001)
 
-        self.encoder_layers = configs["encoder_layers"]
+        self.encoder_layers = encoder_layers
         self.lstm = []
         self.dense = []
         self.dropout = []
         self.ln = []
         for i in range(self.encoder_layers):
-            self.lstm.append(
-                tf.keras.layers.LSTM(
-                    configs["encoder_lstm_units"],
-                    return_sequences=True
-                )
-            )
-            self.dense.append(
-                tf.keras.layers.TimeDistributed(
-                    tf.keras.layers.Dense(configs["proj_size"])
-                )
-            )
-            self.dropout.append(
-                tf.keras.layers.Dropout(configs["dropout"])
-            )
-            self.ln.append(
-                tf.keras.layers.LayerNormalization()
-            )
-        self.reduction_factor = configs["reduction_factor"]
+            self.lstm.append(tf.keras.layers.LSTM(
+                encoder_lstm_units, return_sequences=True))
+            self.dense.append(tf.keras.layers.TimeDistributed(tf.keras.layers.Dense(proj_size)))
+            self.dropout.append(tf.keras.layers.Dropout(dropout))
+            self.ln.append(tf.keras.layers.LayerNormalization())
+        self.reduction_factor = reduction_factor
         self.tr = TimeReduction(self.reduction_factor)
 
     def call(self, inputs):
@@ -75,37 +62,25 @@ class Encoder(tf.keras.layers.Layer):
 
 # 预测网络
 class PredictionNetwork(tf.keras.layers.Layer):
-    def __init__(self, configs, **kwargs):
+    def __init__(self, vocab_size, embedding_size,
+                 prediction_network_layers, prediction_network_lstm_units,
+                 proj_size, dropout, **kwargs):
         super(PredictionNetwork, self).__init__(**kwargs)
 
-        self.embedding_layer = tf.keras.layers.Embedding(
-            configs["vocab_size"],
-            configs["embedding_size"]
-        )
+        self.embedding_layer = tf.keras.layers.Embedding(vocab_size, embedding_size)
 
-        self.prediction_network_layers = configs["prediction_network_layers"]
+        self.prediction_network_layers = prediction_network_layers
         self.lstm = []
         self.dense = []
         self.dropout = []
         self.ln = []
         for i in range(self.prediction_network_layers):
             self.lstm.append(
-                tf.keras.layers.LSTM(
-                    configs["prediction_network_lstm_units"],
-                    return_sequences=True
-                )
-            )
+                tf.keras.layers.LSTM(prediction_network_lstm_units, return_sequences=True))
             self.dense.append(
-                tf.keras.layers.TimeDistributed(
-                    tf.keras.layers.Dense(configs["proj_size"])
-                )
-            )
-            self.dropout.append(
-                tf.keras.layers.Dropout(configs["dropout"])
-            )
-            self.ln.append(
-                tf.keras.layers.LayerNormalization()
-            )
+                tf.keras.layers.TimeDistributed(tf.keras.layers.Dense(proj_size)))
+            self.dropout.append(tf.keras.layers.Dropout(dropout))
+            self.ln.append(tf.keras.layers.LayerNormalization())
 
     def call(self, inputs):
         x = self.embedding_layer(inputs)
@@ -120,22 +95,24 @@ class PredictionNetwork(tf.keras.layers.Layer):
 
 # RNNT，将Encoder和预测网络拼接
 class RNNT(tf.keras.Model):
-    def __init__(self, configs, **kwargs):
+    def __init__(self, encoder_layers, encoder_lstm_units,
+                 encoder_proj_size, encoder_dropout, reduction_factor,
+                 joint_dense_units, vocab_size,
+                 embedding_size,
+                 prediction_network_layers, prediction_network_lstm_units,
+                 pred_proj_size, pred_dropout, **kwargs):
         super(RNNT, self).__init__(**kwargs)
 
-        self.encoder = Encoder(configs)
-        self.prediction_network = PredictionNetwork(configs)
+        self.encoder = Encoder(encoder_layers, encoder_lstm_units,
+                               encoder_proj_size, encoder_dropout, reduction_factor)
+        self.prediction_network = PredictionNetwork(vocab_size,
+                                                    embedding_size,
+                                                    prediction_network_layers,
+                                                    prediction_network_lstm_units,
+                                                    pred_proj_size, pred_dropout)
         self.ds1 = tf.keras.layers.TimeDistributed(
-            tf.keras.layers.Dense(
-                configs["joint_dense_units"],
-                activation="tanh"
-            )
-        )
-        self.ds2 = tf.keras.layers.TimeDistributed(
-            tf.keras.layers.Dense(
-                configs["vocab_size"]
-            )
-        )
+            tf.keras.layers.Dense(joint_dense_units, activation="tanh"))
+        self.ds2 = tf.keras.layers.TimeDistributed(tf.keras.layers.Dense(vocab_size))
 
     def call(self, encoder_inputs, pre_inputs):
         encoder_outputs = self.encoder(encoder_inputs)
