@@ -103,3 +103,19 @@ def get_label_and_length(text_int_sequences_list, max_label_length):
     )
     target_length = tf.convert_to_tensor(target_length_list)
     return target_tensor_numpy, target_length
+
+
+# 初次训练时基于处理好的文本数据来获取文本数字list，并返回tokenizer对象以进行word_index和index_word的保存
+def tokenize(texts):
+    tokenizer = tf.keras.preprocessing.text.Tokenizer(filters='')  # 无过滤字符
+    tokenizer.fit_on_texts(texts)
+    text_int_sequences = tokenizer.texts_to_sequences(texts)  # 文本数字序列
+    return text_int_sequences, tokenizer
+
+
+def get_process_text_list(text_list, mode):
+    process_text_list = []
+    for text in text_list:
+        process_text_list.append(split_sentence(text, mode))
+    return process_text_list
+
