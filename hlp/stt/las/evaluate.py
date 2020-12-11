@@ -9,12 +9,12 @@ import os
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 import tensorflow as tf
-from hlp.stt.las.model import las, las_d_w
-from hlp.stt.las.config import config
 from hlp.utils import beamsearch
+from hlp.stt.las.config import config
+from hlp.stt.las.model import las, las_d_w
 from hlp.stt.utils.metric import lers
-from hlp.stt.las.data_processing import load_dataset
-from hlp.stt.las.data_processing.generator import data_generator
+from hlp.stt.utils import load_dataset
+from hlp.stt.utils.generator import test_generator
 
 if __name__ == "__main__":
 
@@ -25,6 +25,9 @@ if __name__ == "__main__":
     # 测试集文本标签
     label_path = config.test_label_path
 
+    # 测试集数据存放路径，包括音频文件路径和文本标签文件路径
+    data_path = [wav_path, label_path]
+    
     # 尝试实验不同大小的数据集
     test_num = config.test_num
 
@@ -68,18 +71,15 @@ if __name__ == "__main__":
     labels_list = []
 
     # 加载测试集数据生成器
-    test_data = load_dataset.load_data(dataset_name, wav_path, label_path, "test", num_examples)
+    test_data = load_dataset.load_data(dataset_name, data_path, num_examples)
     batchs = len(test_data[0]) // batch_size
     print("构建数据生成器......")
-    test_data_generator = data_generator(
+    test_data_generator = test_generator(
         test_data,
-        "test",
         batchs,
         batch_size,
         audio_feature_type,
-        dataset_information["max_input_length"],
-        dataset_information["max_label_length"]
-    )
+        dataset_information["max_input_length"])
 
     word_index = dataset_information["word_index"]
     index_word = dataset_information["index_word"]
@@ -88,7 +88,7 @@ if __name__ == "__main__":
         beam_size=config.beam_size,
         min_score=0)
 
-    for batch, (inp, targ) in zip(range(1, batchs + 1), test_data_generator):
+    for batch, (inp, _, targ) in zip(range(1, batchs + 1), test_data_generator):
         hidden = model.initialize_hidden_state()
         dec_input = tf.expand_dims([word_index['<start>']] * batch_size, 1)
         beam_search_container.reset(dec_inputs=dec_input)

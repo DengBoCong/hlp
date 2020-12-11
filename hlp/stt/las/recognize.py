@@ -15,32 +15,7 @@ import tensorflow as tf
 from hlp.stt.las.config import config
 from hlp.stt.las.model import las, las_d_w
 from hlp.stt.utils.features import wav_to_feature
-
-
-def record_audio(wave_out_path, record_second):
-    CHUNK = config.CHUNK
-    FORMAT = pyaudio.paInt16
-    CHANNELS = config.CHANNELS
-    RATE = config.RATE
-    p = pyaudio.PyAudio()
-    stream = p.open(format=FORMAT,
-                    channels=CHANNELS,
-                    rate=RATE,
-                    input=True,
-                    frames_per_buffer=CHUNK)
-    wf = wave.open(wave_out_path, 'wb')
-    wf.setnchannels(CHANNELS)
-    wf.setsampwidth(p.get_sample_size(FORMAT))
-    wf.setframerate(RATE)
-    print("* recording")
-    for i in tqdm(range(0, int(RATE / CHUNK * record_second))):
-        data = stream.read(CHUNK)
-        wf.writeframes(data)
-    print("* done recording")
-    stream.stop_stream()
-    stream.close()
-    p.terminate()
-    wf.close()
+from hlp.stt.utils.record import record
 
 
 def recognition(wav_path):
@@ -58,7 +33,7 @@ def recognition(wav_path):
     max_label_length = dataset_information["max_label_length"]
     index_word = dataset_information["index_word"]
     optimizer = tf.keras.optimizers.Adam()
-    
+
     # 选择模型类型
     if model_type == "las":
         model = las.las_model(vocab_tar_size, embedding_dim, units, BATCH_SIZE)
@@ -93,11 +68,10 @@ def recognition(wav_path):
             result += index_word[idx]  # 目标句子
         # 预测的 ID 被输送回模型
         dec_input = tf.expand_dims(predicted_ids, 1)
-    print('****************************')
-    print('Speech recognition results=====================: {}'.format(result))
+    print('Speech recognition results: {}'.format(result))
 
 
 if __name__ == "__main__":
-    record_audio("output.wav", record_second=2)
-    file_path = ".\\output.wav"
+    record("record.wav", 2)
+    file_path = ".\\record.wav"
     recognition(file_path)
