@@ -6,7 +6,7 @@ import tensorflow as tf
 from matplotlib import pyplot as plt
 
 from hlp.stt.ds2.model import DS2
-from hlp.stt.ds2.util import get_config, get_dataset_info, compute_ctc_input_length, compute_metric, earlyStopCheck
+from hlp.stt.ds2.util import get_config, get_dataset_info, compute_ctc_input_length, compute_metric, can_stop
 from hlp.stt.utils.generator import train_generator, test_generator
 from hlp.stt.utils.load_dataset import load_data
 from hlp.stt.utils.text_process import vectorize_texts
@@ -78,9 +78,9 @@ def train(model, optimizer,
             print("平均LER:", lers)
             print("规范化平均LER:", norm_lers)
             if len(history["wers"]) >= stop_early_limits:
-                if earlyStopCheck(history["wers"][-stop_early_limits:]) \
-                        or earlyStopCheck(history["lers"][-stop_early_limits:]) \
-                        or earlyStopCheck(history["norm_lers"][-stop_early_limits:]):
+                if can_stop(history["wers"][-stop_early_limits:]) \
+                        or can_stop(history["lers"][-stop_early_limits:]) \
+                        or can_stop(history["norm_lers"][-stop_early_limits:]):
                     print("指标反弹，停止训练！")
                     break
 
@@ -154,9 +154,9 @@ if __name__ == "__main__":
 
     # 构建训练数据生成器
     train_batch_size = configs["train"]["batch_size"]
-    train_batchs = ceil(len(train_audio_path_list) / train_batch_size)
+    train_batches = ceil(len(train_audio_path_list) / train_batch_size)
     train_data_generator = train_generator(train_data,
-                                           train_batchs,
+                                           train_batches,
                                            train_batch_size,
                                            audio_feature_type,
                                            max_input_length,
@@ -164,9 +164,9 @@ if __name__ == "__main__":
 
     # 构建验证数据生成器
     valid_batch_size = configs["valid"]["batch_size"]
-    valid_batchs = ceil(len(valid_audio_data_path_list) / valid_batch_size)
+    valid_batches = ceil(len(valid_audio_data_path_list) / valid_batch_size)
     valid_data_generator = test_generator(valid_data,
-                                          valid_batchs,
+                                          valid_batches,
                                           valid_batch_size,
                                           audio_feature_type,
                                           max_input_length)
@@ -200,7 +200,7 @@ if __name__ == "__main__":
     index_word = dataset_info["index_word"]
 
     # 训练
-    history = train(model, optimizer, train_data_generator, train_batchs, epochs, valid_data_generator, valid_batchs,
+    history = train(model, optimizer, train_data_generator, train_batches, epochs, valid_data_generator, valid_batches,
                     valid_epoch_freq, stop_early_limits, text_process_mode, index_word, manager, save_epoch_freq)
 
     # 绘制history并保存
