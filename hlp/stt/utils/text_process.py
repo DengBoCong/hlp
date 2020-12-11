@@ -5,7 +5,7 @@ import tensorflow as tf
 def split_sentence(line, mode):
     """此方法依据文本是中文文本还是英文文本，若为英文文本是按字符切分还是按单词切分
 
-    :param text: 语料文件中每行对应文本
+    :param line: 语料文件中每行对应文本
     :param mode: 语料文本的切分方法
     :return: 切分后的文本
     """

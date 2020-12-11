@@ -8,7 +8,6 @@ def load_data(dataset_name, data_path, num_examples):
 
     :param dataset_name: 数据集名字
     :param data_path: 数据集路径
-    :param text_row_style: 文本每行的格式
     :param num_examples: 数据量
     :return: 语音文件路径list和对应转写文本list
     """
