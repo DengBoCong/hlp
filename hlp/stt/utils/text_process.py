@@ -118,27 +118,27 @@ def tokenize(texts):
 
 
 # 将输出token id序列解码为token序列
-def id_to_token(seq, index_word, mode):
+def int_to_text_sequence(seq, index_word, mode):
     if mode.lower() == "cn":
-        return id_to_token_cn(seq, index_word)
+        return int_to_text_sequence_cn(seq, index_word)
     elif mode.lower() == "en_word":
-        return id_to_token_en_word(seq, index_word)
+        return int_to_text_sequence_en_word(seq, index_word)
     elif mode.lower() == "en_char":
-        return id_to_token_en_char(seq, index_word)
+        return int_to_text_sequence_en_char(seq, index_word)
 
 
-def id_to_token_cn(seq, index_word):
+def int_to_text_sequence_cn(ids, index_word):
     result = []
-    for i in seq:
+    for i in ids:
         if 1 <= i <= len(index_word):
             word = index_word[str(i)]
             result.append(word)
     return "".join(result).strip()
 
 
-def id_to_token_en_word(seq, index_word):
+def int_to_text_sequence_en_word(ids, index_word):
     result = []
-    for i in seq:
+    for i in ids:
         if 1 <= i <= (len(index_word)):
             word = index_word[str(i)]
             result.append(word)
@@ -146,9 +146,9 @@ def id_to_token_en_word(seq, index_word):
     return "".join(result).strip()
 
 
-def id_to_token_en_char(seq, index_word):
+def int_to_text_sequence_en_char(ids, index_word):
     result = []
-    for i in seq:
+    for i in ids:
         if 1 <= i <= (len(index_word)):
             word = index_word[str(i)]
             if word != "<space>":
