@@ -1,15 +1,9 @@
-'''
-Author: PengKang6
-Description: 项目相关util
-'''
+
 import json
-import sys
 
 import tensorflow as tf
-from model import decode_output
-
-sys.path.append("..")
-from utils.metric import wers, lers
+from hlp.stt.ds2.model import decode_output
+from hlp.stt.utils.metric import wers, lers
 
 
 # 获取配置文件

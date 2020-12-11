@@ -1,18 +1,13 @@
 import os
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
-
 import time
 from matplotlib import pyplot as plt
 from math import ceil
 import tensorflow as tf
-from model import DS2
-from util import get_config, get_dataset_information, compute_ctc_input_length, compute_metric, earlyStopCheck
-
-import sys
-sys.path.append("..")
-from utils.load_dataset import load_data
-from utils.text_process import build_text_int_sequences
-from utils.generator import train_generator, test_generator
+from hlp.stt.ds2.model import DS2
+from hlp.stt.ds2.util import get_config, get_dataset_information, compute_ctc_input_length, compute_metric, earlyStopCheck
+from hlp.stt.utils.load_dataset import load_data
+from hlp.stt.utils.text_process import build_text_int_sequences
+from hlp.stt.utils.generator import train_generator, test_generator
 
 
 def train_step(model, optimizer, input_tensor, target_tensor, input_length, target_length):

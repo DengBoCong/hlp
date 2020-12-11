@@ -1,19 +1,10 @@
-'''
-Author: PengKang6
-Description: 模型训练前将音频和语料进行预处理
-'''
-import os
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 import json
 
-from util import get_config
-
-import sys
-sys.path.append("..")
-from utils.load_dataset import load_data
-from utils.audio_process import get_max_audio_length
-from utils.text_process import get_process_text_list, get_max_label_length, tokenize
+from hlp.stt.ds2.util import get_config
+from hlp.stt.utils.load_dataset import load_data
+from hlp.stt.utils.audio_process import get_max_audio_length
+from hlp.stt.utils.text_process import get_process_text_list, get_max_label_length, tokenize
 
 
 if __name__ == "__main__":
