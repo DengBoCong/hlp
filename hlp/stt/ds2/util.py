@@ -2,7 +2,7 @@
 import json
 
 import tensorflow as tf
-from hlp.stt.utils.text_process import id_to_token
+from hlp.stt.utils.text_process import int_to_text_sequence
 from hlp.stt.utils.metric import wers, lers
 
 
@@ -61,7 +61,7 @@ def compute_metric(model, test_data_generator, batchs, text_process_mode, index_
 
         # 解码
         for i in range(len(results_int_list)):
-            str = id_to_token(results_int_list[i], index_word, text_process_mode).strip()
+            str = int_to_text_sequence(results_int_list[i], index_word, text_process_mode).strip()
             results.append(str)
 
         # 通过wer、ler指标评价模型

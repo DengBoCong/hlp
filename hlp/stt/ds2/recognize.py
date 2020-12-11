@@ -1,7 +1,7 @@
 import tensorflow as tf
 
 from hlp.stt.ds2.model import DS2
-from hlp.stt.utils.text_process import id_to_token
+from hlp.stt.utils.text_process import int_to_text_sequence
 from hlp.stt.ds2.util import get_config, get_dataset_info, compute_ctc_input_length
 from hlp.stt.utils.features import wav_to_feature
 from hlp.stt.utils.record import record
@@ -65,5 +65,5 @@ if __name__ == "__main__":
                                                  greedy=True)
 
             # 解码
-            txt = id_to_token(output[0][0].numpy()[0], index_word, mode)
+            txt = int_to_text_sequence(output[0][0].numpy()[0], index_word, mode)
             print("Output:" + txt)
