@@ -117,3 +117,43 @@ def tokenize(texts):
     return text_int_sequences, tokenizer
 
 
+# 将输出token id序列解码为token序列
+def id_to_token(seq, index_word, mode):
+    if mode.lower() == "cn":
+        return id_to_token_cn(seq, index_word)
+    elif mode.lower() == "en_word":
+        return id_to_token_en_word(seq, index_word)
+    elif mode.lower() == "en_char":
+        return id_to_token_en_char(seq, index_word)
+
+
+def id_to_token_cn(seq, index_word):
+    result = []
+    for i in seq:
+        if 1 <= i <= len(index_word):
+            word = index_word[str(i)]
+            result.append(word)
+    return "".join(result).strip()
+
+
+def id_to_token_en_word(seq, index_word):
+    result = []
+    for i in seq:
+        if 1 <= i <= (len(index_word)):
+            word = index_word[str(i)]
+            result.append(word)
+            result.append(" ")
+    return "".join(result).strip()
+
+
+def id_to_token_en_char(seq, index_word):
+    result = []
+    for i in seq:
+        if 1 <= i <= (len(index_word)):
+            word = index_word[str(i)]
+            if word != "<space>":
+                result.append(word)
+            else:
+                result.append(" ")
+    return "".join(result).strip()
+

@@ -78,9 +78,9 @@ def train(model, optimizer,
             print("平均LER:", lers)
             print("规范化平均LER:", norm_lers)
             if len(history["wers"]) >= stop_early_limits:
-                if earlyStopCheck(history["wers"][-stop_early_limits:]) or earlyStopCheck(
-                        history["lers"][-stop_early_limits:]) or earlyStopCheck(
-                    history["norm_lers"][-stop_early_limits:]):
+                if earlyStopCheck(history["wers"][-stop_early_limits:]) \
+                        or earlyStopCheck(history["lers"][-stop_early_limits:]) \
+                        or earlyStopCheck(history["norm_lers"][-stop_early_limits:]):
                     print("指标反弹，停止训练！")
                     break
 

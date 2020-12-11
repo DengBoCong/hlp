@@ -1,10 +1,10 @@
-
 import tensorflow as tf
-from hlp.stt.ds2.model import DS2, decode_output
+
+from hlp.stt.ds2.model import DS2
+from hlp.stt.utils.text_process import id_to_token
 from hlp.stt.ds2.util import get_config, get_dataset_info, compute_ctc_input_length
 from hlp.stt.utils.features import wav_to_feature
 from hlp.stt.utils.record import record
-
 
 if __name__ == "__main__":
     configs = get_config()
@@ -25,11 +25,9 @@ if __name__ == "__main__":
 
     # 加载模型检查点
     checkpoint = tf.train.Checkpoint(model=model, optimizer=optimizer)
-    manager = tf.train.CheckpointManager(
-        checkpoint,
-        directory=configs["checkpoint"]['directory'],
-        max_to_keep=configs["checkpoint"]['max_to_keep']
-    )
+    manager = tf.train.CheckpointManager(checkpoint,
+                                         directory=configs["checkpoint"]['directory'],
+                                         max_to_keep=configs["checkpoint"]['max_to_keep'])
     if manager.latest_checkpoint:
         checkpoint.restore(manager.latest_checkpoint)
 
@@ -50,26 +48,22 @@ if __name__ == "__main__":
                 break
             # 录音
             record(record_path, record_duration)
-            # record_path = "./1088-134315-0000.flac"
 
             # 加载录音数据并预测
             x_test = wav_to_feature(record_path, audio_feature_type)
-            x_test_input_tensor = tf.keras.preprocessing.sequence.pad_sequences(
-                [x_test],
-                padding='post',
-                maxlen=max_input_length,
-                dtype='float32'
-            )
+            x_test_input_tensor = tf.keras.preprocessing.sequence.pad_sequences([x_test],
+                                                                                padding='post',
+                                                                                maxlen=max_input_length,
+                                                                                dtype='float32')
             y_test_pred = model(x_test_input_tensor)
-            ctc_input_length = compute_ctc_input_length(x_test_input_tensor.shape[1], y_test_pred.shape[1],
+            ctc_input_length = compute_ctc_input_length(x_test_input_tensor.shape[1],
+                                                        y_test_pred.shape[1],
                                                         tf.convert_to_tensor([[len(x_test)]]))
 
-            output = tf.keras.backend.ctc_decode(
-                y_pred=y_test_pred,
-                input_length=tf.reshape(ctc_input_length, [ctc_input_length.shape[0]]),
-                greedy=True
-            )
+            output = tf.keras.backend.ctc_decode(y_pred=y_test_pred,
+                                                 input_length=tf.reshape(ctc_input_length, [ctc_input_length.shape[0]]),
+                                                 greedy=True)
 
             # 解码
-            str = decode_output(output[0][0].numpy()[0], index_word, mode)
-            print("Output:" + str)
+            txt = id_to_token(output[0][0].numpy()[0], index_word, mode)
+            print("Output:" + txt)
