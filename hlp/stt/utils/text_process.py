@@ -1,20 +1,14 @@
-'''
-Author: PengKang6
-Description: 文本的处理相关方法
-'''
-
 import re
-
 import tensorflow as tf
 
 
 def split_sentence(line, mode):
-    '''此方法依据文本是中文文本还是英文文本，若为英文文本是按字符切分还是按单词切分
+    """此方法依据文本是中文文本还是英文文本，若为英文文本是按字符切分还是按单词切分
 
     :param text: 语料文件中每行对应文本
     :param mode: 语料文本的切分方法
     :return: 切分后的文本
-    '''
+    """
     if mode.lower() == "cn":
         return _split_sentence_cn(line)
     elif mode.lower() == "en_word":

@@ -1,7 +1,3 @@
-'''
-Author: PengKang6
-Description: 本模块主要作用
-'''
 import tensorflow as tf
 from features import wav_to_feature
 
