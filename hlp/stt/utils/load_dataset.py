@@ -1,20 +1,16 @@
-'''
-Author: PengKang6
-Description: 加载数据集, 获取音频路径list和转写文本list
-'''
+
 import os
 
 
 # 获得语音文件名和转写列表
 def load_data(dataset_name, data_path, num_examples):
-    '''加载数据集
-    
+    """加载数据集
+
     :param dataset_name: 数据集名字
     :param data_path: 数据集路径
-    :param text_row_style: 文本每行的格式
     :param num_examples: 数据量
     :return: 语音文件路径list和对应转写文本list
-    '''
+    """
     if dataset_name.lower() == "librispeech":
         audio_data_path_list, text_list = get_data_librispeech(data_path, num_examples)
     elif dataset_name.lower() == "thchs30":
@@ -24,12 +20,12 @@ def load_data(dataset_name, data_path, num_examples):
 
 
 def get_text(line, colum_sep=" "):
-    '''基于数据文本规则的行获取
+    """基于数据文本规则的行获取
 
     :param line: 语料文件中每行索引及其对应文本
-    :param text_row_style: 可能的语音文件名和转写文本间的分隔符
+    :param colum_sep: 可能的语音文件名和转写文本间的分隔符
     :return: 音频对应的转写文本
-    '''
+    """
     if colum_sep is None:
         return line.strip().lower()
 
@@ -118,3 +114,5 @@ if __name__ == "__main__":
     audio_fils, texts = get_data_librispeech(dir_librispeech)
     print(audio_fils)
     print(texts)
+
+

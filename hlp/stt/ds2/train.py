@@ -1,18 +1,15 @@
 import os
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
-
 import time
-from matplotlib import pyplot as plt
 from math import ceil
-import tensorflow as tf
-from model import DS2
-from util import get_config, get_dataset_information, compute_ctc_input_length, compute_metric, earlyStopCheck
 
-import sys
-sys.path.append("..")
-from utils.load_dataset import load_data
-from utils.text_process import build_text_int_sequences
-from utils.generator import train_generator, test_generator
+import tensorflow as tf
+from matplotlib import pyplot as plt
+
+from hlp.stt.ds2.model import DS2
+from hlp.stt.ds2.util import get_config, get_dataset_info, compute_ctc_input_length, compute_metric, earlyStopCheck
+from hlp.stt.utils.generator import train_generator, test_generator
+from hlp.stt.utils.load_dataset import load_data
+from hlp.stt.utils.text_process import vectorize_texts
 
 
 def train_step(model, optimizer, input_tensor, target_tensor, input_length, target_length):
@@ -21,12 +18,10 @@ def train_step(model, optimizer, input_tensor, target_tensor, input_length, targ
         y_pred = model(input_tensor)
         y_true = target_tensor
         input_length = compute_ctc_input_length(input_tensor.shape[1], y_pred.shape[1], input_length)
-        loss = tf.keras.backend.ctc_batch_cost(
-            y_true=y_true,
-            y_pred=y_pred,
-            input_length=input_length,
-            label_length=target_length
-        )
+        loss = tf.keras.backend.ctc_batch_cost(y_true=y_true,
+                                               y_pred=y_pred,
+                                               input_length=input_length,
+                                               label_length=target_length)
 
         """
         mask = tf.math.logical_not(tf.math.equal(y_true, 0))
@@ -39,8 +34,10 @@ def train_step(model, optimizer, input_tensor, target_tensor, input_length, targ
     return loss
 
 
-def train(model, optimizer, train_data_generator, train_batchs, epochs, valid_data_generator, valid_batchs,
-          valid_epoch_freq, stop_early_limits, text_process_mode, index_word, manager, save_epoch_freq):
+def train(model, optimizer,
+          train_data_generator, train_batchs, epochs,
+          valid_data_generator, valid_batchs, valid_epoch_freq,
+          stop_early_limits, text_process_mode, index_word, manager, save_epoch_freq):
     # 构建history
     history = {"loss": [], "wers": [], "lers": [], "norm_lers": []}
 
@@ -63,8 +60,8 @@ def train(model, optimizer, train_data_generator, train_batchs, epochs, valid_da
         epoch_end = time.time()
         # 打印epoch的信息
         print("batchs: %d - epoch_time: %ds %dms/batch - loss: %.4f\n" % (
-        train_batchs, epoch_end - epoch_start, (epoch_end - epoch_start) * 1000 / train_batchs,
-        total_loss / train_batchs))
+            train_batchs, epoch_end - epoch_start, (epoch_end - epoch_start) * 1000 / train_batchs,
+            total_loss / train_batchs))
 
         # 将损失写入history
         history["loss"].append(total_loss / train_batchs)
@@ -81,9 +78,9 @@ def train(model, optimizer, train_data_generator, train_batchs, epochs, valid_da
             print("平均LER:", lers)
             print("规范化平均LER:", norm_lers)
             if len(history["wers"]) >= stop_early_limits:
-                if earlyStopCheck(history["wers"][-stop_early_limits:]) or earlyStopCheck(
-                        history["lers"][-stop_early_limits:]) or earlyStopCheck(
-                        history["norm_lers"][-stop_early_limits:]):
+                if earlyStopCheck(history["wers"][-stop_early_limits:]) \
+                        or earlyStopCheck(history["lers"][-stop_early_limits:]) \
+                        or earlyStopCheck(history["norm_lers"][-stop_early_limits:]):
                     print("指标反弹，停止训练！")
                     break
 
@@ -121,7 +118,7 @@ def plot_history(history, valid_epoch_freq, history_img_path):
 if __name__ == "__main__":
     # 获取训练配置和语料信息
     configs = get_config()
-    dataset_information = get_dataset_information(configs["preprocess"]["dataset_information_path"])
+    dataset_info = get_dataset_info(configs["preprocess"]["dataset_information_path"])
 
     epochs = configs["train"]["train_epochs"]
     data_path = configs["train"]["data_path"]
@@ -129,7 +126,7 @@ if __name__ == "__main__":
     dataset_name = configs["preprocess"]["dataset_name"]
 
     # 加载训练数据
-    train_audio_data_path_list, train_text_list = load_data(dataset_name, data_path, num_examples)
+    train_audio_path_list, train_text_list = load_data(dataset_name, data_path, num_examples)
 
     valid_data_path = configs["valid"]["data_path"]
     # 是否含有验证valid数据集,若有则加载，若没有，则将train数据按比例切分一部分为valid数据
@@ -140,42 +137,39 @@ if __name__ == "__main__":
                                                                 valid_num_examples)
     else:
         valid_percent = configs["valid"]["valid_percent"]
-        pos = ceil(len(train_audio_data_path_list) * valid_percent / 100)
-        valid_audio_data_path_list, valid_text_list = train_audio_data_path_list[-pos:], train_text_list[-pos:]
-        train_audio_data_path_list, train_text_list = train_audio_data_path_list[:-pos], train_text_list[:-pos]
+        pos = ceil(len(train_audio_path_list) * valid_percent / 100)
+        valid_audio_data_path_list, valid_text_list = train_audio_path_list[-pos:], train_text_list[-pos:]
+        train_audio_path_list, train_text_list = train_audio_path_list[:-pos], train_text_list[:-pos]
 
     # 构建train_data和valid_data
     text_process_mode = configs["preprocess"]["text_process_mode"]
-    word_index = dataset_information["word_index"]
-    train_text_int_sequences_list = build_text_int_sequences(train_text_list, text_process_mode, word_index)
-    train_data = (train_audio_data_path_list, train_text_int_sequences_list)
+    word_index = dataset_info["word_index"]
+    train_text_int_sequences_list = vectorize_texts(train_text_list, text_process_mode, word_index)
+    train_data = (train_audio_path_list, train_text_int_sequences_list)
     valid_data = (valid_audio_data_path_list, valid_text_list)
 
     audio_feature_type = configs["other"]["audio_feature_type"]
-    max_input_length = dataset_information["max_input_length"]
-    max_label_length = dataset_information["max_label_length"]
+    max_input_length = dataset_info["max_input_length"]
+    max_label_length = dataset_info["max_label_length"]
 
     # 构建训练数据生成器
     train_batch_size = configs["train"]["batch_size"]
-    train_batchs = ceil(len(train_audio_data_path_list) / train_batch_size)
-    train_data_generator = train_generator(
-        train_data,
-        train_batchs,
-        train_batch_size,
-        audio_feature_type,
-        max_input_length,
-        max_label_length
-    )
+    train_batchs = ceil(len(train_audio_path_list) / train_batch_size)
+    train_data_generator = train_generator(train_data,
+                                           train_batchs,
+                                           train_batch_size,
+                                           audio_feature_type,
+                                           max_input_length,
+                                           max_label_length)
+
     # 构建验证数据生成器
     valid_batch_size = configs["valid"]["batch_size"]
     valid_batchs = ceil(len(valid_audio_data_path_list) / valid_batch_size)
-    valid_data_generator = test_generator(
-        valid_data,
-        valid_batchs,
-        valid_batch_size,
-        audio_feature_type,
-        max_input_length
-    )
+    valid_data_generator = test_generator(valid_data,
+                                          valid_batchs,
+                                          valid_batch_size,
+                                          audio_feature_type,
+                                          max_input_length)
 
     # 加载模型
     conv_layers = configs["model"]["conv_layers"]
@@ -185,7 +179,7 @@ if __name__ == "__main__":
     bi_gru_layers = configs["model"]["bi_gru_layers"]
     gru_units = configs["model"]["gru_units"]
     fc_units = configs["model"]["fc_units"]
-    dense_units = dataset_information["vocab_size"] + 2
+    dense_units = dataset_info["vocab_size"] + 2
 
     model = DS2(conv_layers, filters, kernel_size, strides, bi_gru_layers, gru_units, fc_units, dense_units)
     optimizer = tf.keras.optimizers.Adam()
@@ -194,18 +188,17 @@ if __name__ == "__main__":
     checkpoint = tf.train.Checkpoint(model=model, optimizer=optimizer)
     if not os.path.exists(configs["checkpoint"]['directory']):
         os.mkdir(configs["checkpoint"]['directory'])
-    manager = tf.train.CheckpointManager(
-        checkpoint,
-        directory=configs["checkpoint"]['directory'],
-        max_to_keep=configs["checkpoint"]['max_to_keep']
-    )
+    manager = tf.train.CheckpointManager(checkpoint,
+                                         directory=configs["checkpoint"]['directory'],
+                                         max_to_keep=configs["checkpoint"]['max_to_keep'])
     save_epoch_freq = configs["checkpoint"]["save_epoch_freq"]
     if manager.latest_checkpoint:
         checkpoint.restore(manager.latest_checkpoint)
 
     valid_epoch_freq = configs["valid"]["valid_epoch_freq"]
     stop_early_limits = configs["valid"]["stop_early_limits"]
-    index_word = dataset_information["index_word"]
+    index_word = dataset_info["index_word"]
+
     # 训练
     history = train(model, optimizer, train_data_generator, train_batchs, epochs, valid_data_generator, valid_batchs,
                     valid_epoch_freq, stop_early_limits, text_process_mode, index_word, manager, save_epoch_freq)

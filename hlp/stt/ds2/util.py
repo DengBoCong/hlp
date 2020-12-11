@@ -1,15 +1,9 @@
-'''
-Author: PengKang6
-Description: 项目相关util
-'''
+
 import json
-import sys
 
 import tensorflow as tf
-from model import decode_output
-
-sys.path.append("..")
-from utils.metric import wers, lers
+from hlp.stt.utils.text_process import int_to_text_sequence
+from hlp.stt.utils.metric import wers, lers
 
 
 # 获取配置文件
@@ -20,7 +14,7 @@ def get_config():
 
 
 # 获取预处理得到的语料集信息
-def get_dataset_information(path):
+def get_dataset_info(path):
     with open(path, "r", encoding="utf-8") as f:
         dataset_information = json.load(f)
     return dataset_information
@@ -67,7 +61,7 @@ def compute_metric(model, test_data_generator, batchs, text_process_mode, index_
 
         # 解码
         for i in range(len(results_int_list)):
-            str = decode_output(results_int_list[i], index_word, text_process_mode).strip()
+            str = int_to_text_sequence(results_int_list[i], index_word, text_process_mode).strip()
             results.append(str)
 
         # 通过wer、ler指标评价模型
