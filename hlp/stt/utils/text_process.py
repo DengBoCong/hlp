@@ -23,28 +23,28 @@ def get_max_label_length(text_int_sequences):
     return max(len(seq) for seq in text_int_sequences)
 
 
-def build_text_int_sequences(sentences, mode, word_index):
+def vectorize_texts(sentences, mode, word_index):
     # 基于文本按照某种mode切分文本
     splitted_sentences = split_sentences(sentences, mode)
 
     # 基于预处理时dataset_information中写入的word_index构建文本整形序列list
-    text_int_sequences_list = get_text_int_sequences(splitted_sentences, word_index)
+    text_int_sequences_list = text_to_int_sequences(splitted_sentences, word_index)
 
     return text_int_sequences_list
 
 
 # 基于word_index和切割好的文本list得到数字序列list
-def get_text_int_sequences(splitted_sentences, word_index):
+def text_to_int_sequences(splitted_sentences, word_index):
     text_int_sequences = []
-    for process_text in splitted_sentences:
-        text_int_sequences.append(text_to_int_sequence(process_text, word_index))
+    for splitted_sentence in splitted_sentences:
+        text_int_sequences.append(text_to_int_sequence(splitted_sentence, word_index))
     return text_int_sequences
 
 
 # 对单行文本进行process_text转token整形序列
-def text_to_int_sequence(process_text, word_index):
+def text_to_int_sequence(splitted_sentence, word_index):
     int_sequence = []
-    for c in process_text.split(" "):
+    for c in splitted_sentence.split(" "):
         int_sequence.append(int(word_index[c]))
     return int_sequence
 

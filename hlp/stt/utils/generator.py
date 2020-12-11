@@ -7,6 +7,16 @@ from stt.utils.text_process import get_label_and_length
 # train数据生成器
 def train_generator(data, batchs, batch_size, audio_feature_type,
                     max_input_length, max_label_length):
+    """
+
+    :param data: 语音文件列表，向量化转写列表
+    :param batchs:
+    :param batch_size:
+    :param audio_feature_type:
+    :param max_input_length:
+    :param max_label_length:
+    :return:
+    """
     audio_path_list, text_int_sequences_list = data
 
     # generator只能进行一次生成，故需要while True来进行多个epoch的数据生成

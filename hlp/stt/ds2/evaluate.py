@@ -2,14 +2,14 @@
 import tensorflow as tf
 from math import ceil
 from hlp.stt.ds2.model import DS2
-from hlp.stt.ds2.util import get_config, get_dataset_information, compute_metric
+from hlp.stt.ds2.util import get_config, get_dataset_info, compute_metric
 from hlp.stt.utils.load_dataset import load_data
 from hlp.stt.utils.generator import test_generator
 
 
 if __name__ == "__main__":
     configs = get_config()
-    dataset_information = get_dataset_information(configs["preprocess"]["dataset_information_path"])
+    dataset_information = get_dataset_info(configs["preprocess"]["dataset_information_path"])
 
     # 获取模型配置，加载模型
     conv_layers = configs["model"]["conv_layers"]

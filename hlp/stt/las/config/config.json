@@ -44,7 +44,7 @@
         "file_name": "output.wav"
     },
     "data": {
-        "dataset_information_path": "./ds_info.json",
+        "dataset_info_path": "./ds_info.json",
         "dataset_name": "number",
         "n_mfcc": 39,
         "audio_feature_type": "mfcc"
