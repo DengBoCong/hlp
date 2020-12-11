@@ -40,13 +40,13 @@ if __name__ == "__main__":
     test_data = load_data(dataset_name, test_data_path, num_examples)
 
     batch_size = configs["test"]["batch_size"]
-    batchs = ceil(len(test_data[0]) / batch_size)
+    batches = ceil(len(test_data[0]) / batch_size)
     audio_feature_type = configs["other"]["audio_feature_type"]
     max_input_length = dataset_info["max_input_length"]
 
     # 构建测试数据生成器
     test_data_generator = test_generator(test_data,
-                                         batchs,
+                                         batches,
                                          batch_size,
                                          audio_feature_type,
                                          max_input_length)
@@ -56,7 +56,7 @@ if __name__ == "__main__":
     text_process_mode = configs["preprocess"]["text_process_mode"]
 
     # 计算指标并打印
-    wers, lers, norm_lers = compute_metric(model, test_data_generator, batchs, text_process_mode, index_word)
+    wers, lers, norm_lers = compute_metric(model, test_data_generator, batches, text_process_mode, index_word)
     print("WER:")
     print("平均WER:", wers)
     print("LER:")

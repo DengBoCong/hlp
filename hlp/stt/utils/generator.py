@@ -5,12 +5,12 @@ from stt.utils.text_process import get_label_and_length
 
 
 # train数据生成器
-def train_generator(data, batchs, batch_size, audio_feature_type,
+def train_generator(data, batches, batch_size, audio_feature_type,
                     max_input_length, max_label_length):
     """
 
     :param data: 语音文件列表，向量化转写列表
-    :param batchs:
+    :param batches:
     :param batch_size:
     :param audio_feature_type:
     :param max_input_length:
@@ -26,7 +26,7 @@ def train_generator(data, batchs, batch_size, audio_feature_type,
         audio_path_list = [audio_path_list[i] for i in order]
         text_int_sequences_list = [text_int_sequences_list[i] for i in order]
 
-        for idx in range(batchs):
+        for idx in range(batches):
             batch_input_tensor, batch_input_length = get_input_and_length(
                 audio_path_list[idx * batch_size: (idx + 1) * batch_size],
                 audio_feature_type,
@@ -41,11 +41,11 @@ def train_generator(data, batchs, batch_size, audio_feature_type,
 
 
 # 测试数据生成器
-def test_generator(data, batchs, batch_size, audio_feature_type, max_input_length):
+def test_generator(data, batches, batch_size, audio_feature_type, max_input_length):
     audio_data_path_list, text_list = data
 
     while True:
-        for idx in range(batchs):
+        for idx in range(batches):
             batch_input_tensor, batch_input_length = get_input_and_length(
                 audio_data_path_list[idx * batch_size: (idx + 1) * batch_size],
                 audio_feature_type,
