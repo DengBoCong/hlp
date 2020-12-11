@@ -1,4 +1,5 @@
 import re
+
 import tensorflow as tf
 
 
@@ -55,19 +56,6 @@ def split_sentences(sentences, mode):
     return text_list
 
 
-def get_label_and_length(text_int_sequences_list, max_label_length):
-    target_length_list = []
-    for text_int_sequence in text_int_sequences_list:
-        target_length_list.append([len(text_int_sequence)])
-    target_tensor_numpy = tf.keras.preprocessing.sequence.pad_sequences(
-        text_int_sequences_list,
-        maxlen=max_label_length,
-        padding='post'
-    )
-    target_length = tf.convert_to_tensor(target_length_list)
-    return target_tensor_numpy, target_length
-
-
 def _split_sentence_en_word(s):
     s = s.lower().strip()
     # 在单词与跟在其后的标点符号之间插入一个空格
@@ -102,3 +90,16 @@ def _split_sentence_cn(s):
     s = s.strip()
 
     return s
+
+
+def get_label_and_length(text_int_sequences_list, max_label_length):
+    target_length_list = []
+    for text_int_sequence in text_int_sequences_list:
+        target_length_list.append([len(text_int_sequence)])
+    target_tensor_numpy = tf.keras.preprocessing.sequence.pad_sequences(
+        text_int_sequences_list,
+        maxlen=max_label_length,
+        padding='post'
+    )
+    target_length = tf.convert_to_tensor(target_length_list)
+    return target_tensor_numpy, target_length

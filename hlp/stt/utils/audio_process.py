@@ -2,11 +2,10 @@ import tensorflow as tf
 from hlp.stt.utils.features import wav_to_feature
 
 
-# 基于语音路径序列，处理成模型的输入tensor,以及获取输入的时间步长
-def get_input_and_length(audio_data_path_list, audio_feature_type, maxlen):
+def get_input_and_length(audio_path_list, audio_feature_type, maxlen):
     audio_feature_list = []
     input_length_list = []
-    for audio_path in audio_data_path_list:
+    for audio_path in audio_path_list:
         audio_feature = wav_to_feature(audio_path, audio_feature_type)
         audio_feature_list.append(audio_feature)
         input_length_list.append([audio_feature.shape[0]])
@@ -23,8 +22,8 @@ def get_input_and_length(audio_data_path_list, audio_feature_type, maxlen):
 
 
 # 获取最长的音频length(timesteps)
-def get_max_audio_length(audio_data_path_list, audio_feature_type):
-    return max(wav_to_feature(audio_path, audio_feature_type).shape[0] for audio_path in audio_data_path_list)
+def max_audio_length(audio_path_list, audio_feature_type):
+    return max(wav_to_feature(audio_path, audio_feature_type).shape[0] for audio_path in audio_path_list)
 
 
 if __name__ == "__main__":

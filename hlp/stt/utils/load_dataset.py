@@ -114,3 +114,5 @@ if __name__ == "__main__":
     audio_fils, texts = get_data_librispeech(dir_librispeech)
     print(audio_fils)
     print(texts)
+
+

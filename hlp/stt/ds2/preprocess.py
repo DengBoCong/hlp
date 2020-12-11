@@ -3,7 +3,7 @@ import json
 
 from hlp.stt.ds2.util import get_config
 from hlp.stt.utils.load_dataset import load_data
-from hlp.stt.utils.audio_process import get_max_audio_length
+from hlp.stt.utils.audio_process import max_audio_length
 from hlp.stt.utils.text_process import get_process_text_list, get_max_label_length, tokenize
 
 
@@ -27,7 +27,7 @@ if __name__ == "__main__":
 
     # 获取音频和文本的最大length，从而进行数据补齐
     audio_feature_type = configs["other"]["audio_feature_type"]
-    max_input_length = get_max_audio_length(audio_data_path_list, audio_feature_type)
+    max_input_length = max_audio_length(audio_data_path_list, audio_feature_type)
     max_label_length = get_max_label_length(text_int_sequences)
 
     # 将数据集的相关信息写入dataset_information.json文件
