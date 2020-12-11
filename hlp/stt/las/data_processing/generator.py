@@ -7,7 +7,7 @@ Created on Wed Nov 11 09:27:45 2020
 import numpy as np
 import tensorflow as tf
 from hlp.stt.utils import features
-from . import preprocess_text
+from hlp.stt.las.data_processing import preprocess_text
 
 
 # 训练数据生成器

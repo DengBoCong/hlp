@@ -45,6 +45,8 @@ valid_data_split = conf['valid_data_split']
 valid_data = path + conf['valid_data_fn']
 valid_freq = conf['valid_freq']
 history_image_dir = path + conf['history_image_dir']
+checkpoint_save_freq = conf['checkpoint_save_freq']
+checkpoint_save_size = conf['checkpoint_save_size']
 
 # seq2seq模型相关配置
 seq2seq_units = conf['seq2seq']['units']
@@ -55,6 +57,8 @@ seq2seq_embedding_dim = conf['seq2seq']['embedding_dim']
 seq2seq_max_valid_data_size = conf['seq2seq']['max_valid_data_size']
 seq2seq_max_train_data_size = conf['seq2seq']['max_train_data_size']
 seq2seq_max_length = conf['seq2seq']['max_length']  # 最大文本长度
+seq2seq_encoder_layers = conf['seq2seq']['encoder_layers']
+seq2seq_decoder_layers = conf['seq2seq']['decoder_layers']
 
 # transformer模型相关配置
 transformer_vocab_size = conf['transformer']['vocab_size']

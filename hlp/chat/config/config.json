@@ -5,7 +5,9 @@
     "units": 1024,
     "max_train_data_size": 200,
     "max_valid_data_size": 100,
-    "max_length": 40
+    "max_length": 40,
+    "encoder_layers": 2,
+    "decoder_layers": 2
   },
   "transformer": {
     "num_layers": 2,
@@ -48,12 +50,14 @@
   "history_image_dir": "data\\history\\",
   "valid_data_fn": "data\\valid_lccc.txt",
   "valid_freq": 5,
+  "checkpoint_save_freq": 2,
+  "checkpoint_save_size": 1,
   "solr_server": "http://49.235.33.100:8983/solr/smn/",
   "batch_size": 32,
   "buffer_size": 20000,
   "beam_size": 3,
   "valid_data_split": 0.2,
-  "epochs": 10,
+  "epochs": 5,
   "start_sign": "start",
   "end_sign": "end"
 }

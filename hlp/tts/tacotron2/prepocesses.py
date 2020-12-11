@@ -2,7 +2,6 @@ import io
 import json
 import os
 import re
-
 import numpy as np
 import tensorflow as tf
 
@@ -84,13 +83,12 @@ def tokenize(texts, maxlen_text, save_path):
     return sequences, vocab_size
 
 
-# 恢复字典，用来预测
+#恢复字典，用来预测
 def dataset_seq(texts, tokenizer, config):
     texts = process_text(texts)
     sequences = tokenizer.texts_to_sequences(texts)  # 文本数字序列
     sequences = tf.keras.preprocessing.sequence.pad_sequences(sequences, maxlen=config.max_len_seq, padding='post')
     return sequences
-
 
 # 提取字典
 def get_tokenizer_keras(path):
@@ -98,7 +96,7 @@ def get_tokenizer_keras(path):
     with open(path) as f:
         json_string = json.load(f)
     tokenizer = tf.keras.preprocessing.text.tokenizer_from_json(json_string)
-    vocab_size = len(tokenizer.word_index) + 1
+    vocab_size = len(tokenizer.word_index)+1
     return tokenizer, vocab_size
 
 
@@ -108,14 +106,11 @@ def dataset_txt(sentence_list, save_path, config):
     en_seqs, vocab_size = tokenize(en, config.max_len_seq, save_path)
     return en_seqs, vocab_size
 
-
 def dataset_mel(path, maxlen, wav_name_list2, config):
     audio_feature_list = []
     input_length_list = []
     for file in wav_name_list2:
-        logmelspec, sr = get_spectrograms(path + file + '.wav', config.preemphasis, config.n_fft, config.n_mels,
-                                          config.hop_length, config.win_length, config.max_db, config.ref_db,
-                                          config.top_db)
+        logmelspec, sr = get_spectrograms(path+file+'.wav', config.preemphasis, config.n_fft, config.n_mels, config.hop_length, config.win_length, config.max_db, config.ref_db, config.top_db)
         audio_feature_list.append(logmelspec)
         input_length_list.append([len(logmelspec)])
 
@@ -131,14 +126,13 @@ def dataset_mel(path, maxlen, wav_name_list2, config):
     return input_tensor, input_length
 
 
+
 def dataset_wave(path, config):
     mel_list = []
     mel_len_wav = []
     dirs = os.listdir(path)
     for file in dirs:
-        logmelspec, sr = get_spectrograms(path + file, config.preemphasis, config.n_fft, config.n_mels,
-                                          config.hop_length, config.win_length, config.max_db, config.ref_db,
-                                          config.top_db)
+        logmelspec, sr = get_spectrograms(path + file, config.preemphasis, config.n_fft, config.n_mels, config.hop_length, config.win_length, config.max_db, config.ref_db, config.top_db)
         mel_len_wav.append(len(logmelspec))
         mel_list.append(logmelspec.tolist())
 
@@ -157,6 +151,7 @@ def tar_stop_token(mel_len_wav, mel_gts, max_len):
         j = int(j - 1)
         tar_token[i, j:] = 1
     return tar_token
+
 
 
 if __name__ == '__main__':

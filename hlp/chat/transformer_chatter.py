@@ -2,11 +2,10 @@ import tensorflow as tf
 import common.data_utils as data_utils
 import config.get_config as get_config
 from model.chatter import Chatter
-from common.utils import CmdParser
-from common.utils import log_operator
-from common.utils import CustomSchedule
+import common.utils as utils
+import utils.optimizers as optimizers
 import model.transformer as transformer
-from common.pre_treat import preprocess_raw_data_qa_single, dispatch_tokenized_func_dict_single
+import common.pre_treat as pre_treat
 
 
 class TransformerChatter(Chatter):
@@ -48,7 +47,7 @@ class TransformerChatter(Chatter):
             dropout=dropout
         )
 
-        self.learning_rate = CustomSchedule(d_model)
+        self.learning_rate = optimizers.CustomSchedule(d_model)
         self.optimizer = tf.keras.optimizers.Adam(
             self.learning_rate, beta_1=0.9, beta_2=0.98, epsilon=1e-9
         )
@@ -71,11 +70,10 @@ class TransformerChatter(Chatter):
                 print('不存在检查点，请先执行train模式，再进入chat模式')
                 exit(0)
 
-        logger = log_operator(level=10)
-        logger.info("启动SMN聊天器，执行类别为：{}，模型参数配置为：num_layers：{}，"
-                    "d_model：{}，num_heads：{}，units：{}，dropout：{}，vocab_size：{}，"
-                    "max_length：{}".format(execute_type, num_layers, d_model,
-                                           num_heads, units, dropout, vocab_size, max_length))
+        utils.log_operator(level=10).info("启动SMN聊天器，执行类别为：{}，模型参数配置为：num_layers：{}，"
+                                          "d_model：{}，num_heads：{}，units：{}，dropout：{}，vocab_size：{}，"
+                                          "max_length：{}".format(execute_type, num_layers, d_model,
+                                                                 num_heads, units, dropout, vocab_size, max_length))
 
     def _init_loss_accuracy(self):
         """
@@ -96,7 +94,7 @@ class TransformerChatter(Chatter):
         tar_real = tar[:, 1:]
         with tf.GradientTape() as tape:
             predictions = self.model(inputs=[inp, tar_inp])
-            loss = self._loss_function(tar_real, predictions, weight)
+            loss = optimizers.loss_func_mask(tar_real, predictions, weight)
         gradients = tape.gradient(loss, self.model.trainable_variables)
         self.optimizer.apply_gradients(zip(gradients, self.model.trainable_variables))
 
@@ -121,29 +119,6 @@ class TransformerChatter(Chatter):
         predictions = tf.squeeze(predictions, axis=1)
         return predictions
 
-    def _loss_function(self, real: tf.Tensor, pred: tf.Tensor, weights: tf.Tensor = None):
-        """
-        用于计算预测损失，注意要将填充的0进行mask，不纳入损失计算
-        Args:
-            real: 真实序列
-            pred: 预测序列
-            weights: 样本数据的权重
-        Returns:
-            loss: 该batch的平均损失
-        """
-        real = tf.reshape(real, shape=(-1, self.max_length - 1))
-        if weights is not None:
-            loss = tf.keras.losses.SparseCategoricalCrossentropy(
-                from_logits=True, reduction='none')(real, pred, sample_weight=weights)
-        else:
-            loss = tf.keras.losses.SparseCategoricalCrossentropy(
-                from_logits=True, reduction='none')(real, pred)
-
-        mask = tf.cast(tf.not_equal(real, 0), tf.float32)
-        loss = tf.multiply(loss, mask)
-
-        return tf.reduce_mean(loss)
-
 
 def get_chatter(execute_type: str):
     """
@@ -164,7 +139,7 @@ def get_chatter(execute_type: str):
 
 
 def main():
-    parser = CmdParser(version='%transformer chatbot V1.0')
+    parser = utils.CmdParser(version='%transformer chatbot V1.0')
     parser.add_option("-t", "--type", action="store", type="string",
                       dest="type", default="pre_treat",
                       help="execute type, pre_treat/train/chat")
@@ -178,6 +153,8 @@ def main():
                       max_valid_data_size=get_config.transformer_max_valid_data_size,
                       max_train_data_size=get_config.transformer_max_train_data_size,
                       valid_data_split=get_config.valid_data_split, valid_data_fn="",
+                      checkpoint_save_freq=get_config.checkpoint_save_freq,
+                      checkpoint_save_size=get_config.checkpoint_save_size,
                       save_dir=get_config.history_image_dir + "transformer\\", valid_freq=get_config.valid_freq)
     elif options.type == 'chat':
         chatter = get_chatter(options.type)
@@ -190,10 +167,10 @@ def main():
             response = chatter.respond(req=req)
             print("Agent: ", response)
     elif options.type == 'pre_treat':
-        dispatch_tokenized_func_dict_single(operator="lccc", raw_data=get_config.lccc_data,
-                                            tokenized_data=get_config.lccc_tokenized_data, if_remove=True)
-        preprocess_raw_data_qa_single(raw_data=get_config.lccc_tokenized_data,
-                                      qa_data=get_config.qa_tokenized_data)
+        pre_treat.dispatch_tokenized_func_dict_single(operator="lccc", raw_data=get_config.lccc_data,
+                                                      tokenized_data=get_config.lccc_tokenized_data, if_remove=True)
+        pre_treat.preprocess_raw_data_qa_single(raw_data=get_config.lccc_tokenized_data,
+                                                qa_data=get_config.qa_tokenized_data)
     else:
         parser.error(msg='')
 
