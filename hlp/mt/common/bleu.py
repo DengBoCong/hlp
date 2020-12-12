@@ -45,18 +45,14 @@ def main():
     # 测试语句
     candidate_sentence_zh = '今天的天气真好啊。'
     reference_sentence_zh = '今天可真是个好天气啊。'
-
-    # nltk bleu计算
-    bleu_nltk = bleu_nltk(candidate_sentence_zh, [reference_sentence_zh], language='zh')
-    print('NLTK_BLEU:%.2f' % bleu_nltk)
+    score = bleu_nltk(candidate_sentence_zh, [reference_sentence_zh], language='zh')
+    print('NLTK_BLEU:%.2f' % score)
 
     # 测试英语语句
     candidate_sentence_en = "It's a good day."
     reference_sentence_en = "It's really a good sunny day."
-
-    # nltk bleu计算
-    bleu_nltk = bleu_nltk(candidate_sentence_en, [reference_sentence_en], language='en')
-    print('NLTK_BLEU:%.2f' % bleu_nltk)
+    score = bleu_nltk(candidate_sentence_en, [reference_sentence_en], language='en')
+    print('NLTK_BLEU:%.2f' % score)
 
 
 if __name__ == '__main__':
