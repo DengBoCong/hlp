@@ -5,7 +5,7 @@ import tensorflow as tf
 
 from hlp.mt.model import transformer as _transformer
 from hlp.mt.config import get_config as _config
-from hlp.mt.common import text_tokenize
+from hlp.mt.common import text_vectorize
 from hlp.utils import optimizers as _optimizers
 
 
@@ -25,13 +25,13 @@ def load_model():
     """
     # 加载源语言字典
     print("正在加载源语言(%s)字典..." % _config.source_lang)
-    tokenizer_source, vocab_size_source = text_tokenize.get_tokenizer(language=_config.source_lang)
+    tokenizer_source, vocab_size_source = text_vectorize.get_tokenizer(language=_config.source_lang)
     print('源语言字典大小:%d' % vocab_size_source)
     print('源语言字典加载完毕！\n')
 
     # 加载目标语言字典
     print("正在加载目标语言(%s)字典..." % _config.target_lang)
-    tokenizer_target, vocab_size_target = text_tokenize.get_tokenizer(language=_config.target_lang)
+    tokenizer_target, vocab_size_target = text_vectorize.get_tokenizer(language=_config.target_lang)
     print('目标语言字典大小:%d' % vocab_size_target)
     print('目标语言字典加载完毕！\n')
 

@@ -1,7 +1,8 @@
 from hlp.mt.common import bleu as _bleu
-from hlp.mt.common import preprocess
+from hlp.mt import preprocess
 from hlp.mt.config import get_config as _config
-from hlp.mt.model import translator, nmt_model
+from hlp.mt.model import nmt_model
+from hlp.mt import translator
 
 """
 使用保存的字典进行评估
@@ -34,7 +35,7 @@ def _calc_bleu(path, transformer, tokenizer_source, tokenizer_target):
 def main():
     if nmt_model.check_point():  # 检测是否有检查点
         # 读取保存的需要的配置
-        transformer, tokenizer_source, tokenizer_target = nmt_model.load_model()
+        transformer, _, tokenizer_source, tokenizer_target = nmt_model.load_model()
         _calc_bleu(_config.path_to_eval_file, transformer, tokenizer_source, tokenizer_target)
     else:
         print('请先训练才可使用evaluate功能...')
