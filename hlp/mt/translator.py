@@ -6,12 +6,13 @@ import tensorflow as tf
 from hlp.mt.config import get_config as _config
 from hlp.mt.model import transformer as _transformer
 from hlp.mt.model import checkpoint
-from hlp.mt.common import preprocess, text_vectorize
+from hlp.mt.common import text_vectorize
 from hlp.utils import beamsearch
 from hlp.utils import optimizers as _optimizers
+from hlp.mt import preprocess
 
 
-def _predict_index(inp_sentence, transformer, beam_search_container, input_tokenizer, target_tokenizer):
+def _predict_index(inp_sentence, model, beam_search_container, input_tokenizer, target_tokenizer):
     """对输入句子进行翻译并返回编码的句子列表"""
     sentence = preprocess.preprocess_sentences([inp_sentence], language=_config.source_lang)
 
@@ -32,12 +33,12 @@ def _predict_index(inp_sentence, transformer, beam_search_container, input_token
         enc_padding_mask, combined_mask, dec_padding_mask = _transformer.create_masks(inputs, decoder_input)
 
         # predictions.shape == (batch_size, s.eq_len, vocab_size)
-        predictions, _ = transformer(inputs,
-                                     decoder_input,
-                                     False,
-                                     enc_padding_mask,
-                                     combined_mask,
-                                     dec_padding_mask)
+        predictions, _ = model(inputs,
+                               decoder_input,
+                               False,
+                               enc_padding_mask,
+                               combined_mask,
+                               dec_padding_mask)
 
         # 从 seq_len 维度选择最后一个词
         predictions = predictions[:, -1:, :]  # (batch_size, 1, vocab_size)
@@ -52,7 +53,7 @@ def _predict_index(inp_sentence, transformer, beam_search_container, input_token
     return beam_search_result
 
 
-def translate(sentence, transformer, tokenizer_source, tokenizer_target, beam_size=_config.BEAM_SIZE):
+def translate(sentence, model, tokenizer_source, tokenizer_target, beam_size=_config.BEAM_SIZE):
     """对句子(经过预处理未经过编码)进行翻译,未进行检查点的判断"""
     beam_search_container = beamsearch.BeamSearch(
         beam_size=beam_size,
@@ -70,9 +71,9 @@ def translate(sentence, transformer, tokenizer_source, tokenizer_target, beam_si
 
     # 使用列表中检查点进行预测
     for checkpoint_path in checkpoints_path:
-        checkpoint.load_checkpoint(transformer, optimizer, checkpoint_path=checkpoint_path)
+        checkpoint.load_checkpoint(model, optimizer, checkpoint_path=checkpoint_path)
 
-    predict_idxes = _predict_index(sentence, transformer, beam_search_container, tokenizer_source, tokenizer_target)
+    predict_idxes = _predict_index(sentence, model, beam_search_container, tokenizer_source, tokenizer_target)
     predicted_sentences = []
     # 从容器中抽取序列，生成最终结果
     for i in range(len(predict_idxes)):

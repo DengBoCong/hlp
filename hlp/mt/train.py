@@ -1,6 +1,6 @@
 
-from hlp.mt.model import trainer
-from hlp.mt.common import preprocess as _pre
+from hlp.mt import trainer
+from hlp.mt import preprocess as _pre
 from hlp.mt.model import nmt_model
 from hlp.mt.config import get_config as _config
 
@@ -17,10 +17,10 @@ def main():
     transformer = nmt_model.get_model(vocab_size_source, vocab_size_target)
 
     # 开始训练
-    trainer.train(transformer
-                  , validation_data=_config.validation_data
-                  , validation_split=1-_config.train_size
-                  , validation_freq=_config.validation_freq)
+    trainer.train(transformer,
+                  validation_data=_config.validation_data,
+                  validation_split=1-_config.train_size,
+                  validation_freq=_config.validation_freq)
 
 
 if __name__ == '__main__':

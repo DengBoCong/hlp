@@ -1,4 +1,5 @@
-from hlp.mt.model import translator, nmt_model
+from hlp.mt.model import nmt_model
+from hlp.mt import translator
 
 
 def main():

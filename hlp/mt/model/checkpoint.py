@@ -4,7 +4,8 @@ import tensorflow as tf
 from tensorflow.python.training.tracking import graph_view
 
 from hlp.mt.config import get_config as _config
-from hlp.mt.model import nmt_model, trainer
+from hlp.mt.model import nmt_model
+from hlp.mt import trainer
 
 
 def load_checkpoint(transformer, optimizer, checkpoint_path=_config.checkpoint_path):

@@ -7,9 +7,9 @@ import matplotlib.ticker as ticker
 
 from hlp.mt.model import transformer as _transformer
 from hlp.mt.config import get_config as _config
-from hlp.mt.common import preprocess
 from hlp.mt.model import nmt_model
 from hlp.utils import optimizers as _optimizers
+from hlp.mt import preprocess
 
 
 def _train_step(inp, tar, transformer, optimizer, train_loss, train_accuracy):
