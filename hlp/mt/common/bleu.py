@@ -38,10 +38,6 @@ def bleu_nltk(candidate_sentence, reference_sentences, language):
 
 
 def main():
-    """
-    方法测试
-    Returns:返回BLEU指数
-    """
     # 测试语句
     candidate_sentence_zh = '今天的天气真好啊。'
     reference_sentence_zh = '今天可真是个好天气啊。'
