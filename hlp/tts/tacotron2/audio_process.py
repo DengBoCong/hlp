@@ -6,33 +6,6 @@ import scipy
 import tensorflow as tf
 
 
-# mel频谱处理
-def get_spectrograms(fpath, preemphasis, n_fft, n_mels, hop_length, win_length, max_db, ref_db, top_db):
-    # 加载声音文件
-    y, sr = librosa.load(fpath, sr=None)
-    # 裁剪
-    y, _ = librosa.effects.trim(y, top_db=top_db)
-    y = np.append(y[0], y[1:] - preemphasis * y[:-1])
-    # 短时傅里叶变换
-    linear = librosa.stft(y=y,
-                          n_fft=n_fft,
-                          hop_length=hop_length,
-                          win_length=win_length)
-
-    # 幅度谱
-    mag = np.abs(linear)  # (1+n_fft//2, T)
-    # mel频谱
-    mel_basis = librosa.filters.mel(sr, n_fft, n_mels)  # (n_mels, 1+n_fft//2)
-    mel = np.dot(mel_basis, mag)  # (n_mels, t)
-    mel = 20 * np.log10(np.maximum(1e-5, mel))
-    mag = 20 * np.log10(np.maximum(1e-5, mag))
-    mel = np.clip((mel - ref_db + max_db) / max_db, 1e-8, 1)
-    mag = np.clip((mag - ref_db + max_db) / max_db, 1e-8, 1)
-    # 转置
-    mel = mel.T.astype(np.float32)  # (T, n_mels)
-    mag = mag.T.astype(np.float32)  # (T, 1+n_fft//2)
-    return mel, mag
-
 
 def melspectrogram2wav(mel, max_db, ref_db, sr, n_fft, n_mels, preemphasis, n_iter, hop_length, win_length):
     mel = (np.clip(mel, 0, 1) * max_db) - max_db + ref_db

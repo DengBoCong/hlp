@@ -1,8 +1,11 @@
 import tensorflow as tf
 
 
-# 卷积-Dropout-BatchNormalization块
+
 class ConvDropBN(tf.keras.layers.Layer):
+    """
+    卷积-Dropout-BatchNormalization块
+    """
     def __init__(self, filters, kernel_size, activation, dropout_rate):
         super(ConvDropBN, self).__init__()
         self.conv1d = tf.keras.layers.Conv1D(
@@ -395,3 +398,18 @@ def load_checkpoint(tacotron2, path, config):
     if ckpt_manager.latest_checkpoint:
         ckpt.restore(ckpt_manager.latest_checkpoint).expect_partial()
     return ckpt_manager
+
+
+def encoder(vocab_size: int, filters: int, kernel_sizes: int, activation: str, units: int,
+            dropout_rate: float, embedding_dim: int):
+    """
+    Tacotron2的Encoder，包含Embedding、三层卷积层，一个双向LSTM
+    :param vocab_size: 词汇大小
+    :param filters: 卷积输出空间维度
+    :param kernel_sizes: 卷积窗口的长度
+    :param activation: 激活方法
+    :param units: LSTM单元数
+    :param dropout_rate: dropout率
+    :param embedding_dim: 词嵌入大小
+    """
+    inputs = tf.keras.Input(shape=(None,))

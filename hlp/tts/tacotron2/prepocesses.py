@@ -8,14 +8,6 @@ import tensorflow as tf
 from audio_process import get_spectrograms
 
 
-# 按字符切
-def preprocess_sentence(s):
-    s = s.lower().strip()
-    s = re.sub(r"([?.!,])", r" \1 ", s)  # 切分断句的标点符号
-    s = re.sub(r'[" "]+', " ", s)  # 合并多个空格
-    s = re.sub(r"[^a-zA-Z?.!,]+", " ", s)
-    s = s.strip()
-    return s
 
 
 # 提取语音文件名
@@ -48,25 +40,6 @@ def map_to_text(path_to_csv, wav_name_list):
     return sentence_list
 
 
-# 按字符切分
-def process_text_word(sentence_list):
-    en_sentences = [preprocess_sentence(s) for s in sentence_list]
-    return en_sentences
-
-
-# 按字母切分
-def process_text(sentence_list):
-    sentences_list2 = []
-    for s in sentence_list:
-        a = ""
-        s = s.lower().strip()  # 大写转小写
-        s = re.sub(r"[^a-zA-Z?.!,]+", " ", s)  # 替换一些不常规符号
-        s = re.sub(r'[" "]+', " ", s)  # 合并多个空格
-        sentence = s.strip()  # 去掉前后空格
-        for q in sentence:
-            a = a + ' ' + q
-        sentences_list2.append(a)
-    return sentences_list2
 
 
 def tokenize(texts, maxlen_text, save_path):

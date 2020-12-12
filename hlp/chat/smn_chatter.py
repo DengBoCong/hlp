@@ -1,11 +1,11 @@
 import os
 import sys
 import json
-sys.path.append(os.getcwd()[:os.getcwd().rfind("\\hlp\\")])
 import time
 import pysolr
 import tensorflow as tf
 from argparse import ArgumentParser
+sys.path.append(os.path.abspath(__file__)[:os.path.abspath(__file__).rfind("\\hlp\\")])
 import hlp.chat.model.smn as smn
 import hlp.chat.common.utils as utils
 import hlp.chat.common.data_utils as data_utils
@@ -257,7 +257,8 @@ def main():
         with open(options['config_file'], 'r', encoding='utf-8') as config_file:
             options = json.load(config_file)
 
-    work_path = os.getcwd()  # 注意了有关路径的参数，以chat目录下为基准配置
+    # 注意了有关路径的参数，以chat目录下为基准配置
+    work_path = os.path.abspath(__file__)[:os.path.abspath(__file__).find("\\smn")]
     execute_type = options['type']
 
     if execute_type == 'train':
@@ -313,8 +314,9 @@ def main():
 if __name__ == '__main__':
     """
     SMN入口：指令需要附带运行参数
-    cmd：python smn_chatter.py -t/--type [执行模式]
-    执行类别：pre_treat/train/evaluate/chat
+    cmd：python smn_chatter.py --type [执行模式]
+    执行类别：pre_treat/train/evaluate/chat，默认为pre_treat
+    其他参数参见main方法
 
     chat模式下运行时，输入ESC即退出对话
     """
