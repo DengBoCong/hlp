@@ -1,11 +1,8 @@
-import os
-import sys
-sys.path.append('..')
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
-from model import trainer
-from common import preprocess as _pre
-from model import nmt_model
-from config import get_config as _config
+
+from hlp.mt.model import trainer
+from hlp.mt.common import preprocess as _pre
+from hlp.mt.model import nmt_model
+from hlp.mt.config import get_config as _config
 
 """
 使用 ./data 文件夹下的指定文件(默认 en-ch.txt)进行训练

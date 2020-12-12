@@ -15,6 +15,8 @@ def load_data(dataset_name, data_path, num_examples):
         audio_data_path_list, text_list = get_data_librispeech(data_path, num_examples)
     elif dataset_name.lower() == "thchs30":
         audio_data_path_list, text_list = get_data_thchs30(data_path, num_examples)
+    elif dataset_name.lower() == "number":
+        audio_data_path_list, text_list = get_data_number(data_path, num_examples)
 
     return audio_data_path_list, text_list
 
@@ -103,6 +105,21 @@ def get_data_thchs30(data_path, num_examples=None):
 
     return audio_data_path_list[:num_examples], text_list[:num_examples]
 
+
+def get_data_number(data_path, num_examples=None):
+    """ 获得number数据集的语音文件和转写列表
+
+    :param data_path: number数据集路径
+    :param num_examples: 最大语音文件数
+    :return: (语音文件列表，转写列表)
+    """
+    wav_path = data_path[0]
+    text_data_path = data_path[1]
+    files = os.listdir(wav_path)    
+    audio_path_list = files
+    audio_data_path_list = [wav_path + "\\" + audio_path for audio_path in audio_path_list[:num_examples]]
+    text_list = get_text_list(text_data_path, colum_sep = "\t")[:num_examples]
+    return audio_data_path_list, text_list
 
 if __name__ == "__main__":
     dir_thchs30 = '../data/data_thchs30/train'
