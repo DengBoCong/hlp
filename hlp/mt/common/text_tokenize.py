@@ -220,7 +220,7 @@ def get_start_token(start_word, tokenizer, language):
     return start_token
 
 
-def _create_encoded_sentences_bpe(sentences, tokenizer, path):
+def _encode_and_save_bpe(sentences, tokenizer, path):
     """
     将编码好的句子保存至文件，返回最大句子长度
     Args:
@@ -237,7 +237,7 @@ def _create_encoded_sentences_bpe(sentences, tokenizer, path):
     return max_sequence_length
 
 
-def _create_encoded_sentences_keras(sentences, tokenizer, path):
+def _encode_and_save_keras(sentences, tokenizer, path):
     """
     将编码好的句子保存至文件，返回最大句子长度
     Args:
@@ -270,7 +270,7 @@ def get_mode_and_path_sentences(language, model_type, postfix):
     return mode, path
 
 
-def encode_and_save_text(sentences, tokenizer, language, postfix='', model_type='nmt'):
+def encode_and_save(sentences, tokenizer, language, postfix='', model_type='nmt'):
     """
     根据所选语言将编码好的句子保存至文件，返回最大句子长度
     Args:
@@ -287,17 +287,19 @@ def encode_and_save_text(sentences, tokenizer, language, postfix='', model_type=
     if language == "en":
         if not os.path.exists(os.path.dirname(save_path)):
             os.makedirs(os.path.dirname(save_path), exist_ok=True)
+
         if mode == 'BPE':
-            return _create_encoded_sentences_bpe(sentences, tokenizer, save_path)
+            return _encode_and_save_bpe(sentences, tokenizer, save_path)
         elif mode == 'WORD':
-            return _create_encoded_sentences_keras(sentences, tokenizer, save_path)
+            return _encode_and_save_keras(sentences, tokenizer, save_path)
     elif language == "zh":
         if not os.path.exists(os.path.dirname(save_path)):
             os.makedirs(os.path.dirname(save_path), exist_ok=True)
+
         if mode == 'CHAR':
-            return _create_encoded_sentences_keras(sentences, tokenizer, save_path)
+            return _encode_and_save_keras(sentences, tokenizer, save_path)
         elif mode == 'WORD':
-            return _create_encoded_sentences_keras(sentences, tokenizer, save_path)
+            return _encode_and_save_keras(sentences, tokenizer, save_path)
 
 
 def _decode_sentence_bpe(sequence, tokenizer):

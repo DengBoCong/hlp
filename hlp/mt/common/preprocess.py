@@ -246,24 +246,24 @@ def train_preprocess():
 
     # 编码句子
     print("正在编码训练集句子...")
-    max_sequence_length_source = text_tokenize.encode_and_save_text(sentences=source_sentences,
-                                                                    tokenizer=tokenizer_source,
-                                                                    language=_config.source_lang)
-    max_sequence_length_target = text_tokenize.encode_and_save_text(sentences=target_sentences,
-                                                                    tokenizer=tokenizer_target,
-                                                                    language=_config.target_lang)
+    max_sequence_length_source = text_tokenize.encode_and_save(sentences=source_sentences,
+                                                               tokenizer=tokenizer_source,
+                                                               language=_config.source_lang)
+    max_sequence_length_target = text_tokenize.encode_and_save(sentences=target_sentences,
+                                                               tokenizer=tokenizer_target,
+                                                               language=_config.target_lang)
     print('最大源语言(%s)句子长度:%d' % (_config.source_lang, max_sequence_length_source))
     print('最大目标语言(%s)句子长度:%d' % (_config.target_lang, max_sequence_length_target))
     if _config.validation_data == "True":
         print("正在编码验证集句子...")
-        _ = text_tokenize.encode_and_save_text(sentences=source_sentences_val,
-                                               tokenizer=tokenizer_source,
-                                               language=_config.source_lang,
-                                               postfix='_val')
-        _ = text_tokenize.encode_and_save_text(sentences=target_sentences_val,
-                                               tokenizer=tokenizer_target,
-                                               language=_config.target_lang,
-                                               postfix='_val')
+        _ = text_tokenize.encode_and_save(sentences=source_sentences_val,
+                                          tokenizer=tokenizer_source,
+                                          language=_config.source_lang,
+                                          postfix='_val')
+        _ = text_tokenize.encode_and_save(sentences=target_sentences_val,
+                                          tokenizer=tokenizer_target,
+                                          language=_config.target_lang,
+                                          postfix='_val')
     print("句子编码完毕！\n")
 
     return vocab_size_source, vocab_size_target
