@@ -1,19 +1,11 @@
-"""
-对指定路径文档进行加载处理
-
-可在配置文件中对中英文分词方法进行选择配置
-
-"""
-import sys
-
-sys.path.append('..')
 from sklearn.model_selection import train_test_split
-import config.get_config as _config
-from common import tokenize
 import tensorflow as tf
-import numpy
 import re
+import numpy
 import jieba
+
+from hlp.mt.config import get_config as _config
+from hlp.mt.common import text_tokenize
 
 
 def load_single_sentences(path, num_sentences, column):
@@ -223,8 +215,8 @@ def train_preprocess():
     source_sentences, target_sentences = load_sentences(_config.path_to_train_file, _config.num_sentences)
     # 加载验证集
     if _config.validation_data == "True":
-        source_sentences_val, target_sentences_val = load_sentences(_config.path_to_val_file
-                                                                    , _config.num_validate_sentences)
+        source_sentences_val, target_sentences_val = load_sentences(_config.path_to_val_file,
+                                                                    _config.num_validate_sentences)
 
     # 计算语料词数
     num_words = _count_words(source_sentences)
@@ -241,37 +233,37 @@ def train_preprocess():
 
     # 生成及保存字典
     print('正在生成、保存源语言(%s)字典(分词方式:%s)...' % (_config.source_lang, _config.en_tokenize_type))
-    tokenizer_source, vocab_size_source = tokenize.create_tokenizer(sentences=source_sentences
-                                                                    , language=_config.source_lang)
+    tokenizer_source, vocab_size_source = text_tokenize.create_tokenizer(sentences=source_sentences,
+                                                                         language=_config.source_lang)
     print('生成英文字典大小:%d' % vocab_size_source)
     print('源语言字典生成、保存完毕！\n')
 
     print('正在生成、保存目标语言(%s)字典(分词方式:%s)...' % (_config.target_lang, _config.zh_tokenize_type))
-    tokenizer_target, vocab_size_target = tokenize.create_tokenizer(sentences=target_sentences
-                                                                    , language=_config.target_lang)
+    tokenizer_target, vocab_size_target = text_tokenize.create_tokenizer(sentences=target_sentences,
+                                                                         language=_config.target_lang)
     print('生成目标语言字典大小:%d' % vocab_size_target)
     print('目标语言字典生成、保存完毕！\n')
 
     # 编码句子
     print("正在编码训练集句子...")
-    max_sequence_length_source = tokenize.create_encoded_sentences(sentences=source_sentences
-                                                                   , tokenizer=tokenizer_source
-                                                                   , language=_config.source_lang)
-    max_sequence_length_target = tokenize.create_encoded_sentences(sentences=target_sentences
-                                                                   , tokenizer=tokenizer_target
-                                                                   , language=_config.target_lang)
+    max_sequence_length_source = text_tokenize.create_encoded_sentences(sentences=source_sentences,
+                                                                        tokenizer=tokenizer_source,
+                                                                        language=_config.source_lang)
+    max_sequence_length_target = text_tokenize.create_encoded_sentences(sentences=target_sentences,
+                                                                        tokenizer=tokenizer_target,
+                                                                        language=_config.target_lang)
     print('最大源语言(%s)句子长度:%d' % (_config.source_lang, max_sequence_length_source))
     print('最大目标语言(%s)句子长度:%d' % (_config.target_lang, max_sequence_length_target))
     if _config.validation_data == "True":
         print("正在编码验证集句子...")
-        _ = tokenize.create_encoded_sentences(sentences=source_sentences_val
-                                              , tokenizer=tokenizer_source
-                                              , language=_config.source_lang
-                                              , postfix='_val')
-        _ = tokenize.create_encoded_sentences(sentences=target_sentences_val
-                                              , tokenizer=tokenizer_target
-                                              , language=_config.target_lang
-                                              , postfix='_val')
+        _ = text_tokenize.create_encoded_sentences(sentences=source_sentences_val,
+                                                   tokenizer=tokenizer_source,
+                                                   language=_config.source_lang,
+                                                   postfix='_val')
+        _ = text_tokenize.create_encoded_sentences(sentences=target_sentences_val,
+                                                   tokenizer=tokenizer_target,
+                                                   language=_config.target_lang,
+                                                   postfix='_val')
     print("句子编码完毕！\n")
 
     return vocab_size_source, vocab_size_target
@@ -281,34 +273,6 @@ def main():
     """
     模块方法测试
     """
-    # 加载中英文字典
-    tokenizer_en, vocab_size_en = tokenize.get_tokenizer(path="../data/en_tokenizer"
-                                                         , mode=_config.en_tokenize_type)
-    tokenizer_ch, vocab_size_ch = tokenize.get_tokenizer(path='../data/tokenizer/ch_tokenizer.json'
-                                                         , mode=_config.ch_tokenize_type)
-    print(vocab_size_en)
-    print(vocab_size_ch)
-    en = 'Transformer is good.'
-    ch = '今天天气真好啊。'
-
-    # 预处理句子
-    en = _preprocess_sentences_en([en], mode='BPE')
-    ch = _preprocess_sentences_zh([ch], mode='WORD')
-    print("预处理后的句子")
-    print(en)
-    print(ch)
-
-    # 编码句子
-    print("编码后的句子")
-    en, _ = tokenize.encode_sentences(en, tokenizer_en, mode='BPE')
-
-    ch, _ = tokenize.encode_sentences(ch, tokenizer_ch, mode='WORD')
-    print(en)
-    for ts in en[0]:
-        print('{} ----> {}'.format(ts, tokenizer_en.decode([ts])))
-    print(ch)
-    for ts in ch[0]:
-        print('{} ----> {}'.format(ts, tokenizer_ch.index_word[ts]))
 
 
 if __name__ == '__main__':

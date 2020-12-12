@@ -1,13 +1,7 @@
-import os
-import sys
-sys.path.append('..')
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
-from common import preprocess as _pre
-from common import bleu as _bleu
-import config.get_config as _config
-from model import translator
-from model import nmt_model
-from common import preprocess
+from hlp.mt.common import bleu as _bleu
+from hlp.mt.common import preprocess
+from hlp.mt.config import get_config as _config
+from hlp.mt.model import translator, nmt_model
 
 """
 使用保存的字典进行评估
@@ -22,8 +16,8 @@ def _calc_bleu(path, transformer, tokenizer_source, tokenizer_target):
     print('开始计算BLEU指标...')
     bleu_sum = 0
     for i in range(_config.num_eval):
-        candidate_sentence = translator.translate(source_sentences[i], transformer, tokenizer_source, tokenizer_target
-                                                  , beam_size=1)[0]
+        candidate_sentence = translator.translate(source_sentences[i], transformer, tokenizer_source,
+                                                  tokenizer_target, beam_size=1)[0]
         print('-' * 20)
         print('第%d/%d个句子：' % (i + 1, _config.num_eval))
         print('原句子:' + source_sentences[i].strip())

@@ -46,6 +46,7 @@ target_vocab_size = conf["target_vocab_size"]  # 英语分词target_vocab_size
 start_word = conf["start_word"]  # 句子开始标志
 end_word = conf["end_word"]  # 句子结束标志
 BEAM_SIZE = conf["BEAM_SIZE"]  # BEAM_SIZE
+checkpoint_ensembling = conf["checkpoint_ensembling"]  # 是否采用checkpoint_ensembling
 
 lm_path_to_train_file = conf["language_model"]["path_to_train_file_lm"]  # 语言模型训练文本路径
 lm_language = conf["language_model"]["language"]
