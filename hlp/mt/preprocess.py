@@ -270,9 +270,7 @@ def train_preprocess():
 
 
 def main():
-    """
-    模块方法测试
-    """
+    train_preprocess()
 
 
 if __name__ == '__main__':
