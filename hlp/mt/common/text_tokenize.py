@@ -326,9 +326,3 @@ def decode_sentence(sentence, tokenizer, language, model_type="nmt"):
             return _decode_sentence_tokenizer(sentence, tokenizer)
         elif mode == 'WORD':
             return _decode_sentence_tokenizer(sentence, tokenizer)
-
-
-def main():
-    """
-    模块方法测试
-    """
