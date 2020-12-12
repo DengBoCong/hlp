@@ -4,10 +4,6 @@ from hlp.mt import preprocess as _pre
 from hlp.mt.model import nmt_model
 from hlp.mt.config import get_config as _config
 
-"""
-使用 ./data 文件夹下的指定文件(默认 en-ch.txt)进行训练
-"""
-
 
 def main():
     # 进行训练所需的数据处理
