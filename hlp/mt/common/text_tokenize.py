@@ -270,7 +270,7 @@ def get_mode_and_path_sentences(language, model_type, postfix):
     return mode, path
 
 
-def create_encoded_sentences(sentences, tokenizer, language, postfix='', model_type='nmt'):
+def encode_and_save_text(sentences, tokenizer, language, postfix='', model_type='nmt'):
     """
     根据所选语言将编码好的句子保存至文件，返回最大句子长度
     Args:

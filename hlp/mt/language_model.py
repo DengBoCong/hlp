@@ -96,11 +96,11 @@ def _lm_preprocess():
     print('源语言字典生成、保存完毕！\n')
 
     print("正在编码训练集句子...")
-    max_sequence_length = text_tokenize.create_encoded_sentences(sentences=sentences,
-                                                                 tokenizer=tokenizer,
-                                                                 language=_config.lm_language,
-                                                                 postfix='_lm',
-                                                                 model_type="lm")
+    max_sequence_length = text_tokenize.encode_and_save_text(sentences=sentences,
+                                                             tokenizer=tokenizer,
+                                                             language=_config.lm_language,
+                                                             postfix='_lm',
+                                                             model_type="lm")
     print('最大句子长度:%d' % max_sequence_length)
     print("句子编码完毕！\n")
 
