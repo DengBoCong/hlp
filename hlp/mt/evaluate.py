@@ -1,5 +1,6 @@
+
 from hlp.mt.common import bleu as _bleu
-from hlp.mt import preprocess
+from hlp.mt.common import load_dataset
 from hlp.mt.config import get_config as _config
 from hlp.mt.model import nmt_model
 from hlp.mt import translator
@@ -12,7 +13,7 @@ from hlp.mt import translator
 # BLEU指标计算
 def _calc_bleu(path, transformer, tokenizer_source, tokenizer_target):
     # 读入文本
-    source_sentences, target_sentences = preprocess.load_sentences(path, _config.num_eval)
+    source_sentences, target_sentences = load_dataset.load_sentences(path, _config.num_eval)
 
     print('开始计算BLEU指标...')
     bleu_sum = 0

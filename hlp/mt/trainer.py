@@ -5,11 +5,11 @@ import tensorflow as tf
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 
+from hlp.mt.common import load_dataset
 from hlp.mt.model import transformer as _transformer
 from hlp.mt.config import get_config as _config
 from hlp.mt.model import nmt_model
 from hlp.utils import optimizers as _optimizers
-from hlp.mt import preprocess
 
 
 def _train_step(inp, tar, transformer, optimizer, train_loss, train_accuracy):
@@ -118,8 +118,8 @@ def train(transformer, validation_data='False', validation_split=0.0, cache=True
     steps = _config.num_sentences // _config.BATCH_SIZE
 
     # 读取数据
-    train_dataset, val_dataset = preprocess.get_dataset(steps, cache, train_size=train_size,
-                                                        validate_from_txt=validation_data)
+    train_dataset, val_dataset = load_dataset.get_dataset(steps, cache, train_size=train_size,
+                                                                    validate_from_txt=validation_data)
 
     print("开始训练...")
     for epoch in range(_config.EPOCHS):

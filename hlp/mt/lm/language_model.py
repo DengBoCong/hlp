@@ -4,7 +4,7 @@ import tensorflow as tf
 import numpy
 from sklearn.model_selection import train_test_split
 
-from hlp.mt import preprocess
+from hlp.mt.common import load_dataset
 from hlp.mt.config import get_config as _config
 from hlp.mt.common import text_vectorize
 from hlp.mt.model import nmt_model
@@ -101,7 +101,7 @@ def preprocess_sentences_lm(sentences, language):
 def _lm_preprocess():
     """数据的预处理及编码"""
     print('正在加载、预处理数据...')
-    sentences = preprocess.load_single_sentences(_config.lm_path_to_train_file, _config.lm_num_sentences, column=2)
+    sentences = load_dataset.load_single_sentences(_config.lm_path_to_train_file, _config.lm_num_sentences, column=2)
     sentences = preprocess_sentences_lm(sentences, language=_config.lm_language)
     print('已加载句子数量:%d' % _config.lm_num_sentences)
     print('数据加载、预处理完毕！\n')
