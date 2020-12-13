@@ -4,9 +4,9 @@ from python_speech_features import mfcc, logfbank, delta
 
 
 def wav_to_feature(wav_path, audio_feature_type):
-    """将某个相对路径对应的音频提取特征
+    """提取语音文件语音特征
 
-    :param wav_path: 音频相对路径
+    :param wav_path: 音频文件路径
     :param audio_feature_type: 特征类型
     :return: shape为(timestep, dim)的音频特征
     """
