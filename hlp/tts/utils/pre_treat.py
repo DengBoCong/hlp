@@ -1,5 +1,4 @@
 import os
-import json
 import numpy as np
 import tensorflow as tf
 import hlp.tts.utils.data_preprocess as preprocess
@@ -65,6 +64,7 @@ def preprocess_lj_speech_raw_data(metadata_path: str, audio_dir: str, save_path:
             mel = tf.keras.preprocessing.sequence.pad_sequences(tf.expand_dims(mel, axis=0),
                                                                 maxlen=max_length, dtype="float32", padding="post")
             mel = tf.squeeze(mel, axis=0)
+            mel = tf.transpose(mel, [1, 0])
 
             np.save(file=mel_file, arr=mel)
             np.save(file=mag_file, arr=mag)

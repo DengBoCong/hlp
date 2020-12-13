@@ -1,5 +1,9 @@
+import copy
+import scipy
 import librosa
 import numpy as np
+import tensorflow as tf
+import matplotlib.pyplot as plt
 
 
 def get_spectrograms(audio_path: str, pre_emphasis: float, n_fft: int, n_mels: int,
@@ -35,6 +39,80 @@ def get_spectrograms(audio_path: str, pre_emphasis: float, n_fft: int, n_mels: i
     mel = mel.T.astype(np.float32)  # (T, n_mels)
     mag = mag.T.astype(np.float32)  # (T, 1+n_fft//2)
     return mel, mag
+
+
+def melspectrogram2wav(mel, max_db, ref_db, sr, n_fft, n_mels, preemphasis, n_iter, hop_length, win_length):
+    mel = (np.clip(mel, 0, 1) * max_db) - max_db + ref_db
+    # 转为幅度谱
+    mel = np.power(10.0, mel * 0.05)
+    m = _mel_to_linear_matrix(sr, n_fft, n_mels)
+    mag = np.dot(m, mel)
+    # 波形重构
+    wav = griffin_lim(mag, n_iter, n_fft, hop_length, win_length)
+    wav = scipy.signal.lfilter([1], [1, -preemphasis], wav)
+    # 剪裁
+    wav, _ = librosa.effects.trim(wav)
+    return wav.astype(np.float32)
+
+
+def _mel_to_linear_matrix(sr, n_fft, n_mels):
+    m = librosa.filters.mel(sr, n_fft, n_mels)
+    m_t = np.transpose(m)
+    p = np.matmul(m, m_t)
+    d = [1.0 / x if np.abs(x) > 1.0e-8 else x for x in np.sum(p, axis=0)]
+    return np.matmul(m_t, np.diag(d))
+
+
+def griffin_lim(spectrogram, n_iter, n_fft, hop_length, win_length):
+    X_best = copy.deepcopy(spectrogram)
+    for i in range(n_iter):
+        X_t = invert_spectrogram(X_best, hop_length, win_length)
+        est = librosa.stft(X_t, n_fft, hop_length, win_length=win_length)
+        phase = est / np.maximum(1e-8, np.abs(est))
+        X_best = spectrogram * phase
+    X_t = invert_spectrogram(X_best, hop_length, win_length)
+    y = np.real(X_t)
+    return y
+
+
+def invert_spectrogram(spectrogram, hop_length, win_length):
+    """
+    spectrogram: [f, t]
+    """
+    return librosa.istft(spectrogram, hop_length, win_length=win_length, window="hann")
+
+
+def spec_distance(mel1, mel2):
+    """
+    计算mel谱之间的欧式距离
+    """
+    mel1 = tf.transpose(mel1, [0, 2, 1])
+    score = np.sqrt(np.sum((mel1 - mel2) ** 2))
+    return score
+
+
+def plot_spectrogram_to_numpy(spectrogram):
+    """
+    下面两个方法没使用，暂时保留
+    """
+    fig, ax = plt.subplots(figsize=(12, 3))
+    im = ax.imshow(spectrogram, aspect="auto", origin="lower",
+                   interpolation='none')
+    plt.colorbar(im, ax=ax)
+    plt.xlabel("Frames")
+    plt.ylabel("Channels")
+    plt.tight_layout()
+    fig.canvas.draw()
+    data = _save_figure_to_numpy(fig)
+    plt.close()
+    return data
+
+
+def _save_figure_to_numpy(fig):
+    # 保存成numpy
+    data = np.fromstring(fig.canvas.tostring_rgb(), dtype=np.uint8, sep='')
+    data = data.reshape(fig.canvas.get_width_height()[::-1] + (3,))
+    return data
 
 
 def get_phoneme_dict_symbols(unknown: str = "<unk>", eos: str = "~"):
