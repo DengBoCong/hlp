@@ -24,7 +24,7 @@ def load_checkpoint(transformer, optimizer, checkpoint_path=_config.checkpoint_p
         # ckpt.restore(ckpt_manager.latest_checkpoint)
         ckpt.restore(checkpoint_path)
         # print('已恢复至最新的检查点！')
-        print('翻译模型使用检查点:'+checkpoint_path)
+        print('正在使用检查点:'+checkpoint_path)
 
 
 def get_checkpoints_path(model_dir=_config.checkpoint_path):
@@ -37,15 +37,6 @@ def get_checkpoints_path(model_dir=_config.checkpoint_path):
     if checkpoint_state is None:
         raise ValueError("未在目录：%s 中发现检查点！" % model_dir)
     return checkpoint_state.all_model_checkpoint_paths
-
-
-def checkpoint_ensembling(model, model_dir):
-    """
-    @param model:使用的模型对象
-    @param model_dir:包含用来生成检查点的目录
-    """
-
-    pass
 
 
 def average_checkpoints(model_dir,
