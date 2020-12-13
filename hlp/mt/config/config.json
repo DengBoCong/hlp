@@ -7,7 +7,7 @@
   "train_size": 0.8,
   "BEAM_SIZE": 3,
   "validation_data": "True",
-  "checkpoint_ensembling": "False",
+  "checkpoint_ensembling": "True",
   "num_validate_sentences": 200,
   "validation_freq": 1,
   "max_checkpoints_num": 5,
@@ -36,7 +36,7 @@
   "checkpoint_path_dir": "./checkpoints",
 
   "language_model": {
-    "path_to_train_file_lm": "./data/anki/anki-cmn-eng.txt",
+    "path_to_train_file_lm": "../data/anki/anki-cmn-eng.txt",
     "language": "zh",
     "en_tokenize_type": "WORD",
     "zh_tokenize_type": "CHAR",

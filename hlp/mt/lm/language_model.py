@@ -4,8 +4,9 @@ import tensorflow as tf
 import numpy
 from sklearn.model_selection import train_test_split
 
+from hlp.mt import preprocess
 from hlp.mt.config import get_config as _config
-from hlp.mt.common import text_vectorize, preprocess
+from hlp.mt.common import text_vectorize
 from hlp.mt.model import nmt_model
 
 

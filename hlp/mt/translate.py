@@ -5,7 +5,7 @@ from hlp.mt import translator
 def main():
     if nmt_model.check_point():  # 检测是否有检查点
         # 读取保存的需要的配置
-        transformer, optimizer, tokenizer_source, tokenizer_target = nmt_model.load_model()
+        transformer, _, tokenizer_source, tokenizer_target = nmt_model.load_model()
 
         # translate
         while True:

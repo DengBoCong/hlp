@@ -11,6 +11,8 @@ class BeamSearch(object):
 
         self.candidates = []  # 保存中间状态序列的容器，元素格式为(score, sequence)类型为(float, [])
         self.result = []  # 用来保存已经遇到结束符的序列
+        self.result_plus = []  # 用来保存已经遇到结束符的带概率分布的序列
+        self.candidates_plus = []  # 保存已经遇到结束符的序列及概率分布
 
     def __len__(self):
         """当前候选结果数
@@ -25,12 +27,14 @@ class BeamSearch(object):
         :return: 无返回值
         """
         self.candidates = []  # 保存中间状态序列的容器，元素格式为(score, sequence)类型为(float, [])
+        self.candidates_plus = []  # 保存已经遇到结束符的序列及概率分布,元素为(score, tensor),tensor的shape为(seq_len, vocab_size)
         self.candidates.append((1, dec_input))
         self.inputs = inputs
         self.dec_inputs = dec_input
         self.beam_size = self.BEAM_SIZE  # 新一轮中，将beam_size重置为原beam大小
         self.worst_score = self.MIN_SCORE  # 新一轮中，worst_score重置
         self.result = []  # 用来保存已经遇到结束符的序列
+        self.result_plus = []  # 用来保存已经遇到结束符的带概率分布的序列元素为tensor, tensor的shape为(seq_len, vocab_size)
 
     def get_search_inputs(self):
         """为下一步预测生成输入
@@ -60,7 +64,9 @@ class BeamSearch(object):
             temp = dec.numpy()
             if temp[0][-1] == end_sign:
                 self.result.append((self.candidates[idx][0], self.candidates[idx][1]))
+                self.result_plus.append(self.candidates_plus[idx])
                 del self.candidates[idx]
+                del self.candidates_plus[idx]
                 self.beam_size -= 1
 
     def expand(self, predictions, end_sign):
@@ -71,11 +77,15 @@ class BeamSearch(object):
         :return: 无返回值
         """
         prev_candidates = copy.deepcopy(self.candidates)
+        prev_candidates_plus = copy.deepcopy(self.candidates_plus)
         self.candidates.clear()
+        self.candidates_plus.clear()
         predictions = predictions.numpy()
-        for i in range(self.dec_inputs.shape[0]):
-            for _ in range(self.beam_size):
-                token_index = tf.argmax(input=predictions[i], axis=0)
+        predictions_plus = copy.deepcopy(predictions)
+        # 在batch_size*beam_size个prediction中找到分值最高的beam_size个
+        for i in range(self.dec_inputs.shape[0]):  # 外循环遍历batch_size（batch_size的值其实就是之前选出的候选数量）
+            for _ in range(self.beam_size):  # 内循环遍历选出beam_size个概率最大位置
+                token_index = tf.argmax(input=predictions[i], axis=0)  # predictions.shape --> (batch_size, vocab_size)
                 # 计算分数
                 score = prev_candidates[i][0] * predictions[i][token_index]
                 predictions[i][token_index] = 0
@@ -83,9 +93,14 @@ class BeamSearch(object):
                 if len(self) < self.beam_size or score > self.worst_score:
                     self.candidates.append(
                         (score, tf.concat([prev_candidates[i][1], tf.constant([[token_index.numpy()]], shape=(1, 1))], axis=-1)))
+                    if len(prev_candidates_plus) == 0:
+                        self.candidates_plus.append((score, predictions_plus))
+                    else:
+                        self.candidates_plus.append((score, tf.concat([prev_candidates_plus[i][1], [predictions_plus[i]]], axis=0)))
                     if len(self) > self.beam_size:
                         sorted_scores = sorted([(s, idx) for idx, (s, _) in enumerate(self.candidates)])
                         del self.candidates[sorted_scores[0][1]]
+                        del self.candidates_plus[sorted_scores[0][1]]
                         self.worst_score = sorted_scores[1][0]
                     else:
                         self.worst_score = min(score, self.worst_score)
@@ -98,6 +113,18 @@ class BeamSearch(object):
         """
         results = [element[1] for element in sorted(self.result)[-top_k:]]
         return results
+
+    def get_result_plus(self, top_k=1):
+        """获得概率最高的top_k个结果
+
+        :return: 概率最高的top_k个带概率的结果
+        """
+        sorted_scores = sorted([(s, idx) for idx, (s, _) in enumerate(self.result)], reverse=True)
+        results_plus = []
+        for i in range(top_k):
+            results_plus.append(self.result_plus[sorted_scores[i][1]][1])
+
+        return results_plus
 
 
 class BeamSearchDecoder(object):
