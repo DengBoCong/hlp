@@ -1,3 +1,4 @@
+
 def wers(originals, results):
     """将多个模型预测文本和原始文本进行wer指标的计算
 
@@ -6,16 +7,12 @@ def wers(originals, results):
     :return: 每一个预测文本与原始文本进行计算的到的wer值构成的list; 多个样本的wer平均值
     """
     count = len(originals)
-    try:
-        assert count > 0
-    except:
-        print(originals)
-        raise ("error, assert count>0 - 可能数据丢失")
+    assert count > 0
     rates = []
     mean = 0.0
     assert count == len(results)
     for i in range(count):
-        rate = _wer(originals[i], results[i])
+        rate = wer(originals[i], results[i])
         mean = mean + rate
         rates.append(rate)
 
@@ -52,12 +49,13 @@ def lers(originals, results):
     return rates, (mean / float(count)), norm_rates, (norm_mean / float(count))
 
 
-def _wer(original, result):
+def wer(original, result):
     """单个原始语料文本和模型解码文本的wer指标计算。
-        WER的定义是在单词水平上编辑/Levenshtein距离除以原文中的单词量。
-        如果原稿的字数（N）比结果多，而且两者完全不同（N个字都会导致一次编辑操作），则WER始终为1（N/N=1）
-        WER是在单词（而不是字符）级别上计算的。
-        因此，我们首先将字符串分成单词：
+
+    WER的定义是在单词水平上编辑/Levenshtein距离除以原文中的单词量。
+    如果原稿的字数（N）比结果多，而且两者完全不同（N个字都会导致一次编辑操作），则WER始终为1（N/N=1）
+    WER是在单词（而不是字符）级别上计算的。
+    因此，我们首先将字符串分成单词：
 
     :param original: 原始语料中的文本
     :param result: 模型解码后的文本

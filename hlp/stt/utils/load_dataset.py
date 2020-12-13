@@ -2,9 +2,8 @@
 import os
 
 
-# 获得语音文件名和转写列表
 def load_data(dataset_name, data_path, num_examples):
-    """加载数据集
+    """加载数据集的语音文件名和转写列表
 
     :param dataset_name: 数据集名字
     :param data_path: 数据集路径
