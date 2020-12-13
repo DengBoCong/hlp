@@ -2,6 +2,7 @@ import os
 import json
 from argparse import ArgumentParser
 import hlp.tts.utils.pre_treat as pre_treat
+from hlp.tts.utils.utils import load_checkpoint
 
 if __name__ == '__main__':
     """
@@ -29,7 +30,7 @@ if __name__ == '__main__':
 
     if options.type == 'train':
         print("待完善")
-    elif options.type == 'chat':
+    elif options.type == 'generate':
         print("待完善")
         # print("Agent: 你好！结束合成请输入ESC。")
         # while True:

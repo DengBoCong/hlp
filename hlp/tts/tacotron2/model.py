@@ -1,24 +1,6 @@
 import tensorflow as tf
-
-
-# 卷积-Dropout-BatchNormalization块
-class ConvDropBN(tf.keras.layers.Layer):
-    def __init__(self, filters, kernel_size, activation, dropout_rate):
-        super(ConvDropBN, self).__init__()
-        self.conv1d = tf.keras.layers.Conv1D(
-            filters,
-            kernel_size,
-            padding="same",
-            activation=activation
-        )
-        self.dropout = tf.keras.layers.Dropout(rate=dropout_rate)
-        self.norm = tf.keras.layers.BatchNormalization()
-
-    def call(self, inputs):
-        outputs = self.conv1d(inputs)
-        outputs = self.dropout(outputs)
-        outputs = self.norm(outputs)
-        return outputs
+from hlp.tts.utils.layers import ConvDropBN
+from hlp.tts.utils.layers import DecoderPreNet
 
 
 class Encoder(tf.keras.layers.Layer):
@@ -114,32 +96,6 @@ class Attention(tf.keras.layers.Layer):
         return attention_context, attention_weights
 
 
-class Prenet(tf.keras.layers.Layer):
-    def __init__(self, prenet_units, n_prenet_layers, prenet_dropout_rate):
-        super().__init__()
-        self.prenet_units = prenet_units
-        self.n_prenet_layers = n_prenet_layers
-        self.prenet_dropout_rate = prenet_dropout_rate
-        self.prenet_dense = [
-            tf.keras.layers.Dense(
-                units=self.prenet_units,
-                activation='relu'
-            )
-            for i in range(self.n_prenet_layers)
-        ]
-        self.dropout = tf.keras.layers.Dropout(
-            rate=self.prenet_dropout_rate
-        )
-
-    def __call__(self, inputs):
-        """Call logic."""
-        outputs = inputs
-        for layer in self.prenet_dense:
-            outputs = layer(outputs)
-            outputs = self.dropout(outputs)
-        return outputs
-
-
 class Postnet(tf.keras.layers.Layer):
     def __init__(self, n_conv_encoder, n_conv_postnet, postnet_conv_filters, postnet_conv_kernel_sizes,
                  postnet_dropout_rate, postnet_conv_activation, n_mels):
@@ -189,7 +145,7 @@ class Decoder(tf.keras.layers.Layer):
         self.n_mels = n_mels
         self.max_input_length = max_input_length
         self.initial_hidden_size = initial_hidden_size
-        self.prenet2 = Prenet(prenet_units, n_prenet_layers, prenet_dropout_rate)
+        self.prenet2 = DecoderPreNet(prenet_units, n_prenet_layers, prenet_dropout_rate)
         self.postnet = Postnet(n_conv_encoder, n_conv_postnet, postnet_conv_filters, postnet_conv_kernel_sizes,
                                postnet_dropout_rate, postnet_conv_activation, n_mels)
 

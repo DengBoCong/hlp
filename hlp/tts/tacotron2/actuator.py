@@ -7,26 +7,7 @@ sys.path.append(os.path.abspath(__file__)[:os.path.abspath(__file__).rfind("\\hl
 import hlp.tts.utils.pre_treat as pre_treat
 import hlp.tts.tacotron2.module as module
 from hlp.tts.tacotron2.model import Tacotron2
-
-
-def load_checkpoint(model: tf.keras.Model, checkpoint_dir: str, execute_type: str, checkpoint_save_size: int):
-    """
-    恢复检查点
-    """
-    # 如果检查点存在就恢复，如果不存在就重新创建一个
-    checkpoint = tf.train.Checkpoint(tacotron2=model)
-    ckpt_manager = tf.train.CheckpointManager(checkpoint, checkpoint_dir, max_to_keep=checkpoint_save_size)
-
-    if os.path.exists(checkpoint_dir):
-        if ckpt_manager.latest_checkpoint:
-            checkpoint.restore(ckpt_manager.latest_checkpoint).expect_partial()
-    else:
-        os.makedirs(checkpoint_dir, exist_ok=True)
-        if execute_type == "generate":
-            print("没有检查点，请先执行train模式")
-            exit(0)
-
-    return ckpt_manager
+from hlp.tts.utils.utils import load_checkpoint
 
 
 def main():

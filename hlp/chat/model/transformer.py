@@ -1,6 +1,5 @@
 import tensorflow as tf
 import hlp.utils.layers as layers
-import hlp.chat.common.layers as self_layers
 
 
 def encoder(vocab_size: int, num_layers: int, units: int, d_model: int,
@@ -31,7 +30,7 @@ def encoder(vocab_size: int, num_layers: int, units: int, d_model: int,
 
     # 这里layer使用的name是为了调试的时候答应信息方便查看，也可以不写
     for i in range(num_layers):
-        outputs = self_layers.transformer_encoder_layer(
+        outputs = layers.transformer_encoder_layer(
             units=units,
             d_model=d_model,
             num_heads=num_heads,
@@ -70,7 +69,7 @@ def decoder(vocab_size: int, num_layers: int, units: int, d_model: int,
     outputs = tf.keras.layers.Dropout(rate=dropout)(embeddings)
 
     for i in range(num_layers):
-        outputs = self_layers.transformer_decoder_layer(
+        outputs = layers.transformer_decoder_layer(
             units=units, d_model=d_model, num_heads=num_heads,
             dropout=dropout, name="transformer_decoder_layer_{}".format(i),
         )(inputs=[outputs, enc_outputs, look_ahead_mask, padding_mask])

@@ -1,3 +1,4 @@
+import os
 import copy
 import scipy
 import librosa
@@ -64,6 +65,16 @@ def _mel_to_linear_matrix(sr, n_fft, n_mels):
 
 
 def griffin_lim(spectrogram, n_iter, n_fft, hop_length, win_length):
+    """
+    已知幅度谱，未知相位谱，通过迭代生成相位谱，并用已
+    知的幅度谱和计算得出的相位谱，重建语音波形的方法
+    :param spectrogram: 幅度谱
+    :param n_iter: 迭代指针
+    :param n_fft: FFT窗口大小
+    :param hop_length: 帧移
+    :param win_length: 窗长win_length
+    :return:
+    """
     X_best = copy.deepcopy(spectrogram)
     for i in range(n_iter):
         X_t = invert_spectrogram(X_best, hop_length, win_length)
@@ -78,6 +89,9 @@ def griffin_lim(spectrogram, n_iter, n_fft, hop_length, win_length):
 def invert_spectrogram(spectrogram, hop_length, win_length):
     """
     spectrogram: [f, t]
+    :param spectrogram: 幅度谱
+    :param hop_length: 帧移
+    :param win_length: 窗长win_length
     """
     return librosa.istft(spectrogram, hop_length, win_length=win_length, window="hann")
 
@@ -85,6 +99,9 @@ def invert_spectrogram(spectrogram, hop_length, win_length):
 def spec_distance(mel1, mel2):
     """
     计算mel谱之间的欧式距离
+    :param mel1: 预测mel
+    :param mel2: ground-true mel
+    :return 两者之间的欧氏距离
     """
     mel1 = tf.transpose(mel1, [0, 2, 1])
     score = np.sqrt(np.sum((mel1 - mel2) ** 2))
@@ -139,3 +156,23 @@ def get_phoneme_dict_symbols(unknown: str = "<unk>", eos: str = "~"):
     dict_set = {s: i for i, s in enumerate(symbols_list)}
 
     return dict_set, set(symbols)
+
+
+def load_checkpoint(model: tf.keras.Model, checkpoint_dir: str, execute_type: str, checkpoint_save_size: int):
+    """
+    恢复检查点
+    """
+    # 如果检查点存在就恢复，如果不存在就重新创建一个
+    checkpoint = tf.train.Checkpoint(tacotron2=model)
+    ckpt_manager = tf.train.CheckpointManager(checkpoint, checkpoint_dir, max_to_keep=checkpoint_save_size)
+
+    if os.path.exists(checkpoint_dir):
+        if ckpt_manager.latest_checkpoint:
+            checkpoint.restore(ckpt_manager.latest_checkpoint).expect_partial()
+    else:
+        os.makedirs(checkpoint_dir, exist_ok=True)
+        if execute_type == "generate":
+            print("没有检查点，请先执行train模式")
+            exit(0)
+
+    return ckpt_manager
