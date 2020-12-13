@@ -9,7 +9,7 @@ from hlp.mt.model import transformer as _transformer
 from hlp.mt.model import checkpoint
 from hlp.mt.common import text_vectorize
 from hlp.utils import beamsearch
-from hlp.mt import preprocess
+from hlp.mt.common import text_split
 
 
 def _checkpoint_ensembling(checkpoints_path, model, inputs, decoder_input):
@@ -46,7 +46,7 @@ def _checkpoint_ensembling(checkpoints_path, model, inputs, decoder_input):
 
 def _predict_index(checkpoints_path, inp_sentence, model, beam_search_container, input_tokenizer, target_tokenizer):
     """对输入句子进行翻译并返回编码的句子列表"""
-    sentence = preprocess.preprocess_sentences([inp_sentence], language=_config.source_lang)
+    sentence = text_split.preprocess_sentences([inp_sentence], language=_config.source_lang)
 
     inp_sequence, _ = text_vectorize.encode_sentences(sentence, input_tokenizer, language=_config.source_lang)
     inp_sequence = tf.squeeze(inp_sequence)
