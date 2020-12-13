@@ -1,47 +1,47 @@
 
-def wers(originals, results):
+def wers(truths, preds):
     """多个文本WER计算
 
-    :param originals: 以空格分隔的真实文本串list
-    :param results: 以空格分隔的预测文本串list
+    :param truths: 以空格分隔的真实文本串list
+    :param preds: 以空格分隔的预测文本串list
     :return: WER列表，WER平均值
     """
-    count = len(originals)
+    count = len(truths)
     assert count > 0
     rates = []
     mean = 0.0
-    assert count == len(results)
+    assert count == len(preds)
     for i in range(count):
-        rate = wer(originals[i], results[i])
+        rate = wer(truths[i], preds[i])
         mean = mean + rate
         rates.append(rate)
 
     return rates, mean / float(count)
 
 
-def wer(original, result):
+def wer(truth, pred):
     """单个WER计算
 
-    :param original: 以空格分隔的真实文本串
-    :param result: 以空格分隔的预测文本串
+    :param truth: 以空格分隔的真实文本串
+    :param pred: 以空格分隔的预测文本串
     :return: WER
     """
-    original = original.split()
-    result = result.split()
+    truth = truth.split()
+    pred = pred.split()
 
-    return _levenshtein(original, result) / float(len(original))
+    return _levenshtein(truth, pred) / float(len(truth))
 
 
-def lers(originals, results):
+def lers(truths, preds):
     """多个文本LER计算
 
-    :param originals: 以空格分隔的真实文本串list
-    :param results: 以空格分隔的预测文本串list
+    :param truths: 以空格分隔的真实文本串list
+    :param preds: 以空格分隔的预测文本串list
     :return: 多个ler指标组成的list; ler均值; 规范化ler指标组成的list; 规范化ler均值
     """
-    count = len(originals)
+    count = len(truths)
     assert count > 0
-    assert count == len(results)
+    assert count == len(preds)
 
     rates = []
     norm_rates = []
@@ -49,10 +49,10 @@ def lers(originals, results):
     norm_mean = 0.0
 
     for i in range(count):
-        rate = _levenshtein(originals[i], results[i])
+        rate = _levenshtein(truths[i], preds[i])
         mean = mean + rate
 
-        normrate = (float(rate) / len(originals[i]))
+        normrate = (float(rate) / len(truths[i]))
 
         norm_mean = norm_mean + normrate
 
@@ -62,14 +62,14 @@ def lers(originals, results):
     return rates, (mean / float(count)), norm_rates, (norm_mean / float(count))
 
 
-def ler(original, result):
+def ler(truth, pred):
     """LER
 
-    :param original: 以空格分隔的真实文本串
-    :param result: 以空格分隔的预测文本串
+    :param truth: 以空格分隔的真实文本串
+    :param pred: 以空格分隔的预测文本串
     :return: LER
     """
-    return  _levenshtein(original, result) / float(len(original))
+    return _levenshtein(truth, pred) / float(len(truth))
 
 
 def _levenshtein(a, b):
@@ -100,6 +100,6 @@ def _levenshtein(a, b):
 
 if __name__ == "__main__":
     pred1 = "i like you"
-    ref1 = "i like u"
-    print(wer(ref1, pred1))
-    print(ler(ref1,pred1))
+    truth1 = "i like u"
+    print(wer(truth1, pred1))
+    print(ler(truth1, pred1))
