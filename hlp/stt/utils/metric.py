@@ -37,29 +37,23 @@ def lers(truths, preds):
 
     :param truths: 以空格分隔的真实文本串list
     :param preds: 以空格分隔的预测文本串list
-    :return: 多个ler指标组成的list; ler均值; 规范化ler指标组成的list; 规范化ler均值
+    :return: 规范化ler指标组成的list; 规范化ler均值
     """
     count = len(truths)
     assert count > 0
     assert count == len(preds)
 
-    rates = []
     norm_rates = []
-    mean = 0.0
     norm_mean = 0.0
 
     for i in range(count):
         rate = _levenshtein(truths[i], preds[i])
-        mean = mean + rate
 
         normrate = (float(rate) / len(truths[i]))
-
         norm_mean = norm_mean + normrate
-
-        rates.append(rate)
         norm_rates.append(round(normrate, 4))
 
-    return rates, (mean / float(count)), norm_rates, (norm_mean / float(count))
+    return norm_rates, (norm_mean / float(count))
 
 
 def ler(truth, pred):

@@ -56,9 +56,6 @@ if __name__ == "__main__":
     text_process_mode = configs["preprocess"]["text_process_mode"]
 
     # 计算指标并打印
-    wers, lers, norm_lers = compute_metric(model, test_data_generator, batches, text_process_mode, index_word)
-    print("WER:")
+    wers, norm_lers = compute_metric(model, test_data_generator, batches, text_process_mode, index_word)
     print("平均WER:", wers)
-    print("LER:")
-    print("平均LER:", lers)
     print("规范化平均LER:", norm_lers)

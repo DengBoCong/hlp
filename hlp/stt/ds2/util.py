@@ -34,7 +34,6 @@ def compute_ctc_input_length(max_time_steps, ctc_time_steps, input_length):
 # 在valid或test计算指标
 def compute_metric(model, test_data_generator, batches, text_process_mode, index_word):
     aver_wers = 0
-    aver_lers = 0
     aver_norm_lers = 0
 
     for batch, (input_tensor, input_length, text_list) in zip(range(1, batches + 1), test_data_generator):
@@ -55,13 +54,12 @@ def compute_metric(model, test_data_generator, batches, text_process_mode, index
 
         # 通过wer、ler指标评价模型
         _, aver_wer = wers(originals, results)
-        _, aver_ler, _, norm_aver_ler = lers(originals, results)
+        _, norm_aver_ler = lers(originals, results)
 
         aver_wers += aver_wer
-        aver_lers += aver_ler
         aver_norm_lers += norm_aver_ler
 
-    return aver_wers / batches, aver_lers / batches, aver_norm_lers / batches
+    return aver_wers / batches, aver_norm_lers / batches
 
 
 def can_stop(numbers):
