@@ -22,9 +22,9 @@ def load_data(dataset_name, data_path, num_examples):
 
 
 def get_text(line, colum_sep=" "):
-    """基于数据文本规则的行获取
+    """获得语音转写文本
 
-    :param line: 语料文件中每行索引及其对应文本
+    :param line: 可能包括语音文件和语音转写
     :param colum_sep: 可能的语音文件名和转写文本间的分隔符
     :return: 音频对应的转写文本
     """
@@ -34,8 +34,13 @@ def get_text(line, colum_sep=" "):
     return line.strip().split(colum_sep, 1)[1].lower()
 
 
-# 读取文本文件，并基于某种row_style来处理原始语料
 def get_text_list(text_path, colum_sep=" "):
+    """从标注文件中获得所有转写
+
+    :param text_path: 标注文件路径
+    :param colum_sep: 语音文件和转写间的分隔符
+    :return: 转写列表
+    """
     text_list = []
     with open(text_path, "r") as f:
         sentence_list = f.readlines()
