@@ -1,6 +1,6 @@
 {
     "train": {
-        "epochs": 50,
+        "epochs": 20,
         "wav_path": ".\\data\\number\\wav_train",
         "label_path": ".\\data\\number\\data_train.txt",
         "val_wav_path": ".\\data\\number\\wav_validation",
@@ -47,6 +47,7 @@
         "dataset_info_path": "./ds_info.json",
         "dataset_name": "number",
         "n_mfcc": 39,
-        "audio_feature_type": "mfcc"
+        "audio_feature_type": "mfcc",
+        "text_process_mode": "las_en_char"
     }
 }
