@@ -5,7 +5,7 @@ import numpy as np
 from hlp.chat.common.utils import log_operator
 
 
-def check_file(raw_file: str, treat_file: str, if_remove: bool = True):
+def _check_file(raw_file: str, treat_file: str, if_remove: bool = True):
     """
     对原始文本进行检查是否存在
     删除已存在的分词文本
@@ -15,7 +15,7 @@ def check_file(raw_file: str, treat_file: str, if_remove: bool = True):
     :return: 无返回值
     """
     if not os.path.exists(raw_file):
-        print('数据集不存在，请添加数据集!')
+        print('数据集不存在： ', raw_file)
         exit(0)
     # 如果if_remove为True且已经分词的文件存在，要删除，因为后面的读写操作是边读边写
     if os.path.exists(treat_file) and if_remove:
@@ -31,7 +31,7 @@ def preprocess_raw_data_qa_single(raw_data: str, qa_data: str, if_remove: bool =
     :param if_remove: 是否移除原有分词文本
     :return: 无返回值
     """
-    check_file(raw_file=raw_data, treat_file=qa_data, if_remove=if_remove)
+    _check_file(raw_file=raw_data, treat_file=qa_data, if_remove=if_remove)
 
     count = 0
     sentences_count = 0
@@ -82,7 +82,7 @@ def preprocess_raw_xiao_huang_ji_data(raw_data: str, tokenized_data: str, if_rem
     :param if_remove: 是否移除原有分词文本
     :return:
     """
-    check_file(raw_file=raw_data, treat_file=tokenized_data, if_remove=if_remove)
+    _check_file(raw_file=raw_data, treat_file=tokenized_data, if_remove=if_remove)
 
     count = 1
     max_len = 0
@@ -122,7 +122,7 @@ def preprocess_raw_lccc_data(raw_data: str, tokenized_data: str, if_remove: bool
     :param if_remove: 是否移除原有分词文本
     :return: 无返回值
     """
-    check_file(raw_file=raw_data, treat_file=tokenized_data, if_remove=if_remove)
+    _check_file(raw_file=raw_data, treat_file=tokenized_data, if_remove=if_remove)
 
     count = 0
     max_len = 0
@@ -161,7 +161,7 @@ def preprocess_raw_douban_data(raw_data: str, tokenized_data: str, repeat_data: 
     :param if_remove: 是否移除原有分词文本
     :return: 无返回值
     """
-    check_file(raw_file=raw_data, treat_file=tokenized_data, if_remove=if_remove)
+    _check_file(raw_file=raw_data, treat_file=tokenized_data, if_remove=if_remove)
 
     count = 0
     max_len = 0
@@ -209,7 +209,7 @@ def preprocess_raw_cross_woz_data(raw_data: str, tokenized_data: str, if_remove:
     :param if_remove: 是否移除原有分词文本
     :return: 无返回值
     """
-    check_file(raw_file=raw_data, treat_file=tokenized_data, if_remove=if_remove)
+    _check_file(raw_file=raw_data, treat_file=tokenized_data, if_remove=if_remove)
 
     count = 0
     max_len = 0
@@ -249,7 +249,7 @@ def preprocess_raw_tie_ba_data(raw_data: str, tokenized_data: str, if_remove: bo
     :param if_remove: 是否移除原有分词文本
     :return: 无返回值
     """
-    check_file(raw_file=raw_data, treat_file=tokenized_data, if_remove=if_remove)
+    _check_file(raw_file=raw_data, treat_file=tokenized_data, if_remove=if_remove)
 
     count = 0
     max_len = 0
@@ -306,7 +306,7 @@ def preprocess_raw_wei_bo_data(raw_post_data: str, raw_response_data,
     :param if_remove: 是否移除原有分词文本
     :return: 无返回值
     """
-    check_file(raw_file=raw_post_data, treat_file=tokenized_data, if_remove=if_remove)
+    _check_file(raw_file=raw_post_data, treat_file=tokenized_data, if_remove=if_remove)
     if not os.path.exists(raw_response_data):
         print('数据集不存在，请添加数据集!')
         exit(0)
@@ -353,7 +353,7 @@ def preprocess_raw_qin_yun_data(raw_data: str, tokenized_data: str, if_remove: b
     :param if_remove: 是否移除原有分词文本
     :return: 无返回值
     """
-    check_file(raw_file=raw_data, treat_file=tokenized_data, if_remove=if_remove)
+    _check_file(raw_file=raw_data, treat_file=tokenized_data, if_remove=if_remove)
 
     count = 0
     max_len = 0
