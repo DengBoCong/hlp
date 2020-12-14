@@ -1,23 +1,6 @@
-"""
-transformer中除了层之外的内容
-包含：
-- Positional encoding 位置编码：由于transformer采用self-attention,不包含位置信息，所以需要额外加入位置信息
-
-- Masking 掩码：
-    - 前瞻遮挡 ： 使用前n个word来预测第n个word，将之后的word信息遮挡起来
-    - 填充遮挡 ： 将填充位置，即0元素遮挡起来
-
-- Scaled dot product attention 点积注意力：根据 q、k、v 和 mask 计算出输出
-    返回值 :
-    - output : (..., seq_len_q, depth_v)
-    - attention :  (..., seq_len_q, seq_len_k)
-
-- Multi-head attention 多头注意力 ：将原来单个头分成多头
-
-- Transformer 类
-"""
 import tensorflow as tf
-import utils.layers as layers
+
+from hlp.utils import layers
 
 
 # 点式前馈网络（Point wise feed forward network）

@@ -1,43 +1,45 @@
-'''
-Author: PengKang6
-Description: 加载数据集, 获取音频路径list和转写文本list
-'''
+
 import os
 
 
-# 获得语音文件名和转写列表
 def load_data(dataset_name, data_path, num_examples):
-    '''加载数据集
-    
+    """加载数据集的语音文件名和转写列表
+
     :param dataset_name: 数据集名字
     :param data_path: 数据集路径
-    :param text_row_style: 文本每行的格式
     :param num_examples: 数据量
     :return: 语音文件路径list和对应转写文本list
-    '''
+    """
     if dataset_name.lower() == "librispeech":
         audio_data_path_list, text_list = get_data_librispeech(data_path, num_examples)
     elif dataset_name.lower() == "thchs30":
         audio_data_path_list, text_list = get_data_thchs30(data_path, num_examples)
+    elif dataset_name.lower() == "number":
+        audio_data_path_list, text_list = get_data_number(data_path, num_examples)
 
     return audio_data_path_list, text_list
 
 
 def get_text(line, colum_sep=" "):
-    '''基于数据文本规则的行获取
+    """获得语音转写文本
 
-    :param line: 语料文件中每行索引及其对应文本
-    :param text_row_style: 可能的语音文件名和转写文本间的分隔符
+    :param line: 可能包括语音文件和语音转写
+    :param colum_sep: 可能的语音文件名和转写文本间的分隔符
     :return: 音频对应的转写文本
-    '''
+    """
     if colum_sep is None:
         return line.strip().lower()
 
     return line.strip().split(colum_sep, 1)[1].lower()
 
 
-# 读取文本文件，并基于某种row_style来处理原始语料
 def get_text_list(text_path, colum_sep=" "):
+    """从标注文件中获得所有转写
+
+    :param text_path: 标注文件路径
+    :param colum_sep: 语音文件和转写间的分隔符
+    :return: 转写列表
+    """
     text_list = []
     with open(text_path, "r") as f:
         sentence_list = f.readlines()
@@ -108,6 +110,21 @@ def get_data_thchs30(data_path, num_examples=None):
     return audio_data_path_list[:num_examples], text_list[:num_examples]
 
 
+def get_data_number(data_path, num_examples=None):
+    """ 获得number数据集的语音文件和转写列表
+
+    :param data_path: number数据集路径
+    :param num_examples: 最大语音文件数
+    :return: (语音文件列表，转写列表)
+    """
+    wav_path = data_path[0]
+    text_data_path = data_path[1]
+    files = os.listdir(wav_path)    
+    audio_path_list = files
+    audio_data_path_list = [wav_path + "\\" + audio_path for audio_path in audio_path_list[:num_examples]]
+    text_list = get_text_list(text_data_path, colum_sep = "\t")[:num_examples]
+    return audio_data_path_list, text_list
+
 if __name__ == "__main__":
     dir_thchs30 = '../data/data_thchs30/train'
     audio_fils, texts = get_data_thchs30(dir_thchs30)
@@ -118,3 +135,5 @@ if __name__ == "__main__":
     audio_fils, texts = get_data_librispeech(dir_librispeech)
     print(audio_fils)
     print(texts)
+
+

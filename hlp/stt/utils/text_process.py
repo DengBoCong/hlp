@@ -1,20 +1,14 @@
-'''
-Author: PengKang6
-Description: 文本的处理相关方法
-'''
-
 import re
-
 import tensorflow as tf
 
 
 def split_sentence(line, mode):
-    '''此方法依据文本是中文文本还是英文文本，若为英文文本是按字符切分还是按单词切分
+    """对转写文本进行切分
 
-    :param text: 语料文件中每行对应文本
+    :param line: 转写文本
     :param mode: 语料文本的切分方法
-    :return: 切分后的文本
-    '''
+    :return: 切分后的文本，以空格分隔的字符串
+    """
     if mode.lower() == "cn":
         return _split_sentence_cn(line)
     elif mode.lower() == "en_word":
@@ -28,28 +22,24 @@ def get_max_label_length(text_int_sequences):
     return max(len(seq) for seq in text_int_sequences)
 
 
-def build_text_int_sequences(sentences, mode, word_index):
-    # 基于文本按照某种mode切分文本
+def vectorize_texts(sentences, mode, word_index):
     splitted_sentences = split_sentences(sentences, mode)
-
-    # 基于预处理时dataset_information中写入的word_index构建文本整形序列list
-    text_int_sequences_list = get_text_int_sequences(splitted_sentences, word_index)
-
+    text_int_sequences_list = text_to_int_sequences(splitted_sentences, word_index)
     return text_int_sequences_list
 
 
-# 基于word_index和切割好的文本list得到数字序列list
-def get_text_int_sequences(splitted_sentences, word_index):
+# token转换成id
+def text_to_int_sequences(splitted_sentences, word_index):
     text_int_sequences = []
-    for process_text in splitted_sentences:
-        text_int_sequences.append(text_to_int_sequence(process_text, word_index))
+    for splitted_sentence in splitted_sentences:
+        text_int_sequences.append(text_to_int_sequence(splitted_sentence, word_index))
     return text_int_sequences
 
 
-# 对单行文本进行process_text转token整形序列
-def text_to_int_sequence(process_text, word_index):
+# token转换成id
+def text_to_int_sequence(splitted_sentence, word_index):
     int_sequence = []
-    for c in process_text.split(" "):
+    for c in splitted_sentence.split(" "):
         int_sequence.append(int(word_index[c]))
     return int_sequence
 
@@ -59,19 +49,6 @@ def split_sentences(sentences, mode):
     for text in sentences:
         text_list.append(split_sentence(text, mode))
     return text_list
-
-
-def get_label_and_length(text_int_sequences_list, max_label_length):
-    target_length_list = []
-    for text_int_sequence in text_int_sequences_list:
-        target_length_list.append([len(text_int_sequence)])
-    target_tensor_numpy = tf.keras.preprocessing.sequence.pad_sequences(
-        text_int_sequences_list,
-        maxlen=max_label_length,
-        padding='post'
-    )
-    target_length = tf.convert_to_tensor(target_length_list)
-    return target_tensor_numpy, target_length
 
 
 def _split_sentence_en_word(s):
@@ -108,3 +85,68 @@ def _split_sentence_cn(s):
     s = s.strip()
 
     return s
+
+
+def get_label_and_length(text_int_sequences_list, max_label_length):
+    target_length_list = []
+    for text_int_sequence in text_int_sequences_list:
+        target_length_list.append([len(text_int_sequence)])
+    target_tensor_numpy = tf.keras.preprocessing.sequence.pad_sequences(text_int_sequences_list,
+                                                                        maxlen=max_label_length,
+                                                                        padding='post'
+                                                                        )
+    target_length = tf.convert_to_tensor(target_length_list)
+    return target_tensor_numpy, target_length
+
+
+def tokenize(texts):
+    """ 对文本进行tokenize和编码
+
+    :param texts: 已经用空格分隔的文本列表
+    :return: 文本编码序列, tokenizer
+    """
+    tokenizer = tf.keras.preprocessing.text.Tokenizer(filters='')  # 无过滤字符
+    tokenizer.fit_on_texts(texts)
+    text_int_sequences = tokenizer.texts_to_sequences(texts)
+    return text_int_sequences, tokenizer
+
+
+# 将输出token id序列解码为token序列
+def int_to_text_sequence(seq, index_word, mode):
+    if mode.lower() == "cn":
+        return int_to_text_sequence_cn(seq, index_word)
+    elif mode.lower() == "en_word":
+        return int_to_text_sequence_en_word(seq, index_word)
+    elif mode.lower() == "en_char":
+        return int_to_text_sequence_en_char(seq, index_word)
+
+
+def int_to_text_sequence_cn(ids, index_word):
+    result = []
+    for i in ids:
+        if 1 <= i <= len(index_word):
+            word = index_word[str(i)]
+            result.append(word)
+    return "".join(result).strip()
+
+
+def int_to_text_sequence_en_word(ids, index_word):
+    result = []
+    for i in ids:
+        if 1 <= i <= (len(index_word)):
+            word = index_word[str(i)]
+            result.append(word)
+            result.append(" ")
+    return "".join(result).strip()
+
+
+def int_to_text_sequence_en_char(ids, index_word):
+    result = []
+    for i in ids:
+        if 1 <= i <= (len(index_word)):
+            word = index_word[str(i)]
+            if word != "<space>":
+                result.append(word)
+            else:
+                result.append(" ")
+    return "".join(result).strip()

@@ -10,7 +10,7 @@ import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 import json
 from hlp.stt.las.config import config
-from . import preprocess_text
+from hlp.stt.las.data_processing import preprocess_text
 from hlp.stt.utils import features
 
 
@@ -27,7 +27,7 @@ def build_train_data(audio_data_path_list, text_list):
     max_label_length = max_length(text_int_sequences)
 
     # 将数据集的相关信息写入dataset_information.json文件
-    dataset_information_path = config.dataset_information_path
+    dataset_info_path = config.dataset_info_path
 
     dataset_information = {}
     dataset_information["vocab_tar_size"] = len(tokenizer.index_word) + 1
@@ -36,7 +36,7 @@ def build_train_data(audio_data_path_list, text_list):
     dataset_information["index_word"] = tokenizer.index_word
     dataset_information["word_index"] = tokenizer.word_index
 
-    with open(dataset_information_path, 'w', encoding="utf-8") as f:
+    with open(dataset_info_path, 'w', encoding="utf-8") as f:
         json.dump(dataset_information, f, ensure_ascii=False, indent=4)
     vocab_tar_size = dataset_information["vocab_tar_size"]
     label_length_list = [[len(text_int)] for text_int in text_int_sequences]
@@ -88,8 +88,7 @@ def get_max_audio_length(audio_data_path_list, audio_feature_type):
     max_audio_length = 0
     for audio_path in audio_data_path_list:
         audio_feature = features.wav_to_feature(audio_path, audio_feature_type)
-        if (audio_feature):
-            max_audio_length = max(max_audio_length, len(audio_feature))
+        max_audio_length = max(max_audio_length, len(audio_feature))
 
     return max_audio_length
 

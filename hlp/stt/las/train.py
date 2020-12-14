@@ -13,22 +13,15 @@ import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 import time
 import tensorflow as tf
-from model import las
-from model import las_d_w
-from config import config
-from data_processing import load_dataset
-from data_processing.generator import data_generator, val_generator
-from util import compute_metric
+from hlp.stt.las.model import las
+from hlp.stt.las.model import las_d_w
+from hlp.stt.las.config import config
+from hlp.stt.las.data_processing import load_dataset
+from hlp.stt.las.data_processing.generator import data_generator, val_generator
+from hlp.stt.las.util import compute_metric
+from hlp.utils.optimizers import loss_func_mask
 
 
-def loss_function(real, pred):
-    loss_object = tf.keras.losses.SparseCategoricalCrossentropy(
-        from_logits=True, reduction='none')
-    mask = tf.math.logical_not(tf.math.equal(real, 0))  # 填充位为0，掩蔽
-    loss_ = loss_object(real, pred)
-    mask = tf.cast(mask, dtype=loss_.dtype)
-    loss_ *= mask
-    return tf.reduce_mean(loss_)
 
 
 def train_step(inputx_1, targetx_2, enc_hidden, word_index, model, las_optimizer, train_batch_size):
@@ -45,7 +38,7 @@ def train_step(inputx_1, targetx_2, enc_hidden, word_index, model, las_optimizer
         for t in range(1, targetx_2.shape[1]):
             # 将编码器输出 （enc_output） 传送至解码器，解码
             predictions, _ = model(inputx_1, enc_hidden, dec_input)
-            loss += loss_function(targetx_2[:, t], predictions)  # 根据预测计算损失
+            loss += loss_func_mask(targetx_2[:, t], predictions)  # 根据预测计算损失
 
             # 使用教师强制，下一步输入符号是训练集中对应目标符号
             dec_input = targetx_2[:, t]
@@ -188,7 +181,5 @@ if __name__ == "__main__":
             rates_lers, aver_lers, norm_rates_lers, norm_aver_lers = compute_metric(model, val_data_generator,
                                                                                     val_batchs, val_batch_size)
             print("字母错误率: ")
-            print("每条语音字母错误数: ", rates_lers)
             print("所有语音平均字母错误数: ", aver_lers)
-            print("每条语音字母错误率，错误字母数/标签字母数: ", norm_rates_lers)
             print("所有语音平均字母错误率: ", norm_aver_lers)

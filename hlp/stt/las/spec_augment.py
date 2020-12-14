@@ -186,7 +186,7 @@ def plot_spectrogram(mel_spectrogram, title):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Spec Augment')
-    parser.add_argument('--audio-path', default='../data/number/wav_test/0_jackson_1.wav',
+    parser.add_argument('--audio-path', default='./data/number/wav_test/0_jackson_1.wav',
                         help='The audio file.')
     parser.add_argument('--time-warp-para', default=80,
                         help='time warp parameter W')
@@ -203,7 +203,7 @@ if __name__ == "__main__":
     time_masking_para = args.frequency_mask_para
     frequency_masking_para = args.time_mask_para
     masking_line_number = args.masking_line_number
-
+    print(audio_path)
     audio, sampling_rate = librosa.load(audio_path)
 
     mel_spectrogram = librosa.feature.melspectrogram(y=audio,
@@ -218,6 +218,7 @@ if __name__ == "__main__":
     mel_spectrogram = np.reshape(mel_spectrogram, (-1, shape[0], shape[1], 1))
 
     # Show Raw mel-spectrogram
+    print("11111111111---------mel_spectrogram.shape{}".format(mel_spectrogram.shape))
     plot_spectrogram(mel_spectrogram=mel_spectrogram,
                                            title="Raw Mel Spectrogram")
 
