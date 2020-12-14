@@ -1,18 +1,17 @@
 import tensorflow as tf
-import utils.layers as layers
-import common.utils as utils
+import hlp.utils.layers as layers
+import hlp.chat.common.utils as utils
 
 
 def cell_layer(units: int, input_feature_dim: int, cell_type: str = 'lstm',
                if_bidirectional: bool = True) -> tf.keras.Model:
     """
     RNNCell层，其中可定义cell类型，是否双向
-    Args:
-        units: cell单元数
-        input_feature_dim: 输入的特征维大小
-        cell_type: cell类型，lstm/gru， 默认lstm
-        if_bidirectional: 是否双向
-    Returns:
+    :param units: cell单元数
+    :param input_feature_dim: 输入的特征维大小
+    :param cell_type: cell类型，lstm/gru， 默认lstm
+    :param if_bidirectional: 是否双向
+    :return: Multi-layer RNN
     """
     inputs = tf.keras.Input(shape=(None, input_feature_dim))
     if cell_type == 'lstm':
@@ -41,14 +40,13 @@ def encoder(vocab_size: int, embedding_dim: int, enc_units: int, layer_size: int
     seq2seq的encoder，主要就是使用Embedding和GRU对输入进行编码，
     这里需要注意传入一个初始化的隐藏层，随机也可以，但是我这里就
     直接写了一个隐藏层方法。
-    Args:
-        vocab_size: 词汇量大小
-        embedding_dim: 词嵌入维度
-        enc_units: 单元大小
-        layer_size: encoder中内部RNN层数
-        cell_type: cell类型，lstm/gru， 默认lstm
-        if_bidirectional: 是否双向
-    Returns:
+    :param vocab_size: 词汇量大小
+    :param embedding_dim: 词嵌入维度
+    :param enc_units: 单元大小
+    :param layer_size: encoder中内部RNN层数
+    :param cell_type: cell类型，lstm/gru， 默认lstm
+    :param if_bidirectional: 是否双向
+    :return: Seq2Seq的Encoder
     """
     inputs = tf.keras.Input(shape=(None,))
     outputs = tf.keras.layers.Embedding(vocab_size, embedding_dim)(inputs)
@@ -66,14 +64,13 @@ def decoder(vocab_size: int, embedding_dim: int, dec_units: int, enc_units: int,
     seq2seq的decoder，将初始化的x、隐藏层和encoder的输出作为
     输入，encoder的输入用来和隐藏层进行attention，得到的上下文
     向量和x进行整合然后丢到gru里去，最后Dense输出一下
-    Args:
-        vocab_size: 词汇量大小
-        embedding_dim: 词嵌入维度
-        dec_units: decoder单元大小
-        enc_units: encoder单元大小
-        layer_size: encoder中内部RNN层数
-        cell_type: cell类型，lstm/gru， 默认lstm
-    Returns:
+    :param vocab_size: 词汇量大小
+    :param embedding_dim: 词嵌入维度
+    :param dec_units: decoder单元大小
+    :param enc_units: encoder单元大小
+    :param layer_size: encoder中内部RNN层数
+    :param cell_type: cell类型，lstm/gru， 默认lstm
+    :return: Seq2Seq的Decoder
     """
     inputs = tf.keras.Input(shape=(None,))
     enc_output = tf.keras.Input(shape=(None, enc_units))

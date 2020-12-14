@@ -2,24 +2,17 @@ import os
 import json
 import jieba
 import numpy as np
-from common.utils import log_operator
-
-'''
-对话数据集预处理模块
-raw_data保存原数据集路径
-tokenized_data保存分词后的数据集路径
-'''
+from hlp.chat.common.utils import log_operator
 
 
 def check_file(raw_file: str, treat_file: str, if_remove: bool = True):
     """
     对原始文本进行检查是否存在
     删除已存在的分词文本
-    Args:
-        raw_file: 原始数据路径
-        treat_file: 生成token数据保存路径
-        if_remove: 是否移除原有分词文本
-    Returns:
+    :param raw_file: 原始数据路径
+    :param treat_file: 生成token数据保存路径
+    :param if_remove: 是否移除原有分词文本
+    :return: 无返回值
     """
     if not os.path.exists(raw_file):
         print('数据集不存在，请添加数据集!')
@@ -33,13 +26,11 @@ def preprocess_raw_data_qa_single(raw_data: str, qa_data: str, if_remove: bool =
     """
     单轮对话数据集处理模块
     用于处理已经分词好的多轮次数据集的方法，将数据集处理成问答对的形式
-    Args:
-        raw_data: 原始数据路径
-        qa_data: 生成token数据保存路径
-        if_remove: 是否移除原有分词文本
-    Returns:
+    :param raw_data: 原始数据路径
+    :param qa_data: 生成token数据保存路径
+    :param if_remove: 是否移除原有分词文本
+    :return: 无返回值
     """
-
     check_file(raw_file=raw_data, treat_file=qa_data, if_remove=if_remove)
 
     count = 0
@@ -86,11 +77,10 @@ def preprocess_raw_data_qa_single(raw_data: str, qa_data: str, if_remove: bool =
 def preprocess_raw_xiao_huang_ji_data(raw_data: str, tokenized_data: str, if_remove: bool = True):
     """
     用于处理小黄鸡数据集的方法，将小黄鸡数据集处理成多轮次对话的形式，并分词
-    Args:
-        raw_data: 原始数据路径
-        tokenized_data: 生成token数据保存路径
-        if_remove: 是否移除原有分词文本
-    Returns:
+    :param raw_data: 原始数据路径
+    :param tokenized_data: 生成token数据保存路径
+    :param if_remove: 是否移除原有分词文本
+    :return:
     """
     check_file(raw_file=raw_data, treat_file=tokenized_data, if_remove=if_remove)
 
@@ -127,11 +117,10 @@ def preprocess_raw_xiao_huang_ji_data(raw_data: str, tokenized_data: str, if_rem
 def preprocess_raw_lccc_data(raw_data: str, tokenized_data: str, if_remove: bool = True):
     """
     用于处理LCCC数据集的方法，将LCCC数据集处理成多轮次对话的形式，并分词
-    Args:
-        raw_data: 原始数据路径
-        tokenized_data: 生成token数据保存路径
-        if_remove: 是否移除原有分词文本
-    Returns:
+    :param raw_data: 原始数据路径
+    :param tokenized_data: 生成token数据保存路径
+    :param if_remove: 是否移除原有分词文本
+    :return: 无返回值
     """
     check_file(raw_file=raw_data, treat_file=tokenized_data, if_remove=if_remove)
 
@@ -166,12 +155,11 @@ def preprocess_raw_lccc_data(raw_data: str, tokenized_data: str, if_remove: bool
 def preprocess_raw_douban_data(raw_data: str, tokenized_data: str, repeat_data: int = 10, if_remove: bool = True):
     """
     用于处理douban数据集的方法，将douban数据集处理成多轮次对话的形式，并分词
-    Args:
-        raw_data: 原始数据路径
-        tokenized_data: 生成token数据保存路径
-        repeat_data: 每轮对话重复数据条数
-        if_remove: 是否移除原有分词文本
-    Returns:
+    :param raw_data: 原始数据路径
+    :param tokenized_data: 生成token数据保存路径
+    :param repeat_data: 每轮对话重复数据条数
+    :param if_remove: 是否移除原有分词文本
+    :return: 无返回值
     """
     check_file(raw_file=raw_data, treat_file=tokenized_data, if_remove=if_remove)
 
@@ -216,11 +204,10 @@ def preprocess_raw_douban_data(raw_data: str, tokenized_data: str, repeat_data: 
 def preprocess_raw_cross_woz_data(raw_data: str, tokenized_data: str, if_remove: bool = True):
     """
     用于处理crossWOZ数据集的方法，将crossWOZ数据集处理成多轮次对话的形式，并分词
-    Args:
-        raw_data: 原始数据路径
-        tokenized_data: 生成token数据保存路径
-        if_remove: 是否移除原有分词文本
-    Returns:
+    :param raw_data: 原始数据路径
+    :param tokenized_data: 生成token数据保存路径
+    :param if_remove: 是否移除原有分词文本
+    :return: 无返回值
     """
     check_file(raw_file=raw_data, treat_file=tokenized_data, if_remove=if_remove)
 
@@ -257,11 +244,10 @@ def preprocess_raw_cross_woz_data(raw_data: str, tokenized_data: str, if_remove:
 def preprocess_raw_tie_ba_data(raw_data: str, tokenized_data: str, if_remove: bool = True):
     """
     用于处理TieBa数据集的方法，将TieBa数据集处理成多轮次对话的形式，并分词
-    Args:
-        raw_data: 原始数据路径
-        tokenized_data: 生成token数据保存路径
-        if_remove: 是否移除原有分词文本
-    Returns:
+    :param raw_data: 原始数据路径
+    :param tokenized_data: 生成token数据保存路径
+    :param if_remove: 是否移除原有分词文本
+    :return: 无返回值
     """
     check_file(raw_file=raw_data, treat_file=tokenized_data, if_remove=if_remove)
 
@@ -301,11 +287,10 @@ def preprocess_raw_tie_ba_data(raw_data: str, tokenized_data: str, if_remove: bo
 def preprocess_raw_ppt_gossiping_data(raw_data: str, tokenized_data: str, if_remove: bool = True):
     """
     用于处理PPT-Gossiping数据集的方法，将PPT-Gossiping数据集处理成多轮次对话的形式，并分词
-    Args:
-        raw_data: 原始数据路径
-        tokenized_data: 生成token数据保存路径
-        if_remove: 是否移除原有分词文本
-    Returns:
+    :param raw_data: 原始数据路径
+    :param tokenized_data: 生成token数据保存路径
+    :param if_remove: 是否移除原有分词文本
+    :return: 无返回值
     """
     # 由于原始数据格式和贴吧格式一致，直接调用贴吧数据处理方法
     preprocess_raw_tie_ba_data(raw_data, tokenized_data, if_remove=if_remove)
@@ -315,12 +300,11 @@ def preprocess_raw_wei_bo_data(raw_post_data: str, raw_response_data,
                                tokenized_data: str, if_remove: bool = True):
     """
     用于处理weibo数据集的方法，将weibo数据集处理成多轮次的形式，并分词
-    Args:
-        raw_post_data: 微博的post原始文本数据中的路径
-        raw_response_data: 微博的response原始文本数据中的路径
-        tokenized_data: 生成token数据保存路径
-        if_remove: 是否移除原有分词文本
-    Returns:
+    :param raw_post_data: 微博的post原始文本数据中的路径
+    :param raw_response_data: 微博的response原始文本数据中的路径
+    :param tokenized_data: 生成token数据保存路径
+    :param if_remove: 是否移除原有分词文本
+    :return: 无返回值
     """
     check_file(raw_file=raw_post_data, treat_file=tokenized_data, if_remove=if_remove)
     if not os.path.exists(raw_response_data):
@@ -364,11 +348,10 @@ def preprocess_raw_wei_bo_data(raw_post_data: str, raw_response_data,
 def preprocess_raw_qin_yun_data(raw_data: str, tokenized_data: str, if_remove: bool = True):
     """
     用于处理青云数据集的方法，将青云数据集处理成多轮次的形式，并分词
-    Args:
-        raw_data: 原始数据路径
-        tokenized_data: 生成token数据保存路径
-        if_remove: 是否移除原有分词文本
-    Returns:
+    :param raw_data: 原始数据路径
+    :param tokenized_data: 生成token数据保存路径
+    :param if_remove: 是否移除原有分词文本
+    :return: 无返回值
     """
     check_file(raw_file=raw_data, treat_file=tokenized_data, if_remove=if_remove)
 
@@ -410,11 +393,10 @@ def combine_tokenized_data_single(standby_data: list, combine_data: str, if_remo
     """
     *单轮对话数据集处理模块*
     将所有已经分词好的问答对集中整合到一个文件中
-    Args:
-        standby_data: 分词好的数据文本路径
-        combine_data: 汇总数据的文本路径
-        if_remove: 是否移除原有分词文本
-    Returns:
+    :param standby_data: 分词好的数据文本路径
+    :param combine_data: 汇总数据的文本路径
+    :param if_remove: 是否移除原有分词文本
+    :return: 无返回值
     """
     if os.path.exists(combine_data) and if_remove:
         os.remove(combine_data)
@@ -448,13 +430,12 @@ def dispatch_tokenized_func_dict_single(operator: str, raw_data: str,
     """
     *单轮对话数据集处理模块*
     用来整合目前所有数据处理方法，通过字典匹配进行调用，默认使用preprocess_raw_data_single
-    Args:
-        operator: 对应分词方法的名称，作为key，目前有：xiaohuangji，tieba，ppt_gossiping，lccc，douban，cross_woz
-        raw_data: 原始数据路径
-        tokenized_data: 生成token数据保存路径
-        if_remove: 是否移除原有分词文本
-        reserve_data: 原始文本备用参数
-    Returns:
+    :param operator: 对应分词方法的名称，作为key，目前有：xiaohuangji，tieba，ppt_gossiping，lccc，douban，cross_woz
+    :param raw_data: 原始数据路径
+    :param tokenized_data: 生成token数据保存路径
+    :param if_remove: 是否移除原有分词文本
+    :param reserve_data: 原始文本备用参数
+    :return: 无返回值
     """
     operation = {
         "xiao_huang_ji": lambda: preprocess_raw_xiao_huang_ji_data(raw_data, tokenized_data, if_remove),
@@ -474,13 +455,12 @@ def raw_to_tokenized_and_combine_single(standby_data: dict, combine_data: str, i
     """
     *单轮对话数据集处理模块*
     提供一次性将所有原始数据文本转换成分词文件，并整合到一个文件中
-    Args:
-        standby_data: 分词好的数据文本路径，分词方法匹配字典，key为对应的数据库名称，value为原始文本路径
-                        目前提供的的方法有：{"xiao_huang_ji":"path","tie_ba":"path","ppt_gossiping":"path","lccc":"path",
-                                            "dou_ban":"path","cross_woz":"path","wei_bo":"path","qin_yun":"path"}
-        combine_data: 汇总数据的文本路径
-        if_save_tokenized: 是否保留过程分词文件，如果为True，保留的各分词文件名直接在原始文件名后加tokenized，如lccc_tokenized.txt
-    Returns:
+    :param standby_data: 分词好的数据文本路径，分词方法匹配字典，key为对应的数据库名称，value为原始文本路径
+                    目前提供的的方法有：{"xiao_huang_ji":"path","tie_ba":"path","ppt_gossiping":"path","lccc":"path",
+                                        "dou_ban":"path","cross_woz":"path","wei_bo":"path","qin_yun":"path"}
+    :param combine_data: 汇总数据的文本路径
+    :param if_save_tokenized: 是否保留过程分词文件，如果为True，保留的各分词文件名直接在原始文件名后加tokenized，如lccc_tokenized.txt
+    :return: 无返回值
     """
     tokenized_files = []
     for file in standby_data:
