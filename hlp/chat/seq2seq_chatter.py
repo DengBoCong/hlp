@@ -1,8 +1,10 @@
+import json
 import os
 import sys
-import json
-import tensorflow as tf
 from argparse import ArgumentParser
+
+import tensorflow as tf
+
 sys.path.append(os.path.abspath(__file__)[:os.path.abspath(__file__).rfind("\\hlp\\")])
 import hlp.chat.common.data_utils as data_utils
 import hlp.chat.common.pre_treat as pre_treat
@@ -227,11 +229,13 @@ def main():
             response = chatter.respond(req=req)
             print("Agent: ", response)
     elif execute_type == 'pre_treat':
-        pre_treat.dispatch_tokenized_func_dict_single(operator="lccc", raw_data=work_path + options['resource_data'],
-                                                      tokenized_data=work_path + options['tokenized_data'],
-                                                      if_remove=True)
-        pre_treat.preprocess_raw_data_qa_single(raw_data=work_path + options['tokenized_data'],
-                                                qa_data=work_path + options['qa_tokenized_data'])
+        print("对语料进行处理...")
+        pre_treat.preprocess_datasets(dataset_name="lccc",
+                                      raw_data_path=work_path + options['resource_data'],
+                                      tokenized_data_path=work_path + options['tokenized_data'],
+                                      remove_tokenized=True)
+        pre_treat.to_single_turn_dataset(raw_data_path=work_path + options['tokenized_data'],
+                                         qa_data_path=work_path + options['qa_tokenized_data'])
     else:
         parser.error(msg='')
 

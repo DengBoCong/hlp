@@ -5,33 +5,33 @@ import numpy as np
 from hlp.chat.common.utils import log_operator
 
 
-def _check_file(raw_file: str, treat_file: str, if_remove: bool = True):
+def _check_file(raw_file: str, treat_file: str, remove_tokenized: bool = True):
     """
     对原始文本进行检查是否存在
     删除已存在的分词文本
     :param raw_file: 原始数据路径
     :param treat_file: 生成token数据保存路径
-    :param if_remove: 是否移除原有分词文本
+    :param remove_tokenized: 是否移除原有分词文本
     :return: 无返回值
     """
     if not os.path.exists(raw_file):
         print('数据集不存在： ', raw_file)
         exit(0)
     # 如果if_remove为True且已经分词的文件存在，要删除，因为后面的读写操作是边读边写
-    if os.path.exists(treat_file) and if_remove:
+    if os.path.exists(treat_file) and remove_tokenized:
         os.remove(treat_file)
 
 
-def preprocess_raw_data_qa_single(raw_data: str, qa_data: str, if_remove: bool = True):
+def to_single_turn_dataset(raw_data_path: str, qa_data_path: str, remove_tokenized: bool = True):
     """
     单轮对话数据集处理模块
     用于处理已经分词好的多轮次数据集的方法，将数据集处理成问答对的形式
-    :param raw_data: 原始数据路径
-    :param qa_data: 生成token数据保存路径
-    :param if_remove: 是否移除原有分词文本
+    :param raw_data_path: 原始数据路径
+    :param qa_data_path: 生成token数据保存路径
+    :param remove_tokenized: 是否移除原有分词文本
     :return: 无返回值
     """
-    _check_file(raw_file=raw_data, treat_file=qa_data, if_remove=if_remove)
+    _check_file(raw_file=raw_data_path, treat_file=qa_data_path, remove_tokenized=remove_tokenized)
 
     count = 0
     sentences_count = 0
@@ -41,7 +41,7 @@ def preprocess_raw_data_qa_single(raw_data: str, qa_data: str, if_remove: bool =
     one_pair = []
 
     # 对每一轮对话上下文进行配对，形成一问一答两个部分，如果遇到下一轮对话，直接跳过
-    with open(raw_data, encoding="utf-8") as raw_file, open(qa_data, 'w', encoding="utf-8") as tokenized_file:
+    with open(raw_data_path, encoding="utf-8") as raw_file, open(qa_data_path, 'w', encoding="utf-8") as tokenized_file:
         for line in raw_file:
             line = line.strip('\n').replace('/', '')
             # line = re.sub(r"[%s]+" % punctuation, "", line)
@@ -66,7 +66,7 @@ def preprocess_raw_data_qa_single(raw_data: str, qa_data: str, if_remove: bool =
             min_len = min(min_len, length)
             sentence_len.append(length)
 
-    message = "数据处理完毕，数据信息统计：共处理{}轮对话数据，整理出{}对" \
+    message = "对话数据集转换完毕，数据信息统计：共处理{}轮对话数据，整理出{}对" \
               "问答对，语句最大长度：{}，语句最短长度{}，语句平均长度{:.3f}".format(count, sentences_count,
                                                            max_len, min_len, np.mean(sentence_len))
     print(message)
@@ -82,7 +82,7 @@ def preprocess_raw_xiao_huang_ji_data(raw_data: str, tokenized_data: str, if_rem
     :param if_remove: 是否移除原有分词文本
     :return:
     """
-    _check_file(raw_file=raw_data, treat_file=tokenized_data, if_remove=if_remove)
+    _check_file(raw_file=raw_data, treat_file=tokenized_data, remove_tokenized=if_remove)
 
     count = 1
     max_len = 0
@@ -114,37 +114,40 @@ def preprocess_raw_xiao_huang_ji_data(raw_data: str, tokenized_data: str, if_rem
     logger.info(message)
 
 
-def preprocess_raw_lccc_data(raw_data: str, tokenized_data: str, if_remove: bool = True):
+def preprocess_raw_lccc_data(raw_data_path: str, tokenized_data_path: str, remove_tokenized: bool = True):
     """
     用于处理LCCC数据集的方法，将LCCC数据集处理成多轮次对话的形式，并分词
-    :param raw_data: 原始数据路径
-    :param tokenized_data: 生成token数据保存路径
-    :param if_remove: 是否移除原有分词文本
+    LCCC原始数据集已分词.
+
+    :param raw_data_path: 原始数据路径
+    :param tokenized_data_path: 生成token数据保存路径
+    :param remove_tokenized: 是否移除原有分词文本
     :return: 无返回值
     """
-    _check_file(raw_file=raw_data, treat_file=tokenized_data, if_remove=if_remove)
+    _check_file(raw_file=raw_data_path, treat_file=tokenized_data_path, remove_tokenized=remove_tokenized)
 
     count = 0
     max_len = 0
     min_len = 10000
     sentence_len = []
 
-    with open(raw_data, 'r', encoding="utf-8") as raw_file, open(tokenized_data, 'a',
-                                                                 encoding="utf-8") as tokenized_file:
-        raw_data = json.load(raw_file)
-        for data in raw_data:
+    with open(raw_data_path, 'r', encoding="utf-8") as raw_file, open(tokenized_data_path, 'a',
+                                                                      encoding="utf-8") as tokenized_file:
+        raw_data_path = json.load(raw_file)
+        for data in raw_data_path:
             for sentence in data:
                 length = len(sentence)
                 sentence_len.append(length)
                 max_len = max(max_len, length)
                 min_len = min(min_len, length)
                 tokenized_file.write(sentence + "\n")
+
             tokenized_file.write("\n")
             count += 1
             if count % 10000 == 0:
                 print("已读取：{}轮对话数据".format(count))
 
-    message = "数据处理完毕，数据信息统计：共处理{}轮对话数据，语句最大长度：{}，语" \
+    message = "数据预处理完毕：共处理{}轮对话数据，语句最大长度：{}，语" \
               "句最短长度{}，语句平均长度{:.3f}".format(count, max_len, min_len, np.mean(sentence_len))
 
     print(message)
@@ -161,7 +164,7 @@ def preprocess_raw_douban_data(raw_data: str, tokenized_data: str, repeat_data: 
     :param if_remove: 是否移除原有分词文本
     :return: 无返回值
     """
-    _check_file(raw_file=raw_data, treat_file=tokenized_data, if_remove=if_remove)
+    _check_file(raw_file=raw_data, treat_file=tokenized_data, remove_tokenized=if_remove)
 
     count = 0
     max_len = 0
@@ -209,7 +212,7 @@ def preprocess_raw_cross_woz_data(raw_data: str, tokenized_data: str, if_remove:
     :param if_remove: 是否移除原有分词文本
     :return: 无返回值
     """
-    _check_file(raw_file=raw_data, treat_file=tokenized_data, if_remove=if_remove)
+    _check_file(raw_file=raw_data, treat_file=tokenized_data, remove_tokenized=if_remove)
 
     count = 0
     max_len = 0
@@ -249,7 +252,7 @@ def preprocess_raw_tie_ba_data(raw_data: str, tokenized_data: str, if_remove: bo
     :param if_remove: 是否移除原有分词文本
     :return: 无返回值
     """
-    _check_file(raw_file=raw_data, treat_file=tokenized_data, if_remove=if_remove)
+    _check_file(raw_file=raw_data, treat_file=tokenized_data, remove_tokenized=if_remove)
 
     count = 0
     max_len = 0
@@ -306,7 +309,7 @@ def preprocess_raw_wei_bo_data(raw_post_data: str, raw_response_data,
     :param if_remove: 是否移除原有分词文本
     :return: 无返回值
     """
-    _check_file(raw_file=raw_post_data, treat_file=tokenized_data, if_remove=if_remove)
+    _check_file(raw_file=raw_post_data, treat_file=tokenized_data, remove_tokenized=if_remove)
     if not os.path.exists(raw_response_data):
         print('数据集不存在，请添加数据集!')
         exit(0)
@@ -337,7 +340,7 @@ def preprocess_raw_wei_bo_data(raw_post_data: str, raw_response_data,
             if count % 10000 == 0:
                 print("已读取：{}轮对话数据".format(count))
 
-    message = "数据处理完毕，数据信息统计：共处理{}轮对话数据，语句最大长度：{}，语" \
+    message = "数据处理完毕：共处理{}轮对话数据，语句最大长度：{}，语" \
               "句最短长度{}，语句平均长度{:.3f}".format(count, max_len, min_len, np.mean(sentence_len))
 
     print(message)
@@ -353,7 +356,7 @@ def preprocess_raw_qin_yun_data(raw_data: str, tokenized_data: str, if_remove: b
     :param if_remove: 是否移除原有分词文本
     :return: 无返回值
     """
-    _check_file(raw_file=raw_data, treat_file=tokenized_data, if_remove=if_remove)
+    _check_file(raw_file=raw_data, treat_file=tokenized_data, remove_tokenized=if_remove)
 
     count = 0
     max_len = 0
@@ -425,30 +428,32 @@ def combine_tokenized_data_single(standby_data: list, combine_data: str, if_remo
     logger.info(message)
 
 
-def dispatch_tokenized_func_dict_single(operator: str, raw_data: str,
-                                        tokenized_data: str, if_remove: bool = True, reserve_data: str = None):
+def preprocess_datasets(dataset_name: str, raw_data_path: str,
+                        tokenized_data_path: str,
+                        remove_tokenized: bool = True, reserve_data: str = None):
     """
     *单轮对话数据集处理模块*
     用来整合目前所有数据处理方法，通过字典匹配进行调用，默认使用preprocess_raw_data_single
-    :param operator: 对应分词方法的名称，作为key，目前有：xiaohuangji，tieba，ppt_gossiping，lccc，douban，cross_woz
-    :param raw_data: 原始数据路径
-    :param tokenized_data: 生成token数据保存路径
-    :param if_remove: 是否移除原有分词文本
+    :param dataset_name: 对应分词方法的名称，作为key，目前有：xiaohuangji，tieba，ppt_gossiping，lccc，douban，cross_woz
+    :param raw_data_path: 原始数据路径
+    :param tokenized_data_path: 生成token数据保存路径
+    :param remove_tokenized: 是否移除原有分词文本
     :param reserve_data: 原始文本备用参数
     :return: 无返回值
     """
+    print("数据集：", dataset_name)
     operation = {
-        "xiao_huang_ji": lambda: preprocess_raw_xiao_huang_ji_data(raw_data, tokenized_data, if_remove),
-        "tie_ba": lambda: preprocess_raw_tie_ba_data(raw_data, tokenized_data, if_remove),
-        "ppt_gossiping": lambda: preprocess_raw_ppt_gossiping_data(raw_data, tokenized_data, if_remove),
-        "lccc": lambda: preprocess_raw_lccc_data(raw_data, tokenized_data, if_remove),
-        "dou_ban": lambda: preprocess_raw_douban_data(raw_data, tokenized_data, 2, if_remove),
-        "cross_woz": lambda: preprocess_raw_cross_woz_data(raw_data, tokenized_data, if_remove),
-        "wei_bo": lambda: preprocess_raw_wei_bo_data(raw_data, reserve_data, tokenized_data, if_remove),
-        "qin_yun": lambda: preprocess_raw_qin_yun_data(raw_data, tokenized_data, if_remove)
+        "xiao_huang_ji": lambda: preprocess_raw_xiao_huang_ji_data(raw_data_path, tokenized_data_path, remove_tokenized),
+        "tie_ba": lambda: preprocess_raw_tie_ba_data(raw_data_path, tokenized_data_path, remove_tokenized),
+        "ppt_gossiping": lambda: preprocess_raw_ppt_gossiping_data(raw_data_path, tokenized_data_path, remove_tokenized),
+        "lccc": lambda: preprocess_raw_lccc_data(raw_data_path, tokenized_data_path, remove_tokenized),
+        "dou_ban": lambda: preprocess_raw_douban_data(raw_data_path, tokenized_data_path, 2, remove_tokenized),
+        "cross_woz": lambda: preprocess_raw_cross_woz_data(raw_data_path, tokenized_data_path, remove_tokenized),
+        "wei_bo": lambda: preprocess_raw_wei_bo_data(raw_data_path, reserve_data, tokenized_data_path, remove_tokenized),
+        "qin_yun": lambda: preprocess_raw_qin_yun_data(raw_data_path, tokenized_data_path, remove_tokenized)
     }
 
-    operation.get(operator, "xiao_huang_ji")()
+    operation.get(dataset_name, "lccc")()
 
 
 def raw_to_tokenized_and_combine_single(standby_data: dict, combine_data: str, if_save_tokenized: bool = False):
@@ -471,13 +476,13 @@ def raw_to_tokenized_and_combine_single(standby_data: dict, combine_data: str, i
             tokenized_file = tokenized_dir + "\\" + file + "_tokenized.txt"
             if not os.path.exists(tokenized_dir):
                 os.makedirs(tokenized_dir)
-            dispatch_tokenized_func_dict_single(operator=file, raw_data=standby_data[file],
-                                                tokenized_data=tokenized_file, if_remove=True)
+            preprocess_datasets(dataset_name=file, raw_data_path=standby_data[file],
+                                tokenized_data_path=tokenized_file, remove_tokenized=True)
             tokenized_files.append(tokenized_file)
             print("已保存{}语料的分词文本".format(file))
         else:
-            dispatch_tokenized_func_dict_single(operator=file, raw_data=standby_data[file],
-                                                tokenized_data=combine_data, if_remove=False)
+            preprocess_datasets(dataset_name=file, raw_data_path=standby_data[file],
+                                tokenized_data_path=combine_data, remove_tokenized=False)
             print("已合成{}语料".format(file))
 
     if if_save_tokenized:
