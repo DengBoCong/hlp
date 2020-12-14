@@ -100,13 +100,13 @@ def create_and_save_tokenizer(sentences, language, model_type="nmt"):
             return _create_and_save_tokenizer_keras(sentences, save_path=save_path)
 
 
-def _get_tokenizer_bpe(path):
+def _load_tokenizer_bpe(path):
     """从指定路径加载保存好的字典"""
     tokenizer = tfds.features.text.SubwordTextEncoder.load_from_file(path)
     return tokenizer, tokenizer.vocab_size
 
 
-def _get_tokenizer_keras(path):
+def _load_tokenizer_keras(path):
     """从指定路径加载保存好的字典"""
     with open(path) as f:
         json_string = json.load(f)
@@ -125,28 +125,14 @@ def load_tokenizer(language, model_type="nmt"):
     mode, path = _get_mode_and_path_tokenize(language, model_type)
     if language == "en":
         if mode == 'BPE':
-            return _get_tokenizer_bpe(path)
+            return _load_tokenizer_bpe(path)
         elif mode == 'WORD':
-            return _get_tokenizer_keras(path)
+            return _load_tokenizer_keras(path)
     elif language == "zh":
         if mode == 'CHAR':
-            return _get_tokenizer_keras(path)
+            return _load_tokenizer_keras(path)
         elif mode == 'WORD':
-            return _get_tokenizer_keras(path)
-
-
-# 编码句子
-def _get_tokenized_tensor_bpe(sentences, tokenizer):
-    """
-    Args:
-        sentences: 需要编码的句子
-        tokenizer: 字典
-    Returns:已编码填充的句子及句子长度
-    """
-    sequences = [tokenizer.encode(s) for s in sentences]
-    sequences = tf.keras.preprocessing.sequence.pad_sequences(sequences, padding='post')
-    max_sequence_length = len(sequences[0])
-    return sequences, max_sequence_length
+            return _load_tokenizer_keras(path)
 
 
 def _encode_sentences_bpe(sentences, tokenizer):
