@@ -21,7 +21,7 @@ def split_en_word(s):
     return s
 
 
-def split_cn_char(s):
+def split_zh_char(s):
     """ 对中文按字进行切换
 
     :param s: 待切分的中文
@@ -37,7 +37,7 @@ def split_cn_char(s):
     return s
 
 
-def split_cn_word(s):
+def split_zh_word(s):
     """ 对中文(含英文)按词进行切换
 
     :param s: 待切分的中文
@@ -54,12 +54,12 @@ if __name__ == "__main__":
     print(split_en_word(en_txt1))
 
     cn_txt1 = "我喜欢深度学习。"
-    print(split_cn_char(cn_txt1))
-    print(split_cn_word(cn_txt1))
+    print(split_zh_char(cn_txt1))
+    print(split_zh_word(cn_txt1))
 
     cn_txt2 = " 我喜欢深度学习。 "
-    print(split_cn_char(cn_txt2))
-    print(split_cn_word(cn_txt2))
+    print(split_zh_char(cn_txt2))
+    print(split_zh_word(cn_txt2))
 
     cn_txt3 = "我喜欢book."
-    print(split_cn_word(cn_txt3))
+    print(split_zh_word(cn_txt3))
