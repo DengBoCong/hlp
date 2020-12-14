@@ -6,12 +6,11 @@ def accumulate(units: int, embedding_dim: int,
     """
     SMN的语义抽取层，主要是对匹配对的两个相似度矩阵进行计
     算，并返回最终的最后一层GRU的状态，用于计算分数
-    Args:
-        units: GRU单元数
-        embedding_dim: embedding维度
-        max_utterance: 每轮最大语句数
-        max_sentence: 句子最大长度
-    Returns: GRU的状态
+    :param units: GRU单元数
+    :param embedding_dim: embedding维度
+    :param max_utterance: 每轮最大语句数
+    :param max_sentence: 句子最大长度
+    :return: GRU的状态
     """
     utterance_inputs = tf.keras.Input(shape=(max_utterance, max_sentence, embedding_dim))
     response_inputs = tf.keras.Input(shape=(max_sentence, embedding_dim))
@@ -58,13 +57,12 @@ def smn(units: int, vocab_size: int, embedding_dim: int,
     """
     SMN的模型，在这里将输入进行accumulate之后，得
     到匹配对的向量，然后通过这些向量计算最终的分类概率
-    Args:
-        units: GRU单元数
-        vocab_size: embedding词汇量
-        embedding_dim: embedding维度
-        max_utterance: 每轮最大语句数
-        max_sentence: 句子最大长度
-    Returns: 匹配对打分
+    :param units: GRU单元数
+    :param vocab_size: embedding词汇量
+    :param embedding_dim: embedding维度
+    :param max_utterance: 每轮最大语句数
+    :param max_sentence: 句子最大长度
+    :return: 匹配对打分
     """
     utterances = tf.keras.Input(shape=(max_utterance, max_sentence))
     responses = tf.keras.Input(shape=(max_sentence,))

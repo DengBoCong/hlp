@@ -1,16 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Sat Nov  7 19:55:49 2020
-@author: 九童
-交互式语音识别
-"""
-# -*- coding: utf-8 -*-
-import os
-
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
-import wave
-import pyaudio
-from tqdm import tqdm
 import tensorflow as tf
 from hlp.stt.las.config import config
 from hlp.stt.las.model import las, las_d_w
@@ -18,7 +5,7 @@ from hlp.stt.utils.features import wav_to_feature
 from hlp.stt.utils.record import record
 
 
-def recognition(wav_path):
+def recognize(wav_path):
     model_type = config.model_type
     embedding_dim = config.embedding_dim
     units = config.units
@@ -74,4 +61,4 @@ def recognition(wav_path):
 if __name__ == "__main__":
     record("record.wav", 2)
     file_path = ".\\record.wav"
-    recognition(file_path)
+    recognize(file_path)

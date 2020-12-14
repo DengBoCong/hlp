@@ -118,13 +118,15 @@ class RNNT(tf.keras.Model):
         encoder_outputs = self.encoder(encoder_inputs)
         pred_outputs = self.prediction_network(pre_inputs)
 
+        # [B, T, V] => [B, T, 1, V]
+        encoder_outputs = tf.expand_dims(encoder_outputs, axis=2)
+
+        # [B, U, V] => [B, 1, U, V]
+        pred_outputs = tf.expand_dims(pred_outputs, axis=1)
+
         # 拼接(joint):[B, T, U, V]
-        joint_inputs = (
-            # [B, T, V] => [B, T, 1, V]
-                tf.expand_dims(encoder_outputs, axis=2) +
-                # [B, U, V] => [B, 1, U, V]
-                tf.expand_dims(pred_outputs, axis=1)
-        )
+        # TODO: 加合适吗？
+        joint_inputs = encoder_outputs + pred_outputs
 
         joint_outputs = self.ds1(joint_inputs)
         outputs = self.ds2(joint_outputs)

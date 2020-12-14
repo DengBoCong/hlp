@@ -39,7 +39,7 @@ def train(model, optimizer,
           valid_data_generator, valid_batchs, valid_epoch_freq,
           stop_early_limits, text_process_mode, index_word, manager, save_epoch_freq):
     # 构建history
-    history = {"loss": [], "wers": [], "lers": [], "norm_lers": []}
+    history = {"loss": [], "wers": [], "norm_lers": []}
 
     # 迭代训练
     for epoch in range(1, epochs + 1):
@@ -67,15 +67,11 @@ def train(model, optimizer,
         history["loss"].append(total_loss / train_batchs)
         # 验证并将相关指标写入history
         if epoch % valid_epoch_freq == 0 or epoch == epochs:
-            wers, lers, norm_lers = compute_metric(model, valid_data_generator, valid_batchs, text_process_mode,
+            wers, norm_lers = compute_metric(model, valid_data_generator, valid_batchs, text_process_mode,
                                                    index_word)
             history["wers"].append(wers)
-            history["lers"].append(lers)
             history["norm_lers"].append(norm_lers)
-            print("WER:")
             print("平均WER:", wers)
-            print("LER:")
-            print("平均LER:", lers)
             print("规范化平均LER:", norm_lers)
             if len(history["wers"]) >= stop_early_limits:
                 if can_stop(history["wers"][-stop_early_limits:]) \
@@ -106,7 +102,6 @@ def plot_history(history, valid_epoch_freq, history_img_path):
     plt.xlabel("epoch")
     plt.ylabel("metric")
     plt.plot(epoch2, history["wers"], "--*r", label="wers")
-    plt.plot(epoch2, history["lers"], "--*g", label="lers")
     plt.plot(epoch2, history["norm_lers"], "--*y", label="norm_lers")
     plt.xticks(epoch2)
 

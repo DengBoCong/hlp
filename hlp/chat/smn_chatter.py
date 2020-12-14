@@ -1,12 +1,14 @@
 import os
 import sys
+import json
 import time
 import pysolr
-import model.smn as smn
 import tensorflow as tf
-import common.utils as utils
-import common.data_utils as data_utils
-import config.get_config as get_config
+from argparse import ArgumentParser
+sys.path.append(os.path.abspath(__file__)[:os.path.abspath(__file__).rfind("\\hlp\\")])
+import hlp.chat.model.smn as smn
+import hlp.chat.common.utils as utils
+import hlp.chat.common.data_utils as data_utils
 
 
 class SMNChatter():
@@ -19,18 +21,17 @@ class SMNChatter():
                  learning_rate: float, database_fn: str, solr_server: str):
         """
         SMN聊天器初始化，用于加载模型
-        Args:
-            units: 单元数
-            vocab_size: 词汇量大小
-            execute_type: 对话执行模式
-            dict_fn: 保存字典路径
-            embedding_dim: 嵌入层维度
-            checkpoint_dir: 检查点保存目录路径
-            max_utterance: 每轮句子数量
-            max_sentence: 单个句子最大长度
-            learning_rate: 学习率
-            database_fn: 候选数据库路径
-        Returns:
+        :param units: 单元数
+        :param vocab_size: 词汇量大小
+        :param execute_type: 对话执行模式
+        :param dict_fn: 保存字典路径
+        :param embedding_dim: 嵌入层维度
+        :param checkpoint_dir: 检查点保存目录路径
+        :param max_utterance: 每轮句子数量
+        :param max_sentence: 单个句子最大长度
+        :param learning_rate: 学习率
+        :param database_fn: 候选数据库路径
+        :return: 无返回值
         """
         self.dict_fn = dict_fn
         self.checkpoint_dir = checkpoint_dir
@@ -76,14 +77,13 @@ class SMNChatter():
               max_train_data_size: int = 0, max_valid_data_size: int = 0):
         """
         训练功能
-        Args:
-            epochs: 训练执行轮数
-            data_fn: 数据文本路径
-            buffer_size: Dataset加载缓存大小
-            batch_size: Dataset加载批大小
-            max_train_data_size: 最大训练数据量
-            max_valid_data_size: 最大验证数据量
-        Returns:
+        :param epochs: 训练执行轮数
+        :param data_fn: 数据文本路径
+        :param buffer_size: Dataset加载缓存大小
+        :param batch_size: Dataset加载批大小
+        :param max_train_data_size: 最大训练数据量
+        :param max_valid_data_size: 最大验证数据量
+        :return: 无返回值
         """
         # 处理并加载训练数据，
         dataset, tokenizer, checkpoint_prefix, steps_per_epoch = \
@@ -130,14 +130,12 @@ class SMNChatter():
                  max_turn_utterances_num: int = 10, max_valid_data_size: int = 0):
         """
         验证功能，注意了dict_fn和tokenizer两个比传其中一个
-        Args:
-            valid_fn: 验证数据集路径
-            dict_fn: 字典路径
-            tokenizer: 分词器
-            max_turn_utterances_num: 最大训练数据量
-            max_valid_data_size: 最大验证数据量
-        Returns:
-            r2_1, r10_1
+        :param valid_fn: 验证数据集路径
+        :param dict_fn: 字典路径
+        :param tokenizer: 分词器
+        :param max_turn_utterances_num: 最大训练数据量
+        :param max_valid_data_size: 最大验证数据量
+        :return: r2_1, r10_1指标
         """
         token_dict = None
         step = max_valid_data_size // max_turn_utterances_num
@@ -171,9 +169,8 @@ class SMNChatter():
         """
         对外部聊天请求进行回复
         子类需要利用模型进行推断和搜索以产生回复。
-        Args:
-            req: 输入的语句
-        Returns: 系统回复字符串
+        :param req: 输入的语句
+        :return: 系统回复字符串
         """
         self.solr.ping()
         history = req[-self.max_utterance:]
@@ -212,11 +209,10 @@ class SMNChatter():
     def _metrics_rn_1(self, scores: float, labels: tf.Tensor, num: int = 10):
         """
         计算Rn@k指标
-        Args:
-            scores: 训练所得分数
-            labels: 数据标签
-            num: n
-        Returns:
+        :param scores: 训练所得分数
+        :param labels: 数据标签
+        :param num: n
+        :return: rn_1指标
         """
         total = 0
         correct = 0
@@ -229,50 +225,78 @@ class SMNChatter():
         return float(correct) / total
 
 
-def get_chatter(execute_type):
-    """
-    初始化要使用的聊天器
-    Args:
-        execute_type: 对话执行模型
-    Returns:
-        chatter: 返回对应的聊天器
-    """
-    chatter = SMNChatter(units=get_config.smn_units, vocab_size=get_config.smn_vocab_size,
-                         execute_type=execute_type, dict_fn=get_config.smn_dict_fn, solr_server=get_config.solr_server,
-                         embedding_dim=get_config.smn_embedding_dim, checkpoint_dir=get_config.smn_checkpoint,
-                         max_utterance=get_config.smn_max_utterance, max_sentence=get_config.smn_max_sentence,
-                         learning_rate=get_config.smn_learning_rate, database_fn=get_config.candidate_database)
-
-    return chatter
-
-
 def main():
-    parser = utils.CmdParser(version='%smn chatbot V1.0')
-    parser.add_option("-t", "--type", action="store", type="string",
-                      dest="type", default="pre_treat",
-                      help="execute type, train/chat")
-    (options, args) = parser.parse_args()
+    parser = ArgumentParser(description='%smn multi_turn chatbot V1.2.1')
+    parser.add_argument('--config_file', default='', type=str, required=False, help='配置文件路径，为空则默认命令行，不为空则使用配置文件参数')
+    parser.add_argument('--type', default='pre_treat', type=str, required=False, help='执行类型')
+    parser.add_argument('--units', default=200, type=int, required=False, help='隐藏层单元数')
+    parser.add_argument('--vocab_size', default=2000, type=int, required=False, help='词汇大小')
+    parser.add_argument('--embedding_dim', default=200, type=int, required=False, help='嵌入层维度大小')
+    parser.add_argument('--max_sentence', default=50, type=int, required=False, help='单个句子序列最大长度')
+    parser.add_argument('--max_utterance', default=10, type=int, required=False, help='当回合最大句子数')
+    parser.add_argument('--max_train_data_size', default=36, type=int, required=False, help='用于训练的最大数据大小')
+    parser.add_argument('--max_valid_data_size', default=100, type=int, required=False, help='用于验证的最大数据大小')
+    parser.add_argument('--learning_rate', default=0.001, type=float, required=False, help='学习率')
+    parser.add_argument('--max_database_size', default=0, type=int, required=False, help='最大数据候选数量')
+    parser.add_argument('--dict_file', default='\\data\\smn_dict_fn.json', type=str, required=False, help='字典路径')
+    parser.add_argument('--checkpoint', default='\\checkpoints\\smn', type=str, required=False, help='检查点路径')
+    parser.add_argument('--tokenized_train', default='\\data\\ubuntu_train.txt', type=str, required=False,
+                        help='处理好的多轮分词训练数据集路径')
+    parser.add_argument('--tokenized_valid', default='\\data\\ubuntu_valid.txt', type=str, required=False,
+                        help='处理好的多轮分词验证数据集路径')
+    parser.add_argument('--solr_server', default='http://49.235.33.100:8983/solr/smn/', type=str, required=False,
+                        help='solr服务地址')
+    parser.add_argument('--candidate_database', default='\\data\\candidate.json', type=str, required=False,
+                        help='候选回复数据库')
+    parser.add_argument('--epochs', default=5, type=int, required=False, help='训练步数')
+    parser.add_argument('--batch_size', default=32, type=int, required=False, help='batch大小')
+    parser.add_argument('--buffer_size', default=20000, type=int, required=False, help='Dataset加载缓冲大小')
 
-    if options.type == 'train':
-        chatter = get_chatter(execute_type=options.type)
-        chatter.train(epochs=get_config.epochs, data_fn=get_config.ubuntu_tokenized_data,
-                      batch_size=get_config.BATCH_SIZE, buffer_size=get_config.BUFFER_SIZE,
-                      max_train_data_size=get_config.smn_max_train_data_size,
-                      max_valid_data_size=get_config.smn_max_valid_data_size)
+    options = parser.parse_args().__dict__
+    if options['config_file'] != '':
+        with open(options['config_file'], 'r', encoding='utf-8') as config_file:
+            options = json.load(config_file)
 
-    elif options.type == 'pre_treat':
-        data_utils.creat_index_dataset(data_fn=get_config.ubuntu_tokenized_data,
-                                       solr_sever=get_config.solr_server,
-                                       max_database_size=get_config.smn_max_database_size)
+    # 注意了有关路径的参数，以chat目录下为基准配置
+    work_path = os.path.abspath(__file__)[:os.path.abspath(__file__).find("\\smn")]
+    execute_type = options['type']
 
-    elif options.type == 'evaluate':
-        chatter = get_chatter(execute_type=options.type)
-        r2_1, r10_1 = chatter.evaluate(valid_fn=get_config.ubuntu_valid_data, dict_fn=get_config.smn_dict_fn,
-                                       max_valid_data_size=get_config.smn_max_valid_data_size)
+    if execute_type == 'train':
+        chatter = SMNChatter(units=options['units'], vocab_size=options['vocab_size'],
+                             execute_type=execute_type, dict_fn=work_path + options['dict_file'],
+                             solr_server=options['solr_server'], embedding_dim=options['embedding_dim'],
+                             checkpoint_dir=work_path + options['checkpoint'], learning_rate=options['learning_rate'],
+                             max_utterance=options['max_utterance'], max_sentence=options['max_sentence'],
+                             database_fn=work_path + options['candidate_database'])
+        chatter.train(epochs=options['epochs'], data_fn=work_path + options['tokenized_train'],
+                      batch_size=options['batch_size'], buffer_size=options['buffer_size'],
+                      max_train_data_size=options['max_train_data_size'],
+                      max_valid_data_size=options['max_valid_data_size'])
+
+    elif execute_type == 'pre_treat':
+        data_utils.creat_index_dataset(data_fn=work_path + options['tokenized_train'],
+                                       solr_sever=options['solr_server'],
+                                       max_database_size=options['max_database_size'])
+
+    elif execute_type == 'evaluate':
+        chatter = SMNChatter(units=options['units'], vocab_size=options['vocab_size'],
+                             execute_type=execute_type, dict_fn=work_path + options['dict_file'],
+                             solr_server=options['solr_server'], learning_rate=options['learning_rate'],
+                             embedding_dim=options['embedding_dim'], checkpoint_dir=work_path + options['checkpoint'],
+                             max_utterance=options['max_utterance'], max_sentence=options['max_sentence'],
+                             database_fn=work_path + options['candidate_database'])
+        r2_1, r10_1 = chatter.evaluate(valid_fn=work_path + options['tokenized_valid'],
+                                       dict_fn=work_path + options['dict_file'],
+                                       max_valid_data_size=options['max_valid_data_size'])
         print("指标：R2@1-{:0.3f}，R10@1-{:0.3f}".format(r2_1, r10_1))
 
-    elif options.type == 'chat':
-        chatter = get_chatter(execute_type=options.type)
+    elif execute_type == 'chat':
+        chatter = SMNChatter(units=options['units'], vocab_size=options['vocab_size'],
+                             execute_type=execute_type, dict_fn=work_path + options['dict_file'],
+                             solr_server=options['solr_server'], learning_rate=options['learning_rate'],
+                             embedding_dim=options['embedding_dim'], checkpoint_dir=work_path + options['checkpoint'],
+                             max_utterance=options['max_utterance'], max_sentence=options['max_sentence'],
+                             database_fn=work_path + options['candidate_database'])
         history = []  # 用于存放历史对话
         print("Agent: 你好！结束聊天请输入ESC。")
         while True:
@@ -290,8 +314,9 @@ def main():
 if __name__ == '__main__':
     """
     SMN入口：指令需要附带运行参数
-    cmd：python smn_chatter.py -t/--type [执行模式]
-    执行类别：pre_treat/train/evaluate/chat
+    cmd：python smn_chatter.py --type [执行模式]
+    执行类别：pre_treat/train/evaluate/chat，默认为pre_treat
+    其他参数参见main方法
 
     chat模式下运行时，输入ESC即退出对话
     """

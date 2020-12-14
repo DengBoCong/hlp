@@ -1,11 +1,14 @@
+import time
+
 import tensorflow as tf
-from config import get_config as _config
-from common import preprocess
-from common import tokenize
 import numpy
 from sklearn.model_selection import train_test_split
-import time
-from model import nmt_model
+
+from hlp.mt.common import load_dataset
+from hlp.mt.config import get_config as _config
+from hlp.mt.common import text_vectorize
+from hlp.mt.model import nmt_model
+from hlp.mt.common.text_split import preprocess_sentences_en, preprocess_sentences_zh
 
 
 class LanguageModel(tf.keras.Model):
@@ -81,27 +84,39 @@ def _train_step(sequences, language_model, optimizer, train_loss, train_accuracy
     train_accuracy(seq_real, predictions)
 
 
+def preprocess_sentences_lm(sentences, language):
+    """
+    语言模型使用的句子预处理
+    @param sentences: 句子列表
+    @param language: 语言类型
+    """
+    if language == "en":
+        mode = _config.lm_en_tokenize_type
+        return preprocess_sentences_en(sentences, mode)
+    elif language == "zh":
+        mode = _config.lm_zh_tokenize_type
+        return preprocess_sentences_zh(sentences, mode)
+
+
 def _lm_preprocess():
     """数据的预处理及编码"""
     print('正在加载、预处理数据...')
-    sentences = preprocess.load_single_sentences(_config.lm_path_to_train_file, _config.lm_num_sentences, column=2)
-    sentences = preprocess.preprocess_sentences_lm(sentences, language=_config.lm_language)
+    sentences = load_dataset.load_single_sentences(_config.lm_path_to_train_file, _config.lm_num_sentences, column=2)
+    sentences = preprocess_sentences_lm(sentences, language=_config.lm_language)
     print('已加载句子数量:%d' % _config.lm_num_sentences)
     print('数据加载、预处理完毕！\n')
 
     # 生成及保存字典
-    tokenizer, vocab_size = tokenize.create_tokenizer(sentences
-                                                      , _config.lm_language
-                                                      , model_type="lm")
+    tokenizer, vocab_size = text_vectorize.create_and_save_tokenizer(sentences, _config.lm_language, model_type="lm")
     print('生成字典大小:%d' % vocab_size)
     print('源语言字典生成、保存完毕！\n')
 
     print("正在编码训练集句子...")
-    max_sequence_length = tokenize.create_encoded_sentences(sentences=sentences
-                                                            , tokenizer=tokenizer
-                                                            , language=_config.lm_language
-                                                            , postfix='_lm'
-                                                            , model_type="lm")
+    max_sequence_length = text_vectorize.encode_and_save(sentences=sentences,
+                                                         tokenizer=tokenizer,
+                                                         language=_config.lm_language,
+                                                         postfix='_lm',
+                                                         model_type="lm")
     print('最大句子长度:%d' % max_sequence_length)
     print("句子编码完毕！\n")
 
@@ -111,7 +126,7 @@ def _lm_preprocess():
 def _get_dataset_lm():
     """数据集加载及划分"""
     # 加载
-    _, sentences_path = tokenize.get_mode_and_path_sentences(_config.lm_language, model_type="lm", postfix='_lm')
+    _, sentences_path = text_vectorize.get_tokenizer_mode_and_path(_config.lm_language, model_type="lm", postfix='_lm')
     tensor = numpy.loadtxt(sentences_path, dtype='int32')
 
     # 划分
@@ -137,9 +152,9 @@ def train(epochs=_config.lm_EPOCHS):
                                    , _config.lm_d_embedding
                                    , _config.lm_BATCH_SIZE
                                    , _config.lm_d_rnn)
+
     # 检查点设置，如果检查点存在，则恢复最新的检查点。
-    ckpt = tf.train.Checkpoint(language_model=language_model,
-                               optimizer=optimizer)
+    ckpt = tf.train.Checkpoint(language_model=language_model,optimizer=optimizer)
     ckpt_manager = tf.train.CheckpointManager(ckpt, _config.lm_checkpoint_path, max_to_keep=_config.max_checkpoints_num)
     if nmt_model.check_point(model_type='lm'):
         ckpt.restore(ckpt_manager.latest_checkpoint)

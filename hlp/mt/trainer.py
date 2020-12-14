@@ -1,13 +1,15 @@
-import tensorflow as tf
-from model import transformer as _transformer
-from config import get_config as _config
 import time
-from common import preprocess
+import os
+
+import tensorflow as tf
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
-import os
-from model import nmt_model
-import utils.optimizers as _optimizers
+
+from hlp.mt.common import load_dataset
+from hlp.mt.model import transformer as _transformer
+from hlp.mt.config import get_config as _config
+from hlp.mt.model import nmt_model
+from hlp.utils import optimizers as _optimizers
 
 
 def _train_step(inp, tar, transformer, optimizer, train_loss, train_accuracy):
@@ -38,9 +40,11 @@ def _train_epoch(dataset, transformer, optimizer, train_loss, train_accuracy, ba
     for (batch, (inp, tar)) in enumerate(dataset):
         _train_step(inp, tar, transformer, optimizer, train_loss, train_accuracy)
         batch_sum = batch_sum + len(inp)
-        print('\r{}/{} [batch {} loss {:.4f} accuracy {:.4f}]'.format(batch_sum, sample_sum, batch + 1
-                                                                      , train_loss.result()
-                                                                      , train_accuracy.result()), end='')
+        print('\r{}/{} [batch {} loss {:.4f} accuracy {:.4f}]'.format(batch_sum,
+                                                                      sample_sum,
+                                                                      batch + 1,
+                                                                      train_loss.result(),
+                                                                      train_accuracy.result()), end='')
     print('\r{}/{} [==============================]'.format(sample_sum, sample_sum), end='')
 
 
@@ -71,7 +75,8 @@ def _plot_history(history, validation_freq):
     plt.show()
 
 
-def train(transformer, validation_data='False', validation_split=0.0, cache=True, min_delta=0.00003, patience=10, validation_freq=1):
+def train(transformer, validation_data='False', validation_split=0.0,
+          cache=True, min_delta=0.00003, patience=10, validation_freq=1):
     """
     @param transformer: 训练要使用的transformer模型
     @param validation_data: 为‘True’则从指定文本加载训练集，
@@ -114,8 +119,8 @@ def train(transformer, validation_data='False', validation_split=0.0, cache=True
     steps = _config.num_sentences // _config.BATCH_SIZE
 
     # 读取数据
-    train_dataset, val_dataset = preprocess.get_dataset(steps, cache, train_size=train_size
-                                                        , validate_from_txt=validation_data)
+    train_dataset, val_dataset = load_dataset.get_dataset(steps, cache, train_size=train_size,
+                                                                    validate_from_txt=validation_data)
 
     print("开始训练...")
     for epoch in range(_config.EPOCHS):
@@ -125,8 +130,8 @@ def train(transformer, validation_data='False', validation_split=0.0, cache=True
         train_loss.reset_states()
         train_accuracy.reset_states()
         # 训练部分
-        _train_epoch(train_dataset, transformer, optimizer, train_loss, train_accuracy
-                     , batch_sum_train, sample_sum_train)
+        _train_epoch(train_dataset, transformer, optimizer, train_loss, train_accuracy,
+                     batch_sum_train, sample_sum_train)
 
         history['accuracy'].append(train_accuracy.result().numpy())
         history['loss'].append(train_loss.result().numpy())
@@ -142,8 +147,8 @@ def train(transformer, validation_data='False', validation_split=0.0, cache=True
             train_loss.reset_states()
             train_accuracy.reset_states()
 
-            _train_epoch(val_dataset, transformer, optimizer, train_loss, train_accuracy
-                         , sample_sum_train, sample_sum_train + sample_sum_val + sample_sum_val_txt)
+            _train_epoch(val_dataset, transformer, optimizer, train_loss, train_accuracy,
+                         sample_sum_train, sample_sum_train + sample_sum_val + sample_sum_val_txt)
 
             history['val_accuracy'].append(train_accuracy.result().numpy())
             history['val_loss'].append(train_loss.result().numpy())
