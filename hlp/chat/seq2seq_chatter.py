@@ -9,7 +9,7 @@ sys.path.append(os.path.abspath(__file__)[:os.path.abspath(__file__).rfind("\\hl
 import hlp.chat.common.data_utils as data_utils
 import hlp.chat.common.pre_treat as pre_treat
 import hlp.chat.model.seq2seq as seq2seq
-from hlp.chat.model.chatter import Chatter
+from chat.chatter import Chatter
 from hlp.chat.common.utils import log_operator
 
 
@@ -195,6 +195,7 @@ def main():
     execute_type = options['act']
 
     if execute_type == 'train':
+        print("开始训练模型...")
         chatter = Seq2SeqChatter(execute_type=execute_type, checkpoint_dir=work_path + options['checkpoint'],
                                  beam_size=options['beam_size'], units=options['units'],
                                  embedding_dim=options['embedding_dim'], batch_size=options['batch_size'],

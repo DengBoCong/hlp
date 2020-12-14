@@ -8,7 +8,7 @@ import hlp.utils.optimizers as optimizers
 import hlp.chat.common.pre_treat as pre_treat
 import hlp.chat.common.data_utils as data_utils
 import hlp.chat.model.transformer as transformer
-from hlp.chat.model.chatter import Chatter
+from chat.chatter import Chatter
 from hlp.chat.common.utils import log_operator
 
 
