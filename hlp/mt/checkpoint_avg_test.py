@@ -6,7 +6,6 @@ import numpy
 from hlp.mt.config import get_config as _config
 from hlp.mt.model import nmt_model, checkpoint
 from hlp.mt.model import transformer as _transformer
-from hlp.mt.common import text_vectorize
 
 
 def _model_build(model, inp, tar):
