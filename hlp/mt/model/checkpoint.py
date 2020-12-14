@@ -4,8 +4,6 @@ import tensorflow as tf
 from tensorflow.python.training.tracking import graph_view
 
 from hlp.mt.config import get_config as _config
-from hlp.mt.model import nmt_model
-from hlp.mt import trainer
 
 
 def load_checkpoint(transformer, optimizer, checkpoint_path=_config.checkpoint_path):
@@ -44,38 +42,25 @@ def average_checkpoints(model_dir,
                         trackables,
                         max_count=8,
                         model_key="model"):
-    """Averages object-based checkpoints.
+    """
 
-    Args:
-    model_dir: The directory containing checkpoints.包含检查点的目录
-    output_dir: The directory that will contain the averaged checkpoint.平均后检查点的保存路径
-    trackables: A dictionary containing the trackable objects included in the
-      checkpoint.可追踪的对象的字典
-    max_count: The maximum number of checkpoints to average.用来生成平均检查点的最大检查点数量
-    model_key: The key in :obj:`trackables` that references the model.模型的key？
-
-    Returns:
-    The path to the directory containing the averaged checkpoint. 包含平均检查点的路径
-
-    Raises:
-    ValueError: if :obj:`output_dir` is the same as :obj:`model_dir`.
-    ValueError: if a model is not found in :obj:`trackables` or is not already
-      built.
-    ValueError: if no checkpoints are found in :obj:`model_dir`.
-
-    See Also:
-    :func:`opennmt.utils.average_checkpoints_into_layer`
+    @param model_dir: 需要平均的检查点的文件夹路径
+    @param output_dir: 将得到的检查点输出的文件夹路径
+    @param trackables: 检查点所保存的对象的字典
+    @param max_count: 最多使用几个检查点进行平均
+    @param model_key: 字典中模型对应的key
+    @return:
     """
     if model_dir == output_dir:
-        raise ValueError("Model and output directory must be different")
+        raise ValueError("输入与输出需是不同文件夹")
     model = trackables.get(model_key)
     if model is None:
-        raise ValueError("%s not found in trackables %s" % (model_key, trackables))
+        raise ValueError("模型的key:%s 并没有在字典 %s 中找到" % (model_key, trackables))
 
     # 取检查点路径列表
     checkpoint_state = tf.train.get_checkpoint_state(model_dir)
     if checkpoint_state is None:
-        raise ValueError("No checkpoints found in %s" % model_dir)
+        raise ValueError(" %s 文件夹中没有检查点" % model_dir)
     checkpoints_path = checkpoint_state.all_model_checkpoint_paths
     if len(checkpoints_path) > max_count:
         checkpoints_path = checkpoints_path[-max_count:]
@@ -90,37 +75,27 @@ def average_checkpoints(model_dir,
 
 
 def _average_checkpoints_into_layer(checkpoints, layer, layer_prefix):
-    """Updates the layer weights with their average value in the checkpoints.
-
-    Args:
-      checkpoints: A non empty list of checkpoint paths.
-      layer: A ``tf.keras.layers.Layer`` instance.
-      layer_prefix: The name/scope that prefixes the layer variables names in the
-        checkpoints.
-
-    Raises:
-      ValueError: if :obj:`checkpoints` is empty.
-      ValueError: if :obj:`layer` is not already built.
-
-    See Also:
-      :func:`opennmt.utils.average_checkpoints`
+    """将检查点平均并将平均值放到模型中
+    @param checkpoints: 检查点路径的列表
+    @param layer: 模型实例
+    @param layer_prefix:模型的key
     """
     if not checkpoints:
-        raise ValueError("There should be at least one checkpoint")
+        raise ValueError("至少应有一个检查点")
     if not layer.built:
-        raise ValueError("The layer should be built before calling this function")
+        raise ValueError("使用此方法前应对模型进行build")
 
-    # Reset the layer variables to 0.
+    # 将模型的变量都重置为0
     for variable in layer.variables:
         variable.assign(tf.zeros_like(variable))
 
-    # Get a map from variable names in the checkpoint to variables in the layer.
+    # 得到一个检查点中变量名到层中变量的字典
     _, names_to_variables = _get_variables_name_mapping(layer, root_key=layer_prefix)
 
     num_checkpoints = len(checkpoints)
-    tf.get_logger().info("Averaging %d checkpoints...", num_checkpoints)
+    tf.get_logger().info("正在平均 %d 个检查点...", num_checkpoints)
     for checkpoint_path in checkpoints:
-        tf.get_logger().info("Reading checkpoint %s...", checkpoint_path)
+        tf.get_logger().info("正在读取检查点 %s...", checkpoint_path)
         reader = tf.train.load_checkpoint(checkpoint_path)
         for path in reader.get_variable_to_shape_map().keys():
             if not path.startswith(layer_prefix) or ".OPTIMIZER_SLOT" in path:
@@ -136,50 +111,22 @@ def _get_step_from_checkpoint_prefix(prefix):
 
 
 def _get_variables_name_mapping(root, root_key=None):
-    """Returns mapping between variables and their name in the object-based
-    representation.
-
-    Args:
-    root: The root layer.
-    root_key: Key that was used to save :obj:`root`, if any.
-
-    Returns:
-    A dict mapping variables ref to names and a dict mapping variables name to
-    variables.
+    """ 返回一个检查点中变量名到层中变量的字典
+    @param root: 模型（层）实例
+    @param root_key: 模型（层）的key，即在检查点中的key
+    @return: 返回一个检查点中变量名到层中变量的字典
     """
-    # TODO: find a way to implement this function using public APIs.
     named_variables, _, _ = graph_view.ObjectGraphView(root).serialize_object_graph()
     variables_to_names = {}
     names_to_variables = {}
     for saveable_object in named_variables:
         variable = saveable_object.op
-        if not hasattr(variable, "ref"):  # Ignore non Tensor-like objects.
-            continue
+        # 判断是否是张量，暂时去掉
+        # if not hasattr(variable, "ref"):
+        #     continue
         name = saveable_object.name
         if root_key is not None:
             name = "%s/%s" % (root_key, name)
-        variables_to_names[variable.ref()] = name
+        variables_to_names[variable.experimental_ref()] = name
         names_to_variables[name] = variable
     return variables_to_names, names_to_variables
-
-
-def main():
-    transformer = nmt_model.get_model(2894, 1787)
-    learning_rate = trainer.CustomSchedule(_config.d_model)
-    optimizer = tf.keras.optimizers.Adam(learning_rate, beta_1=0.9, beta_2=0.98, epsilon=1e-9)
-    trackables = {'transformer': transformer, 'optimizer': optimizer}
-    model_key = 'transformer'
-    model_dir = _config.checkpoint_path
-    output_dir = _config.checkpoint_path + '_avg_ckpts'
-    if not os.path.exists(output_dir):
-        os.makedirs(output_dir, exist_ok=True)
-    trainer.train(transformer,
-                  validation_data=_config.validate_from_txt,
-                  validation_split=1 - _config.train_size,
-                  validation_freq=_config.validation_freq)
-    path = average_checkpoints(model_dir, output_dir, trackables, max_count=8, model_key=model_key)
-    print(path)
-
-
-if __name__ == '__main__':
-    main()
