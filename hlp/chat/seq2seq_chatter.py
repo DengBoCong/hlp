@@ -153,7 +153,7 @@ class Seq2SeqChatter(Chatter):
 def main():
     parser = ArgumentParser(description='%seq2seq chatbot V1.2.1')
     parser.add_argument('--config_file', default='', type=str, required=False, help='配置文件路径，为空则默认命令行，不为空则使用配置文件参数')
-    parser.add_argument('--type', default='pre_treat', type=str, required=False, help='执行类型')
+    parser.add_argument('--act', default='pre_treat', type=str, required=False, help='执行类型')
     parser.add_argument('--units', default=1024, type=int, required=False, help='隐藏层单元数')
     parser.add_argument('--vocab_size', default=1000, type=int, required=False, help='词汇大小')
     parser.add_argument('--embedding_dim', default=256, type=int, required=False, help='嵌入层维度大小')
@@ -190,7 +190,7 @@ def main():
 
     # 注意了有关路径的参数，以chat目录下为基准配置
     work_path = os.path.abspath(__file__)[:os.path.abspath(__file__).find("\\seq2seq")]
-    execute_type = options['type']
+    execute_type = options['act']
 
     if execute_type == 'train':
         chatter = Seq2SeqChatter(execute_type=execute_type, checkpoint_dir=work_path + options['checkpoint'],
