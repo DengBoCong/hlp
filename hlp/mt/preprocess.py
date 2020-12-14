@@ -49,14 +49,14 @@ def train_preprocess():
 
     # 生成及保存字典
     print('正在生成、保存源语言(%s)字典(分词方式:%s)...' % (_config.source_lang, _config.en_tokenize_type))
-    tokenizer_source, vocab_size_source = text_vectorize.create_tokenizer(sentences=source_sentences,
-                                                                          language=_config.source_lang)
+    tokenizer_source, vocab_size_source = text_vectorize.create_and_save_tokenizer(sentences=source_sentences,
+                                                                                   language=_config.source_lang)
     print('生成英文字典大小:%d' % vocab_size_source)
     print('源语言字典生成、保存完毕！\n')
 
     print('正在生成、保存目标语言(%s)字典(分词方式:%s)...' % (_config.target_lang, _config.zh_tokenize_type))
-    tokenizer_target, vocab_size_target = text_vectorize.create_tokenizer(sentences=target_sentences,
-                                                                          language=_config.target_lang)
+    tokenizer_target, vocab_size_target = text_vectorize.create_and_save_tokenizer(sentences=target_sentences,
+                                                                                   language=_config.target_lang)
     print('生成目标语言字典大小:%d' % vocab_size_target)
     print('目标语言字典生成、保存完毕！\n')
 

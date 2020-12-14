@@ -107,7 +107,7 @@ def _lm_preprocess():
     print('数据加载、预处理完毕！\n')
 
     # 生成及保存字典
-    tokenizer, vocab_size = text_vectorize.create_tokenizer(sentences, _config.lm_language, model_type="lm")
+    tokenizer, vocab_size = text_vectorize.create_and_save_tokenizer(sentences, _config.lm_language, model_type="lm")
     print('生成字典大小:%d' % vocab_size)
     print('源语言字典生成、保存完毕！\n')
 
@@ -126,7 +126,7 @@ def _lm_preprocess():
 def _get_dataset_lm():
     """数据集加载及划分"""
     # 加载
-    _, sentences_path = text_vectorize.get_mode_and_path_sentences(_config.lm_language, model_type="lm", postfix='_lm')
+    _, sentences_path = text_vectorize.get_tokenizer_mode_and_path(_config.lm_language, model_type="lm", postfix='_lm')
     tensor = numpy.loadtxt(sentences_path, dtype='int32')
 
     # 划分
