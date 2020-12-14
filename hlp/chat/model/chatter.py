@@ -4,9 +4,9 @@ import time
 import tensorflow as tf
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
-import common.data_utils as data_utils
-from utils.beamsearch import BeamSearch
 from collections import deque
+import hlp.chat.common.data_utils as data_utils
+from hlp.utils.beamsearch import BeamSearch
 
 
 class Chatter(object):
@@ -19,11 +19,10 @@ class Chatter(object):
     def __init__(self, checkpoint_dir: str, beam_size: int, max_length: int):
         """
         聊天器初始化，用于加载模型
-        Args:
-            checkpoint_dir: 检查点保存目录路径
-            beam_size: batch大小
-            max_length: 单个句子最大长度
-        Returns:
+        :param checkpoint_dir: 检查点保存目录路径
+        :param beam_size: batch大小
+        :param max_length: 单个句子最大长度
+        return: 无返回值
         """
         self.max_length = max_length
         self.checkpoint_dir = checkpoint_dir
@@ -46,25 +45,21 @@ class Chatter(object):
     def _train_step(self, inp: tf.Tensor, tar: tf.Tensor, weight: int, step_loss: float):
         """
         模型训练步方法，需要返回时间步损失
-        Args:
-            inp: 输入序列
-            tar: 目标序列
-            weight: 样本权重序列
-            step_loss: 每步损失
-        Returns:
-            step_loss: 每步损失
+        :param inp: 输入序列
+        :param tar: 目标序列
+        :param weight: 样本权重序列
+        :param step_loss: 每步损失
+        :return: 每步损失和精度
         """
         pass
 
     def _create_predictions(self, inputs: tf.Tensor, dec_input: tf.Tensor, t: int):
         """
         使用模型预测下一个Token的id
-        Args:
-            inputs: 对话中的问句
-            dec_input: 对话中的答句
-            t: 记录时间步
-        Returns:
-            predictions: 预测
+        :param inputs: 对话中的问句
+        :param dec_input: 对话中的答句
+        :param t: 记录时间步
+        :return: predictions预测
         """
         pass
 
@@ -74,22 +69,21 @@ class Chatter(object):
               valid_data_split: float = 0.0, valid_data_fn: str = "", valid_freq: int = 1):
         """
         对模型进行训练，验证数据集优先级为：预设验证文本>训练划分文本>无验证
-        Args:
-            checkpoint: 模型的检查点
-            dict_fn: 字典路径
-            data_fn: 数据文本路径
-            buffer_size: Dataset加载缓存大小
-            batch_size: Dataset加载批大小
-            max_train_data_size: 最大训练数据量
-            epochs: 执行训练轮数
-            checkpoint_save_freq: 检查点保存频率
-            checkpoint_save_size: 检查点最大保存数
-            save_dir: 历史指标显示图片保存位置
-            max_valid_data_size: 最大验证数据量
-            valid_data_split: 用于从训练数据中划分验证数据，默认0.1
-            valid_data_fn: 验证数据文本路径
-            valid_freq: 验证频率
-        Returns:
+        :param checkpoint: 模型的检查点
+        :param dict_fn: 字典路径
+        :param data_fn: 数据文本路径
+        :param buffer_size: Dataset加载缓存大小
+        :param batch_size: Dataset加载批大小
+        :param max_train_data_size: 最大训练数据量
+        :param epochs: 执行训练轮数
+        :param checkpoint_save_freq: 检查点保存频率
+        :param checkpoint_save_size: 检查点最大保存数
+        :param save_dir: 历史指标显示图片保存位置
+        :param max_valid_data_size: 最大验证数据量
+        :param valid_data_split: 用于从训练数据中划分验证数据，默认0.1
+        :param valid_data_fn: 验证数据文本路径
+        :param valid_freq: 验证频率
+        :return: 各训练指标
         """
         print('训练开始，正在准备数据中...')
         train_dataset, valid_dataset, steps_per_epoch, valid_steps_per_epoch, checkpoint_prefix = \
@@ -101,7 +95,7 @@ class Chatter(object):
                                  max_valid_data_size=max_valid_data_size)
 
         valid_epochs_count = 0  # 用于记录验证轮次
-        checkpoint_queue = deque(maxlen=checkpoint_save_size + 1) # 用于保存该次训练产生的检查点名
+        checkpoint_queue = deque(maxlen=checkpoint_save_size + 1)  # 用于保存该次训练产生的检查点名
         history = {'accuracy': [], 'loss': [], 'val_accuracy': [], 'val_loss': []}
 
         for epoch in range(epochs):
@@ -151,11 +145,10 @@ class Chatter(object):
     def _show_history(self, history, save_dir, valid_freq):
         """
         用于显示历史指标趋势以及保存历史指标图表图
-        Args:
-            history: 历史指标
-            save_dir: 历史指标显示图片保存位置
-            valid_freq: 验证频率
-        Returns:
+        :param history: 历史指标
+        :param save_dir: 历史指标显示图片保存位置
+        :param valid_freq: 验证频率
+        :return: 无返回值
         """
         train_x_axis = [i + 1 for i in range(len(history['loss']))]
         valid_x_axis = [(i + 1) * valid_freq for i in range(len(history['val_loss']))]
@@ -183,10 +176,9 @@ class Chatter(object):
     def _valid_step(self, valid_dataset, steps_per_epoch):
         """
         对模型进行训练，验证数据集优先级为：预设验证文本>训练划分文本>无验证
-        Args:
-            valid_dataset: 验证Dataset
-            steps_per_epoch: 验证数据总共的步数
-        Returns:
+        :param valid_dataset: 验证Dataset
+        :param steps_per_epoch: 验证数据总共的步数
+        :return: 验证的损失和精度
         """
         print("验证轮次")
         start_time = time.time()
@@ -214,9 +206,8 @@ class Chatter(object):
         """
         对外部聊天请求进行回复
         子类需要利用模型进行推断和搜索以产生回复。
-        Args:
-            req: 输入的语句
-        Returns: 系统回复字符串
+        :param req: 输入的语句
+        :return: 系统回复字符串
         """
         # 对req进行初步处理
         inputs, dec_input = data_utils.preprocess_request(sentence=req, token=self.token, max_length=self.max_length,

@@ -10,10 +10,10 @@ def main():
     vocab_size_source, vocab_size_target = _pre.train_preprocess()
 
     # 创建模型及相关变量
-    transformer = nmt_model.get_model(vocab_size_source, vocab_size_target)
+    model = nmt_model.get_model(vocab_size_source, vocab_size_target)
 
     # 开始训练
-    trainer.train(transformer,
+    trainer.train(model,
                   validation_data=_config.validation_data,
                   validation_split=1-_config.train_size,
                   validation_freq=_config.validation_freq)

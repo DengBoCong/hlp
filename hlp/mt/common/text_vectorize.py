@@ -19,8 +19,8 @@ import tensorflow_datasets as tfds
 from hlp.mt.config import get_config as _config
 
 
-def _create_tokenizer_bpe(sentences, save_path, start_word=_config.start_word
-                          , end_word=_config.end_word, target_vocab_size=_config.target_vocab_size):
+def _create_and_save_tokenizer_bpe(sentences, save_path, start_word=_config.start_word
+                                   , end_word=_config.end_word, target_vocab_size=_config.target_vocab_size):
     """
     根据指定语料生成字典
     使用BPE分词
@@ -34,7 +34,7 @@ def _create_tokenizer_bpe(sentences, save_path, start_word=_config.start_word
     return tokenizer, tokenizer.vocab_size
 
 
-def _create_tokenizer_keras(sentences, save_path):
+def _create_and_save_tokenizer_keras(sentences, save_path):
     """
     根据指定语料生成字典
     使用tf.keras.preprocessing.text.Tokenizer进行分词，即使用空格分词
@@ -71,7 +71,7 @@ def _get_mode_and_path_tokenize(language, model_type):
 
 
 # 根据指定模型生成及保存字典
-def create_tokenizer(sentences, language, model_type="nmt"):
+def create_and_save_tokenizer(sentences, language, model_type="nmt"):
     """
     生成和保存指定语言的字典
     所使用的模式为配置文件中设置的该语言的模式
@@ -87,26 +87,26 @@ def create_tokenizer(sentences, language, model_type="nmt"):
         if not os.path.exists(os.path.dirname(save_path)):
             os.makedirs(os.path.dirname(save_path), exist_ok=True)
         if mode == 'BPE':
-            return _create_tokenizer_bpe(sentences, save_path=save_path)
+            return _create_and_save_tokenizer_bpe(sentences, save_path=save_path)
         elif mode == 'WORD':
-            return _create_tokenizer_keras(sentences, save_path=save_path)
+            return _create_and_save_tokenizer_keras(sentences, save_path=save_path)
     # 生成中文字典
     elif language == "zh":
         if not os.path.exists(os.path.dirname(save_path)):
             os.makedirs(os.path.dirname(save_path), exist_ok=True)
         if mode == 'CHAR':
-            return _create_tokenizer_keras(sentences, save_path=save_path)
+            return _create_and_save_tokenizer_keras(sentences, save_path=save_path)
         elif mode == 'WORD':
-            return _create_tokenizer_keras(sentences, save_path=save_path)
+            return _create_and_save_tokenizer_keras(sentences, save_path=save_path)
 
 
-def _get_tokenizer_bpe(path):
+def _load_tokenizer_bpe(path):
     """从指定路径加载保存好的字典"""
     tokenizer = tfds.features.text.SubwordTextEncoder.load_from_file(path)
     return tokenizer, tokenizer.vocab_size
 
 
-def _get_tokenizer_keras(path):
+def _load_tokenizer_keras(path):
     """从指定路径加载保存好的字典"""
     with open(path) as f:
         json_string = json.load(f)
@@ -116,7 +116,7 @@ def _get_tokenizer_keras(path):
 
 
 # 取字典
-def get_tokenizer(language, model_type="nmt"):
+def load_tokenizer(language, model_type="nmt"):
     """
     根据语言获取保存的字典
     支持的语言：en、zh
@@ -125,28 +125,14 @@ def get_tokenizer(language, model_type="nmt"):
     mode, path = _get_mode_and_path_tokenize(language, model_type)
     if language == "en":
         if mode == 'BPE':
-            return _get_tokenizer_bpe(path)
+            return _load_tokenizer_bpe(path)
         elif mode == 'WORD':
-            return _get_tokenizer_keras(path)
+            return _load_tokenizer_keras(path)
     elif language == "zh":
         if mode == 'CHAR':
-            return _get_tokenizer_keras(path)
+            return _load_tokenizer_keras(path)
         elif mode == 'WORD':
-            return _get_tokenizer_keras(path)
-
-
-# 编码句子
-def _get_tokenized_tensor_bpe(sentences, tokenizer):
-    """
-    Args:
-        sentences: 需要编码的句子
-        tokenizer: 字典
-    Returns:已编码填充的句子及句子长度
-    """
-    sequences = [tokenizer.encode(s) for s in sentences]
-    sequences = tf.keras.preprocessing.sequence.pad_sequences(sequences, padding='post')
-    max_sequence_length = len(sequences[0])
-    return sequences, max_sequence_length
+            return _load_tokenizer_keras(path)
 
 
 def _encode_sentences_bpe(sentences, tokenizer):
@@ -253,7 +239,7 @@ def _encode_and_save_keras(sentences, tokenizer, path):
     return max_sequence_length
 
 
-def get_mode_and_path_sentences(language, model_type, postfix):
+def get_tokenizer_mode_and_path(language, model_type, postfix):
     """根据语言及模型确定编码句子的编码模式及保存路径"""
     if language == "en":
         if model_type == "nmt":
@@ -283,7 +269,7 @@ def encode_and_save(sentences, tokenizer, language, postfix='', model_type='nmt'
     Returns:最大句子长度
     """
     # 根据所选语言确定mode、save_path
-    mode, save_path = get_mode_and_path_sentences(language, model_type, postfix)
+    mode, save_path = get_tokenizer_mode_and_path(language, model_type, postfix)
     if language == "en":
         if not os.path.exists(os.path.dirname(save_path)):
             os.makedirs(os.path.dirname(save_path), exist_ok=True)

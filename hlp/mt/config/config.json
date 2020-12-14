@@ -4,7 +4,7 @@
   "reverse": "False",
   "en_tokenize_type": "WORD",
   "zh_tokenize_type": "CHAR",
-  "train_size": 0.8,
+  "train_size": 0.9,
   "BEAM_SIZE": 3,
   "validation_data": "True",
   "checkpoint_ensembling": "True",

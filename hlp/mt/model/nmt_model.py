@@ -11,8 +11,12 @@ from hlp.utils import optimizers as _optimizers
 
 def get_model(vocab_size_source, vocab_size_target):
     """获取模型"""
-    transformer = _transformer.Transformer(_config.num_layers, _config.d_model, _config.num_heads, _config.dff,
-                                           vocab_size_source + 1, vocab_size_target + 1,
+    transformer = _transformer.Transformer(_config.num_layers,
+                                           _config.d_model,
+                                           _config.num_heads,
+                                           _config.dff,
+                                           vocab_size_source + 1,
+                                           vocab_size_target + 1,
                                            pe_input=vocab_size_source + 1,
                                            pe_target=vocab_size_target + 1,
                                            rate=_config.dropout_rate)
@@ -25,13 +29,13 @@ def load_model():
     """
     # 加载源语言字典
     print("正在加载源语言(%s)字典..." % _config.source_lang)
-    tokenizer_source, vocab_size_source = text_vectorize.get_tokenizer(language=_config.source_lang)
+    tokenizer_source, vocab_size_source = text_vectorize.load_tokenizer(language=_config.source_lang)
     print('源语言字典大小:%d' % vocab_size_source)
     print('源语言字典加载完毕！\n')
 
     # 加载目标语言字典
     print("正在加载目标语言(%s)字典..." % _config.target_lang)
-    tokenizer_target, vocab_size_target = text_vectorize.get_tokenizer(language=_config.target_lang)
+    tokenizer_target, vocab_size_target = text_vectorize.load_tokenizer(language=_config.target_lang)
     print('目标语言字典大小:%d' % vocab_size_target)
     print('目标语言字典加载完毕！\n')
 

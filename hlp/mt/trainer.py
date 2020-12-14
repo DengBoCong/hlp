@@ -75,7 +75,8 @@ def _plot_history(history, validation_freq):
     plt.show()
 
 
-def train(transformer, validation_data='False', validation_split=0.0, cache=True, min_delta=0.00003, patience=10, validation_freq=1):
+def train(transformer, validation_data='False', validation_split=0.0,
+          cache=True, min_delta=0.00003, patience=10, validation_freq=1):
     """
     @param transformer: 训练要使用的transformer模型
     @param validation_data: 为‘True’则从指定文本加载训练集，

@@ -5,10 +5,6 @@ from hlp.mt.config import get_config as _config
 from hlp.mt.model import nmt_model
 from hlp.mt import translator
 
-"""
-使用保存的字典进行评估
-"""
-
 
 # BLEU指标计算
 def _calc_bleu(path, transformer, tokenizer_source, tokenizer_target):
