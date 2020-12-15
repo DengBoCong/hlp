@@ -10,6 +10,7 @@ from hlp.mt.model import transformer as _transformer
 from hlp.mt.config import get_config as _config
 from hlp.mt.model import nmt_model
 from hlp.utils import optimizers as _optimizers
+from hlp.mt import preprocess
 
 
 def _train_step(inp, tar, transformer, optimizer, train_loss, train_accuracy):
@@ -112,16 +113,22 @@ def train(transformer, validation_data='False', validation_split=0.0,
     batch_sum_train = 0
     sample_sum_val_txt = 0
     if validation_data == 'True':
-        train_size = 1
+        train_size = 0.999999
         sample_sum_val_txt = _config.num_validate_sentences
     sample_sum_train = int((_config.num_sentences * train_size) // _config.BATCH_SIZE * _config.BATCH_SIZE)
     sample_sum_val = int((_config.num_sentences * (1 - train_size)) // _config.BATCH_SIZE * _config.BATCH_SIZE)
     steps = _config.num_sentences // _config.BATCH_SIZE
 
     # 读取数据
-    train_dataset, val_dataset = load_dataset.get_dataset(steps, cache, train_size=train_size,
-                                                                    validate_from_txt=validation_data)
-
+    source_sequences_path_train = preprocess.get_encoded_sequences_path(_config.source_lang, postfix='_train')
+    target_sequences_path_train = preprocess.get_encoded_sequences_path(_config.target_lang, postfix='_train')
+    source_sequences_path_val = preprocess.get_encoded_sequences_path(_config.source_lang, postfix='_val')
+    target_sequences_path_val = preprocess.get_encoded_sequences_path(_config.target_lang, postfix='_val')
+    train_dataset, val_dataset = load_dataset.get_dataset(source_sequences_path_train, target_sequences_path_train,
+                                                          cache, train_size, steps)
+    if validation_data == 'True':  # 从文本中加载val_dataset
+        val_dataset, _ = load_dataset.get_dataset(source_sequences_path_val, target_sequences_path_val,
+                                                  cache, train_size, steps)
     print("开始训练...")
     for epoch in range(_config.EPOCHS):
         print('Epoch {}/{}'.format(epoch + 1, _config.EPOCHS))
