@@ -107,7 +107,7 @@ def main():
                       decoder_lstm_rate=options['decoder_lstm_rate'])
     optimizer = tf.keras.optimizers.Adam(lr=options['lr'])
     ckpt_manager = load_checkpoint(model=model, checkpoint_dir=work_path + options['checkpoint_dir'],
-                                   execute_type=options['type'], checkpoint_save_size=options['checkpoint_save_size'])
+                                   execute_type=options['act'], checkpoint_save_size=options['checkpoint_save_size'])
 
     if execute_type == 'train':
         module.train(epochs=options['epochs'], train_data_path=work_path + options['train_file'],
@@ -150,7 +150,7 @@ def main():
 if __name__ == '__main__':
     """
     Tacotron2入口：指令需要附带运行参数
-    cmd：python actuator.py --type [执行模式]
+    cmd：python actuator.py --act [执行模式]
     执行类别：pre_treat/train/evaluate/generate，默认pre_treat模式
     其他参数参见main方法
 
