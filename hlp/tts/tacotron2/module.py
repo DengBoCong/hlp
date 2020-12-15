@@ -48,7 +48,7 @@ def train(epochs: int, train_data_path: str, max_len: int, vocab_size: int,
 
         for (batch, (mel, stop_token, sentence)) in enumerate(train_dataset.take(steps_per_epoch)):
             batch_start = time.time()
-            batch_loss, mel_outputs = _train_step(sentence, mel, model, optimizer, stop_token)  # 训练一个批次，返回批损失
+            batch_loss, mel_outputs = _train_step(model, sentence, mel, optimizer, stop_token)  # 训练一个批次，返回批损失
             total_loss += batch_loss
 
             print('\r{}/{} [Batch {} Loss {:.4f} {:.1f}s]'.format((batch + 1),
@@ -182,7 +182,7 @@ def _loss_function(mel_out, mel_out_postnet, mel_gts, tar_token, stop_token):
     return mel_loss
 
 
-def _train_step(input_ids, mel_gts, model, optimizer, tar_token):
+def _train_step(model, input_ids, mel_gts, optimizer, tar_token):
     """
     训练步
     :param input_ids: sentence序列
