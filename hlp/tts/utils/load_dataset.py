@@ -67,11 +67,11 @@ def load_data(train_data_path: str, max_len: int, vocab_size: int, batch_size: i
         if valid_flag:
             valid_sentence_sequences = tokenizer.texts_to_sequences(valid_sentence_data)
 
-    train_dataset = dataset_pack(data=(train_audio_data_pair, train_sentence_sequences),
-                                 batch_size=batch_size, buffer_size=buffer_size)
+    train_dataset = _to_dataset(data=(train_audio_data_pair, train_sentence_sequences),
+                                batch_size=batch_size, buffer_size=buffer_size)
     if valid_flag:
-        valid_dataset = dataset_pack(data=(valid_audio_data_pair, valid_sentence_sequences),
-                                     batch_size=batch_size, buffer_size=buffer_size)
+        valid_dataset = _to_dataset(data=(valid_audio_data_pair, valid_sentence_sequences),
+                                    batch_size=batch_size, buffer_size=buffer_size)
         valid_steps_per_epoch = len(valid_sentence_sequences) // batch_size
     else:
         valid_dataset = None
@@ -82,7 +82,7 @@ def load_data(train_data_path: str, max_len: int, vocab_size: int, batch_size: i
     return train_dataset, valid_dataset, steps_per_epoch, valid_steps_per_epoch
 
 
-def dataset_pack(data: tuple, batch_size: int, buffer_size: int):
+def _to_dataset(data: tuple, batch_size: int, buffer_size: int):
     """
     将data封装成tf.data.Dataset
     :param data: 要封装的数据元组
