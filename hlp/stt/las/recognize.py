@@ -1,6 +1,7 @@
 import tensorflow as tf
+
 from hlp.stt.las.config import config
-from hlp.stt.las.model import las, las_d_w
+from hlp.stt.las.model import plas, las
 from hlp.stt.utils.features import wav_to_feature
 from hlp.stt.utils.record import record
 
@@ -23,9 +24,9 @@ def recognize(wav_path):
 
     # 选择模型类型
     if model_type == "las":
-        model = las.las_model(vocab_tar_size, embedding_dim, units, BATCH_SIZE)
+        model = plas.PLAS(vocab_tar_size, embedding_dim, units, BATCH_SIZE)
     elif model_type == "las_d_w":
-        model = las_d_w.las_d_w_model(vocab_tar_size, d, w, emb_dim, dec_units, BATCH_SIZE)
+        model = las.LAS(vocab_tar_size, d, w, emb_dim, dec_units, BATCH_SIZE)
 
     # 检查点
     checkpoint_dir = config.checkpoint_dir

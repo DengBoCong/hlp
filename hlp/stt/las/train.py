@@ -1,53 +1,46 @@
 ﻿# -*- coding: utf-8 -*-
-"""
-Created on Wed Sep 16 10:34:04 2020
-formatted
-@author: 九童
-"""
-# !/usr/bin/env Python
-# coding=utf-8
 
 from __future__ import absolute_import, division, print_function, unicode_literals
-import os
 
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
-import time
 import json
+import os
+import time
+
 import tensorflow as tf
+
 from hlp.stt.las.config import config
-from hlp.stt.las.model import las, las_d_w
+from hlp.stt.las.model import plas, las
 from hlp.stt.las.util import compute_metric
 from hlp.stt.utils import load_dataset
-from hlp.stt.utils.generator import train_generator, test_generator
-from hlp.utils.optimizers import loss_func_mask
-from hlp.stt.utils.text_process import vectorize_texts
 from hlp.stt.utils.audio_process import max_audio_length
+from hlp.stt.utils.generator import train_generator, test_generator
 from hlp.stt.utils.text_process import split_sentences, get_max_label_length, tokenize
+from hlp.stt.utils.text_process import vectorize_texts
+from hlp.utils.optimizers import loss_func_mask
 
 
-def train_step(inputx_1, targetx_2, enc_hidden, word_index, model, las_optimizer, train_batch_size):
+def train_step(x_audio, y_label, enc_hidden, word_index, model, las_optimizer, train_batch_size):
     loss = 0
 
     with tf.GradientTape() as tape:
-        inputx_1 = tf.convert_to_tensor(inputx_1)
-        targetx_2 = tf.convert_to_tensor(targetx_2)
+        x_audio = tf.convert_to_tensor(x_audio)
+        y_label = tf.convert_to_tensor(y_label)
 
         # 解码器输入符号
         dec_input = tf.expand_dims([word_index['<start>']] * train_batch_size, 1)
 
         # 导师驱动 - 将目标词作为下一个输入
-        for t in range(1, targetx_2.shape[1]):
+        for t in range(1, y_label.shape[1]):
+            print(t)
             # 将编码器输出 （enc_output） 传送至解码器，解码
-            print("inputx_1.shape:{}".format(inputx_1.shape))
-            print("enc_hidden.shape:{}".format(enc_hidden.shape))
-            print("dec_input.shape:{}".format(dec_input.shape))
-            predictions, _ = model(inputx_1, enc_hidden, dec_input)
-            loss += loss_func_mask(targetx_2[:, t], predictions)  # 根据预测计算损失
+            predictions, _ = model(x_audio, enc_hidden, dec_input)
+            loss += loss_func_mask(y_label[:, t], predictions)  # 根据预测计算损失
+
             # 使用导师驱动，下一步输入符号是训练集中对应目标符号
-            dec_input = targetx_2[:, t]
+            dec_input = y_label[:, t]
             dec_input = tf.expand_dims(dec_input, 1)
 
-    batch_loss = (loss / int(targetx_2.shape[1]))
+    batch_loss = (loss / int(y_label.shape[1]))
     variables = model.trainable_variables
     gradients = tape.gradient(loss, variables)  # 计算损失对参数的梯度
     las_optimizer.apply_gradients(zip(gradients, variables))  # 优化器反向传播更新参数
@@ -55,7 +48,6 @@ def train_step(inputx_1, targetx_2, enc_hidden, word_index, model, las_optimizer
 
 
 if __name__ == "__main__":
-   
     # 训练集数据存放路径，包括音频文件路径和文本标签文件路径
     data_path = config.train_data_path
     # 尝试实验不同大小的数据集
@@ -76,17 +68,18 @@ if __name__ == "__main__":
     validation_data = config.validation_data
 
     print("加载训练数据......")
-    train_wav_path_list, train_label_list = load_dataset.load_data(dataset_name, data_path,
+    train_wav_path_list, train_label_list = load_dataset.load_data(dataset_name,
+                                                                   data_path,
                                                                    num_examples)
 
     print("数据预处理......")
     splitted_text_list = split_sentences(train_label_list, text_process_mode)
+
     # 将文本处理成对应的token数字序列
     text_int_sequences, tokenizer = tokenize(splitted_text_list)
     max_input_length = max_audio_length(train_wav_path_list, audio_feature_type)
     max_label_length = get_max_label_length(text_int_sequences)
 
-    # 将数据集的相关信息写入dataset_information.json文件 这部分没有想好放在那里
     print("保存数据集信息...")
     ds_info_path = config.dataset_info_path
     dataset_info = {}
@@ -119,39 +112,38 @@ if __name__ == "__main__":
             val_wav_path_list, val_label_list = train_wav_path_list[-index:], train_label_list[-index:]
             train_wav_path_list, train_label_list = train_wav_path_list[:-index], train_label_list[:-index]
         val_data = (val_wav_path_list, val_label_list)
+
         print("构建验证数据生成器......")
         val_batch_size = config.val_batch_size
         val_batchs = len(val_wav_path_list) // val_batch_size
-        val_data_generator = test_generator(
-            val_data,
-            val_batchs,
-            val_batch_size,
-            audio_feature_type,
-            max_input_length
-        )
+        val_data_generator = test_generator(val_data,
+                                            val_batchs,
+                                            val_batch_size,
+                                            audio_feature_type,
+                                            max_input_length
+                                            )
 
     # 构建train_data
     train_text_int_sequences_list = vectorize_texts(train_label_list, text_process_mode, word_index)
     train_data = (train_wav_path_list, train_text_int_sequences_list)
     batchs = len(train_wav_path_list) // train_batch_size
     print("构建训练数据生成器......")
-    train_data_generator = train_generator(
-        train_data,
-        batchs,
-        train_batch_size,
-        audio_feature_type,
-        max_input_length,
-        max_label_length
-    )
+    train_data_generator = train_generator(train_data,
+                                           batchs,
+                                           train_batch_size,
+                                           audio_feature_type,
+                                           max_input_length,
+                                           max_label_length
+                                           )
 
     vocab_tar_size = dataset_info["vocab_tar_size"]
     optimizer = tf.keras.optimizers.Adam()
 
     # 选择模型类型
     if model_type == "las":
-        model = las.las_model(vocab_tar_size, embedding_dim, units, train_batch_size)
+        model = plas.PLAS(vocab_tar_size, embedding_dim, units, train_batch_size)
     elif model_type == "las_d_w":
-        model = las_d_w.las_d_w_model(vocab_tar_size, d, w, emb_dim, dec_units, train_batch_size)
+        model = las.LAS(vocab_tar_size, d, w, emb_dim, dec_units, train_batch_size)
 
     # 检查点
     checkpoint_dir = config.checkpoint_dir
@@ -163,41 +155,39 @@ if __name__ == "__main__":
         max_to_keep=config.max_to_keep
     )
     checkpoint_keep_interval = config.checkpoint_keep_interval
-    print("恢复检查点目录 （checkpoint_dir） 中最新的检查点......")
     if manager.latest_checkpoint:
+        print("恢复检查点目录 （checkpoint_dir） 中最新的检查点......")
         checkpoint.restore(manager.latest_checkpoint)
 
+    print("开始训练...")
     EPOCHS = config.epochs
-
     for epoch in range(EPOCHS):
         start = time.time()
         enc_hidden = model.initialize_hidden_state()
         total_loss = 0
         batch_start = time.time()
-        for batch, (inp, targ, _, _) in zip(range(1, batchs + 1), train_data_generator):
-            x_1 = inp
-            x_2 = targ
-            batch_loss = train_step(x_1, x_2, enc_hidden, word_index,
+        for batch, (x_audio, y_label, _, _) in zip(range(1, batchs + 1), train_data_generator):
+            batch_loss = train_step(x_audio, y_label, enc_hidden, word_index,
                                     model,
                                     optimizer,
                                     train_batch_size)  # 训练一个批次，返回批损失
             total_loss += batch_loss
 
-            if (batch + 1) % 2 == 0:
-                print('Epoch {} Batch {} Loss {:.4f}'.format(epoch + 1,
-                                                             batch + 1,
-                                                             batch_loss.numpy()))
-                print('Time taken for 2 batches {} sec\n'.format(time.time() - batch_start))
-                batch_start = time.time()
+            print('Epoch {} Batch {} Loss {:.4f}'.format(epoch + 1,
+                                                         batch + 1,
+                                                         batch_loss.numpy()))
+            print('Time taken for 1 batch {} sec\n'.format(time.time() - batch_start))
+            batch_start = time.time()
+
         # 每 checkpoint_keep_interval 个周期（epoch），保存（检查点）一次模型
         if (epoch + 1) % checkpoint_keep_interval == 0:
             manager.save()
 
         print('Epoch {} Loss {:.4f}'.format(epoch + 1, total_loss / batchs))
         print('Time taken for 1 epoch {} sec\n'.format(time.time() - start))
+
         # 验证
         if validation_data:
             norm_rates_lers, norm_aver_lers = compute_metric(model, val_data_generator,
                                                              val_batchs, val_batch_size)
-            print("字母错误率: ")
-            print("所有语音平均字母错误率: ", norm_aver_lers)
+            print("平均字母错误率: ", norm_aver_lers)

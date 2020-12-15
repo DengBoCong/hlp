@@ -11,13 +11,14 @@ Spec augmentation 计算函数
 
 @author: 九童
 """
+import argparse
+
 import librosa
 import librosa.display
+import matplotlib.pyplot as plt
+import numpy as np
 import tensorflow as tf
 from tensorflow_addons.image import sparse_image_warp
-import numpy as np
-import matplotlib.pyplot as plt
-import argparse
 
 
 def sparse_warp(mel_spectrogram, time_warping_para=80):

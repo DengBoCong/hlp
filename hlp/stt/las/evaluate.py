@@ -1,20 +1,14 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Mon Oct 26 15:37:32 2020
-
-@author: 九童
-使用训练集进行模型评估
-"""
 import os
 
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 import tensorflow as tf
-from hlp.utils import beamsearch
+
 from hlp.stt.las.config import config
-from hlp.stt.las.model import las, las_d_w
-from hlp.stt.utils.metric import lers
+from hlp.stt.las.model import plas, las
 from hlp.stt.utils import load_dataset
 from hlp.stt.utils.generator import test_generator
+from hlp.stt.utils.metric import lers
+from hlp.utils import beamsearch
 
 if __name__ == "__main__":
 
@@ -54,9 +48,9 @@ if __name__ == "__main__":
 
     # 选择模型类型
     if model_type == "las":
-        model = las.las_model(test_vocab_tar_size, embedding_dim, units, batch_size)
+        model = plas.PLAS(test_vocab_tar_size, embedding_dim, units, batch_size)
     elif model_type == "las_d_w":
-        model = las_d_w.las_d_w_model(test_vocab_tar_size, d, w, emb_dim, dec_units, batch_size)
+        model = las.LAS(test_vocab_tar_size, d, w, emb_dim, dec_units, batch_size)
 
     # 检查点
     checkpoint_dir = config.checkpoint_dir
@@ -73,12 +67,11 @@ if __name__ == "__main__":
     test_data = load_dataset.load_data(dataset_name, data_path, num_examples)
     batchs = len(test_data[0]) // batch_size
     print("构建数据生成器......")
-    test_data_generator = test_generator(
-        test_data,
-        batchs,
-        batch_size,
-        audio_feature_type,
-        dataset_information["max_input_length"])
+    test_data_generator = test_generator(test_data,
+                                         batchs,
+                                         batch_size,
+                                         audio_feature_type,
+                                         dataset_information["max_input_length"])
 
     word_index = dataset_information["word_index"]
     index_word = dataset_information["index_word"]
@@ -114,5 +107,4 @@ if __name__ == "__main__":
         labels_list.append(targ[0])
     norm_rates_lers, norm_aver_lers = lers(labels_list, results)
 
-    print("字母错误率: ")
-    print("所有语音平均字母错误率: ", norm_aver_lers)
+    print("平均字母错误率: ", norm_aver_lers)

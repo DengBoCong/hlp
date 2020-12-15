@@ -4,8 +4,8 @@ Created on Mon Nov  9 09:23:56 2020
 
 @author: 九童
 """
-import os
 import json
+import os
 
 json_path = os.path.join(os.path.dirname(__file__), 'config.json')  # 配置文件路径
 
