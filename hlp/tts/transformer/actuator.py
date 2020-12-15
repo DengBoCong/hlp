@@ -41,7 +41,7 @@ if __name__ == '__main__':
     elif options.type == 'pre_treat':
         pre_treat.preprocess_lj_speech_raw_data(metadata_path=work_path + options['metadata_file'],
                                                 audio_dir=work_path + options['audio_dir'],
-                                                save_path=work_path + options['train_file'],
+                                                dataset_infos_file=work_path + options['train_file'],
                                                 cmu_dict_path=work_path + options['cmu_dict_file'],
                                                 spectrum_data_dir=work_path + options['spectrum_data_dir'],
                                                 tokenized_type=options['tokenized_type'],

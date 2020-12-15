@@ -5,7 +5,7 @@ from hlp.tts.utils import text_preprocess
 from hlp.tts.utils.spec import get_spectrograms
 
 
-def preprocess_lj_speech_raw_data(metadata_path: str, audio_dir: str, save_path: str, max_length: int,
+def preprocess_lj_speech_raw_data(metadata_path: str, audio_dir: str, dataset_infos_file: str, max_length: int,
                                   pre_emphasis: float, n_fft: int, n_mels: int, hop_length: int,
                                   win_length: int, max_db: int, ref_db: int, top_db: int,
                                   spectrum_data_dir: str, audio_suffix: str = ".wav",
@@ -15,7 +15,7 @@ def preprocess_lj_speech_raw_data(metadata_path: str, audio_dir: str, save_path:
     形式，这样方便后续进行分批读取
     :param metadata_path: 元数据CSV文件路径
     :param audio_dir: 音频目录路径
-    :param save_path: 保存处理之后的数据路径
+    :param dataset_infos_file: 保存处理之后的数据路径
     :param max_length: 最大序列长度
     :param audio_suffix: 音频的类型后缀
     :param tokenized_type: 分词类型，默认按音素分词，模式：phoneme(音素)/word(单词)/char(字符)
@@ -41,7 +41,7 @@ def preprocess_lj_speech_raw_data(metadata_path: str, audio_dir: str, save_path:
 
     count = 0
     with open(metadata_path, 'r', encoding='utf-8') as raw_file, \
-            open(save_path, 'w', encoding='utf-8') as save_file:
+            open(dataset_infos_file, 'w', encoding='utf-8') as ds_infos_file:
         for line in raw_file:
             line = line.strip('\n').replace('/', '')
             pair = line.split('|')
@@ -70,7 +70,7 @@ def preprocess_lj_speech_raw_data(metadata_path: str, audio_dir: str, save_path:
             np.save(file=mag_file, arr=mag)
             np.save(file=stop_token_file, arr=stop_token)
 
-            save_file.write(mel_file + "\t" + mag_file + "\t" + stop_token_file + "\t" + text + "\n")
+            ds_infos_file.write(mel_file + "\t" + mag_file + "\t" + stop_token_file + "\t" + text + "\n")
 
             count += 1
             print('\r已处理音频句子对数：{}'.format(count), flush=True, end='')

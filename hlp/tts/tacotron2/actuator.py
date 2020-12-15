@@ -18,7 +18,7 @@ def main():
                         help='原始语音数据的metadata文件路径')
     parser.add_argument('--audio_dir', default='\\data\\LJSpeech-1.1\\wavs\\', type=str, required=False,
                         help='原始语音数据的保存目录')
-    parser.add_argument('--train_file', default='\\data\\audio_sentence_pairs.txt', type=str, required=False,
+    parser.add_argument('--train_file', default='\\data\\processed_train_file.txt', type=str, required=False,
                         help='整理后的音频句子对保存路径')
     parser.add_argument('--cmu_dict_file', default='\\data\\cmudict-0.7b', type=str, required=False,
                         help='cmu音素字典路径')
@@ -134,7 +134,7 @@ def main():
     elif execute_type == 'pre_treat':
         pre_treat.preprocess_lj_speech_raw_data(metadata_path=work_path + options['metadata_file'],
                                                 audio_dir=work_path + options['audio_dir'],
-                                                save_path=work_path + options['train_file'],
+                                                dataset_infos_file=work_path + options['train_file'],
                                                 cmu_dict_path=work_path + options['cmu_dict_file'],
                                                 spectrum_data_dir=work_path + options['spectrum_data_dir'],
                                                 tokenized_type=options['tokenized_type'],
