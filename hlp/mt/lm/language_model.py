@@ -9,6 +9,7 @@ from hlp.mt.config import get_config as _config
 from hlp.mt.common import text_vectorize
 from hlp.mt.model import nmt_model
 from hlp.mt.common.text_split import preprocess_sentences_en, preprocess_sentences_zh
+from hlp.utils import optimizers
 
 
 class LanguageModel(tf.keras.Model):
@@ -49,21 +50,6 @@ class LanguageModel(tf.keras.Model):
         return predictions
 
 
-def _loss_function(real, pred):
-    """
-    损失计算
-    使用mask将填充部分loss去掉
-    """
-    mask = tf.math.logical_not(tf.math.equal(real, 0))
-
-    loss_ = tf.keras.losses.sparse_categorical_crossentropy(real, pred, from_logits=True)
-
-    mask = tf.cast(mask, dtype=loss_.dtype)
-    loss_ *= mask
-
-    return tf.reduce_mean(loss_)
-
-
 def _train_step(sequences, language_model, optimizer, train_loss, train_accuracy):
     """
     @param sequences: 已编码的一个batch的数据集  shape --> (batch_size, seq_length)
@@ -75,7 +61,7 @@ def _train_step(sequences, language_model, optimizer, train_loss, train_accuracy
 
     with tf.GradientTape() as tape:
         predictions = language_model(seq_input)
-        loss = _loss_function(seq_real, predictions)
+        loss = optimizers.loss_function(seq_real, predictions)
 
     gradients = tape.gradient(loss, language_model.trainable_variables)
     optimizer.apply_gradients(zip(gradients, language_model.trainable_variables))

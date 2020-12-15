@@ -15,7 +15,12 @@ def load_single_sentences(path, num_sentences, column):
 
 
 def load_sentences(path, num_sentences, reverse=_config.reverse):
-    """加载文本"""
+    """加载句子对，
+    @param path:加载文本的路径
+    @param num_sentences:加载句子数量
+    @param reverse:是否交换列的顺序
+    @return:相应列句子的列表
+    """
     source_sentences = []
     target_sentences = []
     with open(path, encoding='UTF-8') as file:
@@ -64,35 +69,20 @@ def _generate_batch_from_file(input_path, target_path, num_steps, start_step, ba
         yield tf.cast(input_tensor, tf.int32), tf.cast(target_tensor, tf.int32)
 
 
-def get_dataset(steps, cache, train_size, validate_from_txt):
-    """
+def get_dataset(input_path, target_path, cache, train_size, steps=None):
+    """从指定的路径中获取数据集
 
-    @param steps:训练集文本共含多少个batch
-    @param cache:是否一次性加载入内存
-    @param train_size:训练集比例
-    @param validate_from_txt:是否从指定文本加载验证集
-
-    返回训练可接收的训练集验证集
+    @param input_path: 输入已编码文本路径
+    @param target_path: 目标已编码文本路径
+    @param cache: 是否一次性加载入内存，即是采用generator
+    @param train_size: 训练集比例
+    @param steps: 训练集文本共含多少个batch,cache为 False时可为None
     """
-    input_path = _config.encoded_sequences_path_prefix + _config.source_lang
-    target_path = _config.encoded_sequences_path_prefix + _config.target_lang
-    # 首先判断是否从指定文件读入，若为真，则从验证集文本读取验证集数据
-    if validate_from_txt == 'True':
-        train_size = 0.9999
-        val_dataset, _ = _split_batch(input_path + '_val', target_path + '_val', train_size)
-        # 判断训练数据是直接读取还是采用生成器读取
-        if cache:
-            train_dataset, _ = _split_batch(input_path, target_path, train_size)
-        else:
-            train_dataset = _generate_batch_from_file(input_path, target_path, steps, 0, _config.BATCH_SIZE)
-        return train_dataset, val_dataset
-    # 若为假，则从数据集中划分验证集
+    if cache:
+        train_dataset, val_dataset = _split_batch(input_path, target_path, train_size)
     else:
-        if cache:
-            train_dataset, val_dataset = _split_batch(input_path, target_path, train_size)
-        else:
-            train_dataset = _generate_batch_from_file(input_path, target_path
-                                                      , steps * train_size, 0, _config.BATCH_SIZE)
-            val_dataset = _generate_batch_from_file(input_path, target_path
-                                                    , steps, steps * train_size, _config.BATCH_SIZE)
-        return train_dataset, val_dataset
+        train_dataset = _generate_batch_from_file(input_path, target_path, steps * train_size, 0, _config.BATCH_SIZE)
+        val_dataset = _generate_batch_from_file(input_path, target_path, steps, steps * train_size, _config.BATCH_SIZE)
+    return train_dataset, val_dataset
+
+
