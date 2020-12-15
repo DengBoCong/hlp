@@ -13,7 +13,7 @@ from hlp.tts.utils.utils import load_checkpoint
 def main():
     parser = ArgumentParser(description='%tacotron2 tts')
     parser.add_argument('--config_file', default='', type=str, required=False, help='配置文件路径，为空则默认命令行，不为空则使用配置文件参数')
-    parser.add_argument('--type', default='pre_treat', type=str, required=False, help='执行类型')
+    parser.add_argument('--act', default='pre_treat', type=str, required=False, help='执行类型')
     parser.add_argument('--metadata_file', default='\\data\\LJSpeech-1.1\\metadata.csv', type=str, required=False,
                         help='原始语音数据的metadata文件路径')
     parser.add_argument('--audio_dir', default='\\data\\LJSpeech-1.1\\wavs\\', type=str, required=False,
@@ -86,7 +86,7 @@ def main():
     # 注意了，有关路径的参数，以tacotron2目录下为基准配置，只要
     # tacotron2目录名未更改，任意移动位置不影响使用
     work_path = os.path.abspath(__file__)[:os.path.abspath(__file__).find("\\tacotron2")]
-    execute_type = options['type']
+    execute_type = options['act']
 
     model = Tacotron2(vocab_size=options['vocab_size'], encoder_conv_filters=options['encoder_conv_filters'],
                       encoder_conv_kernel_sizes=options['encoder_conv_kernel_sizes'],
