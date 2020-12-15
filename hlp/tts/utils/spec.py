@@ -74,14 +74,14 @@ def griffin_lim(spectrogram, n_iter, n_fft, hop_length, win_length):
     :param win_length: 窗长win_length
     :return:
     """
-    X_best = copy.deepcopy(spectrogram)
+    x_best = copy.deepcopy(spectrogram)
     for i in range(n_iter):
-        X_t = invert_spectrogram(X_best, hop_length, win_length)
-        est = librosa.stft(X_t, n_fft, hop_length, win_length=win_length)
+        x_t = invert_spectrogram(x_best, hop_length, win_length)
+        est = librosa.stft(x_t, n_fft, hop_length, win_length=win_length)
         phase = est / np.maximum(1e-8, np.abs(est))
-        X_best = spectrogram * phase
-    X_t = invert_spectrogram(X_best, hop_length, win_length)
-    y = np.real(X_t)
+        x_best = spectrogram * phase
+    x_t = invert_spectrogram(x_best, hop_length, win_length)
+    y = np.real(x_t)
     return y
 
 

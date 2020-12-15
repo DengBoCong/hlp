@@ -6,7 +6,7 @@ import scipy.io.wavfile as wave
 import hlp.tts.utils.data_preprocess as preprocess
 from hlp.tts.utils.spec import melspectrogram2wav, spec_distance
 from hlp.tts.utils.data_preprocess import text_to_sequence_phoneme
-from hlp.tts.utils.data_preprocess import text_to_phonemes_converter
+from hlp.tts.utils.data_preprocess import text_to_phonemes
 
 
 def train(epochs: int, train_data_path: str, max_len: int, vocab_size: int,
@@ -139,7 +139,7 @@ def generate(model: tf.keras.Model, max_db: int, ref_db: int, sr: int, max_len: 
         if seq == 'ESC':
             break
         sequences_list = []
-        sequences_list.append(text_to_phonemes_converter(text=seq, cmu_dict_path=cmu_dict_path))
+        sequences_list.append(text_to_phonemes(text=seq, cmu_dict_path=cmu_dict_path))
         if tokenized_type == "phoneme":
             input_ids = text_to_sequence_phoneme(texts=sequences_list, max_len=max_len)
         else:

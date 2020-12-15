@@ -143,7 +143,7 @@ def deal_audio_sentence_pairs(audio_data_pair: tf.Tensor, sentence: tf.Tensor):
     return mel, stop_token, sentence
 
 
-def text_to_phonemes_converter(text: str, cmu_dict_path: str):
+def text_to_phonemes(text: str, cmu_dict_path: str):
     """
     将句子按照CMU音素字典进行分词切分
     :param text: 单个句子文本
@@ -191,7 +191,7 @@ def text_to_phonemes_converter(text: str, cmu_dict_path: str):
     return " ".join(cmu_result)
 
 
-def text_to_word_converter(text: str):
+def text_to_words(text: str):
     """
     按照单词进行切分
     :param text: 单个句子文本
@@ -206,7 +206,7 @@ def text_to_word_converter(text: str):
     return text
 
 
-def text_to_char_converter(text: str):
+def text_to_chars(text: str):
     """
     按照字符进行切分
     :param text: 单个句子文本

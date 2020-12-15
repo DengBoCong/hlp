@@ -87,10 +87,10 @@ def dispatch_tokenized_func(text: str, tokenized_type: str = "phoneme", cmu_dict
     :return: 按照对应方法处理好的文本序列
     """
     operation = {
-        "phoneme": lambda: preprocess.text_to_phonemes_converter(text=text,
-                                                                 cmu_dict_path=cmu_dict_path),
-        "word": lambda: preprocess.text_to_word_converter(text=text),
-        "char": lambda: preprocess.text_to_char_converter(text=text)
+        "phoneme": lambda: preprocess.text_to_phonemes(text=text,
+                                                       cmu_dict_path=cmu_dict_path),
+        "word": lambda: preprocess.text_to_words(text=text),
+        "char": lambda: preprocess.text_to_chars(text=text)
     }
 
     return operation.get(tokenized_type, "phoneme")()
