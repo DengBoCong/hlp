@@ -48,7 +48,7 @@ def train(epochs: int, train_data_path: str, max_len: int, vocab_size: int,
 
         for (batch, (mel, stop_token, sentence)) in enumerate(train_dataset.take(steps_per_epoch)):
             batch_start = time.time()
-            batch_loss, mel_outputs = _train_step(model, sentence, mel, optimizer, stop_token)  # 训练一个批次，返回批损失
+            batch_loss, mel_outputs = _train_step(model, optimizer, sentence, mel, stop_token)  # 训练一个批次，返回批损失
             total_loss += batch_loss
 
             print('\r{}/{} [Batch {} Loss {:.4f} {:.1f}s]'.format((batch + 1),
@@ -60,8 +60,7 @@ def train(epochs: int, train_data_path: str, max_len: int, vocab_size: int,
 
         if (epoch + 1) % checkpoint_save_freq == 0:
             checkpoint.save()
-            _valid_step(model=model, optimizer=optimizer,
-                        dataset=valid_dataset, steps_per_epoch=valid_steps_per_epoch)
+            _valid_step(model=model, dataset=valid_dataset, steps_per_epoch=valid_steps_per_epoch)
 
     return mel_outputs
 
@@ -182,20 +181,20 @@ def _loss_function(mel_out, mel_out_postnet, mel_gts, tar_token, stop_token):
     return mel_loss
 
 
-def _train_step(model, input_ids, mel_gts, optimizer, tar_token):
+def _train_step(model, optimizer, input_ids, mel_gts, stop_token):
     """
     训练步
     :param input_ids: sentence序列
     :param mel_gts: ground-true的mel
     :param model: 模型
     :param optimizer 优化器
-    :param tar_token: ground-true的stop_token
+    :param stop_token: ground-true的stop_token
     :return: batch损失和postnet输出
     """
     loss = 0
     with tf.GradientTape() as tape:
         mel_outputs, mel_outputs_postnet, gate_outputs, alignments = model(input_ids, mel_gts)
-        loss += _loss_function(mel_outputs, mel_outputs_postnet, mel_gts, tar_token, gate_outputs)
+        loss += _loss_function(mel_outputs, mel_outputs_postnet, mel_gts, stop_token, gate_outputs)
     batch_loss = loss
     variables = model.trainable_variables
     gradients = tape.gradient(loss, variables)  # 计算损失对参数的梯度
@@ -203,11 +202,10 @@ def _train_step(model, input_ids, mel_gts, optimizer, tar_token):
     return batch_loss, mel_outputs_postnet
 
 
-def _valid_step(model, optimizer, dataset, steps_per_epoch):
+def _valid_step(model, dataset, steps_per_epoch):
     """
     验证模块
     :param model: 模型
-    :param optimizer: 优化器
     :param dataset: 验证集dataset
     :param steps_per_epoch: 总的训练步数
     :return: 无返回值
