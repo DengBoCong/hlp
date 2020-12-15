@@ -10,6 +10,7 @@ from hlp.mt.model import checkpoint
 from hlp.mt.common import text_vectorize
 from hlp.utils import beamsearch
 from hlp.mt.common import text_split
+from hlp.mt import preprocess
 
 
 def _checkpoint_ensembling(checkpoints_path, model, inputs, decoder_input):
@@ -46,15 +47,20 @@ def _checkpoint_ensembling(checkpoints_path, model, inputs, decoder_input):
 
 def _predict_index(checkpoints_path, inp_sentence, model, beam_search_container, input_tokenizer, target_tokenizer):
     """对输入句子进行翻译并返回编码的句子列表"""
-    sentence = text_split.preprocess_sentences([inp_sentence], language=_config.source_lang)
+    input_mode = preprocess.get_tokenizer_mode(_config.source_lang)
+    target_mode = preprocess.get_tokenizer_mode(_config.target_lang)
 
-    inp_sequence, _ = text_vectorize.encode_sentences(sentence, input_tokenizer, language=_config.source_lang)
+    sentence = text_split.preprocess_sentences([inp_sentence], _config.source_lang, input_mode)
+
+    inp_sequence, _ = text_vectorize.encode_sentences(sentence, input_tokenizer,
+                                                      language=_config.source_lang, mode=input_mode)
     inp_sequence = tf.squeeze(inp_sequence)
     inp_sequence = tf.expand_dims(inp_sequence, 0)
 
     # start_token  shape:(1,)
     start_token = text_vectorize.get_start_token(_config.start_word, target_tokenizer, language=_config.target_lang)
-    end_token, _ = text_vectorize.encode_sentences([_config.end_word], target_tokenizer, language=_config.target_lang)
+    end_token, _ = text_vectorize.encode_sentences([_config.end_word], target_tokenizer,
+                                                   language=_config.target_lang, mode=target_mode)
     end_token = tf.squeeze(end_token)
 
     decoder_input = tf.expand_dims(start_token, 0)  # shape --> (1,1) 即(batch_size,sentence_length)
@@ -96,11 +102,13 @@ def translate(sentence, model, tokenizer_source, tokenizer_target, beam_size=_co
     predict_idxes = _predict_index(checkpoints_path, sentence, model, beam_search_container, tokenizer_source, tokenizer_target)
 
     predicted_sentences = []
+    target_mode = preprocess.get_tokenizer_mode(_config.target_lang)
     # 从容器中抽取序列，生成最终结果
     for i in range(len(predict_idxes)):
         predict_idx = predict_idxes[i].numpy()
         predict_idx = tf.squeeze(predict_idx)
-        predict_sentence = text_vectorize.decode_sentence(predict_idx, tokenizer_target, language=_config.target_lang)
+        predict_sentence = text_vectorize.decode_sentence(predict_idx, tokenizer_target,
+                                                          _config.target_lang, target_mode)
         predict_sentence = predict_sentence.replace(_config.start_word, '') \
             .replace(_config.end_word, '').strip()
         predicted_sentences.append(predict_sentence)

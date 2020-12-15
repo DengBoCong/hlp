@@ -1,59 +1,46 @@
 # -*- coding: utf-8 -*-
 
 import tensorflow as tf
+
 from hlp.utils.layers import BahdanauAttention
 
 
-class pBLSTM(tf.keras.layers.Layer):
-    def __init__(self, dim):
-        super(pBLSTM, self).__init__()
-        self.dim = dim
-        self.LSTM = tf.keras.layers.LSTM(self.dim, return_sequences=True)
-        self.bidi_LSTM = tf.keras.layers.Bidirectional(self.LSTM)
-
-    @tf.function
-    def call(self, inputs):
-        y = self.bidi_LSTM(inputs)
-
-        if tf.shape(inputs)[1] % 2 == 1:
-            y = tf.keras.layers.ZeroPadding1D(padding=(0, 1))(y)
-
-        y = tf.keras.layers.Reshape(target_shape=(-1, int(self.dim * 4)))(y)
-        return y
-
-
 class Encoder(tf.keras.Model):
-    def __init__(self, embedding_dim, enc_units, batch_sz):
+    def __init__(self, d, w, batch_sz):
         super(Encoder, self).__init__()
+        self.d = d
+        self.w = w
         self.batch_sz = batch_sz
-        self.enc_units = enc_units
-        self.dim = embedding_dim
-        # Listen; Lower resoultion by 8x
-        self.plstm1 = pBLSTM(self.dim // 2)
-        self.plstm2 = pBLSTM(self.dim // 2)
-        self.plstm3 = pBLSTM(self.dim // 2)
+        self.cnn1 = tf.keras.layers.Conv1D(filters=2, kernel_size=2, activation='relu')
+        self.cnn2 = tf.keras.layers.Conv1D(filters=2, kernel_size=2, activation='relu')
+        self.max_pool = tf.keras.layers.MaxPooling1D(strides=2, pool_size=8)
 
-    def call(self, x):
-        x = self.plstm1(x)
-        x = self.plstm2(x)
-        output = self.plstm3(x)
-        return output
+        self.bi_lstm = []
+        for i in range(self.d):
+            self.bi_lstm.append(tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(w, return_sequences=True)))
+
+    def call(self, x, hidden):
+        x = self.cnn1(x)
+        x = self.cnn2(x)
+        x = self.max_pool(x)
+
+        for i in range(self.d):
+            x = self.bi_lstm[i](x)
+
+        return x, hidden
 
     def initialize_hidden_state(self):
-        return tf.zeros((self.batch_sz, self.enc_units))
+        return tf.zeros((self.batch_sz, self.w))
 
 
 class Decoder(tf.keras.Model):
-    def __init__(self, vocab_size, embedding_dim, dec_units):
+    def __init__(self, vocab_size, embedding_dim, dec_units, w):
         super(Decoder, self).__init__()
         self.dec_units = dec_units
         self.embedding = tf.keras.layers.Embedding(vocab_size, embedding_dim)
-        self.gru = tf.keras.layers.GRU(self.dec_units,
-                                       return_sequences=True,
-                                       return_state=True,
-                                       recurrent_initializer='glorot_uniform')
+        self.rnn1 = tf.keras.layers.LSTM(w, return_sequences=True)
+        # self.rnn2 = tf.keras.layers.LSTM(w, return_sequences=True)
         self.fc = tf.keras.layers.Dense(vocab_size)
-
         # 用于注意力
         self.attention = BahdanauAttention(self.dec_units)
 
@@ -67,32 +54,39 @@ class Decoder(tf.keras.Model):
         # x 在拼接 （concatenation） 后的形状 == （批大小，1，嵌入维度 + 隐藏层大小）
         x = tf.concat([tf.expand_dims(context_vector, 1), x], axis=-1)
 
-        # 将合并后的向量传送到 GRU
-        output, state = self.gru(x)
+        # 将合并后的向量传送到 RNN
+        output = self.rnn1(x)
+        # output = self.rnn2(x)
 
         # 输出的形状 == （批大小 * 1，隐藏层大小）
         output = tf.reshape(output, (-1, output.shape[2]))
-
         # 输出的形状 == （批大小，vocab）
         x = self.fc(output)
 
-        return x, state, attention_weights
+        return x, attention_weights
 
 
-class las_model(tf.keras.Model):
-    def __init__(self, vocab_tar_size, embedding_dim, units, batch_size):
-        super(las_model, self).__init__()
+class LAS(tf.keras.Model):
+    def __init__(self, vocab_tar_size, d, w, embedding_dim, dec_units, batch_size):
+        super(LAS, self).__init__()
         self.vocab_tar_size = vocab_tar_size
-        self.embedding_dim = embedding_dim
-        self.units = units
+        self.d = d
+        self.w = w
         self.batch_size = batch_size
-        self.encoder = Encoder(embedding_dim, units, batch_size)
-        self.decoder = Decoder(vocab_tar_size, embedding_dim, units)
+        self.encoder = Encoder(d, w, batch_size)
+        self.decoder = Decoder(vocab_tar_size, embedding_dim, dec_units, w)
 
-    def call(self, inputx_1, enc_hidden, dec_input):
-        enc_output = self.encoder(inputx_1)  # 前向计算，编码
+    def call(self, inputx_1, enc_hidden, dec_input, candi_size=1):
+        enc_output, enc_hidden = self.encoder(inputx_1, enc_hidden)  # 前向计算，编码
+
         dec_hidden = enc_hidden  # 编码器状态作为解码器初始状态？
-        predictions, dec_hidden, _ = self.decoder(dec_input, dec_hidden, enc_output)
+        # 根据当前候选结果数复制相同数量的enc_output和dec_hidden，喂入decoder中
+        enc_outputs = enc_output
+        dec_hiddens = dec_hidden
+        # for i in range(candi_size - 1):
+        #     enc_outputs = tf.concat([enc_outputs, enc_output], 0)
+        #     dec_hiddens = tf.concat([dec_hiddens, dec_hidden], 0)
+        predictions, _ = self.decoder(dec_input, dec_hiddens, enc_outputs)
         return predictions, dec_hidden
 
     def initialize_hidden_state(self):

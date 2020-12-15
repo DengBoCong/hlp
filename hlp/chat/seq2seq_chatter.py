@@ -1,13 +1,15 @@
+import json
 import os
 import sys
-import json
-import tensorflow as tf
 from argparse import ArgumentParser
+
+import tensorflow as tf
+
 sys.path.append(os.path.abspath(__file__)[:os.path.abspath(__file__).rfind("\\hlp\\")])
 import hlp.chat.common.data_utils as data_utils
 import hlp.chat.common.pre_treat as pre_treat
 import hlp.chat.model.seq2seq as seq2seq
-from hlp.chat.model.chatter import Chatter
+from chat.chatter import Chatter
 from hlp.chat.common.utils import log_operator
 
 
@@ -153,7 +155,7 @@ class Seq2SeqChatter(Chatter):
 def main():
     parser = ArgumentParser(description='%seq2seq chatbot V1.2.1')
     parser.add_argument('--config_file', default='', type=str, required=False, help='配置文件路径，为空则默认命令行，不为空则使用配置文件参数')
-    parser.add_argument('--type', default='pre_treat', type=str, required=False, help='执行类型')
+    parser.add_argument('--act', default='pre_treat', type=str, required=False, help='执行类型')
     parser.add_argument('--units', default=1024, type=int, required=False, help='隐藏层单元数')
     parser.add_argument('--vocab_size', default=1000, type=int, required=False, help='词汇大小')
     parser.add_argument('--embedding_dim', default=256, type=int, required=False, help='嵌入层维度大小')
@@ -190,9 +192,10 @@ def main():
 
     # 注意了有关路径的参数，以chat目录下为基准配置
     work_path = os.path.abspath(__file__)[:os.path.abspath(__file__).find("\\seq2seq")]
-    execute_type = options['type']
+    execute_type = options['act']
 
     if execute_type == 'train':
+        print("开始训练模型...")
         chatter = Seq2SeqChatter(execute_type=execute_type, checkpoint_dir=work_path + options['checkpoint'],
                                  beam_size=options['beam_size'], units=options['units'],
                                  embedding_dim=options['embedding_dim'], batch_size=options['batch_size'],
@@ -227,11 +230,13 @@ def main():
             response = chatter.respond(req=req)
             print("Agent: ", response)
     elif execute_type == 'pre_treat':
-        pre_treat.dispatch_tokenized_func_dict_single(operator="lccc", raw_data=work_path + options['resource_data'],
-                                                      tokenized_data=work_path + options['tokenized_data'],
-                                                      if_remove=True)
-        pre_treat.preprocess_raw_data_qa_single(raw_data=work_path + options['tokenized_data'],
-                                                qa_data=work_path + options['qa_tokenized_data'])
+        print("对语料进行处理...")
+        pre_treat.preprocess_datasets(dataset_name="lccc",
+                                      raw_data_path=work_path + options['resource_data'],
+                                      tokenized_data_path=work_path + options['tokenized_data'],
+                                      remove_tokenized=True)
+        pre_treat.to_single_turn_dataset(raw_data_path=work_path + options['tokenized_data'],
+                                         qa_data_path=work_path + options['qa_tokenized_data'])
     else:
         parser.error(msg='')
 

@@ -1,24 +1,17 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Mon Oct 26 15:37:32 2020
-
-@author: 九童
-使用训练集进行模型评估
-"""
 import os
 
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 import tensorflow as tf
-from hlp.utils import beamsearch
+
 from hlp.stt.las.config import config
-from hlp.stt.las.model import las, las_d_w
-from hlp.stt.utils.metric import lers
+from hlp.stt.las.model import plas, las
 from hlp.stt.utils import load_dataset
 from hlp.stt.utils.generator import test_generator
+from hlp.stt.utils.metric import lers
+from hlp.utils import beamsearch
 
 if __name__ == "__main__":
 
-    # 用测试集wav文件语音识别出中文 
     # 测试集wav文件
     wav_path = config.test_wav_path
 
@@ -27,7 +20,7 @@ if __name__ == "__main__":
 
     # 测试集数据存放路径，包括音频文件路径和文本标签文件路径
     data_path = [wav_path, label_path]
-    
+
     # 尝试实验不同大小的数据集
     test_num = config.test_num
 
@@ -49,15 +42,15 @@ if __name__ == "__main__":
     num_examples = config.test_num
 
     print("获取训练语料信息......")
-    dataset_information = config.get_dataset_information()
+    dataset_information = config.get_dataset_info()
     test_vocab_tar_size = dataset_information["vocab_tar_size"]
     optimizer = tf.keras.optimizers.Adam()
 
     # 选择模型类型
     if model_type == "las":
-        model = las.las_model(test_vocab_tar_size, embedding_dim, units, batch_size)
+        model = plas.PLAS(test_vocab_tar_size, embedding_dim, units, batch_size)
     elif model_type == "las_d_w":
-        model = las_d_w.las_d_w_model(test_vocab_tar_size, d, w, emb_dim, dec_units, batch_size)
+        model = las.LAS(test_vocab_tar_size, d, w, emb_dim, dec_units, batch_size)
 
     # 检查点
     checkpoint_dir = config.checkpoint_dir
@@ -74,12 +67,11 @@ if __name__ == "__main__":
     test_data = load_dataset.load_data(dataset_name, data_path, num_examples)
     batchs = len(test_data[0]) // batch_size
     print("构建数据生成器......")
-    test_data_generator = test_generator(
-        test_data,
-        batchs,
-        batch_size,
-        audio_feature_type,
-        dataset_information["max_input_length"])
+    test_data_generator = test_generator(test_data,
+                                         batchs,
+                                         batch_size,
+                                         audio_feature_type,
+                                         dataset_information["max_input_length"])
 
     word_index = dataset_information["word_index"]
     index_word = dataset_information["index_word"]
@@ -96,7 +88,6 @@ if __name__ == "__main__":
         result = ''  # 识别结果字符串
 
         for t in range(max_label_length):  # 逐步解码或预测
-            # predictions, dec_hidden = model(inp, hidden, dec_input)
             decoder_input = decoder_input[:, -1:]
             predictions, dec_hidden = model(inp, hidden, decoder_input, len(beam_search_container))
             beam_search_container.expand(predictions=predictions, end_sign=word_index['<end>'])
@@ -114,8 +105,6 @@ if __name__ == "__main__":
 
         results.append(result)
         labels_list.append(targ[0])
-    rates_lers, aver_lers, norm_rates_lers, norm_aver_lers = lers(labels_list, results)
+    norm_rates_lers, norm_aver_lers = lers(labels_list, results)
 
-    print("字母错误率: ")
-    print("所有语音平均字母错误数: ", aver_lers)
-    print("所有语音平均字母错误率: ", norm_aver_lers)
+    print("平均字母错误率: ", norm_aver_lers)

@@ -13,12 +13,12 @@ from hlp.tts.utils.utils import load_checkpoint
 def main():
     parser = ArgumentParser(description='%tacotron2 tts')
     parser.add_argument('--config_file', default='', type=str, required=False, help='配置文件路径，为空则默认命令行，不为空则使用配置文件参数')
-    parser.add_argument('--type', default='pre_treat', type=str, required=False, help='执行类型')
+    parser.add_argument('--act', default='pre_treat', type=str, required=False, help='执行类型')
     parser.add_argument('--metadata_file', default='\\data\\LJSpeech-1.1\\metadata.csv', type=str, required=False,
                         help='原始语音数据的metadata文件路径')
     parser.add_argument('--audio_dir', default='\\data\\LJSpeech-1.1\\wavs\\', type=str, required=False,
                         help='原始语音数据的保存目录')
-    parser.add_argument('--train_file', default='\\data\\audio_sentence_pairs.txt', type=str, required=False,
+    parser.add_argument('--train_file', default='\\data\\processed_train_file.txt', type=str, required=False,
                         help='整理后的音频句子对保存路径')
     parser.add_argument('--cmu_dict_file', default='\\data\\cmudict-0.7b', type=str, required=False,
                         help='cmu音素字典路径')
@@ -41,7 +41,7 @@ def main():
     parser.add_argument('--max_db', default=100, type=int, required=False, help='峰值分贝值')
     parser.add_argument('--ref_db', default=20, type=int, required=False, help='参考分贝值')
     parser.add_argument('--top_db', default=15, type=int, required=False, help='峰值以下的阈值分贝值')
-    parser.add_argument('--epochs', default=10, type=int, required=False, help='训练周期')
+    parser.add_argument('--epochs', default=4, type=int, required=False, help='训练周期')
     parser.add_argument('--vocab_size', default=500, type=int, required=False, help='词汇大小')
     parser.add_argument('--batch_size', default=2, type=int, required=False, help='batch大小')
     parser.add_argument('--buffer_size', default=20000, type=int, required=False, help='dataset缓冲区大小')
@@ -86,7 +86,7 @@ def main():
     # 注意了，有关路径的参数，以tacotron2目录下为基准配置，只要
     # tacotron2目录名未更改，任意移动位置不影响使用
     work_path = os.path.abspath(__file__)[:os.path.abspath(__file__).find("\\tacotron2")]
-    execute_type = options['type']
+    execute_type = options['act']
 
     model = Tacotron2(vocab_size=options['vocab_size'], encoder_conv_filters=options['encoder_conv_filters'],
                       encoder_conv_kernel_sizes=options['encoder_conv_kernel_sizes'],
@@ -107,7 +107,7 @@ def main():
                       decoder_lstm_rate=options['decoder_lstm_rate'])
     optimizer = tf.keras.optimizers.Adam(lr=options['lr'])
     ckpt_manager = load_checkpoint(model=model, checkpoint_dir=work_path + options['checkpoint_dir'],
-                                   execute_type=options['type'], checkpoint_save_size=options['checkpoint_save_size'])
+                                   execute_type=options['act'], checkpoint_save_size=options['checkpoint_save_size'])
 
     if execute_type == 'train':
         module.train(epochs=options['epochs'], train_data_path=work_path + options['train_file'],
@@ -134,7 +134,7 @@ def main():
     elif execute_type == 'pre_treat':
         pre_treat.preprocess_lj_speech_raw_data(metadata_path=work_path + options['metadata_file'],
                                                 audio_dir=work_path + options['audio_dir'],
-                                                save_path=work_path + options['train_file'],
+                                                dataset_infos_file=work_path + options['train_file'],
                                                 cmu_dict_path=work_path + options['cmu_dict_file'],
                                                 spectrum_data_dir=work_path + options['spectrum_data_dir'],
                                                 tokenized_type=options['tokenized_type'],
@@ -150,7 +150,7 @@ def main():
 if __name__ == '__main__':
     """
     Tacotron2入口：指令需要附带运行参数
-    cmd：python actuator.py --type [执行模式]
+    cmd：python actuator.py --act [执行模式]
     执行类别：pre_treat/train/evaluate/generate，默认pre_treat模式
     其他参数参见main方法
 
