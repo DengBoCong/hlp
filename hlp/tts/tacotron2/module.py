@@ -3,10 +3,9 @@ import time
 import tensorflow as tf
 from playsound import playsound
 import scipy.io.wavfile as wave
-import hlp.tts.utils.data_preprocess as preprocess
+import hlp.tts.utils.load_dataset as _dataset
 from hlp.tts.utils.spec import melspectrogram2wav, spec_distance
-from hlp.tts.utils.data_preprocess import text_to_sequence_phoneme
-from hlp.tts.utils.data_preprocess import text_to_phonemes
+from hlp.tts.utils.text_preprocess import text_to_phonemes, text_to_sequence_phoneme
 
 
 def train(epochs: int, train_data_path: str, max_len: int, vocab_size: int,
@@ -36,11 +35,11 @@ def train(epochs: int, train_data_path: str, max_len: int, vocab_size: int,
     :return:
     """
     train_dataset, valid_dataset, steps_per_epoch, valid_steps_per_epoch = \
-        preprocess.load_data(train_data_path=train_data_path, max_len=max_len, vocab_size=vocab_size,
-                             batch_size=batch_size, buffer_size=buffer_size, tokenized_type=tokenized_type,
-                             dict_path=dict_path, valid_data_split=valid_data_split,
-                             valid_data_path=valid_data_path, max_train_data_size=max_train_data_size,
-                             max_valid_data_size=max_valid_data_size)
+        _dataset.load_data(train_data_path=train_data_path, max_len=max_len, vocab_size=vocab_size,
+                           batch_size=batch_size, buffer_size=buffer_size, tokenized_type=tokenized_type,
+                           dict_path=dict_path, valid_data_split=valid_data_split,
+                           valid_data_path=valid_data_path, max_train_data_size=max_train_data_size,
+                           max_valid_data_size=max_valid_data_size)
 
     for epoch in range(epochs):
         print('Epoch {}/{}'.format(epoch + 1, epochs))
@@ -83,9 +82,9 @@ def evaluate(model: tf.keras.Model, data_path: str, max_len: int,
     :return: 无返回值
     """
     dataset, _, steps_per_epoch, _ = \
-        preprocess.load_data(train_data_path=data_path, max_len=max_len, vocab_size=vocab_size,
-                             batch_size=batch_size, buffer_size=buffer_size, tokenized_type=tokenized_type,
-                             max_train_data_size=max_train_data_size)
+        _dataset.load_data(train_data_path=data_path, max_len=max_len, vocab_size=vocab_size,
+                           batch_size=batch_size, buffer_size=buffer_size, tokenized_type=tokenized_type,
+                           max_train_data_size=max_train_data_size)
 
     j = 0
     score_sum = 0

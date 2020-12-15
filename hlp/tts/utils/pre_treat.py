@@ -1,7 +1,7 @@
 import os
 import numpy as np
 import tensorflow as tf
-import hlp.tts.utils.data_preprocess as preprocess
+from hlp.tts.utils import text_preprocess
 from hlp.tts.utils.spec import get_spectrograms
 
 
@@ -87,10 +87,10 @@ def dispatch_tokenized_func(text: str, tokenized_type: str = "phoneme", cmu_dict
     :return: 按照对应方法处理好的文本序列
     """
     operation = {
-        "phoneme": lambda: preprocess.text_to_phonemes(text=text,
-                                                       cmu_dict_path=cmu_dict_path),
-        "word": lambda: preprocess.text_to_words(text=text),
-        "char": lambda: preprocess.text_to_chars(text=text)
+        "phoneme": lambda: text_preprocess.text_to_phonemes(text=text,
+                                                                      cmu_dict_path=cmu_dict_path),
+        "word": lambda: text_preprocess.text_to_words(text=text),
+        "char": lambda: text_preprocess.text_to_chars(text=text)
     }
 
     return operation.get(tokenized_type, "phoneme")()
