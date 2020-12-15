@@ -46,7 +46,7 @@ def preprocess_lj_speech_raw_data(metadata_path: str, audio_dir: str, save_path:
             line = line.strip('\n').replace('/', '')
             pair = line.split('|')
             audio_file = pair[0] + audio_suffix
-            mel_file = spectrum_data_dir + pair[0] + ".pt.npy"
+            mel_file = spectrum_data_dir + pair[0] + ".mel.npy"
             mag_file = spectrum_data_dir + pair[0] + ".mag.npy"
             stop_token_file = spectrum_data_dir + pair[0] + ".stop.npy"
 
