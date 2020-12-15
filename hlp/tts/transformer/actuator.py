@@ -14,9 +14,17 @@ if __name__ == '__main__':
     """
     parser = ArgumentParser(version='transformer tts V1.0.0')
     parser.add_argument('--config_file', default='', type=str, required=False, help='配置文件路径，为空则默认命令行，不为空则使用配置文件参数')
-    parser.add_argument('--type', default='pre_treat', type=str, required=False, help='执行类型')
+    parser.add_argument('--act', default='pre_treat', type=str, required=False, help='执行类型')
     parser.add_argument('--metadata_file', default='\\data\\LJSpeech-1.1\\metadata.csv', type=str, required=False,
                         help='原始语音数据的metadata文件路径')
+
+    parser.add_argument('--embedding_dim', default=512, type=int, required=False, help='嵌入层维度')
+    parser.add_argument('--encoder_pre_net_filters', default=512, type=int, required=False,
+                        help='encoder PreNet的卷积输出空间维度')
+    parser.add_argument('--encoder_pre_net_dropout', default=0.2, type=float, required=False,
+                        help='encoder PreNet的dropout采样率')
+    parser.add_argument('--encoder_pre_net_activation', default='relu', type=str, required=False,
+                        help='encoder PreNet的dropout采样率')
 
     options = parser.parse_args().__dict__
     if options['config_file'] != '':
@@ -26,11 +34,11 @@ if __name__ == '__main__':
     # 注意了，有关路径的参数，以tacotron2目录下为基准配置，只要
     # tacotron2目录名未更改，任意移动位置不影响使用
     work_path = os.path.abspath(__file__)[:os.path.abspath(__file__).find("\\tacotron2")]
-    execute_type = options['type']
+    execute_type = options['act']
 
-    if options.type == 'train':
+    if execute_type == 'train':
         print("待完善")
-    elif options.type == 'generate':
+    elif execute_type == 'generate':
         print("待完善")
         # print("Agent: 你好！结束合成请输入ESC。")
         # while True:
@@ -38,7 +46,7 @@ if __name__ == '__main__':
         #     if req == "ESC":
         #         print("Agent: 再见！")
         #         exit(0)
-    elif options.type == 'pre_treat':
+    elif execute_type == 'pre_treat':
         pre_treat.preprocess_lj_speech_raw_data(metadata_path=work_path + options['metadata_file'],
                                                 audio_dir=work_path + options['audio_dir'],
                                                 dataset_infos_file=work_path + options['train_file'],
