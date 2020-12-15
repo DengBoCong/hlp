@@ -12,18 +12,18 @@ class Encoder(tf.keras.Model):
         self.batch_sz = batch_sz
         self.cnn1 = tf.keras.layers.Conv1D(filters=2, kernel_size=2, activation='relu')
         self.cnn2 = tf.keras.layers.Conv1D(filters=2, kernel_size=2, activation='relu')
-        self.max_pool = tf.keras.layers.MaxPooling1D(strides=2)
-        self.LSTM = tf.keras.layers.LSTM(w, return_sequences=True)
-        self.bi_lstm = []
-        for i in range(d):
-            self.bi_lstm.append(tf.keras.layers.Bidirectional(self.LSTM))
+        self.max_pool = tf.keras.layers.MaxPooling1D(strides=2, pool_size=8)
+        self.LSTM1 = tf.keras.layers.LSTM(w, return_sequences=True)
+        self.LSTM2 = tf.keras.layers.LSTM(w, return_sequences=True)
+        self.bi_lstm1 = tf.keras.layers.Bidirectional(self.LSTM1)
+        self.bi_lstm2 = tf.keras.layers.Bidirectional(self.LSTM2)
 
     def call(self, x, hidden):
         x = self.cnn1(x)
         x = self.cnn2(x)
         x = self.max_pool(x)
-        for i in range(self.d):
-            x = self.bi_lstm[i](x)
+        x = self.bi_lstm1(x)
+        x = self.bi_lstm2(x)
         return x, hidden
 
     def initialize_hidden_state(self):

@@ -38,6 +38,9 @@ def train_step(inputx_1, targetx_2, enc_hidden, word_index, model, las_optimizer
         # 导师驱动 - 将目标词作为下一个输入
         for t in range(1, targetx_2.shape[1]):
             # 将编码器输出 （enc_output） 传送至解码器，解码
+            print("inputx_1.shape:{}".format(inputx_1.shape))
+            print("enc_hidden.shape:{}".format(enc_hidden.shape))
+            print("dec_input.shape:{}".format(dec_input.shape))
             predictions, _ = model(inputx_1, enc_hidden, dec_input)
             loss += loss_func_mask(targetx_2[:, t], predictions)  # 根据预测计算损失
             # 使用导师驱动，下一步输入符号是训练集中对应目标符号
@@ -52,12 +55,9 @@ def train_step(inputx_1, targetx_2, enc_hidden, word_index, model, las_optimizer
 
 
 if __name__ == "__main__":
-    # wav文件
-    wav_path = config.train_wav_path
-    # 标签文件
-    label_path = config.train_label_path
+   
     # 训练集数据存放路径，包括音频文件路径和文本标签文件路径
-    data_path = [wav_path, label_path]
+    data_path = config.train_data_path
     # 尝试实验不同大小的数据集
     num_examples = config.num_examples
     # 确定使用的model类型
@@ -108,10 +108,8 @@ if __name__ == "__main__":
     # 若validation_data为真，则有验证数据集，val_wav_path为空，则将训练数据按比例划分一部分为验证数据
     # 若validation_data为假，则没有验证数据集
     if validation_data:
-        val_wav_path = config.val_wav_path
-        val_label_path = config.val_label_path
-        val_data_path = [val_wav_path, val_label_path]
-        if val_wav_path:
+        val_data_path = config.val_data_path
+        if val_data_path:
             validation_size = config.validation_size
             val_wav_path_list, val_label_list = load_dataset.load_data(dataset_name, val_data_path,
                                                                        validation_size)
