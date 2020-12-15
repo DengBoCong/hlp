@@ -27,7 +27,7 @@ def load_data(train_data_path: str, max_len: int, vocab_size: int, batch_size: i
         print("加载的训练验证数据文件不存在，请先执行pre_treat模式后重试")
         exit(0)
 
-    print("正在加载训练验证数据...")
+    print("正在加载训练数据...")
     train_audio_data_pair, train_sentence_data = read_data(data_path=train_data_path, num_examples=max_train_data_size)
 
     valid_flag = True  # 是否开启验证标记
@@ -35,15 +35,18 @@ def load_data(train_data_path: str, max_len: int, vocab_size: int, batch_size: i
 
     # 根据是否传入验证数据文件，切分验证数据
     if valid_data_path != "":
+        print("正在加载验证数据...")
         valid_audio_data_pair, valid_sentence_data = read_data(data_path=valid_data_path,
                                                                num_examples=max_valid_data_size)
     elif valid_data_split != 0.0:
+        print("从训练数据中划分验证数据...")
         train_size = int(len(train_audio_data_pair) * (1.0 - valid_data_split))
         valid_audio_data_pair = train_audio_data_pair[train_size:]
         valid_sentence_data = train_sentence_data[train_size:]
         train_audio_data_pair = train_audio_data_pair[:train_size]
         train_sentence_data = train_sentence_data[:train_size]
     else:
+        print("没有验证数据.")
         valid_flag = False
 
     # 根据分词类型进行序列转换

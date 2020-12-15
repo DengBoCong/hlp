@@ -12,7 +12,7 @@ def text_to_phonemes(text: str, cmu_dict_path: str):
     :param cmu_dict_path: cmu音素字典路径
     :return: 按照音素分词好的数组
     """
-    _, symbols_set = get_phoneme_dict_symbols()
+    _, symbols_set = get_phonemes_and_symbols()
 
     alt_re = re.compile(r'\([0-9]+\)')
     cmu_dict = {}
@@ -94,7 +94,7 @@ def text_to_sequence_phoneme(texts, max_len: int):
     :param max_len: 文本序列最大长度
     :return: 转换后的id序列
     """
-    dict_set, _ = get_phoneme_dict_symbols()
+    dict_set, _ = get_phonemes_and_symbols()
 
     sequences = []
     for text in texts:
@@ -240,7 +240,7 @@ def _abbreviations_to_word(text: str):
     return text
 
 
-def get_phoneme_dict_symbols(unknown: str = "<unk>", eos: str = "~"):
+def get_phonemes_and_symbols(unknown: str = "<unk>", eos: str = "~"):
     """
     用于创建音素文件，方便在pre_treat中使用
     :param unknown: 未登录词
