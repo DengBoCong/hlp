@@ -23,10 +23,10 @@ def get_config_json(config_file):
 
 
 # 获取预处理得到的语料集信息
-def get_dataset_information():
+def get_dataset_info():
     with open("./ds_info.json", "r", encoding="utf-8") as f:
-        dataset_information = json.load(f)
-    return dataset_information
+        dataset_info = json.load(f)
+    return dataset_info
 
 
 conf = get_config_json(json_path)
@@ -68,3 +68,4 @@ dataset_info_path = conf["data"]['dataset_info_path']
 dataset_name = conf["data"]['dataset_name']  # 数据集名称
 n_mfcc = conf["data"]['n_mfcc']  # 声音mfcc特征数
 audio_feature_type = conf["data"]['audio_feature_type']  # 声音特征类型
+text_process_mode = conf["data"]['text_process_mode']  # 语料文本的切分方法

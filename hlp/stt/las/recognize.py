@@ -14,7 +14,7 @@ def recognize(wav_path):
     emb_dim = config.emb_dim
     dec_units = config.dec_units
     BATCH_SIZE = 1  # 只支持BATCH_SIZE为1的评估
-    dataset_information = config.get_dataset_information()
+    dataset_information = config.get_dataset_info()
     vocab_tar_size = dataset_information["vocab_tar_size"]
     word_index = dataset_information["word_index"]
     max_label_length = dataset_information["max_label_length"]
