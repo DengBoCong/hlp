@@ -4,7 +4,7 @@ import os
 import re
 import numpy as np
 import tensorflow as tf
-from hlp.tts.utils.utils import get_spectrograms
+from hlp.tts.utils.spec import get_spectrograms
 
 
 # 提取语音文件名

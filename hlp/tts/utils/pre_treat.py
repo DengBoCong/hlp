@@ -2,7 +2,7 @@ import os
 import numpy as np
 import tensorflow as tf
 import hlp.tts.utils.data_preprocess as preprocess
-from hlp.tts.utils.utils import get_spectrograms
+from hlp.tts.utils.spec import get_spectrograms
 
 
 def preprocess_lj_speech_raw_data(metadata_path: str, audio_dir: str, save_path: str, max_length: int,

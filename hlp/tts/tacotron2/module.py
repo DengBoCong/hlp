@@ -4,8 +4,7 @@ import tensorflow as tf
 from playsound import playsound
 import scipy.io.wavfile as wave
 import hlp.tts.utils.data_preprocess as preprocess
-from hlp.tts.utils.utils import spec_distance
-from hlp.tts.utils.utils import melspectrogram2wav
+from hlp.tts.utils.spec import melspectrogram2wav, spec_distance
 from hlp.tts.utils.data_preprocess import text_to_sequence_phoneme
 from hlp.tts.utils.data_preprocess import text_to_phonemes_converter
 
