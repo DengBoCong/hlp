@@ -108,30 +108,6 @@ def spec_distance(mel1, mel2):
     return score
 
 
-def plot_spectrogram_to_numpy(spectrogram):
-    """
-    下面两个方法没使用，暂时保留
-    """
-    fig, ax = plt.subplots(figsize=(12, 3))
-    im = ax.imshow(spectrogram, aspect="auto", origin="lower",
-                   interpolation='none')
-    plt.colorbar(im, ax=ax)
-    plt.xlabel("Frames")
-    plt.ylabel("Channels")
-    plt.tight_layout()
-    fig.canvas.draw()
-    data = _save_figure_to_numpy(fig)
-    plt.close()
-    return data
-
-
-def _save_figure_to_numpy(fig):
-    # 保存成numpy
-    data = np.fromstring(fig.canvas.tostring_rgb(), dtype=np.uint8, sep='')
-    data = data.reshape(fig.canvas.get_width_height()[::-1] + (3,))
-    return data
-
-
 def get_phoneme_dict_symbols(unknown: str = "<unk>", eos: str = "~"):
     """
     用于创建音素文件，方便在pre_treat中使用
