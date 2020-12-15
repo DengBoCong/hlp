@@ -41,7 +41,7 @@ def main():
     parser.add_argument('--max_db', default=100, type=int, required=False, help='峰值分贝值')
     parser.add_argument('--ref_db', default=20, type=int, required=False, help='参考分贝值')
     parser.add_argument('--top_db', default=15, type=int, required=False, help='峰值以下的阈值分贝值')
-    parser.add_argument('--epochs', default=10, type=int, required=False, help='训练周期')
+    parser.add_argument('--epochs', default=4, type=int, required=False, help='训练周期')
     parser.add_argument('--vocab_size', default=500, type=int, required=False, help='词汇大小')
     parser.add_argument('--batch_size', default=2, type=int, required=False, help='batch大小')
     parser.add_argument('--buffer_size', default=20000, type=int, required=False, help='dataset缓冲区大小')
