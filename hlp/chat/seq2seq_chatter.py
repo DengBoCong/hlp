@@ -235,7 +235,7 @@ def main():
                                       raw_data_path=work_path + options['resource_data'],
                                       tokenized_data_path=work_path + options['tokenized_data'],
                                       remove_tokenized=True)
-        pre_treat.to_single_turn_dataset(raw_data_path=work_path + options['tokenized_data'],
+        pre_treat.to_single_turn_dataset(tokenized_data_path=work_path + options['tokenized_data'],
                                          qa_data_path=work_path + options['qa_tokenized_data'])
     else:
         parser.error(msg='')
