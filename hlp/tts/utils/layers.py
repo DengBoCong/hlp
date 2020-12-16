@@ -53,3 +53,33 @@ class DecoderPreNet(tf.keras.layers.Layer):
             outputs = layer(outputs)
             outputs = self.dropout(outputs)
         return outputs
+
+
+class PostNet(tf.keras.layers.Layer):
+    """
+    Tacotron2的PostNet，包含n_conv_encoder数量的卷积层
+    """
+
+    def __init__(self, n_conv_encoder: int, n_conv_postnet: int, postnet_conv_filters: int,
+                 postnet_conv_kernel_sizes: int, postnet_dropout_rate: float,
+                 postnet_conv_activation: str, n_mels: int):
+        super().__init__()
+        self.conv_batch_norm = []
+        for i in range(n_conv_encoder):
+            if i == n_conv_postnet - 1:
+                conv = ConvDropBN(filters=postnet_conv_filters, kernel_size=postnet_conv_kernel_sizes,
+                                  activation=None, dropout_rate=postnet_dropout_rate)
+            else:
+                conv = ConvDropBN(filters=postnet_conv_filters, kernel_size=postnet_conv_kernel_sizes,
+                                  activation=postnet_conv_activation, dropout_rate=postnet_dropout_rate)
+            self.conv_batch_norm.append(conv)
+
+        self.fc = tf.keras.layers.Dense(units=n_mels, activation=None, name="frame_projection1")
+
+    def call(self, inputs):
+        x = tf.transpose(inputs, [0, 2, 1])
+        for _, conv in enumerate(self.conv_batch_norm):
+            x = conv(x)
+        x = self.fc(x)
+        x = tf.transpose(x, [0, 2, 1])
+        return x

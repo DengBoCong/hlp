@@ -43,6 +43,8 @@ if __name__ == '__main__':
     parser.add_argument('--num_layers', default=2, type=int, required=False, help='encoder和decoder的layer层数')
     parser.add_argument('--units', default=1024, type=int, required=False, help='单元数')
     parser.add_argument('--num_heads', default=8, type=int, required=False, help='注意头数')
+    parser.add_argument('--dropout', default=0.1, type=float, required=False,
+                        help='encoder的dropout采样率')
 
     parser.add_argument('--encoder_pre_net_filters', default=512, type=int, required=False,
                         help='encoder PreNet的卷积输出空间维度')
@@ -54,8 +56,6 @@ if __name__ == '__main__':
                         help='encoder PreNet的激活函数')
     parser.add_argument('--encoder_pre_net_conv_num', default=3, type=int, required=False,
                         help='encoder PreNet的卷积层数')
-    parser.add_argument('--encoder_dropout_rate', default=0.1, type=float, required=False,
-                        help='encoder的dropout采样率')
     parser.add_argument('--encoder_layer_dropout_rate', default=0.1, type=float, required=False,
                         help='encoder layer的dropout采样率')
     parser.add_argument('--decoder_pre_net_units', default=256, type=int, required=False,
