@@ -10,7 +10,7 @@ from hlp.utils import optimizers as _optimizers
 from hlp.mt import preprocess
 
 
-def get_model(vocab_size_source, vocab_size_target):
+def create_model(vocab_size_source, vocab_size_target):
     """获取模型"""
     transformer = _transformer.Transformer(_config.num_layers,
                                            _config.d_model,
@@ -50,7 +50,7 @@ def load_model():
     # 创建模型及相关变量
     learning_rate = _optimizers.CustomSchedule(_config.d_model)
     optimizer = tf.keras.optimizers.Adam(learning_rate, beta_1=0.9, beta_2=0.98, epsilon=1e-9)
-    transformer = get_model(vocab_size_source, vocab_size_target)
+    transformer = create_model(vocab_size_source, vocab_size_target)
 
     return transformer, optimizer, tokenizer_source, tokenizer_target
 

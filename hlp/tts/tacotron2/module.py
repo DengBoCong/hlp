@@ -3,11 +3,9 @@ import time
 import tensorflow as tf
 from playsound import playsound
 import scipy.io.wavfile as wave
-import hlp.tts.utils.data_preprocess as preprocess
-from hlp.tts.utils.utils import spec_distance
-from hlp.tts.utils.utils import melspectrogram2wav
-from hlp.tts.utils.data_preprocess import text_to_sequence_phoneme
-from hlp.tts.utils.data_preprocess import text_to_phonemes_converter
+import hlp.tts.utils.load_dataset as _dataset
+from hlp.tts.utils.spec import melspectrogram2wav, spec_distance
+from hlp.tts.utils.text_preprocess import text_to_phonemes, text_to_sequence_phoneme
 
 
 def train(epochs: int, train_data_path: str, max_len: int, vocab_size: int,
@@ -37,11 +35,11 @@ def train(epochs: int, train_data_path: str, max_len: int, vocab_size: int,
     :return:
     """
     train_dataset, valid_dataset, steps_per_epoch, valid_steps_per_epoch = \
-        preprocess.load_data(train_data_path=train_data_path, max_len=max_len, vocab_size=vocab_size,
-                             batch_size=batch_size, buffer_size=buffer_size, tokenized_type=tokenized_type,
-                             dict_path=dict_path, valid_data_split=valid_data_split,
-                             valid_data_path=valid_data_path, max_train_data_size=max_train_data_size,
-                             max_valid_data_size=max_valid_data_size)
+        _dataset.load_data(train_data_path=train_data_path, max_len=max_len, vocab_size=vocab_size,
+                           batch_size=batch_size, buffer_size=buffer_size, tokenized_type=tokenized_type,
+                           dict_path=dict_path, valid_data_split=valid_data_split,
+                           valid_data_path=valid_data_path, max_train_data_size=max_train_data_size,
+                           max_valid_data_size=max_valid_data_size)
 
     for epoch in range(epochs):
         print('Epoch {}/{}'.format(epoch + 1, epochs))
@@ -50,7 +48,7 @@ def train(epochs: int, train_data_path: str, max_len: int, vocab_size: int,
 
         for (batch, (mel, stop_token, sentence)) in enumerate(train_dataset.take(steps_per_epoch)):
             batch_start = time.time()
-            batch_loss, mel_outputs = _train_step(sentence, mel, model, optimizer, stop_token)  # 训练一个批次，返回批损失
+            batch_loss, mel_outputs = _train_step(model, optimizer, sentence, mel, stop_token)  # 训练一个批次，返回批损失
             total_loss += batch_loss
 
             print('\r{}/{} [Batch {} Loss {:.4f} {:.1f}s]'.format((batch + 1),
@@ -62,8 +60,7 @@ def train(epochs: int, train_data_path: str, max_len: int, vocab_size: int,
 
         if (epoch + 1) % checkpoint_save_freq == 0:
             checkpoint.save()
-            _valid_step(model=model, optimizer=optimizer,
-                        dataset=valid_dataset, steps_per_epoch=valid_steps_per_epoch)
+            _valid_step(model=model, dataset=valid_dataset, steps_per_epoch=valid_steps_per_epoch)
 
     return mel_outputs
 
@@ -84,9 +81,9 @@ def evaluate(model: tf.keras.Model, data_path: str, max_len: int,
     :return: 无返回值
     """
     dataset, _, steps_per_epoch, _ = \
-        preprocess.load_data(train_data_path=data_path, max_len=max_len, vocab_size=vocab_size,
-                             batch_size=batch_size, buffer_size=buffer_size, tokenized_type=tokenized_type,
-                             max_train_data_size=max_train_data_size)
+        _dataset.load_data(train_data_path=data_path, max_len=max_len, vocab_size=vocab_size,
+                           batch_size=batch_size, buffer_size=buffer_size, tokenized_type=tokenized_type,
+                           max_train_data_size=max_train_data_size)
 
     j = 0
     score_sum = 0
@@ -140,7 +137,7 @@ def generate(model: tf.keras.Model, max_db: int, ref_db: int, sr: int, max_len: 
         if seq == 'ESC':
             break
         sequences_list = []
-        sequences_list.append(text_to_phonemes_converter(text=seq, cmu_dict_path=cmu_dict_path))
+        sequences_list.append(text_to_phonemes(text=seq, cmu_dict_path=cmu_dict_path))
         if tokenized_type == "phoneme":
             input_ids = text_to_sequence_phoneme(texts=sequences_list, max_len=max_len)
         else:
@@ -184,20 +181,20 @@ def _loss_function(mel_out, mel_out_postnet, mel_gts, tar_token, stop_token):
     return mel_loss
 
 
-def _train_step(input_ids, mel_gts, model, optimizer, tar_token):
+def _train_step(model, optimizer, input_ids, mel_gts, stop_token):
     """
     训练步
     :param input_ids: sentence序列
     :param mel_gts: ground-true的mel
     :param model: 模型
     :param optimizer 优化器
-    :param tar_token: ground-true的stop_token
+    :param stop_token: ground-true的stop_token
     :return: batch损失和postnet输出
     """
     loss = 0
     with tf.GradientTape() as tape:
         mel_outputs, mel_outputs_postnet, gate_outputs, alignments = model(input_ids, mel_gts)
-        loss += _loss_function(mel_outputs, mel_outputs_postnet, mel_gts, tar_token, gate_outputs)
+        loss += _loss_function(mel_outputs, mel_outputs_postnet, mel_gts, stop_token, gate_outputs)
     batch_loss = loss
     variables = model.trainable_variables
     gradients = tape.gradient(loss, variables)  # 计算损失对参数的梯度
@@ -205,11 +202,10 @@ def _train_step(input_ids, mel_gts, model, optimizer, tar_token):
     return batch_loss, mel_outputs_postnet
 
 
-def _valid_step(model, optimizer, dataset, steps_per_epoch):
+def _valid_step(model, dataset, steps_per_epoch):
     """
     验证模块
     :param model: 模型
-    :param optimizer: 优化器
     :param dataset: 验证集dataset
     :param steps_per_epoch: 总的训练步数
     :return: 无返回值

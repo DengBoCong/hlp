@@ -113,20 +113,25 @@ def train(transformer, validation_data='False', validation_split=0.0,
     batch_sum_train = 0
     sample_sum_val_txt = 0
     if validation_data == 'True':
+        # TODO: 此处有问题
         train_size = 0.999999
         sample_sum_val_txt = _config.num_validate_sentences
+    else:
+        print("从训练数据中划分验证数据.")
     sample_sum_train = int((_config.num_sentences * train_size) // _config.BATCH_SIZE * _config.BATCH_SIZE)
     sample_sum_val = int((_config.num_sentences * (1 - train_size)) // _config.BATCH_SIZE * _config.BATCH_SIZE)
     steps = _config.num_sentences // _config.BATCH_SIZE
 
     # 读取数据
+    print("加载训练数据...")
     source_sequences_path_train = preprocess.get_encoded_sequences_path(_config.source_lang, postfix='_train')
     target_sequences_path_train = preprocess.get_encoded_sequences_path(_config.target_lang, postfix='_train')
-    source_sequences_path_val = preprocess.get_encoded_sequences_path(_config.source_lang, postfix='_val')
-    target_sequences_path_val = preprocess.get_encoded_sequences_path(_config.target_lang, postfix='_val')
     train_dataset, val_dataset = load_dataset.get_dataset(source_sequences_path_train, target_sequences_path_train,
                                                           cache, train_size, steps)
     if validation_data == 'True':  # 从文本中加载val_dataset
+        print("加载验证数据...")
+        source_sequences_path_val = preprocess.get_encoded_sequences_path(_config.source_lang, postfix='_val')
+        target_sequences_path_val = preprocess.get_encoded_sequences_path(_config.target_lang, postfix='_val')
         val_dataset, _ = load_dataset.get_dataset(source_sequences_path_val, target_sequences_path_val,
                                                   cache, train_size, steps)
     print("开始训练...")
