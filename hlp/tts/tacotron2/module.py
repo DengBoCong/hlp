@@ -13,7 +13,7 @@ def train(epochs: int, train_data_path: str, max_len: int, vocab_size: int,
           checkpoint: tf.train.CheckpointManager, model: tf.keras.Model,
           optimizer: tf.keras.optimizers.Adam, tokenized_type: str = "phoneme",
           dict_path: str = "", valid_data_split: float = 0.0, valid_data_path: str = "",
-          max_train_data_size: int = 0, max_valid_data_size: int = 0, ):
+          max_train_data_size: int = 0, max_valid_data_size: int = 0):
     """
     训练模块
     :param epochs: 训练周期
@@ -181,7 +181,8 @@ def _loss_function(mel_out, mel_out_postnet, mel_gts, tar_token, stop_token):
     return mel_loss
 
 
-def _train_step(model, optimizer, input_ids, mel_gts, stop_token):
+def _train_step(model: tf.keras.Model, optimizer: tf.keras.optimizers.Adam,
+                input_ids: tf.Tensor, mel_gts: tf.Tensor, stop_token: tf.Tensor):
     """
     训练步
     :param input_ids: sentence序列
@@ -202,7 +203,7 @@ def _train_step(model, optimizer, input_ids, mel_gts, stop_token):
     return batch_loss, mel_outputs_postnet
 
 
-def _valid_step(model, dataset, steps_per_epoch):
+def _valid_step(model: tf.keras.Model, dataset: tf.data.Dataset, steps_per_epoch: int):
     """
     验证模块
     :param model: 模型
@@ -226,3 +227,23 @@ def _valid_step(model, dataset, steps_per_epoch):
                                                               (time.time() - batch_start)), end='')
     print(' - {:.0f}s/step - loss: {:.4f}'.format((time.time() - start_time) / steps_per_epoch,
                                                   total_loss / steps_per_epoch))
+
+
+def load_checkpoint(model: tf.keras.Model, checkpoint_dir: str, execute_type: str, checkpoint_save_size: int):
+    """
+    恢复检查点
+    """
+    # 如果检查点存在就恢复，如果不存在就重新创建一个
+    checkpoint = tf.train.Checkpoint(tacotron2=model)
+    ckpt_manager = tf.train.CheckpointManager(checkpoint, checkpoint_dir, max_to_keep=checkpoint_save_size)
+
+    if os.path.exists(checkpoint_dir):
+        if ckpt_manager.latest_checkpoint:
+            checkpoint.restore(ckpt_manager.latest_checkpoint).expect_partial()
+    else:
+        os.makedirs(checkpoint_dir, exist_ok=True)
+        if execute_type == "generate":
+            print("没有检查点，请先执行train模式")
+            exit(0)
+
+    return ckpt_manager
