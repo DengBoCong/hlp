@@ -1,4 +1,5 @@
 import tensorflow as tf
+from hlp.tts.utils.layers import PostNet
 from hlp.tts.utils.layers import ConvDropBN
 from hlp.tts.utils.layers import DecoderPreNet
 from hlp.utils.layers import positional_encoding
@@ -81,8 +82,10 @@ def decoder(vocab_size: int, embedding_dim: int, encoder_pre_net_conv_num, num_l
             encoder_pre_net_filters: int, encoder_pre_net_kernel_size: int, decoder_units: int,
             encoder_pre_net_activation: str, encoder_units: int, num_heads: int,
             max_mel_length: int, num_mel: int, decoder_pre_net_layers_num: int,
+            post_net_conv_num: int, post_net_filters: int, post_net_kernel_sizes: int,
             encoder_layer_dropout_rate: float = 0.1, encoder_pre_net_dropout: float = 0.1,
-            decoder_pre_net_dropout_rate: float = 0.1, dropout: float = 0.1):
+            decoder_pre_net_dropout_rate: float = 0.1, dropout: float = 0.1, post_net_dropout: float = 0.1,
+            post_net_activation: str = "tanh"):
     """
     :param vocab_size: 词汇大小
     :param embedding_dim: 嵌入层维度
@@ -101,6 +104,11 @@ def decoder(vocab_size: int, embedding_dim: int, encoder_pre_net_conv_num, num_l
     :param decoder_pre_net_layers_num: pre_net层数
     :param decoder_pre_net_dropout_rate: pre_net的dropout采样率
     :param dropout: decoder的dropout采样率
+    :param post_net_conv_num: post_net的卷积层数量
+    :param post_net_filters: post_net卷积输出空间维数
+    :param post_net_kernel_sizes: post_net卷积核大小
+    :param post_net_dropout: post_net的dropout采样率
+    :param post_net_activation: post_net卷积激活函数
     """
     enc_inputs = tf.keras.Input(shape=(None,))
     dec_inputs = tf.keras.Input(shape=(max_mel_length, num_mel))
@@ -119,17 +127,25 @@ def decoder(vocab_size: int, embedding_dim: int, encoder_pre_net_conv_num, num_l
                                     decoder_pre_net_dropout_rate)(dec_inputs)
     decoder_pre_net *= tf.math.sqrt(tf.cast(embedding_dim, tf.float32))
     decoder_pre_net = decoder_pre_net + alpha * pos_encoding[:, :tf.shape(decoder_pre_net)[1], :]
-    outputs = tf.keras.layers.Dropout(rate=dropout)(decoder_pre_net)
+    dec_outputs = tf.keras.layers.Dropout(rate=dropout)(decoder_pre_net)
 
     for i in range(num_layers):
-        outputs = transformer_decoder_layer(
+        dec_outputs = transformer_decoder_layer(
             units=decoder_units, d_model=embedding_dim, num_heads=num_heads,
             dropout=dropout, name="transformer_decoder_layer_{}".format(i)
-        )(inputs=[outputs, enc_outputs, look_ahead_mask, padding_mask])
+        )(inputs=[dec_outputs, enc_outputs, look_ahead_mask, padding_mask])
 
-    stop_token = tf.keras.layers.Dense(units=num_mel)(outputs)
+    outputs = tf.keras.layers.Dense(units=num_mel)(dec_outputs)
+    stop_token_outputs = tf.keras.layers.Dense(units=1)(dec_outputs)
+    stop_token_outputs = tf.math.sigmoid(stop_token_outputs)
 
-    return tf.keras.Model(inputs=[enc_inputs, dec_inputs], outputs=outputs)
+    post_net_inputs = tf.transpose(outputs, [0, 2, 1])
+    outputs = PostNet(post_net_conv_num, post_net_conv_num, post_net_filters,
+                      post_net_kernel_sizes, post_net_dropout, post_net_activation, num_mel)(post_net_inputs)
+    outputs = outputs + post_net_inputs
+    outputs = tf.transpose(outputs, [0, 2, 1])
+
+    return tf.keras.Model(inputs=[enc_inputs, dec_inputs], outputs=[outputs, stop_token_outputs])
 
 
 def _combine_mask(seq: tf.Tensor):

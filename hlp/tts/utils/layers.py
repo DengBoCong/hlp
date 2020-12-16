@@ -60,21 +60,30 @@ class PostNet(tf.keras.layers.Layer):
     Tacotron2的PostNet，包含n_conv_encoder数量的卷积层
     """
 
-    def __init__(self, n_conv_encoder: int, n_conv_postnet: int, postnet_conv_filters: int,
-                 postnet_conv_kernel_sizes: int, postnet_dropout_rate: float,
-                 postnet_conv_activation: str, n_mels: int):
+    def __init__(self, encoder_conv_num: int, post_net_conv_num: int, post_net_filters: int,
+                 post_net_kernel_sizes: int, post_net_dropout: float,
+                 post_net_activation: str, num_mel: int):
+        """
+        :param encoder_conv_num: encoder卷积层数量
+        :param post_net_conv_num: post_net的卷积层数量
+        :param post_net_filters: post_net卷积输出空间维数
+        :param post_net_kernel_sizes: post_net卷积核大小
+        :param post_net_dropout: post_net的dropout采样率
+        :param post_net_activation: post_net卷积激活函数
+        :param n_mels: 梅尔带数
+        """
         super().__init__()
         self.conv_batch_norm = []
-        for i in range(n_conv_encoder):
-            if i == n_conv_postnet - 1:
-                conv = ConvDropBN(filters=postnet_conv_filters, kernel_size=postnet_conv_kernel_sizes,
-                                  activation=None, dropout_rate=postnet_dropout_rate)
+        for i in range(encoder_conv_num):
+            if i == post_net_conv_num - 1:
+                conv = ConvDropBN(filters=post_net_filters, kernel_size=post_net_kernel_sizes,
+                                  activation=None, dropout_rate=post_net_dropout)
             else:
-                conv = ConvDropBN(filters=postnet_conv_filters, kernel_size=postnet_conv_kernel_sizes,
-                                  activation=postnet_conv_activation, dropout_rate=postnet_dropout_rate)
+                conv = ConvDropBN(filters=post_net_filters, kernel_size=post_net_kernel_sizes,
+                                  activation=post_net_activation, dropout_rate=post_net_dropout)
             self.conv_batch_norm.append(conv)
 
-        self.fc = tf.keras.layers.Dense(units=n_mels, activation=None, name="frame_projection1")
+        self.fc = tf.keras.layers.Dense(units=num_mel, activation=None, name="frame_projection1")
 
     def call(self, inputs):
         x = tf.transpose(inputs, [0, 2, 1])
