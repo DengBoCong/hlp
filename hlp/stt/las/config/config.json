@@ -9,7 +9,7 @@
         "validation_size": 20,
         "validation_percent": 2,
         "val_batch_size": 1,
-        "model_type": "las"
+        "model_type": "las_d_w"
     },
     "test": {
         "test_data_path": "../data/LibriSpeech/dev-clean-2",
@@ -45,6 +45,6 @@
         "dataset_name": "librispeech",
         "n_mfcc": 39,
         "audio_feature_type": "mfcc",
-        "text_process_mode": "las_en_char"
+        "text_process_mode": "las_en_word"
     }
 }

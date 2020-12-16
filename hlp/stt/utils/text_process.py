@@ -17,6 +17,8 @@ def split_sentence(line, mode):
         return _split_sentence_en_char(line)
     elif mode.lower() == "las_en_char":
         return _split_sentence_las_en_char(line)
+    elif mode.lower() == "las_en_word":
+        return _split_sentence_las_en_word(line)
 
 
 # 获取最长的label_length
@@ -93,6 +95,22 @@ def _split_sentence_las_en_char(s):
     # 以便模型知道何时开始和结束预测
     s = '<start> ' + s + ' <end>'
 
+    return s
+
+
+def _split_sentence_las_en_word(s):
+    s = s.lower().strip()
+    # 在单词与跟在其后的标点符号之间插入一个空格
+    # 例如： "he is a boy." => "he is a boy ."
+    s = re.sub(r"([?.!,])", r" \1 ", s)  # 切分断句的标点符号
+    s = re.sub(r'[" "]+', " ", s)  # 合并多个空格
+
+    # 除了 (a-z, A-Z, ".", "?", "!", ",")，将所有字符替换为空格
+    s = re.sub(r"[^a-zA-Z?.!,]+", " ", s)
+    s = s.strip()
+    # 给句子加上开始和结束标记
+    # 以便模型知道何时开始和结束预测
+    s = '<start> ' + s + ' <end>'
     return s
 
 
