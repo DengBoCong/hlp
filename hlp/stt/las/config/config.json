@@ -9,7 +9,7 @@
         "validation_size": 20,
         "validation_percent": 2,
         "val_batch_size": 1,
-        "model_type": "las_d_w"
+        "model_type": "las"
     },
     "test": {
         "test_data_path": "../data/LibriSpeech/dev-clean-2",
@@ -22,13 +22,13 @@
         "units": 512
     },
     "las_d_w_model": {
-        "d": 2,
+        "d": 1,
         "w": 256,
         "emb_dim": 256,
         "dec_units": 256
     },
     "checkpoint": {
-        "directory": "./checkpoints_1",
+        "directory": "./checkpoints",
         "prefix": "ckpt",
         "max_to_keep": 6,
         "checkpoint_keep_interval": 2 

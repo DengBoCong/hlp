@@ -1,15 +1,9 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Mon Nov 23 14:43:50 2020
 
-@author: 九童
-"""
-import os
-
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 import tensorflow as tf
-from hlp.stt.utils.metric import lers
+
 from hlp.stt.las.config import config
+from hlp.stt.utils.metric import lers
 
 
 # 计算指标
@@ -32,14 +26,14 @@ def compute_metric(model, val_data_generator, val_batchs, val_batch_size):
         dec_input = tf.expand_dims([word_index['<start>']] * val_batch_size, 1)
         result = ''  # 识别结果字符串
 
-        for t in range(max_label_length):  
+        for t in range(max_label_length):
             predictions, _ = model(input_tensor, hidden, dec_input)
             predicted_ids = tf.argmax(predictions, 1).numpy()  # 贪婪解码，取最大
             idx = str(predicted_ids[0])
             if index_word[idx] == '<end>':
                 break
             else:
-                result += index_word[idx]  
+                result += index_word[idx]
             dec_input = tf.expand_dims(predicted_ids, 1)
 
         results.append(result)

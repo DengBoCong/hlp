@@ -10,7 +10,7 @@ def main():
     vocab_size_source, vocab_size_target = _pre.train_preprocess()
 
     # 创建模型及相关变量
-    model = nmt_model.get_model(vocab_size_source, vocab_size_target)
+    model = nmt_model.create_model(vocab_size_source, vocab_size_target)
 
     # 开始训练
     trainer.train(model,

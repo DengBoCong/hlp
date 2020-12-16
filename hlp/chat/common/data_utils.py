@@ -7,7 +7,7 @@ import tensorflow as tf
 from sklearn.feature_extraction.text import TfidfVectorizer
 
 
-def preprocess_sentence(start_sign: str, end_sign: str, sentence: str):
+def _add_start_end_token(start_sign: str, end_sign: str, sentence: str):
     """
     用于给句子首尾添加start和end
     :param start_sign: 开始标记
@@ -30,7 +30,7 @@ def preprocess_request(sentence: str, token: dict, max_length: int, start_sign: 
     :return: 处理好的句子和decoder输入
     """
     sentence = " ".join(jieba.cut(sentence))
-    sentence = preprocess_sentence(sentence, start_sign, end_sign)
+    sentence = _add_start_end_token(sentence, start_sign, end_sign)
     inputs = [token.get(i, 3) for i in sentence.split(' ')]
     inputs = tf.keras.preprocessing.sequence.pad_sequences([inputs], maxlen=max_length, padding='post')
     inputs = tf.convert_to_tensor(inputs)
@@ -39,44 +39,44 @@ def preprocess_request(sentence: str, token: dict, max_length: int, start_sign: 
     return inputs, dec_input
 
 
-def create_dataset(path: str, num_examples: int, start_sign: str, end_sign: str):
+def _create_dataset(data_path: str, num_examples: int, start_sign: str, end_sign: str):
     """
     用于将分词文本读入内存，并整理成问答对
-    :param path: 分词文本路径
+    :param data_path: 分词文本路径
     :param num_examples: 读取的数据量大小
     :param start_sign: 开始标记
     :param end_sign: 结束标记
     :return: 整理好的问答对和样本权重
     """
-    if not os.path.exists(path):
+    if not os.path.exists(data_path):
         print('不存在已经分词好的文件，请先执行pre_treat模式')
         exit(0)
 
-    with open(path, 'r', encoding="utf-8") as file:
+    with open(data_path, 'r', encoding="utf-8") as file:
         lines = file.read().strip().split('\n')
-        diag_weight = []
-        word_pairs = []
+        sample_weights = []
+        qa_pairs = []
         if num_examples != 0:
             lines = lines[:num_examples]
 
         for line in lines:
             # 文本数据中的问答对权重通过在问答对尾部添加“<|>”配置
             temp = line.split("<|>")
-            word_pairs.append([preprocess_sentence(start_sign, end_sign, w) for w in temp[0].split('\t')])
+            qa_pairs.append([_add_start_end_token(start_sign, end_sign, w) for w in temp[0].split('\t')])
             # 如果没有配置对应问答对权重，则默认为1.
             if len(temp) == 1:
-                diag_weight.append(float(1))
+                sample_weights.append(float(1))
             else:
-                diag_weight.append(float(temp[1]))
+                sample_weights.append(float(temp[1]))
 
-    return zip(*word_pairs), diag_weight
+    return zip(*qa_pairs), sample_weights
 
 
-def read_data(path: str, num_examples: int, start_sign: str, end_sign: str, max_length: int,
-              tokenizer: tf.keras.preprocessing.text.Tokenizer = None):
+def _read_data(data_path: str, num_examples: int, start_sign: str, end_sign: str, max_length: int,
+               tokenizer: tf.keras.preprocessing.text.Tokenizer = None):
     """
     读取数据，将input和target进行分词后返回
-    :param path: 分词文本路径
+    :param data_path: 分词文本路径
     :param num_examples: 读取的数据量大小
     :param start_sign: 开始标记
     :param end_sign: 结束标记
@@ -84,13 +84,13 @@ def read_data(path: str, num_examples: int, start_sign: str, end_sign: str, max_
     :param tokenizer: 传入现有的分词器，默认重新生成
     :return: 输入序列张量、目标序列张量和分词器
     """
-    (input_lang, target_lang), diag_weight = create_dataset(path, num_examples, start_sign, end_sign)
-    input_tensor, target_tensor, lang_tokenizer = tokenize(input_lang, target_lang, max_length, tokenizer)
-    return input_tensor, target_tensor, lang_tokenizer, diag_weight
+    (input_lang, target_lang), diag_weight = _create_dataset(data_path, num_examples, start_sign, end_sign)
+    input_tensor, target_tensor, txt_tokenizer = _tokenize(input_lang, target_lang, max_length, tokenizer)
+    return input_tensor, target_tensor, txt_tokenizer, diag_weight
 
 
-def tokenize(input_lang: list, target_lang: list, max_length: int,
-             tokenizer: tf.keras.preprocessing.text.Tokenizer = None):
+def _tokenize(input_lang: list, target_lang: list, max_length: int,
+              tokenizer: tf.keras.preprocessing.text.Tokenizer = None):
     """
     分词方法，使用Keras API中的Tokenizer进行分词操作
     :param input_lang: 输入序列
@@ -101,20 +101,20 @@ def tokenize(input_lang: list, target_lang: list, max_length: int,
     """
     lang = np.hstack((input_lang, target_lang))
     if tokenizer is not None:
-        lang_tokenizer = tokenizer
+        txt_tokenizer = tokenizer
     else:
-        lang_tokenizer = tf.keras.preprocessing.text.Tokenizer(filters='', oov_token=3)
+        txt_tokenizer = tf.keras.preprocessing.text.Tokenizer(filters='', oov_token=3)
 
-    lang_tokenizer.fit_on_texts(lang)
-    input_tensor = lang_tokenizer.texts_to_sequences(input_lang)
-    target_tensor = lang_tokenizer.texts_to_sequences(target_lang)
+    txt_tokenizer.fit_on_texts(lang)
+    input_tensor = txt_tokenizer.texts_to_sequences(input_lang)
+    target_tensor = txt_tokenizer.texts_to_sequences(target_lang)
 
     input_tensor = tf.keras.preprocessing.sequence.pad_sequences(input_tensor, maxlen=max_length,
                                                                  padding='post')
     target_tensor = tf.keras.preprocessing.sequence.pad_sequences(target_tensor, maxlen=max_length,
                                                                   padding='post')
 
-    return input_tensor, target_tensor, lang_tokenizer
+    return input_tensor, target_tensor, txt_tokenizer
 
 
 def load_data(dict_fn: str, data_fn: str, start_sign: str, end_sign: str, buffer_size: int,
@@ -136,28 +136,31 @@ def load_data(dict_fn: str, data_fn: str, start_sign: str, end_sign: str, buffer
     :param max_valid_data_size: 最大验证数据量
     :return: 训练Dataset、验证Dataset、训练数据总共的步数、验证数据总共的步数和检查点前缀
     """
-    train_input, train_target, lang_tokenizer, diag_weight = read_data(data_fn, max_train_data_size,
-                                                                       start_sign, end_sign, max_length)
+    print("读取训练对话对...")
+    train_input, train_target, txt_tokenizer, sample_weights = _read_data(data_fn, max_train_data_size,
+                                                                        start_sign, end_sign, max_length)
     valid_flag = True  # 是否开启验证标记
     valid_steps_per_epoch = 0
 
     if valid_data_fn != "":
-        valid_input, valid_target, _, _ = read_data(valid_data_fn, max_valid_data_size, start_sign,
-                                                    end_sign, max_length, tokenizer=lang_tokenizer)
+        print("读取验证对话对...")
+        valid_input, valid_target, _, _ = _read_data(valid_data_fn, max_valid_data_size, start_sign,
+                                                     end_sign, max_length, tokenizer=txt_tokenizer)
     elif valid_data_split != 0.0:
         train_size = int(len(train_input) * (1.0 - valid_data_split))
         valid_input = train_input[train_size:]
         valid_target = train_target[train_size:]
         train_input = train_input[:train_size]
         train_target = train_target[:train_size]
-        diag_weight = diag_weight[:train_size]
+        sample_weights = sample_weights[:train_size]
     else:
         valid_flag = False
 
+    print("保存词典到", dict_fn)
     with open(dict_fn, 'w', encoding='utf-8') as file:
-        file.write(json.dumps(lang_tokenizer.word_index, indent=4, ensure_ascii=False))
+        file.write(json.dumps(txt_tokenizer.word_index, indent=4, ensure_ascii=False))
 
-    train_dataset = tf.data.Dataset.from_tensor_slices((train_input, train_target, diag_weight)).cache().shuffle(
+    train_dataset = tf.data.Dataset.from_tensor_slices((train_input, train_target, sample_weights)).cache().shuffle(
         buffer_size).prefetch(tf.data.experimental.AUTOTUNE)
     train_dataset = train_dataset.batch(batch_size, drop_remainder=True)
 

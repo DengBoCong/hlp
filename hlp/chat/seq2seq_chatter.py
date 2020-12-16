@@ -61,15 +61,15 @@ class Seq2SeqChatter(Chatter):
         self.checkpoint = tf.train.Checkpoint(optimizer=self.optimizer, encoder=self.encoder, decoder=self.decoder)
 
         if execute_type == "chat":
-            print('正在从“{}”处加载字典...'.format(dict_fn))
+            print('正在从{}中加载字典...'.format(dict_fn))
             self.token = data_utils.load_token_dict(dict_fn=dict_fn)
         print('正在检查是否存在检查点...')
         if self.ckpt:
-            print('存在检查点，正在从“{}”中加载检查点...'.format(checkpoint_dir))
+            print('存在检查点，正在从{}中加载检查点...'.format(checkpoint_dir))
             self.checkpoint.restore(tf.train.latest_checkpoint(checkpoint_dir)).expect_partial()
         else:
             if execute_type == "train":
-                print('不存在检查点，正在train模式...')
+                print('不存在检查点，从头开始训练...')
             else:
                 print('不存在检查点，请先执行train模式，再进入chat模式')
                 exit(0)
@@ -235,7 +235,7 @@ def main():
                                       raw_data_path=work_path + options['resource_data'],
                                       tokenized_data_path=work_path + options['tokenized_data'],
                                       remove_tokenized=True)
-        pre_treat.to_single_turn_dataset(raw_data_path=work_path + options['tokenized_data'],
+        pre_treat.to_single_turn_dataset(tokenized_data_path=work_path + options['tokenized_data'],
                                          qa_data_path=work_path + options['qa_tokenized_data'])
     else:
         parser.error(msg='')

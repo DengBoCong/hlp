@@ -11,7 +11,7 @@ def _preprocess_sentence_en_bpe(sentence, start_word=_config.start_word, end_wor
 
 
 def _preprocess_sentence_en_word(sentence, start_word=_config.start_word, end_word=_config.end_word):
-    """对输入句子进行预处理"""
+    """对英文进行WORD编码的预处理"""
     s = sentence.lower().strip()
     s = re.sub(r'([?.!,])', r' \1', s)  # 在?.!,前添加空格
     s = re.sub(r'[^a-zA-Z?,!.]+', " ", s)  # 将除字母及标点外的字符变为空格
@@ -68,11 +68,9 @@ def preprocess_sentences_zh(sentences, mode=_config.zh_tokenize_type, start_word
         return _preprocess_sentence_zh_word(sentences)
 
 
-def preprocess_sentences(sentences, language):
+def preprocess_sentences(sentences, language, mode):
     """通过language判断mode"""
     if language == "en":
-        mode = _config.en_tokenize_type
         return preprocess_sentences_en(sentences, mode)
     elif language == "zh":
-        mode = _config.zh_tokenize_type
         return preprocess_sentences_zh(sentences, mode)
