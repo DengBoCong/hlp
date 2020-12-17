@@ -6,14 +6,23 @@ from hlp.utils.layers import BahdanauAttention
 
 
 class Encoder(tf.keras.Model):
-    def __init__(self, d, w, batch_sz):
+    def __init__(self,
+                 cnn1_filters,
+                 cnn1_kernel_size,
+                 cnn2_filters,
+                 cnn2_kernel_size,
+                 max_pool_strides,
+                 max_pool_size,
+                 d,
+                 w, 
+                 batch_sz):
         super(Encoder, self).__init__()
         self.d = d
         self.w = w
         self.batch_sz = batch_sz
-        self.cnn1 = tf.keras.layers.Conv1D(filters=2, kernel_size=2, activation='relu')
-        self.cnn2 = tf.keras.layers.Conv1D(filters=2, kernel_size=2, activation='relu')
-        self.max_pool = tf.keras.layers.MaxPooling1D(strides=2, pool_size=8)
+        self.cnn1 = tf.keras.layers.Conv1D(filters=cnn1_filters, kernel_size=cnn1_kernel_size, activation='relu')
+        self.cnn2 = tf.keras.layers.Conv1D(filters=cnn2_filters, kernel_size=cnn2_kernel_size, activation='relu')
+        self.max_pool = tf.keras.layers.MaxPooling1D(strides=max_pool_strides, pool_size=max_pool_size)
 
         self.bi_lstm = []
         for i in range(self.d):
@@ -67,13 +76,33 @@ class Decoder(tf.keras.Model):
 
 
 class LAS(tf.keras.Model):
-    def __init__(self, vocab_tar_size, d, w, embedding_dim, dec_units, batch_size):
+    def __init__(self,
+                 vocab_tar_size,
+                 cnn1_filters,
+                 cnn1_kernel_size,
+                 cnn2_filters,
+                 cnn2_kernel_size,
+                 max_pool_strides,
+                 max_pool_size,
+                 d,
+                 w, 
+                 embedding_dim,
+                 dec_units,
+                 batch_size):
         super(LAS, self).__init__()
         self.vocab_tar_size = vocab_tar_size
         self.d = d
         self.w = w
         self.batch_size = batch_size
-        self.encoder = Encoder(d, w, batch_size)
+        self.encoder = Encoder(cnn1_filters,
+                               cnn1_kernel_size,
+                               cnn2_filters,
+                               cnn2_kernel_size,
+                               max_pool_strides,
+                               max_pool_size,       
+                               d,
+                               w,
+                               batch_size)
         self.decoder = Decoder(vocab_tar_size, embedding_dim, dec_units, w)
 
     def call(self, inputx_1, enc_hidden, dec_input, candi_size=1):
