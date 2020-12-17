@@ -119,17 +119,17 @@ def generate(encoder: tf.keras.Model, decoder: tf.keras.Model, wave_save_dir: st
         input_ids = tf.convert_to_tensor(input_ids)
         mel_input = tf.zeros(shape=(1, 1, num_mel))
         enc_outputs, padding_mask = encoder(input_ids)
-        for i in range(max_mel_length):
+        for i in range(10):
             mel_pred, post_net_pred, stop_token_pred = decoder(inputs=[enc_outputs, mel_input, padding_mask])
-            stop_token_pred = tf.squeeze(stop_token_pred)
             # 由于数据量少的问题，暂时不开启stop_token
-            # if stop_token_pred > 0.5:
+            # if stop_token_pred[0][0][0] > tf.constant(0.5):
             #     break
             mel_input = tf.concat([mel_input, post_net_pred[:, -1:, :]], axis=1)
 
+        post_net_pred = tf.transpose(post_net_pred, [0, 2, 1])
         wav = melspectrogram2wav(post_net_pred[0].numpy(), max_db, ref_db, sr, n_fft,
                                  num_mel, pre_emphasis, n_iter, hop_length, win_length)
-        name = wave_save_dir + '\\' + int(time.time()) + '.wav'
+        name = wave_save_dir + '\\' + str(time.time()) + '.wav'
         wave.write(name, rate=sr, data=wav)
         print("已合成，路径：{}".format(name))
 
