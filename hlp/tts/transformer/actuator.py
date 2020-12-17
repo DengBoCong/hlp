@@ -39,7 +39,7 @@ if __name__ == '__main__':
     parser.add_argument('--wave_save_dir', default='\\data\\LJSpeech-1.1\\generate\\transformer', type=str,
                         required=False, help='合成的音频保存路径')
     parser.add_argument('--tokenized_type', default="phoneme", type=str, required=False, help='分词类型')
-    parser.add_argument('--max_mel_length', default=1000, type=int, required=False, help='最大序列长度')
+    parser.add_argument('--max_mel_length', default=700, type=int, required=False, help='最大序列长度')
     parser.add_argument('--max_sentence_length', default=100, type=int, required=False, help='最大句子序列长度')
     parser.add_argument('--pre_emphasis', default=0.97, type=float, required=False, help='预加重')
     parser.add_argument('--n_fft', default=2048, type=int, required=False, help='FFT窗口大小')
@@ -52,7 +52,7 @@ if __name__ == '__main__':
     parser.add_argument('--n_iter', default=100, type=int, required=False, help='')
     parser.add_argument('--vocab_size', default=1000, type=int, required=False, help='词汇量大小')
     parser.add_argument('--embedding_dim', default=256, type=int, required=False, help='嵌入层维度')
-    parser.add_argument('--num_layers', default=2, type=int, required=False, help='encoder和decoder的layer层数')
+    parser.add_argument('--num_layers', default=6, type=int, required=False, help='encoder和decoder的layer层数')
     parser.add_argument('--encoder_units', default=256, type=int, required=False, help='单元数')
     parser.add_argument('--decoder_units', default=256, type=int, required=False, help='单元数')
     parser.add_argument('--num_heads', default=8, type=int, required=False, help='注意头数')
@@ -61,7 +61,7 @@ if __name__ == '__main__':
     parser.add_argument('--lr', default=0.0001, type=float, required=False, help='学习率')
     parser.add_argument('--sr', default=22050, type=int, required=False, help='采样率')
     parser.add_argument('--epochs', default=4, type=int, required=False, help='训练轮次')
-    parser.add_argument('--batch_size', default=2, type=int, required=False, help='batch大小')
+    parser.add_argument('--batch_size', default=8, type=int, required=False, help='batch大小')
     parser.add_argument('--buffer_size', default=20000, type=int, required=False, help='dataset缓冲区大小')
     parser.add_argument('--checkpoint_save_freq', default=2, type=int, required=False, help='检查点保存频率')
     parser.add_argument('--valid_data_split', default=0.2, type=float, required=False, help='从训练数据划分验证数据的比例')
@@ -113,13 +113,13 @@ if __name__ == '__main__':
 
     tts_decoder = decoder(vocab_size=options['vocab_size'], embedding_dim=options['embedding_dim'],
                           num_layers=options['num_layers'], decoder_units=options['decoder_units'],
-                          num_heads=options['num_heads'], max_mel_length=options['max_mel_length'],
+                          num_heads=options['num_heads'], post_net_filters=options['post_net_filters'],
                           num_mel=options['num_mel'], post_net_activation=options['post_net_activation'],
                           decoder_pre_net_layers_num=options['decoder_pre_net_layers_num'],
-                          post_net_conv_num=options['post_net_conv_num'], post_net_filters=options['post_net_filters'],
+                          post_net_conv_num=options['post_net_conv_num'], dropout=options['dropout'],
                           post_net_kernel_sizes=options['post_net_kernel_sizes'],
                           decoder_pre_net_dropout_rate=options['decoder_pre_net_dropout_rate'],
-                          dropout=options['dropout'], post_net_dropout=options['post_net_dropout'])
+                          post_net_dropout=options['post_net_dropout'])
     optimizer = tf.keras.optimizers.Adam(lr=options['lr'])
     ckpt_manager = load_checkpoint(encoder=tts_encoder, decoder=tts_decoder,
                                    checkpoint_dir=work_path + options['checkpoint_dir'],

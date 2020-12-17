@@ -56,9 +56,8 @@ def train(encoder: tf.keras.Model, decoder: tf.keras.Model, optimizer: tf.keras.
                                                   mel, mel_input, stop_token)
             total_loss += batch_loss
 
-            print('\r{}/{} [Batch {} Loss {:.4f} {:.1f}s]'.format((batch + 1),
-                                                                  steps_per_epoch, batch + 1, batch_loss.numpy(),
-                                                                  (time.time() - batch_start)), end='')
+            print('\r{}/{} [Batch {} Loss {:.4f} {:.1f}s]'.format(
+                (batch + 1), steps_per_epoch, batch + 1, batch_loss.numpy(), (time.time() - batch_start)), end="")
 
         print(' - {:.0f}s/step - loss: {:.4f}'.format((time.time() - start_time) / steps_per_epoch,
                                                       total_loss / steps_per_epoch))
@@ -119,7 +118,7 @@ def generate(encoder: tf.keras.Model, decoder: tf.keras.Model, wave_save_dir: st
         input_ids = tf.convert_to_tensor(input_ids)
         mel_input = tf.zeros(shape=(1, 1, num_mel))
         enc_outputs, padding_mask = encoder(input_ids)
-        for i in range(10):
+        for i in range(max_mel_length):
             mel_pred, post_net_pred, stop_token_pred = decoder(inputs=[enc_outputs, mel_input, padding_mask])
             # 由于数据量少的问题，暂时不开启stop_token
             # if stop_token_pred[0][0][0] > tf.constant(0.5):
@@ -149,12 +148,11 @@ def _train_step(encoder: tf.keras.Model, decoder: tf.keras.Model, optimizer, sen
     :param stop_token_target: ground-true的stop_token
     :return: batch损失和post_net输出
     """
-    loss = 0
     with tf.GradientTape() as tape:
         enc_outputs, padding_mask = encoder(sentence)
         mel_pred, post_net_pred, stop_token_pred = decoder(inputs=[enc_outputs, mel_input, padding_mask])
         stop_token_pred = tf.squeeze(stop_token_pred, axis=-1)
-        loss += _loss_function(mel_pred, post_net_pred, mel_target, stop_token_target, stop_token_pred)
+        loss = _loss_function(mel_pred, post_net_pred, mel_target, stop_token_target, stop_token_pred)
     batch_loss = loss
 
     variables = encoder.trainable_variables + decoder.trainable_variables
@@ -207,9 +205,11 @@ def _loss_function(mel_pred, post_net_pred, mel_target, stop_token_target, stop_
     :param stop_token_pred: 输出的stop_token
     :return: 损失总和
     """
-    stop_loss = tf.keras.losses.BinaryCrossentropy(from_logits=True)(stop_token_target, stop_token_pred)
-    mel_loss = tf.keras.losses.MeanSquaredError()(mel_pred, mel_target) \
+    stop_loss = tf.keras.losses.BinaryCrossentropy(
+        from_logits=True)(stop_token_target, stop_token_pred)
+    mel_loss = tf.keras.losses.MeanSquaredError()(mel_pred, mel_target)\
                + tf.keras.losses.MeanSquaredError()(post_net_pred, mel_target) + stop_loss
+
     return mel_loss
 
 
