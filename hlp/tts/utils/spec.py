@@ -42,6 +42,19 @@ def get_spectrograms(audio_path: str, pre_emphasis: float, n_fft: int, n_mels: i
 
 
 def melspectrogram2wav(mel, max_db, ref_db, sr, n_fft, n_mels, preemphasis, n_iter, hop_length, win_length):
+    """
+    从线性幅度谱图生成wav文件
+    :param mel: 梅尔谱
+    :param sr: 采样率
+    :param preemphasis: 预加重
+    :param n_fft: FFT窗口大小
+    :param n_mels: 产生的梅尔带数
+    :param hop_length: 帧移
+    :param win_length: 每一帧音频都由window()加窗，窗长win_length，然后用零填充以匹配N_FFT
+    :param max_db: 峰值分贝值
+    :param ref_db: 参考分贝值
+    :param n_iter: 迭代指针
+    """
     mel = (np.clip(mel, 0, 1) * max_db) - max_db + ref_db
     # 转为幅度谱
     mel = np.power(10.0, mel * 0.05)
