@@ -17,7 +17,6 @@ def train_generator(data, batches, batch_size, audio_feature_type,
     :return:
     """
     audio_path_list, text_int_sequences_list = data
-
     while True:
         # 每epoch将所有数据进行一次shuffle
         indexes = np.random.choice(len(audio_path_list), len(audio_path_list), replace=False)

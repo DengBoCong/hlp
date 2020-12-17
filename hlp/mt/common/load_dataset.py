@@ -34,18 +34,19 @@ def load_sentences(path, num_sentences, reverse=_config.reverse):
         return source_sentences, target_sentences
 
 
-def _split_batch(input_path, target_path, train_size=_config.train_size):
+def _generate_batch_from_ram(input_path, target_path, train_size=_config.train_size):
+    """从内存中产生训练和验证批数据
     """
-    根据配置文件语言对来确定文件路径，划分训练集与验证集
-    """
-
     input_tensor = numpy.loadtxt(input_path, dtype='int32')
     target_tensor = numpy.loadtxt(target_path, dtype='int32')
     x_train, x_test, y_train, y_test = train_test_split(input_tensor, target_tensor, train_size=train_size)
+
     train_dataset = tf.data.Dataset.from_tensor_slices((x_train, y_train))
     train_dataset = train_dataset.shuffle(_config.BUFFER_SIZE).batch(_config.BATCH_SIZE, drop_remainder=True)
+
     val_dataset = tf.data.Dataset.from_tensor_slices((x_test, y_test))
     val_dataset = val_dataset.shuffle(_config.BUFFER_SIZE).batch(_config.BATCH_SIZE, drop_remainder=True)
+
     return train_dataset, val_dataset
 
 
@@ -63,6 +64,7 @@ def _generate_batch_from_file(input_path, target_path, num_steps, start_step, ba
 
     step = int(start_step)
     while step < num_steps:
+        # TODO: 这个效率有问题
         input_tensor = numpy.loadtxt(input_path, dtype='int32', skiprows=0 + step * batch_size, max_rows=batch_size)
         target_tensor = numpy.loadtxt(target_path, dtype='int32', skiprows=0 + step * batch_size, max_rows=batch_size)
         step += 1
@@ -79,7 +81,7 @@ def get_dataset(input_path, target_path, cache, train_size, steps=None):
     @param steps: 训练集文本共含多少个batch,cache为 False时可为None
     """
     if cache:
-        train_dataset, val_dataset = _split_batch(input_path, target_path, train_size)
+        train_dataset, val_dataset = _generate_batch_from_ram(input_path, target_path, train_size)
     else:
         train_dataset = _generate_batch_from_file(input_path, target_path, steps * train_size, 0, _config.BATCH_SIZE)
         val_dataset = _generate_batch_from_file(input_path, target_path, steps, steps * train_size, _config.BATCH_SIZE)

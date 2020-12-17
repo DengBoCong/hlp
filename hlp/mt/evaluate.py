@@ -18,7 +18,7 @@ def _calc_bleu(path, transformer, tokenizer_source, tokenizer_target):
                                                   tokenizer_target, beam_size=1)[0]
         print('-' * 20)
         print('第%d/%d个句子：' % (i + 1, _config.num_eval))
-        print('原句子:' + source_sentences[i].strip())
+        print('源句子:' + source_sentences[i].strip())
         print('机翻句子:' + candidate_sentence)
         print('参考句子:' + target_sentences[i])
         bleu_i = _bleu.bleu_nltk(candidate_sentence, [target_sentences[i]], language=_config.target_lang)
@@ -35,7 +35,7 @@ def main():
         transformer, _, tokenizer_source, tokenizer_target = nmt_model.load_model()
         _calc_bleu(_config.path_to_eval_file, transformer, tokenizer_source, tokenizer_target)
     else:
-        print('请先训练才可使用evaluate功能...')
+        print('没有发现训练好的模型，请先训练模型.')
 
 
 if __name__ == '__main__':
