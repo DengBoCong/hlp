@@ -83,9 +83,9 @@ class LAS(tf.keras.Model):
         # 根据当前候选结果数复制相同数量的enc_output和dec_hidden，喂入decoder中
         enc_outputs = enc_output
         dec_hiddens = dec_hidden
-        # for i in range(candi_size - 1):
-        #     enc_outputs = tf.concat([enc_outputs, enc_output], 0)
-        #     dec_hiddens = tf.concat([dec_hiddens, dec_hidden], 0)
+        for i in range(candi_size - 1):
+            enc_outputs = tf.concat([enc_outputs, enc_output], 0)
+            dec_hiddens = tf.concat([dec_hiddens, dec_hidden], 0)
         predictions, _ = self.decoder(dec_input, dec_hiddens, enc_outputs)
         return predictions, dec_hidden
 

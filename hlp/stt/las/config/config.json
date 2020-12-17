@@ -1,10 +1,10 @@
 {
     "train": {
         "epochs": 20,
-        "train_data_path": "../data/LibriSpeech/train-clean-5", 
+        "train_data_path": "../data/data_thchs30/train", 
         "val_data_path": null,
-        "train_batch_size": 2,
-        "num_examples": 10,
+        "train_batch_size": 1,
+        "num_examples": 3,
         "validation_data": false,
         "validation_size": 20,
         "validation_percent": 2,
@@ -12,10 +12,10 @@
         "model_type": "las_d_w"
     },
     "test": {
-        "test_data_path": "../data/LibriSpeech/dev-clean-2",
-        "test_num": 20,
+        "test_data_path": "../data/data_thchs30/test",
+        "test_num": 2,
         "batch_size": 1,
-        "beam_size": 2
+        "beam_size": 4
     },
     "las_model": {
         "embedding_dim": 256,
@@ -31,7 +31,7 @@
         "directory": "./checkpoints",
         "prefix": "ckpt",
         "max_to_keep": 6,
-        "checkpoint_keep_interval": 2 
+        "checkpoint_keep_interval": 1 
     },
     "recognition": {
         "CHUNK": 1024,
@@ -42,9 +42,9 @@
     },
     "data": {
         "dataset_info_path": "./ds_info.json",
-        "dataset_name": "librispeech",
+        "dataset_name": "thchs30",
         "n_mfcc": 39,
         "audio_feature_type": "mfcc",
-        "text_process_mode": "las_en_word"
+        "text_process_mode": "las_cn"
     }
 }

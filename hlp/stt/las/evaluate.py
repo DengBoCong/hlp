@@ -12,15 +12,9 @@ from hlp.utils import beamsearch
 
 if __name__ == "__main__":
 
-    # 测试集wav文件
-    wav_path = config.test_wav_path
-
-    # 测试集文本标签
-    label_path = config.test_label_path
-
     # 测试集数据存放路径，包括音频文件路径和文本标签文件路径
-    data_path = [wav_path, label_path]
-
+    data_path = config.test_data_path
+    
     # 尝试实验不同大小的数据集
     test_num = config.test_num
 
