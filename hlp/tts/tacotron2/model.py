@@ -1,6 +1,7 @@
 import tensorflow as tf
 from hlp.tts.utils.layers import ConvDropBN
 from hlp.tts.utils.layers import DecoderPreNet
+from hlp.tts.utils.layers import PostNet
 
 
 class Encoder(tf.keras.layers.Layer):
@@ -96,37 +97,6 @@ class Attention(tf.keras.layers.Layer):
         return attention_context, attention_weights
 
 
-class Postnet(tf.keras.layers.Layer):
-    def __init__(self, n_conv_encoder, n_conv_postnet, postnet_conv_filters, postnet_conv_kernel_sizes,
-                 postnet_dropout_rate, postnet_conv_activation, n_mels):
-        super().__init__()
-        self.conv_batch_norm = []
-        for i in range(n_conv_encoder):
-            if i == n_conv_postnet - 1:
-                conv = ConvDropBN(
-                    filters=postnet_conv_filters,
-                    kernel_size=postnet_conv_kernel_sizes,
-                    activation=None,
-                    dropout_rate=postnet_dropout_rate,
-                )
-            else:
-                conv = ConvDropBN(
-                    filters=postnet_conv_filters,
-                    kernel_size=postnet_conv_kernel_sizes,
-                    activation=postnet_conv_activation,
-                    dropout_rate=postnet_dropout_rate,
-                )
-            self.conv_batch_norm.append(conv)
-
-        self.fc = tf.keras.layers.Dense(units=n_mels, activation=None, name="frame_projection1")
-
-    def call(self, inputs):
-        x = tf.transpose(inputs, [0, 2, 1])
-        for _, conv in enumerate(self.conv_batch_norm):
-            x = conv(x)
-        x = self.fc(x)
-        x = tf.transpose(x, [0, 2, 1])
-        return x
 
 
 class Decoder(tf.keras.layers.Layer):
@@ -146,7 +116,7 @@ class Decoder(tf.keras.layers.Layer):
         self.max_input_length = max_input_length
         self.initial_hidden_size = initial_hidden_size
         self.prenet2 = DecoderPreNet(prenet_units, n_prenet_layers, prenet_dropout_rate)
-        self.postnet = Postnet(n_conv_encoder, n_conv_postnet, postnet_conv_filters, postnet_conv_kernel_sizes,
+        self.postnet = PostNet(n_conv_encoder, n_conv_postnet, postnet_conv_filters, postnet_conv_kernel_sizes,
                                postnet_dropout_rate, postnet_conv_activation, n_mels)
 
         # 两个单层LSTM
@@ -346,7 +316,7 @@ class Tacotron2(tf.keras.Model):
                                decoder_lstm_dim,
                                embedding_hidden_size,
                                gate_threshold, max_input_length, initial_hidden_size, decoder_lstm_rate)
-        self.postnet = Postnet(n_conv_encoder, n_conv_postnet, postnet_conv_filters, postnet_conv_kernel_sizes,
+        self.postnet = PostNet(n_conv_encoder, n_conv_postnet, postnet_conv_filters, postnet_conv_kernel_sizes,
                                postnet_dropout_rate, postnet_conv_activation, n_mels)
 
     def call(self, inputs, mel_gts):

@@ -53,3 +53,42 @@ class DecoderPreNet(tf.keras.layers.Layer):
             outputs = layer(outputs)
             outputs = self.dropout(outputs)
         return outputs
+
+
+class PostNet(tf.keras.layers.Layer):
+    """
+    Tacotron2的PostNet，包含n_conv_encoder数量的卷积层
+    """
+
+    def __init__(self, encoder_conv_num: int, post_net_conv_num: int, post_net_filters: int,
+                 post_net_kernel_sizes: int, post_net_dropout: float,
+                 post_net_activation: str, num_mel: int):
+        """
+        :param encoder_conv_num: encoder卷积层数量
+        :param post_net_conv_num: post_net的卷积层数量
+        :param post_net_filters: post_net卷积输出空间维数
+        :param post_net_kernel_sizes: post_net卷积核大小
+        :param post_net_dropout: post_net的dropout采样率
+        :param post_net_activation: post_net卷积激活函数
+        :param n_mels: 梅尔带数
+        """
+        super().__init__()
+        self.conv_batch_norm = []
+        for i in range(encoder_conv_num):
+            if i == post_net_conv_num - 1:
+                conv = ConvDropBN(filters=post_net_filters, kernel_size=post_net_kernel_sizes,
+                                  activation=None, dropout_rate=post_net_dropout)
+            else:
+                conv = ConvDropBN(filters=post_net_filters, kernel_size=post_net_kernel_sizes,
+                                  activation=post_net_activation, dropout_rate=post_net_dropout)
+            self.conv_batch_norm.append(conv)
+
+        self.fc = tf.keras.layers.Dense(units=num_mel, activation=None, name="frame_projection1")
+
+    def call(self, inputs):
+        x = tf.transpose(inputs, [0, 2, 1])
+        for _, conv in enumerate(self.conv_batch_norm):
+            x = conv(x)
+        x = self.fc(x)
+        x = tf.transpose(x, [0, 2, 1])
+        return x
