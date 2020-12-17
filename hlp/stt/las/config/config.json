@@ -1,24 +1,20 @@
 {
     "train": {
-        "epochs": 50,
-        "wav_path": ".\\data\\number\\wav_train",
-        "label_path": ".\\data\\number\\data_train.txt",
-        "val_wav_path": ".\\data\\number\\wav_validation",
-        "val_label_path": ".\\data\\number\\data_val.txt",
-        "train_batch_size": 32,
-        "num_examples": 100,
-        "validation_data": true,
+        "epochs": 20,
+        "train_data_path": "../data/LibriSpeech/train-clean-5", 
+        "val_data_path": null,
+        "train_batch_size": 2,
+        "num_examples": 10,
+        "validation_data": false,
         "validation_size": 20,
         "validation_percent": 2,
         "val_batch_size": 1,
         "model_type": "las_d_w"
     },
     "test": {
-        "wav_path": ".\\data\\number\\wav_test",
-        "label_path": ".\\data\\number\\data_test.txt",
+        "test_data_path": "../data/LibriSpeech/dev-clean-2",
         "test_num": 20,
         "batch_size": 1,
-        "warning": "batch_size can only be 1",
         "beam_size": 2
     },
     "las_model": {
@@ -26,13 +22,13 @@
         "units": 512
     },
     "las_d_w_model": {
-        "d": 2,
+        "d": 1,
         "w": 256,
         "emb_dim": 256,
         "dec_units": 256
     },
     "checkpoint": {
-        "directory": "./checkpoints_1",
+        "directory": "./checkpoints",
         "prefix": "ckpt",
         "max_to_keep": 6,
         "checkpoint_keep_interval": 2 
@@ -45,9 +41,10 @@
         "file_name": "output.wav"
     },
     "data": {
-        "dataset_information_path": "./ds_info.json",
-        "dataset_name": "number",
+        "dataset_info_path": "./ds_info.json",
+        "dataset_name": "librispeech",
         "n_mfcc": 39,
-        "audio_feature_type": "mfcc"
+        "audio_feature_type": "mfcc",
+        "text_process_mode": "las_en_word"
     }
 }

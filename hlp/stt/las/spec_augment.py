@@ -11,13 +11,14 @@ Spec augmentation 计算函数
 
 @author: 九童
 """
+import argparse
+
 import librosa
 import librosa.display
+import matplotlib.pyplot as plt
+import numpy as np
 import tensorflow as tf
 from tensorflow_addons.image import sparse_image_warp
-import numpy as np
-import matplotlib.pyplot as plt
-import argparse
 
 
 def sparse_warp(mel_spectrogram, time_warping_para=80):
@@ -48,33 +49,27 @@ def sparse_warp(mel_spectrogram, time_warping_para=80):
     time_warping_para: 80
     pt: 105
     """
-    #n为该频谱图的时间步
-    #v为该频谱图的频率
+    # n为该频谱图的时间步
+    # v为该频谱图的频率
     # 步骤1 : 时间扭曲
     # 图像扭曲控制点设置。
     # 源
     pt = tf.random.uniform([], time_warping_para, n - time_warping_para, tf.int32)  # radnom point along the time axis
-    print("pt: {}".format(pt))#(80,176)之间的一个随机数
+    print("pt: {}".format(pt))  # (80,176)之间的一个随机数
     src_ctr_pt_freq = tf.range(v // 2)  # [0,46)的一系列数字control points on freq-axis
-    print("src_ctr_pt_freq: {}".format(src_ctr_pt_freq))
     src_ctr_pt_time = tf.ones_like(src_ctr_pt_freq) * pt  # 返回一个全为1，形状相同的张量，control points on time-axis
-    print("src_ctr_pt_time: {}".format(src_ctr_pt_time))    
-    #src_ctr_pts = tf.stack((src_ctr_pt_time, src_ctr_pt_freq), -1)
+    # src_ctr_pts = tf.stack((src_ctr_pt_time, src_ctr_pt_freq), -1)
     src_ctr_pts = tf.stack((src_ctr_pt_freq, src_ctr_pt_time), -1)
-    print("src_ctr_pts: {}".format(src_ctr_pts))  
     src_ctr_pts = tf.cast(src_ctr_pts, dtype=tf.float32)
-    print("src_ctr_pts: {}".format(src_ctr_pts)) 
     # 目标
     w = tf.random.uniform([], 0, time_warping_para, tf.int32)  # distance
-    print("w: {}".format(w)) #33，[0,80)间的随机数
-    #？？？
-    #w = tf.random.uniform([], -time_warping_para, time_warping_para, tf.int32)  # distance
+    # ？？？
+    # w = tf.random.uniform([], -time_warping_para, time_warping_para, tf.int32)  # distance
     dest_ctr_pt_freq = src_ctr_pt_freq
     dest_ctr_pt_time = src_ctr_pt_time + w
-    #dest_ctr_pts = tf.stack((dest_ctr_pt_time, dest_ctr_pt_freq), -1)
+    # dest_ctr_pts = tf.stack((dest_ctr_pt_time, dest_ctr_pt_freq), -1)
     dest_ctr_pts = tf.stack((dest_ctr_pt_freq, dest_ctr_pt_time), -1)
     dest_ctr_pts = tf.cast(dest_ctr_pts, dtype=tf.float32)
-    print("dest_ctr_pts: {}".format(dest_ctr_pts)) 
     # 扭曲
     source_control_point_locations = tf.expand_dims(src_ctr_pts, 0)  # (1, v//2, 2)
     dest_control_point_locations = tf.expand_dims(dest_ctr_pts, 0)  # (1, v//2, 2)
@@ -110,14 +105,12 @@ def frequency_masking(mel_spectrogram, v, frequency_masking_para=27, frequency_m
         f = tf.random.uniform([], minval=0, maxval=frequency_masking_para, dtype=tf.int32)
         v = tf.cast(v, dtype=tf.int32)
         f0 = tf.random.uniform([], minval=0, maxval=v - f, dtype=tf.int32)
-        #错错错
+        # 错
         # warped_mel_spectrogram[f0:f0 + f, :] = 0 mel_spectrogram.shape: (1, 256, 92, 1)
         mask = tf.concat((tf.ones(shape=(1, n, v - f0 - f, 1)),
                           tf.zeros(shape=(1, n, f, 1)),
                           tf.ones(shape=(1, n, f0, 1)),
                           ), 2)
-        print("mask.shape: {}".format(mask.shape)) 
-        print("mel_spectrogram.shape: {}".format(mel_spectrogram.shape)) 
         mel_spectrogram = mel_spectrogram * mask
     return tf.cast(mel_spectrogram, dtype=tf.float32)
 
@@ -158,15 +151,14 @@ def time_masking(mel_spectrogram, tau, time_masking_para=100, time_mask_num=1):
 def spec_augment(mel_spectrogram):
     v = mel_spectrogram.shape[0]
     tau = mel_spectrogram.shape[1]
-    print("mel_spectrogram.shape: {}".format(mel_spectrogram.shape)) 
 
     warped_mel_spectrogram = sparse_warp(mel_spectrogram)
 
     warped_frequency_spectrogram = frequency_masking(mel_spectrogram, v=v)
 
-    #warped_time_sepctrogram = time_masking(mel_spectrogram, tau=tau)
+    warped_time_sepctrogram = time_masking(mel_spectrogram, tau=tau)
 
-    return warped_frequency_spectrogram
+    return warped_mel_spectrogram
 
 
 def plot_spectrogram(mel_spectrogram, title):
@@ -186,7 +178,7 @@ def plot_spectrogram(mel_spectrogram, title):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Spec Augment')
-    parser.add_argument('--audio-path', default='../data/number/wav_test/0_jackson_1.wav',
+    parser.add_argument('--audio-path', default='./data/number/wav_test/0_jackson_1.wav',
                         help='The audio file.')
     parser.add_argument('--time-warp-para', default=80,
                         help='time warp parameter W')
@@ -203,7 +195,7 @@ if __name__ == "__main__":
     time_masking_para = args.frequency_mask_para
     frequency_masking_para = args.time_mask_para
     masking_line_number = args.masking_line_number
-
+    print(audio_path)
     audio, sampling_rate = librosa.load(audio_path)
 
     mel_spectrogram = librosa.feature.melspectrogram(y=audio,
@@ -219,8 +211,8 @@ if __name__ == "__main__":
 
     # Show Raw mel-spectrogram
     plot_spectrogram(mel_spectrogram=mel_spectrogram,
-                                           title="Raw Mel Spectrogram")
+                     title="Raw Mel Spectrogram")
 
     # Show time warped & masked spectrogram
     plot_spectrogram(mel_spectrogram=spec_augment(mel_spectrogram),
-                                           title="tensorflow Warped & Masked Mel Spectrogram")
+                     title="tensorflow Warped & Masked Mel Spectrogram")

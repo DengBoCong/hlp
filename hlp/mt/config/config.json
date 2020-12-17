@@ -4,9 +4,10 @@
   "reverse": "False",
   "en_tokenize_type": "WORD",
   "zh_tokenize_type": "CHAR",
-  "train_size": 0.8,
+  "train_size": 0.9,
   "BEAM_SIZE": 3,
-  "validation_data": "True",
+  "validation_data": "False",
+  "checkpoint_ensembling": "True",
   "num_validate_sentences": 200,
   "validation_freq": 1,
   "max_checkpoints_num": 5,
@@ -14,7 +15,7 @@
   "checkpoint_name": "4layers512units",
   "num_eval": 5,
   "BUFFER_SIZE": 20000,
-  "EPOCHS": 1,
+  "EPOCHS": 4,
   "num_sentences": 1000,
   "BATCH_SIZE": 32,
   "num_layers": 4,
@@ -32,5 +33,21 @@
   "path_to_val_file": "./data/anki/en-zh_val.txt",
   "encoded_sequences_path_prefix": "./data/encoded_corpus/encoded_sequences_",
   "tokenizer_path_prefix": "./data/tokenizer/tokenizer_",
-  "checkpoint_path_dir": "./checkpoints"
+  "checkpoint_path_dir": "./checkpoints",
+
+  "language_model": {
+    "path_to_train_file_lm": "../data/anki/anki-cmn-eng.txt",
+    "language": "zh",
+    "en_tokenize_type": "WORD",
+    "zh_tokenize_type": "CHAR",
+    "EPOCHS": 10,
+    "num_sentences": 1000,
+    "BATCH_SIZE": 32,
+    "train_size": 0.8,
+    "d_rnn": 200,
+    "d_embedding": 256,
+    "validation_freq": 1,
+    "max_checkpoints_num": 5,
+    "checkpoints_save_freq": 5
+  }
 }

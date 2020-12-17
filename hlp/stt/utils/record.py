@@ -1,9 +1,9 @@
-import pyaudio
 import wave
+import pyaudio
 
 
 def record(record_path, record_duration):
-    """ 从麦克风录音声音道文件
+    """从麦克风录音声音道文件
 
     :param record_path: 声音文件保存路径
     :param record_duration: 录制时间，秒
