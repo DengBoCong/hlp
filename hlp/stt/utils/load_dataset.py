@@ -82,9 +82,10 @@ def get_data_librispeech(data_path, num_examples=None):
     return audio_data_path_list[:num_examples], text_list[:num_examples]
 
 
-def get_data_thchs30(data_path, num_examples=None):
+def get_data_thchs30(data_path, num_examples=None, transcript_row=1):
     """ 获得thchs数据集的语音文件和转写列表
 
+    :param transcript_row: 语音转写行，0表示中文词，1中文拼音，2声母韵母
     :param data_path: thchs数据集路径
     :param num_examples: 最大语音文件数
     :return: (语音文件列表，转写列表)
@@ -94,7 +95,6 @@ def get_data_thchs30(data_path, num_examples=None):
     files = os.listdir(data_path)
     audio_data_path_list = []
     text_list = []
-    row_num = 1  # 第0行是汉字序列，1行是完整拼音序列，2是分离拼音序列
     for file in files:
         if os.path.splitext(file)[1] == ".wav":
             # 音频文件
@@ -104,7 +104,7 @@ def get_data_thchs30(data_path, num_examples=None):
             # 对应的文本
             with open(os.path.join(thchs30_dataset_dir, "data", file + ".trn"), encoding='UTF-8') as fl:
                 txt_content = fl.readlines()
-            text = txt_content[row_num].strip()
+            text = txt_content[transcript_row].strip()
             text_list.append(text)
 
     return audio_data_path_list[:num_examples], text_list[:num_examples]
