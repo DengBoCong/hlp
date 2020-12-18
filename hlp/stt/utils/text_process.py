@@ -2,32 +2,6 @@ import re
 import tensorflow as tf
 
 
-def split_sentence(line, mode):
-    """对转写文本进行切分
-
-    :param line: 转写文本
-    :param mode: 语料文本的切分方法
-    :return: 切分后的文本，以空格分隔的字符串
-    """
-    if mode.lower() == "cn":
-        return _split_sentence_cn(line)    
-    elif mode.lower() == "en_word":
-        return _split_sentence_en_word(line)
-    elif mode.lower() == "en_char":
-        return _split_sentence_en_char(line)
-    elif mode.lower() == "las_cn":
-        return _split_sentence_las_cn(line)    
-    elif mode.lower() == "las_en_word":
-        return _split_sentence_las_en_word(line)
-    elif mode.lower() == "las_en_char":
-        return _split_sentence_las_en_char(line)
-
-
-# 获取最长的label_length
-def get_max_label_length(text_int_sequences):
-    return max(len(seq) for seq in text_int_sequences)
-
-
 def split_and_encode(sentences, mode, word_index):
     """对文本进行切分和编码
 
@@ -57,7 +31,34 @@ def encode_text(splitted_sentence, word_index):
     return int_sequence
 
 
+def split_sentence(line, mode):
+    """对转写文本进行切分
+
+    :param line: 转写文本
+    :param mode: 语料文本的切分方法
+    :return: 切分后的文本，以空格分隔的字符串
+    """
+    if mode.lower() == "cn":
+        return _split_sentence_cn(line)
+    elif mode.lower() == "en_word":
+        return _split_sentence_en_word(line)
+    elif mode.lower() == "en_char":
+        return _split_sentence_en_char(line)
+    elif mode.lower() == "las_cn":
+        return _split_sentence_las_cn(line)
+    elif mode.lower() == "las_en_word":
+        return _split_sentence_las_en_word(line)
+    elif mode.lower() == "las_en_char":
+        return _split_sentence_las_en_char(line)
+
+
 def split_sentences(sentences, mode):
+    """对文本进行切换
+
+    :param sentences: 待切分文本序列
+    :param mode: 切分模式
+    :return: 空格分隔的token串的列表
+    """
     text_list = []
     for text in sentences:
         text_list.append(split_sentence(text, mode))
@@ -114,7 +115,7 @@ def _split_sentence_las_en_word(s):
     s = re.sub(r"([?.!,])", r" \1 ", s)  # 切分断句的标点符号
     s = re.sub(r'[" "]+', " ", s)  # 合并多个空格
 
-    # 除了 (a-z, A-Z, ".", "?", "!", ",")，将所有字符替换为空格
+    # 除了 (a-z, A-Z, ".", "?", "!", ",")外的将所有字符替换为空格
     s = re.sub(r"[^a-zA-Z?.!,]+", " ", s)
     s = s.strip()
     # 给句子加上开始和结束标记
@@ -145,6 +146,11 @@ def _split_sentence_las_cn(s):
     # 以便模型知道何时开始和结束预测
     s = '<start> ' + s + ' <end>'
     return s
+
+
+# 获取最长的label_length
+def get_max_label_length(text_int_sequences):
+    return max(len(seq) for seq in text_int_sequences)
 
 
 def get_label_and_length(text_int_sequences_list, max_label_length):
