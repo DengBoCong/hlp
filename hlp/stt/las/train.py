@@ -15,7 +15,6 @@ from hlp.stt.utils import load_dataset
 from hlp.stt.utils.audio_process import max_audio_length
 from hlp.stt.utils.generator import train_generator, test_generator
 from hlp.stt.utils.text_process import split_sentences, get_max_label_length, tokenize
-from hlp.stt.utils.text_process import vectorize_texts
 from hlp.utils.optimizers import loss_func_mask
 
 
@@ -57,6 +56,12 @@ if __name__ == "__main__":
 
     embedding_dim = config.embedding_dim
     units = config.units
+    cnn1_filters = config.cnn1_filters
+    cnn1_kernel_size = config.cnn1_kernel_size
+    cnn2_filters = config.cnn2_filters
+    cnn2_kernel_size = config.cnn2_kernel_size
+    max_pool_strides = config.max_pool_strides
+    max_pool_size = config.max_pool_size
     d = config.d
     w = config.w
     emb_dim = config.emb_dim
@@ -79,7 +84,6 @@ if __name__ == "__main__":
     text_int_sequences, tokenizer = tokenize(splitted_text_list)
     max_input_length = max_audio_length(train_wav_path_list, audio_feature_type)
     max_label_length = get_max_label_length(text_int_sequences)
-
     print("保存数据集信息...")
     ds_info_path = config.dataset_info_path
     dataset_info = {}
@@ -96,7 +100,7 @@ if __name__ == "__main__":
     word_index = dataset_info["word_index"]
     max_input_length = dataset_info["max_input_length"]
     max_label_length = dataset_info["max_label_length"]
-
+    train_text_int_sequences_list = text_int_sequences
     # 若validation_data为真，则有验证数据集，val_wav_path非空，则从文件路径中加载
     # 若validation_data为真，则有验证数据集，val_wav_path为空，则将训练数据按比例划分一部分为验证数据
     # 若validation_data为假，则没有验证数据集
@@ -110,7 +114,7 @@ if __name__ == "__main__":
             validation_percent = config.validation_percent
             index = len(train_wav_path_list) * validation_percent // 100
             val_wav_path_list, val_label_list = train_wav_path_list[-index:], train_label_list[-index:]
-            train_wav_path_list, train_label_list = train_wav_path_list[:-index], train_label_list[:-index]
+            train_wav_path_list, train_text_int_sequences_list = train_wav_path_list[:-index], text_int_sequences[0][:-index]
         val_data = (val_wav_path_list, val_label_list)
 
         print("构建验证数据生成器......")
@@ -124,7 +128,6 @@ if __name__ == "__main__":
                                             )
 
     # 构建train_data
-    train_text_int_sequences_list = vectorize_texts(train_label_list, text_process_mode, word_index)
     train_data = (train_wav_path_list, train_text_int_sequences_list)
     batchs = len(train_wav_path_list) // train_batch_size
     print("构建训练数据生成器......")
@@ -143,7 +146,18 @@ if __name__ == "__main__":
     if model_type == "las":
         model = plas.PLAS(vocab_tar_size, embedding_dim, units, train_batch_size)
     elif model_type == "las_d_w":
-        model = las.LAS(vocab_tar_size, d, w, emb_dim, dec_units, train_batch_size)
+        model = las.LAS(vocab_tar_size,
+                        cnn1_filters,
+                        cnn1_kernel_size,
+                        cnn2_filters,
+                        cnn2_kernel_size,
+                        max_pool_strides,
+                        max_pool_size,
+                        d,
+                        w,
+                        emb_dim,
+                        dec_units,
+                        train_batch_size)
 
     # 检查点
     checkpoint_dir = config.checkpoint_dir

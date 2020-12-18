@@ -10,15 +10,18 @@ def split_sentence(line, mode):
     :return: 切分后的文本，以空格分隔的字符串
     """
     if mode.lower() == "cn":
-        return _split_sentence_cn(line)
+        return _split_sentence_cn(line)    
     elif mode.lower() == "en_word":
         return _split_sentence_en_word(line)
     elif mode.lower() == "en_char":
         return _split_sentence_en_char(line)
-    elif mode.lower() == "las_en_char":
-        return _split_sentence_las_en_char(line)
+    elif mode.lower() == "las_cn":
+        return _split_sentence_las_cn(line)    
     elif mode.lower() == "las_en_word":
         return _split_sentence_las_en_word(line)
+    elif mode.lower() == "las_en_char":
+        return _split_sentence_las_en_char(line)
+
 
 
 # 获取最长的label_length
@@ -122,6 +125,19 @@ def _split_sentence_cn(s):
     s = re.sub(r'[" "]+', " ", s)  # 合并多个空格
     s = s.strip()
 
+    return s
+
+
+def _split_sentence_las_cn(s):
+    s = s.lower().strip()
+
+    s = [c for c in s]
+    s = ' '.join(s)
+    s = re.sub(r'[" "]+', " ", s)  # 合并多个空格
+    s = s.strip()
+    # 给句子加上开始和结束标记
+    # 以便模型知道何时开始和结束预测
+    s = '<start> ' + s + ' <end>'
     return s
 
 

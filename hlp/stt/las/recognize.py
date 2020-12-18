@@ -10,6 +10,12 @@ def recognize(wav_path):
     model_type = config.model_type
     embedding_dim = config.embedding_dim
     units = config.units
+    cnn1_filters = config.cnn1_filters
+    cnn1_kernel_size = config.cnn1_kernel_size
+    cnn2_filters = config.cnn2_filters
+    cnn2_kernel_size = config.cnn2_kernel_size
+    max_pool_strides = config.max_pool_strides
+    max_pool_size = config.max_pool_size
     d = config.d
     w = config.w
     emb_dim = config.emb_dim
@@ -26,8 +32,18 @@ def recognize(wav_path):
     if model_type == "las":
         model = plas.PLAS(vocab_tar_size, embedding_dim, units, BATCH_SIZE)
     elif model_type == "las_d_w":
-        model = las.LAS(vocab_tar_size, d, w, emb_dim, dec_units, BATCH_SIZE)
-
+        model = las.LAS(vocab_tar_size,
+                        cnn1_filters,
+                        cnn1_kernel_size,
+                        cnn2_filters,
+                        cnn2_kernel_size,
+                        max_pool_strides,
+                        max_pool_size,
+                        d,
+                        w,
+                        emb_dim,
+                        dec_units,
+                        BATCH_SIZE)
     # 检查点
     checkpoint_dir = config.checkpoint_dir
     checkpoint = tf.train.Checkpoint(optimizer=optimizer, model=model)
