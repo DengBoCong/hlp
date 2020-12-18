@@ -61,7 +61,7 @@ if __name__ == '__main__':
     parser.add_argument('--lr', default=0.0001, type=float, required=False, help='学习率')
     parser.add_argument('--sr', default=22050, type=int, required=False, help='采样率')
     parser.add_argument('--epochs', default=4, type=int, required=False, help='训练轮次')
-    parser.add_argument('--batch_size', default=8, type=int, required=False, help='batch大小')
+    parser.add_argument('--batch_size', default=2, type=int, required=False, help='batch大小')
     parser.add_argument('--buffer_size', default=20000, type=int, required=False, help='dataset缓冲区大小')
     parser.add_argument('--checkpoint_save_freq', default=2, type=int, required=False, help='检查点保存频率')
     parser.add_argument('--valid_data_split', default=0.2, type=float, required=False, help='从训练数据划分验证数据的比例')
