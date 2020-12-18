@@ -165,7 +165,7 @@ def get_label_and_length(text_int_sequences_list, max_label_length):
     return target_tensor_numpy, target_length
 
 
-def tokenize(texts):
+def tokenize_and_encode(texts):
     """ 对文本进行tokenize和编码
 
     :param texts: 已经用空格分隔的文本列表

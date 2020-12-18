@@ -4,7 +4,7 @@ import json
 from hlp.stt.ds2.util import get_config
 from hlp.stt.utils.load_dataset import load_data
 from hlp.stt.utils.audio_process import max_audio_length
-from hlp.stt.utils.text_process import split_sentences, get_max_label_length, tokenize
+from hlp.stt.utils.text_process import split_sentences, get_max_label_length, tokenize_and_encode
 
 
 if __name__ == "__main__":
@@ -24,16 +24,15 @@ if __name__ == "__main__":
     splitted_text_list = split_sentences(text_list, mode)
 
     # 将文本处理成对应的token数字序列
-    text_int_sequences, tokenizer = tokenize(splitted_text_list)
+    text_int_sequences, tokenizer = tokenize_and_encode(splitted_text_list)
 
     # 获取音频和文本的最大length，从而进行数据补齐
     audio_feature_type = configs["other"]["audio_feature_type"]
     max_input_length = max_audio_length(audio_data_path_list, audio_feature_type)
     max_label_length = get_max_label_length(text_int_sequences)
 
-    # 将数据集的相关信息写入dataset_information.json文件
     print("保存数据集信息...")
-    ds_info_path = configs["preprocess"]["dataset_information_path"]
+    ds_info_path = configs["preprocess"]["dataset_info_path"]
 
     dataset_info = {}
     dataset_info["vocab_size"] = len(tokenizer.index_word)

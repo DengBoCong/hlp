@@ -37,7 +37,7 @@
         "history_img_dir": "./history_img/"
     },
     "preprocess": {
-        "dataset_information_path": "./ds_info.json",
+        "dataset_info_path": "./ds_info.json",
         "dataset_name": "thchs30",
         "text_process_mode": "en_char"
     }

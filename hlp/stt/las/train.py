@@ -14,7 +14,7 @@ from hlp.stt.las.util import compute_metric
 from hlp.stt.utils import load_dataset
 from hlp.stt.utils.audio_process import max_audio_length
 from hlp.stt.utils.generator import train_generator, test_generator
-from hlp.stt.utils.text_process import split_sentences, get_max_label_length, tokenize
+from hlp.stt.utils.text_process import split_sentences, get_max_label_length, tokenize_and_encode
 from hlp.utils.optimizers import loss_func_mask
 
 
@@ -81,7 +81,7 @@ if __name__ == "__main__":
     splitted_text_list = split_sentences(train_label_list, text_process_mode)
 
     # 将文本处理成对应的token数字序列
-    text_int_sequences, tokenizer = tokenize(splitted_text_list)
+    text_int_sequences, tokenizer = tokenize_and_encode(splitted_text_list)
     max_input_length = max_audio_length(train_wav_path_list, audio_feature_type)
     max_label_length = get_max_label_length(text_int_sequences)
     print("保存数据集信息...")
