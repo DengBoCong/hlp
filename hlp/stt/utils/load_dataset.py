@@ -1,4 +1,3 @@
-
 import os
 
 
@@ -20,7 +19,7 @@ def load_data(dataset_name, data_path, num_examples):
     return audio_data_path_list, text_list
 
 
-def get_text(line, colum_sep=" "):
+def _get_text(line, colum_sep=" "):
     """获得语音转写文本
 
     :param line: 可能包括语音文件和语音转写
@@ -33,7 +32,7 @@ def get_text(line, colum_sep=" "):
     return line.strip().split(colum_sep, 1)[1].lower()
 
 
-def get_text_list(text_path, colum_sep=" "):
+def _get_text_list(text_path, colum_sep=" "):
     """从标注文件中获得所有转写
 
     :param text_path: 标注文件路径
@@ -44,7 +43,7 @@ def get_text_list(text_path, colum_sep=" "):
     with open(text_path, "r") as f:
         sentence_list = f.readlines()
     for sentence in sentence_list:
-        text_list.append(get_text(sentence, colum_sep))
+        text_list.append(_get_text(sentence, colum_sep))
     return text_list
 
 
@@ -77,7 +76,7 @@ def get_data_librispeech(data_path, num_examples=None):
 
         # 获取语音路径list和文本list
         audio_data_path_list.extend([os.path.join(data_folder, audio_path) for audio_path in audio_path_list])
-        text_list.extend(get_text_list(os.path.join(data_folder, text_data_path)))
+        text_list.extend(_get_text_list(os.path.join(data_folder, text_data_path)))
 
     return audio_data_path_list[:num_examples], text_list[:num_examples]
 
@@ -119,11 +118,12 @@ def get_data_number(data_path, num_examples=None):
     """
     wav_path = data_path[0]
     text_data_path = data_path[1]
-    files = os.listdir(wav_path)    
+    files = os.listdir(wav_path)
     audio_path_list = files
     audio_data_path_list = [wav_path + "\\" + audio_path for audio_path in audio_path_list[:num_examples]]
-    text_list = get_text_list(text_data_path, colum_sep = "\t")[:num_examples]
+    text_list = _get_text_list(text_data_path, colum_sep="\t")[:num_examples]
     return audio_data_path_list, text_list
+
 
 if __name__ == "__main__":
     dir_thchs30 = '../data/data_thchs30/train'
@@ -135,5 +135,3 @@ if __name__ == "__main__":
     audio_fils, texts = get_data_librispeech(dir_librispeech)
     print(audio_fils)
     print(texts)
-
-
