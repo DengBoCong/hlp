@@ -9,7 +9,7 @@ from hlp.stt.ds2.model import DS2
 from hlp.stt.ds2.util import get_config, get_dataset_info, compute_ctc_input_length, compute_metric, can_stop
 from hlp.stt.utils.generator import train_generator, test_generator
 from hlp.stt.utils.load_dataset import load_data
-from hlp.stt.utils.text_process import vectorize_texts
+from hlp.stt.utils.text_process import split_and_encode
 
 
 def train_step(model, optimizer, input_tensor, target_tensor, input_length, target_length):
@@ -139,7 +139,7 @@ if __name__ == "__main__":
     # 构建train_data和valid_data
     text_process_mode = configs["preprocess"]["text_process_mode"]
     word_index = dataset_info["word_index"]
-    train_text_int_sequences_list = vectorize_texts(train_text_list, text_process_mode, word_index)
+    train_text_int_sequences_list = split_and_encode(train_text_list, text_process_mode, word_index)
     train_data = (train_audio_path_list, train_text_int_sequences_list)
     valid_data = (valid_audio_data_path_list, valid_text_list)
 

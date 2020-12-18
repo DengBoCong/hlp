@@ -23,28 +23,34 @@ def split_sentence(line, mode):
         return _split_sentence_las_en_char(line)
 
 
-
 # 获取最长的label_length
 def get_max_label_length(text_int_sequences):
     return max(len(seq) for seq in text_int_sequences)
 
 
-def vectorize_texts(sentences, mode, word_index):
+def split_and_encode(sentences, mode, word_index):
+    """对文本进行切分和编码
+
+    :param sentences: 文本列表
+    :param mode: 切分模式
+    :param word_index: 词典
+    :return: 文本编码序列
+    """
     splitted_sentences = split_sentences(sentences, mode)
-    text_int_sequences_list = text_to_int_sequences(splitted_sentences, word_index)
+    text_int_sequences_list = encode_texts(splitted_sentences, word_index)
     return text_int_sequences_list
 
 
 # token转换成id
-def text_to_int_sequences(splitted_sentences, word_index):
+def encode_texts(splitted_sentences, word_index):
     text_int_sequences = []
     for splitted_sentence in splitted_sentences:
-        text_int_sequences.append(text_to_int_sequence(splitted_sentence, word_index))
+        text_int_sequences.append(encode_text(splitted_sentence, word_index))
     return text_int_sequences
 
 
 # token转换成id
-def text_to_int_sequence(splitted_sentence, word_index):
+def encode_text(splitted_sentence, word_index):
     int_sequence = []
     for c in splitted_sentence.split(" "):
         int_sequence.append(int(word_index[c]))

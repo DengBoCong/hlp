@@ -1,7 +1,7 @@
 {
     "train": {
         "train_epochs": 2,
-        "data_path": "../data/LibriSpeech/train-clean-5",
+        "data_path": "../data/data_thchs30/train",
         "batch_size": 36,
         "num_examples": null
     },
@@ -14,7 +14,7 @@
         "stop_early_limits": 5
     },
     "test": {
-        "data_path": "../data/LibriSpeech/dev-clean-2",
+        "data_path": "../data/data_thchs30/dev",
         "batch_size": 36,
         "num_examples": null
     },
@@ -38,7 +38,7 @@
     },
     "preprocess": {
         "dataset_information_path": "./ds_info.json",
-        "dataset_name": "librispeech",
+        "dataset_name": "thchs30",
         "text_process_mode": "en_char"
     }
 }
