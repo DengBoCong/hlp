@@ -79,7 +79,7 @@ def encoder(vocab_size: int, embedding_dim: int, encoder_pre_net_conv_num, num_l
 
 
 def decoder(vocab_size: int, embedding_dim: int, num_layers: int, decoder_units: int,
-            num_heads: int, max_mel_length: int, num_mel: int, decoder_pre_net_layers_num: int,
+            num_heads: int, num_mel: int, decoder_pre_net_layers_num: int,
             post_net_conv_num: int, post_net_filters: int, post_net_kernel_sizes: int,
             decoder_pre_net_dropout_rate: float = 0.1, dropout: float = 0.1,
             post_net_dropout: float = 0.1, post_net_activation: str = "tanh") -> tf.keras.Model:
@@ -89,7 +89,6 @@ def decoder(vocab_size: int, embedding_dim: int, num_layers: int, decoder_units:
     :param num_layers: encoder层数量
     :param decoder_units: 单元大小
     :param num_heads: 头注意力数量
-    :param max_mel_length: 最长序列长度
     :param num_mel: 产生的梅尔带数
     :param decoder_pre_net_layers_num: pre_net层数
     :param decoder_pre_net_dropout_rate: pre_net的dropout采样率
