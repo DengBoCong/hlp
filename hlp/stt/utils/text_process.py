@@ -72,7 +72,7 @@ def _split_sentence_en_word(s):
     s = re.sub(r"([?.!,])", r" \1 ", s)  # 切分断句的标点符号
     s = re.sub(r'[" "]+', " ", s)  # 合并多个空格
 
-    # 除了 (a-z, A-Z, ".", "?", "!", ",")，将所有字符替换为空格
+    # 除了 (a-z, A-Z, ".", "?", "!", ",")外的将所有字符替换为空格
     s = re.sub(r"[^a-zA-Z?.!,]+", " ", s)
     s = s.strip()
     return s
