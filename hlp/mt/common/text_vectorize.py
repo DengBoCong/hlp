@@ -74,25 +74,6 @@ def create_and_save_tokenizer(sentences, save_path, language, mode):
         raise ValueError("暂不支持语言(%s)" % language)
 
 
-def _get_mode_and_path_tokenize(language, model_type):
-    """根据语言及模型确定字典的编码模式及保存路径"""
-    if language == "en":
-        if model_type == "nmt":
-            mode = _config.en_tokenize_type
-            path = _config.tokenizer_path_prefix + language + '_' + mode.lower()
-        elif model_type == "lm":
-            mode = _config.lm_en_tokenize_type
-            path = _config.tokenizer_path_prefix + language + '_' + mode.lower()+"_lm"
-    elif language == "zh":
-        if model_type == "nmt":
-            mode = _config.zh_tokenize_type
-            path = _config.tokenizer_path_prefix + language + '_' + mode.lower()
-        elif model_type == "lm":
-            mode = _config.lm_zh_tokenize_type
-            path = _config.tokenizer_path_prefix + language + '_' + mode.lower() + "_lm"
-    return mode, path
-
-
 def _load_tokenizer_bpe(path):
     """从指定路径加载保存好的字典"""
     tokenizer = tfds.features.text.SubwordTextEncoder.load_from_file(path)
@@ -232,23 +213,6 @@ def _encode_and_save_keras(sentences, tokenizer, path):
     max_sequence_length = len(sequences[0])
     numpy.savetxt(path, sequences)
     return max_sequence_length
-
-
-def get_tokenizer_mode_and_path(language, model_type, postfix):
-    """根据语言及模型确定编码句子的编码模式及保存路径"""
-    if language == "en":
-        if model_type == "nmt":
-            mode = _config.en_tokenize_type
-        elif model_type == "lm":
-            mode = _config.lm_en_tokenize_type
-    elif language == "zh":
-        if model_type == "nmt":
-            mode = _config.zh_tokenize_type
-        elif model_type == "lm":
-            mode = _config.lm_zh_tokenize_type
-    path = _config.encoded_sequences_path_prefix + language + postfix
-
-    return mode, path
 
 
 def encode_and_save(save_path, sentences, tokenizer, language, mode):
