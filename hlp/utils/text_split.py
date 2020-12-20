@@ -13,10 +13,12 @@ def split_en_word(s):
     # 在单词与跟在其后的标点符号之间插入一个空格
     # 例如： "he is a boy." => "he is a boy ."
     s = re.sub(r"([?.!,])", r" \1 ", s)  # 切分断句的标点符号
-    s = re.sub(r'[" "]+', " ", s)  # 合并多个空格
 
     # 除了 (a-z, A-Z, ".", "?", "!", ",")，将所有字符替换为空格
     s = re.sub(r"[^a-zA-Z?.!,]+", " ", s)
+
+    s = re.sub(r'[" "]+', " ", s)  # 合并多个空格
+
     return s.strip().split()
 
 
@@ -28,6 +30,7 @@ def split_en_char(s):
     """
     s = s.lower().strip()
     s = re.sub(r"([?.!,])", r" \1 ", s)  # 切分断句的标点符号
+
     # 除了 (a-z, A-Z, ".", "?", "!", ",")外的所有字符替换为空格
     s = re.sub(r"[^a-zA-Z?.!,]+", " ", s)
 
