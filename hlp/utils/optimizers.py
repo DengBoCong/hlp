@@ -1,5 +1,4 @@
 import tensorflow as tf
-from pathlib import Path
 
 
 class CustomSchedule(tf.keras.optimizers.schedules.LearningRateSchedule):
