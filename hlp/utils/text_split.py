@@ -55,7 +55,7 @@ def split_zh_word(s):
     """ 对中文(含英文)按词进行切切分
 
     :param s: 待切分的中文
-    :return: return s.strip().split()
+    :return: token列表
     """
     return list(jieba.cut(s.lower().strip()))
 
