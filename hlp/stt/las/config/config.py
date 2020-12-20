@@ -48,6 +48,12 @@ test_batch_size = conf["test"]['batch_size']  # 测试batch_size
 beam_size = conf["test"]['beam_size']  # 测试beam_size
 embedding_dim = conf["las_model"]['embedding_dim']  # 模型LSTM层维数
 units = conf["las_model"]['units']  # 隐藏层状态单元数
+cnn1_filters = conf["las_d_w_model"]['cnn1_filters']  
+cnn1_kernel_size = conf["las_d_w_model"]['cnn1_kernel_size']  
+cnn2_filters = conf["las_d_w_model"]['cnn2_filters']  
+cnn2_kernel_size = conf["las_d_w_model"]['cnn2_kernel_size']  
+max_pool_strides = conf["las_d_w_model"]['max_pool_strides']  
+max_pool_size = conf["las_d_w_model"]['max_pool_size']  
 d = conf["las_d_w_model"]['d']  # encoder中d层的Bi-LSTM(cell=w)
 w = conf["las_d_w_model"]['w']  # encoder中d层的Bi-LSTM(cell=w)
 emb_dim = conf["las_d_w_model"]['emb_dim']  # decoder中embedding层output的维数

@@ -7,7 +7,7 @@ sys.path.append(os.path.abspath(__file__)[:os.path.abspath(__file__).rfind("\\hl
 import hlp.tts.utils.pre_treat as pre_treat
 import hlp.tts.tacotron2.module as module
 from hlp.tts.tacotron2.model import Tacotron2
-from hlp.tts.utils.utils import load_checkpoint
+from hlp.tts.tacotron2.module import load_checkpoint
 
 
 def main():
@@ -18,17 +18,19 @@ def main():
                         help='原始语音数据的metadata文件路径')
     parser.add_argument('--audio_dir', default='\\data\\LJSpeech-1.1\\wavs\\', type=str, required=False,
                         help='原始语音数据的保存目录')
-    parser.add_argument('--train_file', default='\\data\\processed_train_file.txt', type=str, required=False,
+    parser.add_argument('--train_file', default='\\data\\LJSpeech-1.1\\processed_train_file.txt', type=str,
+                        required=False,
                         help='整理后的音频句子对保存路径')
     parser.add_argument('--cmu_dict_file', default='\\data\\cmudict-0.7b', type=str, required=False,
                         help='cmu音素字典路径')
-    parser.add_argument('--spectrum_data_dir', default='\\data\\feature\\', type=str, required=False,
+    parser.add_argument('--spectrum_data_dir', default='\\data\\LJSpeech-1.1\\feature\\', type=str, required=False,
                         help='目标数据存放路径')
-    parser.add_argument('--dict_path', default='\\data\\tacotron2_dict.json', type=str, required=False,
+    parser.add_argument('--dict_path', default='\\data\\LJSpeech-1.1\\tacotron2_dict.json', type=str, required=False,
                         help='字典存放路径')
     parser.add_argument('--checkpoint_dir', default='\\data\\checkpoints\\tacotron2', type=str, required=False,
                         help='检查点保存路径')
-    parser.add_argument('--wave_save_dir', default='\\data\\generate\\tacotron2', type=str, required=False,
+    parser.add_argument('--wave_save_dir', default='\\data\\LJSpeech-1.1\\generate\\tacotron2', type=str,
+                        required=False,
                         help='合成的音频保存路径')
     parser.add_argument('--valid_data_path', default="", type=str, required=False, help='验证集路径')
     parser.add_argument('--max_mel_length', default=1000, type=int, required=False, help='最大序列长度')
