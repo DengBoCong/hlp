@@ -81,7 +81,7 @@ def get_data_librispeech(data_path, num_examples=None):
     return audio_data_path_list[:num_examples], text_list[:num_examples]
 
 
-def get_data_thchs30(data_path, num_examples=None, transcript_row=1):
+def get_data_thchs30(data_path, num_examples=None, transcript_row=0):
     """ 获得thchs数据集的语音文件和转写列表
 
     :param transcript_row: 语音转写行，0表示中文词，1中文拼音，2声母韵母

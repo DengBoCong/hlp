@@ -30,7 +30,6 @@ def train_step(x_audio, y_label, enc_hidden, word_index, model, las_optimizer, t
 
         # 导师驱动 - 将目标词作为下一个输入
         for t in range(1, y_label.shape[1]):
-            print(t)
             # 将编码器输出 （enc_output） 传送至解码器，解码
             predictions, _ = model(x_audio, enc_hidden, dec_input)
             loss += loss_func_mask(y_label[:, t], predictions)  # 根据预测计算损失
@@ -84,6 +83,12 @@ if __name__ == "__main__":
     text_int_sequences, tokenizer = tokenize_and_encode(splitted_text_list)
     max_input_length = max_audio_length(train_wav_path_list, audio_feature_type)
     max_label_length = get_max_label_length(text_int_sequences)
+
+    print("数据集: ", dataset_name)
+    print("语音文件数: ", len(train_wav_path_list))
+    print("最长语音: ", max_input_length)
+    print("最长转写文本: ", max_label_length)
+
     print("保存数据集信息...")
     ds_info_path = config.dataset_info_path
     dataset_info = {}
@@ -96,11 +101,9 @@ if __name__ == "__main__":
     with open(ds_info_path, 'w', encoding="utf-8") as f:
         json.dump(dataset_info, f, ensure_ascii=False, indent=4)
 
-    dataset_info = config.get_dataset_info()
     word_index = dataset_info["word_index"]
-    max_input_length = dataset_info["max_input_length"]
-    max_label_length = dataset_info["max_label_length"]
     train_text_int_sequences_list = text_int_sequences
+
     # 若validation_data为真，则有验证数据集，val_wav_path非空，则从文件路径中加载
     # 若validation_data为真，则有验证数据集，val_wav_path为空，则将训练数据按比例划分一部分为验证数据
     # 若validation_data为假，则没有验证数据集
@@ -114,7 +117,9 @@ if __name__ == "__main__":
             validation_percent = config.validation_percent
             index = len(train_wav_path_list) * validation_percent // 100
             val_wav_path_list, val_label_list = train_wav_path_list[-index:], train_label_list[-index:]
-            train_wav_path_list, train_text_int_sequences_list = train_wav_path_list[:-index], text_int_sequences[0][:-index]
+            train_wav_path_list, train_text_int_sequences_list = train_wav_path_list[:-index], text_int_sequences[0][
+                                                                                               :-index]
+
         val_data = (val_wav_path_list, val_label_list)
 
         print("构建验证数据生成器......")
@@ -129,10 +134,10 @@ if __name__ == "__main__":
 
     # 构建train_data
     train_data = (train_wav_path_list, train_text_int_sequences_list)
-    batchs = len(train_wav_path_list) // train_batch_size
+    batches = len(train_wav_path_list) // train_batch_size
     print("构建训练数据生成器......")
     train_data_generator = train_generator(train_data,
-                                           batchs,
+                                           batches,
                                            train_batch_size,
                                            audio_feature_type,
                                            max_input_length,
@@ -170,7 +175,7 @@ if __name__ == "__main__":
     )
     checkpoint_keep_interval = config.checkpoint_keep_interval
     if manager.latest_checkpoint:
-        print("恢复检查点目录 （checkpoint_dir） 中最新的检查点......")
+        print("恢复最新的检查点...")
         checkpoint.restore(manager.latest_checkpoint)
 
     print("开始训练...")
@@ -180,25 +185,25 @@ if __name__ == "__main__":
         enc_hidden = model.initialize_hidden_state()
         total_loss = 0
         batch_start = time.time()
-        for batch, (x_audio, y_label, _, _) in zip(range(1, batchs + 1), train_data_generator):
+        print("Epoch {}/{}".format(epoch + 1, EPOCHS))
+        for batch, (x_audio, y_label, _, _) in zip(range(1, batches + 1), train_data_generator):
             batch_loss = train_step(x_audio, y_label, enc_hidden, word_index,
                                     model,
                                     optimizer,
                                     train_batch_size)  # 训练一个批次，返回批损失
             total_loss += batch_loss
 
-            print('Epoch {} Batch {} Loss {:.4f}'.format(epoch + 1,
-                                                         batch + 1,
-                                                         batch_loss.numpy()))
-            print('Time taken for 1 batch {} sec\n'.format(time.time() - batch_start))
+            print('Epoch {} Batch {} Loss {:.4f} - {:.4f} sec'.format(epoch + 1,
+                                                                batch,
+                                                                batch_loss.numpy(),
+                                                                time.time() - batch_start))
             batch_start = time.time()
 
         # 每 checkpoint_keep_interval 个周期（epoch），保存（检查点）一次模型
         if (epoch + 1) % checkpoint_keep_interval == 0:
             manager.save()
 
-        print('Epoch {} Loss {:.4f}'.format(epoch + 1, total_loss / batchs))
-        print('Time taken for 1 epoch {} sec\n'.format(time.time() - start))
+        print('Epoch {} Loss {:.4f} - {:.4f} sec'.format(epoch + 1, total_loss / batches, time.time() - start))
 
         # 验证
         if validation_data:

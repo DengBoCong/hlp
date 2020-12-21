@@ -1,33 +1,33 @@
 {
     "train": {
-        "epochs": 20,
+        "epochs": 4,
         "train_data_path": "../data/data_thchs30/train", 
         "val_data_path": null,
-        "train_batch_size": 1,
+        "train_batch_size": 2,
         "num_examples": 3,
         "validation_data": false,
         "validation_size": 20,
         "validation_percent": 2,
-        "val_batch_size": 1,
-        "model_type": "las_d_w"
+        "val_batch_size": 2,
+        "model_type": "las"
     },
     "test": {
         "test_data_path": "../data/data_thchs30/test",
         "test_num": 2,
-        "batch_size": 1,
-        "beam_size": 4
+        "batch_size": 2,
+        "beam_size": 2
     },
     "las_model": {
-        "embedding_dim": 256,
-        "units": 512
+        "embedding_dim": 128,
+        "units": 256
     },
     "las_d_w_model": {
-        "cnn1_filters": 2,
+        "cnn1_filters": 16,
         "cnn1_kernel_size": 3,
-        "cnn2_filters": 2,
+        "cnn2_filters": 16,
         "cnn2_kernel_size": 3,
         "max_pool_strides": 2,
-        "max_pool_size": 8,
+        "max_pool_size": 7,
         "d": 1,
         "w": 256,
         "emb_dim": 256,
