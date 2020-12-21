@@ -1,14 +1,3 @@
-"""
-预处理中关于字典及编码解码部分
-加入新语言时需要在下列方法中对新语言进行判断
-主要方法包括：
-- create_tokenizer(sentence, language): 生成及保存字典
-- get_tokenizer(language): 获取字典
-- encode_sentences(sentence, tokenizer, language): 编码句子
-- get_start_token(start_word, tokenizer, language): 获取start_token
-- create_encoded_sentences(sentence, tokenizer, language): 编码并保存句子列表
-- decode_sentence(sentence, tokenizer, language): 解码句子
-"""
 import os
 
 import tensorflow as tf
