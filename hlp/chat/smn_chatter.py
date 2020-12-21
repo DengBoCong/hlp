@@ -228,7 +228,7 @@ class SMNChatter():
 def main():
     parser = ArgumentParser(description='%smn multi_turn chatbot V1.2.1')
     parser.add_argument('--config_file', default='', type=str, required=False, help='配置文件路径，为空则默认命令行，不为空则使用配置文件参数')
-    parser.add_argument('--type', default='pre_treat', type=str, required=False, help='执行类型')
+    parser.add_argument('--act', default='pre_treat', type=str, required=False, help='执行类型')
     parser.add_argument('--units', default=200, type=int, required=False, help='隐藏层单元数')
     parser.add_argument('--vocab_size', default=2000, type=int, required=False, help='词汇大小')
     parser.add_argument('--embedding_dim', default=200, type=int, required=False, help='嵌入层维度大小')
@@ -259,7 +259,7 @@ def main():
 
     # 注意了有关路径的参数，以chat目录下为基准配置
     work_path = os.path.abspath(__file__)[:os.path.abspath(__file__).find("\\smn")]
-    execute_type = options['type']
+    execute_type = options['act']
 
     if execute_type == 'train':
         chatter = SMNChatter(units=options['units'], vocab_size=options['vocab_size'],
@@ -314,7 +314,7 @@ def main():
 if __name__ == '__main__':
     """
     SMN入口：指令需要附带运行参数
-    cmd：python smn_chatter.py --type [执行模式]
+    cmd：python smn_chatter.py --act [执行模式]
     执行类别：pre_treat/train/evaluate/chat，默认为pre_treat
     其他参数参见main方法
 
