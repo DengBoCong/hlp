@@ -14,7 +14,7 @@ def train_generator(data, batches, batch_size, audio_feature_type,
     :param audio_feature_type: 语音特征类型
     :param max_input_length:
     :param max_label_length:
-    :return:
+    :return: 输入语音张量，语音转写张量，输入语音长度张量，语音转写长度张量
     """
     audio_path_list, text_int_sequences_list = data
     while True:

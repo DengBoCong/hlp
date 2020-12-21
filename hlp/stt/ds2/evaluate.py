@@ -9,7 +9,7 @@ from hlp.stt.utils.load_dataset import load_data
 
 if __name__ == "__main__":
     configs = get_config()
-    dataset_info = get_dataset_info(configs["preprocess"]["dataset_information_path"])
+    dataset_info = get_dataset_info(configs["preprocess"]["dataset_info_path"])
 
     # 获取模型配置，加载模型
     conv_layers = configs["model"]["conv_layers"]
