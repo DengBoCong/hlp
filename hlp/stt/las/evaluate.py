@@ -12,15 +12,9 @@ from hlp.utils import beamsearch
 
 if __name__ == "__main__":
 
-    # 测试集wav文件
-    wav_path = config.test_wav_path
-
-    # 测试集文本标签
-    label_path = config.test_label_path
-
     # 测试集数据存放路径，包括音频文件路径和文本标签文件路径
-    data_path = [wav_path, label_path]
-
+    data_path = config.test_data_path
+    
     # 尝试实验不同大小的数据集
     test_num = config.test_num
 
@@ -32,6 +26,12 @@ if __name__ == "__main__":
 
     embedding_dim = config.embedding_dim
     units = config.units
+    cnn1_filters = config.cnn1_filters
+    cnn1_kernel_size = config.cnn1_kernel_size
+    cnn2_filters = config.cnn2_filters
+    cnn2_kernel_size = config.cnn2_kernel_size
+    max_pool_strides = config.max_pool_strides
+    max_pool_size = config.max_pool_size
     d = config.d
     w = config.w
     emb_dim = config.emb_dim
@@ -50,8 +50,18 @@ if __name__ == "__main__":
     if model_type == "las":
         model = plas.PLAS(test_vocab_tar_size, embedding_dim, units, batch_size)
     elif model_type == "las_d_w":
-        model = las.LAS(test_vocab_tar_size, d, w, emb_dim, dec_units, batch_size)
-
+        model = las.LAS(test_vocab_tar_size,
+                        cnn1_filters,
+                        cnn1_kernel_size,
+                        cnn2_filters,
+                        cnn2_kernel_size,
+                        max_pool_strides,
+                        max_pool_size,
+                        d,
+                        w,
+                        emb_dim,
+                        dec_units,
+                        batch_size)
     # 检查点
     checkpoint_dir = config.checkpoint_dir
     checkpoint_prefix = os.path.join(checkpoint_dir, config.checkpoint_prefix)

@@ -84,6 +84,23 @@ class DecoderLayer(tf.keras.layers.Layer):
         return out3, attn_weights_block1, attn_weights_block2
 
 
+def create_masks(inp, tar):
+    # 编码器填充遮挡
+    enc_padding_mask = layers.create_padding_mask(inp)
+
+    # 在解码器的第二个注意力模块使用。
+    # 该填充遮挡用于遮挡编码器的输出。
+    dec_padding_mask = layers.create_padding_mask(inp)
+
+    # 在解码器的第一个注意力模块使用。
+    # 用于填充（pad）和遮挡（mask）解码器获取到的输入的后续标记（future tokens）。
+    look_ahead_mask = layers.create_look_ahead_mask(tar)
+    dec_target_padding_mask = layers.create_padding_mask(tar)
+    combined_mask = tf.maximum(dec_target_padding_mask, look_ahead_mask)
+
+    return enc_padding_mask, combined_mask, dec_padding_mask
+
+
 # 编码器
 class Encoder(tf.keras.layers.Layer):
     """
@@ -104,7 +121,7 @@ class Encoder(tf.keras.layers.Layer):
 
         self.embedding = tf.keras.layers.Embedding(input_vocab_size, d_model)
         self.pos_encoding = layers.positional_encoding(maximum_position_encoding,
-                                                               self.d_model)
+                                                       self.d_model)
 
         self.enc_layers = [EncoderLayer(d_model, num_heads, dff, rate)
                            for _ in range(num_layers)]
@@ -173,28 +190,12 @@ class Decoder(tf.keras.layers.Layer):
         return x, attention_weights
 
 
-def create_masks(inp, tar):
-    # 编码器填充遮挡
-    enc_padding_mask = layers.create_padding_mask(inp)
-
-    # 在解码器的第二个注意力模块使用。
-    # 该填充遮挡用于遮挡编码器的输出。
-    dec_padding_mask = layers.create_padding_mask(inp)
-
-    # 在解码器的第一个注意力模块使用。
-    # 用于填充（pad）和遮挡（mask）解码器获取到的输入的后续标记（future tokens）。
-    look_ahead_mask = layers.create_look_ahead_mask(tar)
-    dec_target_padding_mask = layers.create_padding_mask(tar)
-    combined_mask = tf.maximum(dec_target_padding_mask, look_ahead_mask)
-
-    return enc_padding_mask, combined_mask, dec_padding_mask
-
-
 # Transformer模型
 class Transformer(tf.keras.Model):
     """
     Transformer 包括编码器，解码器和最后的线性层。解码器的输出是线性层的输入，返回线性层的输出。
     """
+
     def __init__(self, num_layers, d_model, num_heads, dff, input_vocab_size,
                  target_vocab_size, pe_input, pe_target, rate=0.1):
         super(Transformer, self).__init__()
@@ -205,8 +206,7 @@ class Transformer(tf.keras.Model):
 
         self.final_layer = tf.keras.layers.Dense(target_vocab_size)
 
-    def call(self, inp, tar, training, enc_padding_mask,
-             look_ahead_mask, dec_padding_mask):
+    def call(self, inp, tar, training, enc_padding_mask, look_ahead_mask, dec_padding_mask):
         enc_output = self.encoder(inp, training, enc_padding_mask)  # (batch_size, inp_seq_len, d_model)
 
         # dec_output.shape == (batch_size, tar_seq_len, d_model)
@@ -217,3 +217,116 @@ class Transformer(tf.keras.Model):
 
         return final_output, attention_weights
 
+
+# 使用schedual sampling的transformer
+class ScheduledSamplingTransformer(tf.keras.Model):
+    """
+    使用scheduled sampling的Transformer模型
+    """
+
+    def __init__(self, num_layers, d_model, num_heads, dff, input_vocab_size,
+                 target_vocab_size, pe_input, pe_target, rate=0.1, schedule_type=None, temperature=1.0):
+        super(Transformer, self).__init__()
+
+        self.read_probability = 0.7
+        self.schedule_type = 'constant'
+        self.k = None
+
+        self.schedule_type = schedule_type
+        self.temperature = temperature
+
+        self.encoder = Encoder(num_layers, d_model, num_heads, dff, input_vocab_size, pe_input, rate)
+
+        self.decoder = Decoder(num_layers, d_model, num_heads, dff, target_vocab_size, pe_target, rate)
+
+        self.final_layer = tf.keras.layers.Dense(target_vocab_size)
+
+    def call(self, inp, tar, training, enc_padding_mask, look_ahead_mask, dec_padding_mask, step):
+        enc_output = self.encoder(inp, training, enc_padding_mask)  # (batch_size, inp_seq_len, d_model)
+
+        # dec_output.shape == (batch_size, tar_seq_len, d_model)
+        dec_first_output, attention_weights = self.decoder(tar, enc_output, training, look_ahead_mask, dec_padding_mask)
+        first_final_output = self.final_layer(dec_first_output)
+
+        gumbel_dec_first_output = self._gumbel_softmax(first_final_output)  # 对第一个decoder输出做高斯模糊
+
+        mix_output = self.embedding_mix(gumbel_dec_first_output, tar)
+
+        dec_second_outputs = self.decoder(mix_output, enc_output, training, look_ahead_mask, dec_padding_mask)
+        final_output = self.final_layer(dec_second_outputs)  # (batch_size, tar_seq_len, target_vocab_size)
+
+        return final_output, attention_weights
+
+    def _embedding_mix(self, gumbel_inputs, inputs, step):
+        """返回schedule sampling的embedding
+
+        :param gumbel_inputs:第一次decoder输出后添加噪音的Output
+        :param inputs:真实的target
+        :param step:当前步数
+        :return:schedule sampling的input
+        """
+        random = tf.random.uniform(shape=tf.shape(inputs), maxval=1, minval=0, dtype=tf.float32)
+        sampling_probability = self._get_sampling_probability(step, read_probability=None, schedule_type=None, k=None)
+        return tf.where(random < sampling_probability, x=gumbel_inputs, y=inputs)
+
+    def _gumbel_softmax(self, inputs):
+        """
+        按照论文中的公式，实现GumbelSoftmax，具体见论文公式
+        :param inputs: 输入
+        :return: 混合Gumbel噪音后，做softmax以及argmax之后的输出
+        """
+        uniform = tf.random.uniform(shape=tf.shape(inputs), maxval=1, minval=0)
+        # 以给定输入的形状采样Gumbel噪声
+        gumbel_noise = -tf.math.log(-tf.math.log(uniform))
+        # 将Gumbel噪声添加到输入中，输入第三维就是分数
+        gumbel_outputs = inputs + gumbel_noise
+        gumbel_outputs = tf.cast(gumbel_outputs, dtype=tf.float32)
+        # 在给定温度下，进行softmax并返回
+        gumbel_outputs = tf.nn.softmax(self.temperature * gumbel_outputs)
+        gumbel_outputs = tf.argmax(gumbel_outputs, axis=-1)
+        return tf.cast(gumbel_outputs, dtype=tf.float32)
+
+    def set_decay_config(self, read_probability=None, schedule_type=None, k=None):
+        """设置几率衰减的类型及参数
+
+        :param read_probability: 若为线性衰减，初始的几率
+        :param schedule_type: 衰减类型: "constant", "linear", "exponential", "inverse_sigmoid"
+        :param k: 函数参数
+        """
+        self.read_probability = read_probability
+        self.schedule_type = schedule_type
+        self.k = k
+
+    def _get_sampling_probability(self, step):
+        """返回几率
+        需先使用方法set_decay_config来设置衰减函数类型及
+        :param step:当前训练步数
+        :return: 几率
+        """
+        read_probability = self.read_probability
+        schedule_type = self.schedule_type
+        k = self.k
+
+        if read_probability is None and schedule_type is None:
+            return None
+
+        if schedule_type is not None and schedule_type != "constant":
+            if k is None:
+                raise ValueError("scheduled_sampling_type确定后必须设置scheduled_sampling_k ")
+
+            step = tf.cast(step, tf.float32)
+            k = tf.constant(k, tf.float32)
+
+            if schedule_type == "linear":
+                if read_probability is None:
+                    raise ValueError("Linear schedule 需要一个初始概率")
+                read_probability = min(read_probability, 1.0)
+                read_probability = tf.maximum(read_probability - k * step, 0.0)
+            elif schedule_type == "exponential":
+                read_probability = tf.pow(k, step)
+            elif schedule_type == "inverse_sigmoid":
+                read_probability = k / (k + tf.exp(step / k))
+            else:
+                raise TypeError("未知的schedule type: {}".format(schedule_type))
+
+        return 1.0 - read_probability

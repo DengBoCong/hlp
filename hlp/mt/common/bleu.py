@@ -1,7 +1,3 @@
-"""
-对两个句子进行比对并得出BLEU指标
-"""
-
 import re
 import nltk
 

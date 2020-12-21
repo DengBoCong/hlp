@@ -1,26 +1,16 @@
 # 使用说明
+项目自带较小的训练和验证数据集，可以无需配置运行所有功能。
+- 语料预处理
+   - （可选步骤）在mt/config/config.json中配置语料路径和切分方法
+   - 运行mt/preprocess.py
 
-- 运行入口： 
-    - nmt_train: 使用 ./data/corpus/en-zh_train.txt 进行训练
-    - nmt_evaluate : 使用 ./data/corpus/en-zh_eval.txt 对模型进行测试,需对指标类型进行选择
-        - bleu指标
-    - nmt_translate : 对输入句子进行翻译，输入0退出
-    - language_model : 对语言模型进行训练
-    
-- 分词方法(在配置文件中进行选择)：
-    - 英文分词:
-        - BPE:使用子词分词器（subwords tokenizer）对英文进行BPE(Byte Pair Encoding)分词
-        - WORD:使用单词划分的方法进行分词
-    - 中文分词：
-        - CHAR:使用字划分方法进行分词
-        - WORD:使用jieba模块对词进行划分来分词
+- 训练模型
+   - （可选步骤）在mt/config/config.json中配置语料路径、切分方法、模型参数和训练超参数等
+   - 运行mt/train.py
 
-- 配置文件参数提示：
-    - 验证集部分：
-        - 若想从训练数据中划分验证集，则validate_from_txt设置为False，并设置训练集比例train_size
-        - 若想从 ./data/en-zh_val.txt 中读取验证集，则validate_from_txt设置为True，并设置验证集句子数num_validate_sentences
+- 评价模型
+   - （可选步骤）在mt/config/config.json中配置验证语料路径
+   - 运行mt/evaluate.py
 
-
-# 数据集
-
-github上传为测试数据集
+- 交互式翻译
+   - 运行mt/translate.py

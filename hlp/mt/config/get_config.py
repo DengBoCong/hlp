@@ -50,8 +50,7 @@ checkpoint_ensembling = conf["checkpoint_ensembling"]  # 是否采用checkpoint_
 
 lm_path_to_train_file = conf["language_model"]["path_to_train_file_lm"]  # 语言模型训练文本路径
 lm_language = conf["language_model"]["language"]
-lm_en_tokenize_type = conf["language_model"]["en_tokenize_type"]
-lm_zh_tokenize_type = conf["language_model"]["zh_tokenize_type"]
+lm_tokenize_type = conf["language_model"]["tokenize_type"]
 lm_EPOCHS = conf["language_model"]["EPOCHS"]
 lm_num_sentences = conf["language_model"]["num_sentences"]
 lm_BATCH_SIZE = conf["language_model"]["BATCH_SIZE"]
