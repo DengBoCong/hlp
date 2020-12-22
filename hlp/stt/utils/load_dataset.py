@@ -2,8 +2,8 @@ import os
 
 
 def load_data(dataset_name, data_path, num_examples):
-    """加载数据集的语音文件名和转写列表
-
+    """
+    加载数据集的语音文件名和转写列表
     :param dataset_name: 数据集名字
     :param data_path: 数据集路径
     :param num_examples: 数据量
@@ -20,8 +20,8 @@ def load_data(dataset_name, data_path, num_examples):
 
 
 def _get_text(line, colum_sep=" "):
-    """获得语音转写文本
-
+    """
+    获得语音转写文本
     :param line: 可能包括语音文件和语音转写
     :param colum_sep: 可能的语音文件名和转写文本间的分隔符
     :return: 音频对应的转写文本
@@ -33,8 +33,8 @@ def _get_text(line, colum_sep=" "):
 
 
 def _get_text_list(text_path, colum_sep=" "):
-    """从标注文件中获得所有转写
-
+    """
+    从标注文件中获得所有转写
     :param text_path: 标注文件路径
     :param colum_sep: 语音文件和转写间的分隔符
     :return: 转写列表
@@ -48,8 +48,8 @@ def _get_text_list(text_path, colum_sep=" "):
 
 
 def get_data_librispeech(data_path, num_examples=None):
-    """ 获得librispeech数据集的语音文件和转写列表
-
+    """
+    获得librispeech数据集的语音文件和转写列表
     :param data_path: librispeech数据集路径
     :param num_examples: 最大语音文件数
     :return: (语音文件列表，转写列表)
@@ -82,8 +82,8 @@ def get_data_librispeech(data_path, num_examples=None):
 
 
 def get_data_thchs30(data_path, num_examples=None, transcript_row=0):
-    """ 获得thchs数据集的语音文件和转写列表
-
+    """
+    获得thchs数据集的语音文件和转写列表
     :param transcript_row: 语音转写行，0表示中文词，1中文拼音，2声母韵母
     :param data_path: thchs数据集路径
     :param num_examples: 最大语音文件数
@@ -110,8 +110,8 @@ def get_data_thchs30(data_path, num_examples=None, transcript_row=0):
 
 
 def get_data_number(data_path, num_examples=None):
-    """ 获得number数据集的语音文件和转写列表
-
+    """
+    获得number数据集的语音文件和转写列表
     :param data_path: number数据集路径
     :param num_examples: 最大语音文件数
     :return: (语音文件列表，转写列表)
