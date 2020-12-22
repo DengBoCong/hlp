@@ -28,24 +28,6 @@ def preprocess_sentences_en(sentences, mode=_config.en_tokenize_type, start_word
         return ''
 
 
-def _preprocess_sentence_zh_char(sentence, start_word=_config.start_word, end_word=_config.end_word):
-    """对输入句子(string)进行预处理"""
-    s = sentence.strip()
-    s = ' '.join(s)
-    s = s.strip()
-    s = start_word + ' ' + s + ' ' + end_word  # 给句子加上开始结束标志
-    return s
-
-
-def _preprocess_sentence_zh_word(sentences, start_word=_config.start_word, end_word=_config.end_word):
-    """使用jieba进行分词前的预处理"""
-    sentences_word = []
-    for sentence in sentences:
-        sentence = start_word + ' ' + ' '.join(jieba.cut(sentence.strip())) + ' ' + end_word
-        sentences_word.append(sentence)
-    return sentences_word
-
-
 def preprocess_sentences_zh(sentences, mode=_config.zh_tokenize_type, start_word=_config.start_word,
                             end_word=_config.end_word):
     """
