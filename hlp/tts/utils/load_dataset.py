@@ -61,11 +61,15 @@ def load_data(train_data_path: str, max_len: int, vocab_size: int, batch_size: i
         tokenizer = tf.keras.preprocessing.text.Tokenizer(filters='', oov_token="<unk>", num_words=vocab_size)
         tokenizer.fit_on_texts(train_sentence_data)
         train_sentence_sequences = tokenizer.texts_to_sequences(train_sentence_data)
+        train_sentence_sequences = tf.keras.preprocessing.sequence.pad_sequences(train_sentence_sequences,
+                                                                                 max_len=max_len, padding="post")
         with open(dict_path, 'w', encoding="utf-8") as dict_file:
             dict_file.write(tokenizer.to_json())
 
         if valid_flag:
             valid_sentence_sequences = tokenizer.texts_to_sequences(valid_sentence_data)
+            valid_sentence_sequences = tf.keras.preprocessing.sequence.pad_sequences(valid_sentence_sequences,
+                                                                                     max_len=max_len, padding="post")
 
     train_dataset = _to_dataset(data=(train_audio_data_pair, train_sentence_sequences),
                                 batch_size=batch_size, buffer_size=buffer_size)

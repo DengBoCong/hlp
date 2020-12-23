@@ -2,18 +2,22 @@ import re
 import tensorflow as tf
 
 
-def tokenize_and_encode(texts: list, dict_path: str, unk_token: str = "<unk>"):
+def tokenize_and_encode(texts: list, dict_path: str, max_len: int,
+                        num_words: int, unk_token: str = "<unk>"):
     """
     用于将文本序列集合转化为token序列
     :param texts: 文本序列列表
     :param dict_path: 字典保存路径
+    :param max_len: 文本最大长度
+    :param num_words:最多保存词汇数量
     :param unk_token: 未登录词
     :return texts: 处理好的文本token序列
     :return tokenizer: tokenizer
     """
-    tokenizer = tf.keras.preprocessing.text.Tokenizer(filters="", oov_token=unk_token)
+    tokenizer = tf.keras.preprocessing.text.Tokenizer(filters="", oov_token=unk_token, num_words=num_words)
     tokenizer.fit_on_texts(texts)
     texts = tokenizer.texts_to_sequences(texts)
+    texts = tf.keras.preprocessing.sequence.pad_sequences(texts, maxlen=max_len, padding="post")
 
     with open(dict_path, 'w', encoding="utf-8") as dict_file:
         dict_file.write(tokenizer.to_json())

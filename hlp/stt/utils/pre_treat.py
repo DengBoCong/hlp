@@ -4,9 +4,38 @@ import tensorflow as tf
 from hlp.stt.utils.audio_process import wav_to_feature
 
 
+def dispatch_pre_treat_func(func_type: str, data_path: str, dataset_infos_file: str, max_length: int,
+                            spectrum_data_dir: str, audio_feature_type: str = "mfcc",
+                            transcript_row: int = 0):
+    """
+    预处理方法分发匹配
+    :param func_type: 预处理方法类型
+    :param data_path: 数据存放目录路径
+    :param dataset_infos_file: 保存处理之后的数据路径
+    :param max_length: 最大音频补齐长度
+    :param spectrum_data_dir: 保存处理后的音频特征数据目录
+    :param audio_feature_type: 特征类型
+    :param transcript_row: 使用文本数据中的第几行，第一行文字，第二行拼音，第三行音节
+    :return: 无返回值
+    """
+    operation = {
+        "thchs30": lambda: preprocess_thchs30_speech_raw_data(data_path=data_path, max_length=max_length,
+                                                              dataset_infos_file=dataset_infos_file,
+                                                              spectrum_data_dir=spectrum_data_dir,
+                                                              audio_feature_type=audio_feature_type,
+                                                              transcript_row=transcript_row),
+        "librispeech": lambda: preprocess_librispeech_speech_raw_data(data_path=data_path, max_length=max_length,
+                                                                      dataset_infos_file=dataset_infos_file,
+                                                                      spectrum_data_dir=spectrum_data_dir,
+                                                                      audio_feature_type=audio_feature_type)
+    }
+
+    operation.get(func_type, "thchs30")()
+
+
 def preprocess_thchs30_speech_raw_data(data_path: str, dataset_infos_file: str, max_length: int,
                                        spectrum_data_dir: str, audio_feature_type: str = "mfcc",
-                                       transcript_row: int = 0):
+                                       transcript_row: int = 0, start_sign: str="<start>", end_sign: str="<end>"):
     """
     用于处理thchs30数据集的方法，将数据整理为<音频地址, 句子>的
     形式，这样方便后续进行分批读取
@@ -16,6 +45,9 @@ def preprocess_thchs30_speech_raw_data(data_path: str, dataset_infos_file: str, 
     :param spectrum_data_dir: 保存处理后的音频特征数据目录
     :param audio_feature_type: 特征类型
     :param transcript_row: 使用文本数据中的第几行，第一行文字，第二行拼音，第三行音节
+    :param start_sign: 句子开始标记
+    :param end_sign: 句子结束标记
+    :return: 无返回值
     """
     if not os.path.exists(data_path):
         print("thchs30数据集不存在，请检查重试")
@@ -39,11 +71,15 @@ def preprocess_thchs30_speech_raw_data(data_path: str, dataset_infos_file: str, 
                 with open(text_file_name, 'r', encoding='utf-8') as text_file:
                     texts = text_file.readlines()
                 text = texts[transcript_row].strip()
+                text = start_sign + " " + text + " " + end_sign
 
                 audio_feature_file = spectrum_data_dir + data_name + ".npy"
                 audio_feature = wav_to_feature(audio_path, audio_feature_type)
+                audio_feature = tf.expand_dims(audio_feature, axis=0)
                 audio_feature = tf.keras.preprocessing.sequence.pad_sequences(audio_feature, maxlen=max_length,
                                                                               dtype="float32", padding="post")
+                audio_feature = tf.squeeze(audio_feature, axis=0)
+
                 np.save(file=audio_feature_file, arr=audio_feature)
                 ds_infos_file.write(audio_feature_file + '\t' + text + "\n")
 
@@ -63,7 +99,7 @@ def preprocess_librispeech_speech_raw_data(data_path: str, dataset_infos_file: s
     :param max_length: 最大音频补齐长度
     :param spectrum_data_dir: 保存处理后的音频特征数据目录
     :param audio_feature_type: 特征类型
-    :param transcript_row: 使用文本数据中的第几行，第一行文字，第二行拼音，第三行音节
+    :return: 无返回值
     """
     if not os.path.exists(data_path):
         print("thchs30数据集不存在，请检查重试")
