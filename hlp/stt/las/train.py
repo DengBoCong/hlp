@@ -75,6 +75,8 @@ if __name__ == "__main__":
     train_wav_path_list, train_label_list = load_dataset.load_data(dataset_name,
                                                                    data_path,
                                                                    num_examples)
+    print(train_wav_path_list)
+    exit()
 
     print("数据预处理......")
     splitted_text_list = split_sentences(train_label_list, text_process_mode)
