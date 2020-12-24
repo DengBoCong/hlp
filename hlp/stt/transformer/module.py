@@ -1,8 +1,10 @@
 import os
 import time
 import tensorflow as tf
+from hlp.utils.beamsearch import BeamSearch
 from hlp.stt.utils.load_dataset import load_data
 from hlp.utils.optimizers import loss_func_mask
+from hlp.stt.utils.audio_process import wav_to_feature
 
 
 def train(encoder: tf.keras.Model, decoder: tf.keras.Model, optimizer: tf.keras.optimizers.Adam,
@@ -69,6 +71,67 @@ def train(encoder: tf.keras.Model, decoder: tf.keras.Model, optimizer: tf.keras.
             _valid_step(encoder=encoder, decoder=decoder, dataset=valid_dataset, steps_per_epoch=valid_steps_per_epoch)
 
 
+def recognize(encoder: tf.keras.Model, decoder: tf.keras.Model, beam_size: int,
+              audio_feature_type: str, max_length: int, max_sentence_length: int, dict_path: str):
+    """
+    语音识别模块
+    :param encoder: 模型的encoder
+    :param decoder: 模型的decoder
+    :param beam_size: beam_size
+    :param audio_feature_type: 特征类型
+    :param max_length: 最大音频补齐长度
+    :param max_sentence_length: 最大音频补齐长度
+    :param dict_path: 字典保存路径
+    """
+    beam_search_container = BeamSearch(beam_size=beam_size, max_length=max_sentence_length, worst_score=0)
+
+    print("Agent: 你好！结束识别请输入ESC。")
+    while True:
+        path = input("Path: ")
+        if path == "ESC":
+            print("Agent: 再见！")
+            exit(0)
+
+        if not os.path.exists(path):
+            print("音频文件不存在，请重新输入")
+            continue
+
+        audio_feature = wav_to_feature(path, audio_feature_type)
+        audio_feature = tf.expand_dims(audio_feature, axis=0)
+        audio_feature = tf.keras.preprocessing.sequence.pad_sequences(audio_feature, maxlen=max_length,
+                                                                      dtype="float32", padding="post")
+
+        with open(dict_path, 'r', encoding='utf-8') as dict_file:
+            json_string = dict_file.read().strip().strip("\n")
+            tokenizer = tf.keras.preprocessing.text.tokenizer_from_json(json_string)
+        dec_input = tf.expand_dims([tokenizer.word_index.get("<start>", "<unk>")], 0)
+
+        beam_search_container.reset(inputs=audio_feature, dec_input=dec_input)
+        for i in range(max_sentence_length):
+            enc_outputs, padding_mask = encoder(audio_feature)
+            sentence_predictions = decoder(inputs=[dec_input, enc_outputs, padding_mask])
+            sentence_predictions = tf.squeeze(sentence_predictions, axis=0)
+            beam_search_container.expand(predictions=sentence_predictions, end_sign=tokenizer.word_index.get("<end>"))
+
+            if beam_search_container.beam_size == 0:
+                break
+
+            audio_feature, dec_input = beam_search_container.get_search_inputs()
+
+        beam_search_result = beam_search_container.get_result(top_k=3)
+        result = ''
+        # 从容器中抽取序列，生成最终结果
+        for i in range(len(beam_search_result)):
+            temp = beam_search_result[i].numpy()
+            text = tokenizer.sequences_to_texts(temp)
+            text[0] = text[0].replace("<start>", '').replace("<end>", '').replace(' ', '')
+            result = '<' + text[0] + '>' + result
+
+        print("识别句子为".format(result))
+
+    print("识别结束")
+
+
 def _train_step(encoder: tf.keras.Model, decoder: tf.keras.Model, optimizer,
                 sentence_input: tf.Tensor, sentence_real: tf.Tensor, audio_feature: tf.Tensor):
     """
@@ -85,8 +148,8 @@ def _train_step(encoder: tf.keras.Model, decoder: tf.keras.Model, optimizer,
         enc_outputs, padding_mask = encoder(audio_feature)
         sentence_predictions = decoder(inputs=[sentence_input, enc_outputs, padding_mask])
         loss = loss_func_mask(sentence_real, sentence_predictions)
-    batch_loss = loss
 
+    batch_loss = loss
     variables = encoder.trainable_variables + decoder.trainable_variables
     gradients = tape.gradient(loss, variables)
     optimizer.apply_gradients(zip(gradients, variables))

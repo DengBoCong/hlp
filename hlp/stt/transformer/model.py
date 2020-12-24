@@ -22,7 +22,7 @@ def encoder(vocab_size: int, embedding_dim: int, num_layers: int, feature_dim: i
     padding_mask = tf.keras.layers.Lambda(_create_padding_mask,
                                           output_shape=(1, 1, None))(inputs)
     outputs = tf.keras.layers.Dense(embedding_dim)(inputs)
-    outputs = tf.keras.layers.LayerNormalization()(outputs)
+    outputs = tf.keras.layers.LayerNormalization(epsilon=1e-6)(outputs)
 
     outputs = outputs * tf.math.sqrt(tf.cast(embedding_dim, tf.float32))
     pos_encoding = positional_encoding(vocab_size, embedding_dim)
@@ -70,6 +70,8 @@ def decoder(vocab_size: int, embedding_dim: int, num_layers: int,
             units=decoder_units, d_model=embedding_dim, num_heads=num_heads,
             dropout=dropout, name="transformer_decoder_layer_{}".format(i),
         )(inputs=[outputs, enc_outputs, look_ahead_mask, padding_mask])
+
+    outputs = tf.keras.layers.Dense(units=vocab_size, name="outputs")(outputs)
 
     return tf.keras.Model(inputs=[dec_inputs, enc_outputs, padding_mask], outputs=outputs)
 

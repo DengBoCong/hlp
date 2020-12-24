@@ -7,6 +7,7 @@ from argparse import ArgumentParser
 sys.path.append(os.path.abspath(__file__)[:os.path.abspath(__file__).rfind("\\hlp\\")])
 from hlp.stt.utils.pre_treat import dispatch_pre_treat_func
 from hlp.stt.transformer.module import train
+from hlp.stt.transformer.module import recognize
 from hlp.stt.transformer.module import load_checkpoint
 from hlp.stt.transformer.model import encoder
 from hlp.stt.transformer.model import decoder
@@ -22,20 +23,21 @@ if __name__ == '__main__':
     parser = ArgumentParser(description='transformer tts V1.0.0')
     parser.add_argument('--config_file', default='', type=str, required=False, help='配置文件路径，为空则默认命令行，不为空则使用配置文件参数')
     parser.add_argument('--act', default='pre_treat', type=str, required=False, help='执行类型')
-    parser.add_argument('--epochs', default=4, type=int, required=False, help='训练轮次')
+    parser.add_argument('--epochs', default=100, type=int, required=False, help='训练轮次')
     parser.add_argument('--lr', default=0.0001, type=float, required=False, help='学习率')
     parser.add_argument('--encoder_vocab_size', default=10000, type=int, required=False, help='词汇量大小')
     parser.add_argument('--decoder_vocab_size', default=1000, type=int, required=False, help='词汇量大小')
     parser.add_argument('--feature_dim', default=80, type=int, required=False, help='处理后音频的特征维度')
     parser.add_argument('--batch_size', default=2, type=int, required=False, help='batch大小')
     parser.add_argument('--buffer_size', default=20000, type=int, required=False, help='dataset缓冲区大小')
+    parser.add_argument('--beam_size', default=3, type=int, required=False, help='beam_size')
     parser.add_argument('--checkpoint_save_freq', default=2, type=int, required=False, help='检查点保存频率')
     parser.add_argument('--embedding_dim', default=256, type=int, required=False, help='嵌入层维度')
     parser.add_argument('--encoder_units', default=256, type=int, required=False, help='单元数')
     parser.add_argument('--decoder_units', default=256, type=int, required=False, help='单元数')
     parser.add_argument('--num_heads', default=8, type=int, required=False, help='注意头数')
     parser.add_argument('--dropout', default=0.1, type=float, required=False, help='encoder的dropout采样率')
-    parser.add_argument('--num_layers', default=6, type=int, required=False, help='encoder和decoder的layer层数')
+    parser.add_argument('--num_layers', default=2, type=int, required=False, help='encoder和decoder的layer层数')
     parser.add_argument('--max_sentence_length', default=100, type=int, required=False, help='最大句子序列长度')
     parser.add_argument('--valid_data_split', default=0.1, type=float, required=False, help='从训练数据划分验证数据的比例')
     parser.add_argument('--max_train_data_size', default=20, type=int, required=False, help='从训练集读取最大数据量，0即全部数据')
@@ -52,7 +54,7 @@ if __name__ == '__main__':
                         required=False, help='整理后的音频句子对保存路径')
     parser.add_argument('--dict_path', default='\\data\\data_thchs30\\transformer_dict.json', type=str, required=False,
                         help='字典存放路径')
-    parser.add_argument('--checkpoint_dir', default='\\data\\checkpoints\\las', type=str, required=False,
+    parser.add_argument('--checkpoint_dir', default='\\data\\checkpoints\\transformer', type=str, required=False,
                         help='检查点保存路径')
 
     options = parser.parse_args().__dict__
@@ -87,8 +89,10 @@ if __name__ == '__main__':
               valid_data_split=options['valid_data_split'], valid_data_path="",
               max_train_data_size=options['max_train_data_size'], encoder=encoder,
               max_valid_data_size=options['max_valid_data_size'], decoder=decoder)
-    elif execute_type == 'generate':
-        print("待完善")
+    elif execute_type == 'recognize':
+        recognize(encoder=encoder, decoder=decoder, beam_size=options['beam_size'],
+                  audio_feature_type=options['audio_feature_type'], max_length=options['max_time_step'],
+                  max_sentence_length=options['max_sentence_length'], dict_path=work_path + options['dict_path'])
     elif execute_type == 'pre_treat':
         dispatch_pre_treat_func(func_type=options['dataset_type'],
                                 data_path=work_path + options['train_data_dir'],

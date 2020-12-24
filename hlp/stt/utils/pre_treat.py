@@ -35,7 +35,7 @@ def dispatch_pre_treat_func(func_type: str, data_path: str, dataset_infos_file: 
 
 def preprocess_thchs30_speech_raw_data(data_path: str, dataset_infos_file: str, max_length: int,
                                        spectrum_data_dir: str, audio_feature_type: str = "mfcc",
-                                       transcript_row: int = 0, start_sign: str="<start>", end_sign: str="<end>"):
+                                       transcript_row: int = 0, start_sign: str = "<start>", end_sign: str = "<end>"):
     """
     用于处理thchs30数据集的方法，将数据整理为<音频地址, 句子>的
     形式，这样方便后续进行分批读取
