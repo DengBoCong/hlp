@@ -1,3 +1,5 @@
+import tensorflow as tf
+
 def wers(truths, preds):
     """多个文本WER计算
 

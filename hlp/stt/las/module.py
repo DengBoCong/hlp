@@ -44,10 +44,9 @@ def train(epochs: int, train_data_path: str, max_len: int, vocab_size: int,
 
         print("Epoch {}/{}".format(epoch + 1, epochs))
         for (batch, (audio_feature, sentence)) in enumerate(train_dataset.take(steps_per_epoch)):
-            print(sentence.shape)
-            print(audio_feature.shape)
             batch_loss = _train_step(audio_feature, sentence,
                                      enc_hidden, tokenizer, model, optimizer, batch_size)
+
             total_loss += batch_loss
 
             print('Epoch {} Batch {} Loss {:.4f} - {:.4f} sec'.format(epoch + 1, batch, batch_loss.numpy(),
@@ -58,6 +57,10 @@ def train(epochs: int, train_data_path: str, max_len: int, vocab_size: int,
 
         if (epoch + 1) % checkpoint_save_freq == 0:
             checkpoint.save()
+            # norm_rates_lers, norm_aver_lers = compute_metric(model, val_data_generator,
+            #                                                  val_batchs, val_batch_size)
+            # print("平均字母错误率: ", norm_aver_lers)
+
 
 
 def _train_step(audio_feature, sentence, enc_hidden, tokenizer, model, las_optimizer, train_batch_size):
@@ -67,6 +70,7 @@ def _train_step(audio_feature, sentence, enc_hidden, tokenizer, model, las_optim
         # 解码器输入符号
         for t in range(1, sentence.shape[1]):
             predictions, _ = model(audio_feature, enc_hidden, dec_input)
+
             loss += loss_func_mask(sentence[:, t], predictions)  # 根据预测计算损失
 
             # 使用导师驱动，下一步输入符号是训练集中对应目标符号
@@ -79,6 +83,24 @@ def _train_step(audio_feature, sentence, enc_hidden, tokenizer, model, las_optim
     las_optimizer.apply_gradients(zip(gradients, variables))  # 优化器反向传播更新参数
     return batch_loss
 
+
+def _train_step(audio_feature, sentence, enc_hidden, tokenizer, model, las_optimizer, train_batch_size):
+    loss = 0
+    dec_input = tf.expand_dims([tokenizer.word_index.get('<start>')] * train_batch_size, 1)
+    for t in range(1, sentence.shape[1]):
+        predictions, _ = model(audio_feature, enc_hidden, dec_input)
+
+        loss += loss_func_mask(sentence[:, t], predictions)  # 根据预测计算损失
+
+        # 使用导师驱动，下一步输入符号是训练集中对应目标符号
+        dec_input = sentence[:, t]
+        dec_input = tf.expand_dims(dec_input, 1)
+
+    batch_loss = (loss / int(sentence.shape[1]))
+    variables = model.trainable_variables
+    gradients = tape.gradient(loss, variables)  # 计算损失对参数的梯度
+    las_optimizer.apply_gradients(zip(gradients, variables))  # 优化器反向传播更新参数
+    return batch_loss
 
 def load_checkpoint(model: tf.keras.Model, checkpoint_dir: str,
                     execute_type: str, checkpoint_save_size: int):

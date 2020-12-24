@@ -16,7 +16,7 @@ def main():
     parser.add_argument('--config_file', default='', type=str, required=False, help='配置文件路径，为空则默认命令行，不为空则使用配置文件参数')
     parser.add_argument('--act', default='pre_treat', type=str, required=False, help='执行类型')
     parser.add_argument('--dataset_type', default='thchs30', type=str, required=False, help='数据集类型')
-    parser.add_argument('--model_type', default='las', type=str, required=False, help='模型类型')
+    parser.add_argument('--model_type', default='las_d_w', type=str, required=False, help='模型类型')
     parser.add_argument('--epochs', default=4, type=int, required=False, help='训练轮次')
     parser.add_argument('--vocab_size', default=1000, type=int, required=False, help='词汇量大小')
     parser.add_argument('--batch_size', default=2, type=int, required=False, help='batch大小')
@@ -74,7 +74,7 @@ def main():
                     cnn2_kernel_size=options['cnn2_kernel_size'], max_pool_strides=options['max_pool_strides'],
                     max_pool_size=options['max_pool_size'], d=options['d'], w=options['w'],
                     embedding_dim=options['emb_dim'], dec_units=options['dec_units'],
-                    train_batch_size=options['batch_size'])
+                    batch_size=options['batch_size'])
 
     optimizer = tf.keras.optimizers.Adam(lr=options['lr'])
     ckpt_manager = load_checkpoint(model=model, checkpoint_dir=work_path + options['checkpoint_dir'],
