@@ -8,6 +8,8 @@ sys.path.append(os.path.abspath(__file__)[:os.path.abspath(__file__).rfind("\\hl
 from hlp.stt.utils.pre_treat import dispatch_pre_treat_func
 from hlp.stt.transformer.module import train
 from hlp.stt.transformer.module import load_checkpoint
+from hlp.stt.transformer.model import encoder
+from hlp.stt.transformer.model import decoder
 
 if __name__ == '__main__':
     """
@@ -26,13 +28,19 @@ if __name__ == '__main__':
     parser.add_argument('--batch_size', default=2, type=int, required=False, help='batch大小')
     parser.add_argument('--buffer_size', default=20000, type=int, required=False, help='dataset缓冲区大小')
     parser.add_argument('--checkpoint_save_freq', default=2, type=int, required=False, help='检查点保存频率')
+    parser.add_argument('--embedding_dim', default=256, type=int, required=False, help='嵌入层维度')
+    parser.add_argument('--encoder_units', default=256, type=int, required=False, help='单元数')
+    parser.add_argument('--decoder_units', default=256, type=int, required=False, help='单元数')
+    parser.add_argument('--num_heads', default=8, type=int, required=False, help='注意头数')
+    parser.add_argument('--dropout', default=0.1, type=float, required=False, help='encoder的dropout采样率')
+    parser.add_argument('--num_layers', default=6, type=int, required=False, help='encoder和decoder的layer层数')
     parser.add_argument('--max_sentence_length', default=100, type=int, required=False, help='最大句子序列长度')
     parser.add_argument('--valid_data_split', default=0.2, type=float, required=False, help='从训练数据划分验证数据的比例')
     parser.add_argument('--max_train_data_size', default=20, type=int, required=False, help='从训练集读取最大数据量，0即全部数据')
     parser.add_argument('--max_valid_data_size', default=0, type=int, required=False, help='从验证集集读取最大数据量，0即全部数据')
     parser.add_argument('--checkpoint_save_size', default=2, type=int, required=False, help='训练中最多保存checkpoint数量')
     parser.add_argument('--dataset_type', default='thchs30', type=str, required=False, help='数据集类型')
-    parser.add_argument('--audio_feature_type', default='mfcc', type=str, required=False, help='音频处理方式')
+    parser.add_argument('--audio_feature_type', default='fbank', type=str, required=False, help='音频处理方式')
     parser.add_argument('--max_time_step', default=1100, type=int, required=False, help='最大音频补齐长度')
     parser.add_argument('--train_data_dir', default='\\data\\data_thchs30\\data\\', type=str, required=False,
                         help='训练数据集存放目录路径')
@@ -55,11 +63,15 @@ if __name__ == '__main__':
     work_path = os.path.abspath(__file__)[:os.path.abspath(__file__).find("\\transformer")]
     execute_type = options['act']
 
-    stt_encoder = tf.keras.Model()
-    stt_decoder = tf.keras.Model()
+    encoder = encoder(vocab_size=options['vocab_size'], embedding_dim=options['embedding_dim'],
+                      num_layers=options['num_layers'], encoder_units=options['encoder_units'],
+                      num_heads=options['num_heads'], dropout=options['dropout'])
+    decoder = decoder(vocab_size=options['vocab_size'], embedding_dim=options['embedding_dim'],
+                      num_layers=options['num_layers'], decoder_units=options['decoder_units'],
+                      num_heads=options['num_heads'], dropout=options['dropout'])
 
     optimizer = tf.keras.optimizers.Adam(lr=options['lr'])
-    ckpt_manager = load_checkpoint(encoder=stt_encoder, decoder=stt_decoder,
+    ckpt_manager = load_checkpoint(encoder=encoder, decoder=decoder,
                                    checkpoint_dir=work_path + options['checkpoint_dir'],
                                    execute_type=options['act'], checkpoint_save_size=options['checkpoint_save_size'])
 
@@ -70,8 +82,8 @@ if __name__ == '__main__':
               checkpoint_save_freq=options['checkpoint_save_freq'], checkpoint=ckpt_manager,
               optimizer=optimizer, dict_path=work_path + options['dict_path'],
               valid_data_split=options['valid_data_split'], valid_data_path="",
-              max_train_data_size=options['max_train_data_size'], encoder=stt_encoder,
-              max_valid_data_size=options['max_valid_data_size'], decoder=stt_decoder)
+              max_train_data_size=options['max_train_data_size'], encoder=encoder,
+              max_valid_data_size=options['max_valid_data_size'], decoder=decoder)
     elif execute_type == 'generate':
         print("待完善")
     elif execute_type == 'pre_treat':

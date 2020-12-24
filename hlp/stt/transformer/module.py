@@ -44,7 +44,7 @@ def train(encoder: tf.keras.Model, decoder: tf.keras.Model, optimizer: tf.keras.
             print(sentence)
             exit(0)
             batch_start = time.time()
-            audio_feature_input =
+            # audio_feature_input =
 
             batch_loss, mel_outputs = _train_step(encoder, decoder, optimizer, sentence,
                                                   mel, mel_input, stop_token)
