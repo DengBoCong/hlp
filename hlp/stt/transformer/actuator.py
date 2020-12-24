@@ -24,7 +24,9 @@ if __name__ == '__main__':
     parser.add_argument('--act', default='pre_treat', type=str, required=False, help='执行类型')
     parser.add_argument('--epochs', default=4, type=int, required=False, help='训练轮次')
     parser.add_argument('--lr', default=0.0001, type=float, required=False, help='学习率')
-    parser.add_argument('--vocab_size', default=1000, type=int, required=False, help='词汇量大小')
+    parser.add_argument('--encoder_vocab_size', default=10000, type=int, required=False, help='词汇量大小')
+    parser.add_argument('--decoder_vocab_size', default=1000, type=int, required=False, help='词汇量大小')
+    parser.add_argument('--feature_dim', default=80, type=int, required=False, help='处理后音频的特征维度')
     parser.add_argument('--batch_size', default=2, type=int, required=False, help='batch大小')
     parser.add_argument('--buffer_size', default=20000, type=int, required=False, help='dataset缓冲区大小')
     parser.add_argument('--checkpoint_save_freq', default=2, type=int, required=False, help='检查点保存频率')
@@ -35,7 +37,7 @@ if __name__ == '__main__':
     parser.add_argument('--dropout', default=0.1, type=float, required=False, help='encoder的dropout采样率')
     parser.add_argument('--num_layers', default=6, type=int, required=False, help='encoder和decoder的layer层数')
     parser.add_argument('--max_sentence_length', default=100, type=int, required=False, help='最大句子序列长度')
-    parser.add_argument('--valid_data_split', default=0.2, type=float, required=False, help='从训练数据划分验证数据的比例')
+    parser.add_argument('--valid_data_split', default=0.1, type=float, required=False, help='从训练数据划分验证数据的比例')
     parser.add_argument('--max_train_data_size', default=20, type=int, required=False, help='从训练集读取最大数据量，0即全部数据')
     parser.add_argument('--max_valid_data_size', default=0, type=int, required=False, help='从验证集集读取最大数据量，0即全部数据')
     parser.add_argument('--checkpoint_save_size', default=2, type=int, required=False, help='训练中最多保存checkpoint数量')
@@ -63,10 +65,11 @@ if __name__ == '__main__':
     work_path = os.path.abspath(__file__)[:os.path.abspath(__file__).find("\\transformer")]
     execute_type = options['act']
 
-    encoder = encoder(vocab_size=options['vocab_size'], embedding_dim=options['embedding_dim'],
-                      num_layers=options['num_layers'], encoder_units=options['encoder_units'],
+    encoder = encoder(vocab_size=options['encoder_vocab_size'], embedding_dim=options['embedding_dim'],
+                      feature_dim=options['feature_dim'], num_layers=options['num_layers'],
+                      encoder_units=options['encoder_units'],
                       num_heads=options['num_heads'], dropout=options['dropout'])
-    decoder = decoder(vocab_size=options['vocab_size'], embedding_dim=options['embedding_dim'],
+    decoder = decoder(vocab_size=options['decoder_vocab_size'], embedding_dim=options['embedding_dim'],
                       num_layers=options['num_layers'], decoder_units=options['decoder_units'],
                       num_heads=options['num_heads'], dropout=options['dropout'])
 
@@ -77,7 +80,7 @@ if __name__ == '__main__':
 
     if execute_type == 'train':
         train(epochs=options['epochs'], train_data_path=work_path + options['train_file'],
-              max_len=options['max_sentence_length'], vocab_size=options['vocab_size'],
+              max_len=options['max_sentence_length'], vocab_size=options['decoder_vocab_size'],
               batch_size=options['batch_size'], buffer_size=options['buffer_size'],
               checkpoint_save_freq=options['checkpoint_save_freq'], checkpoint=ckpt_manager,
               optimizer=optimizer, dict_path=work_path + options['dict_path'],

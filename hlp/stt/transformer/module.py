@@ -2,6 +2,7 @@ import os
 import time
 import tensorflow as tf
 from hlp.stt.utils.load_dataset import load_data
+from hlp.utils.optimizers import loss_func_mask
 
 
 def train(encoder: tf.keras.Model, decoder: tf.keras.Model, optimizer: tf.keras.optimizers.Adam,
@@ -40,14 +41,12 @@ def train(encoder: tf.keras.Model, decoder: tf.keras.Model, optimizer: tf.keras.
         total_loss = 0
 
         for (batch, (audio_feature, sentence)) in enumerate(train_dataset.take(steps_per_epoch)):
-            print(audio_feature)
-            print(sentence)
-            exit(0)
             batch_start = time.time()
-            # audio_feature_input =
+            sentence_input = sentence[:, :-1]
+            sentence_real = sentence[:, 1:]
 
-            batch_loss, mel_outputs = _train_step(encoder, decoder, optimizer, sentence,
-                                                  mel, mel_input, stop_token)
+            batch_loss, sentence_predictions = _train_step(encoder, decoder, optimizer,
+                                                           sentence_input, sentence_real, audio_feature)
             total_loss += batch_loss
 
             print('\r{}/{} [Batch {} Loss {:.4f} {:.1f}s]'.format(
@@ -58,63 +57,55 @@ def train(encoder: tf.keras.Model, decoder: tf.keras.Model, optimizer: tf.keras.
 
         if (epoch + 1) % checkpoint_save_freq == 0:
             checkpoint.save()
-            _valid_step(encoder=encoder, decoder=decoder, dataset=valid_dataset,
-                        num_mel=num_mel, steps_per_epoch=valid_steps_per_epoch)
-
-    return mel_outputs
+            _valid_step(encoder=encoder, decoder=decoder, dataset=valid_dataset, steps_per_epoch=valid_steps_per_epoch)
 
 
-def _train_step(encoder: tf.keras.Model, decoder: tf.keras.Model, optimizer, sentence,
-                mel_target, mel_input, stop_token_target):
+def _train_step(encoder: tf.keras.Model, decoder: tf.keras.Model, optimizer,
+                sentence_input: tf.Tensor, sentence_real: tf.Tensor, audio_feature: tf.Tensor):
     """
     训练步
     :param encoder: 模型的encoder
     :param decoder: 模型的decoder
-    :param sentence: sentence序列
-    :param mel_target: ground-true的mel
-    :param mel_input: ground-true的用作训练的mel，移动的一维
+    :param sentence_input: sentence序列
+    :param audio_feature: 音频特征序列
+    :param sentence_real: ground-true句子序列
     :param optimizer 优化器
-    :param stop_token_target: ground-true的stop_token
     :return: batch损失和post_net输出
     """
     with tf.GradientTape() as tape:
-        enc_outputs, padding_mask = encoder(sentence)
-        mel_pred, post_net_pred, stop_token_pred = decoder(inputs=[enc_outputs, mel_input, padding_mask])
-        stop_token_pred = tf.squeeze(stop_token_pred, axis=-1)
-        loss = _loss_function(mel_pred, post_net_pred, mel_target, stop_token_target, stop_token_pred)
+        enc_outputs, padding_mask = encoder(audio_feature)
+        sentence_predictions = decoder(inputs=[sentence_input, enc_outputs, padding_mask])
+        loss = loss_func_mask(sentence_real, sentence_predictions)
     batch_loss = loss
 
     variables = encoder.trainable_variables + decoder.trainable_variables
     gradients = tape.gradient(loss, variables)
     optimizer.apply_gradients(zip(gradients, variables))
-    return batch_loss, post_net_pred
+    return batch_loss, sentence_predictions
 
 
-def _valid_step(encoder: tf.keras.Model, decoder: tf.keras.Model, num_mel: int,
+def _valid_step(encoder: tf.keras.Model, decoder: tf.keras.Model,
                 dataset: tf.data.Dataset, steps_per_epoch: int):
     """
     验证模块
     :param encoder: 模型的encoder
     :param decoder: 模型的decoder
-    :param num_mel: 产生的梅尔带数
-    :param dataset: 验证集dataset
-    :param steps_per_epoch: 总的训练步数
+    :param dataset: 验证数据dataset
+    :param steps_per_epoch: 验证训练步
     :return: 无返回值
     """
     print("验证轮次")
     start_time = time.time()
     total_loss = 0
 
-    for (batch, (mel, stop_token, sentence)) in enumerate(dataset.take(steps_per_epoch)):
+    for (batch, (audio_feature, sentence)) in enumerate(dataset.take(steps_per_epoch)):
         batch_start = time.time()
-        mel = tf.transpose(mel, [0, 2, 1])
-        mel_input = tf.concat([tf.zeros(shape=(mel.shape[0], 1, num_mel), dtype=tf.float32),
-                               mel[:, :-1, :]], axis=1)
+        sentence_input = sentence[:, :-1]
+        sentence_real = sentence[:, 1:]
 
-        enc_outputs, padding_mask = encoder(sentence)
-        mel_pred, post_net_pred, stop_token_pred = decoder(inputs=[enc_outputs, mel_input, padding_mask])
-        stop_token_pred = tf.squeeze(stop_token_pred, axis=-1)
-        batch_loss = _loss_function(mel_pred, post_net_pred, mel, stop_token, stop_token_pred)
+        enc_outputs, padding_mask = encoder(audio_feature)
+        sentence_predictions = decoder(inputs=[sentence_input, enc_outputs, padding_mask])
+        batch_loss = loss_func_mask(sentence_real, sentence_predictions)
         total_loss += batch_loss
 
         print('\r{}/{} [Batch {} Loss {:.4f} {:.1f}s]'.format((batch + 1),
@@ -122,24 +113,6 @@ def _valid_step(encoder: tf.keras.Model, decoder: tf.keras.Model, num_mel: int,
                                                               (time.time() - batch_start)), end='')
     print(' - {:.0f}s/step - loss: {:.4f}'.format((time.time() - start_time) / steps_per_epoch,
                                                   total_loss / steps_per_epoch))
-
-
-def _loss_function(mel_pred, post_net_pred, mel_target, stop_token_target, stop_token_pred):
-    """
-    损失函数
-    :param mel_pred: 模型输出的mel
-    :param post_net_pred: post_net输出
-    :param mel_target: ground-true的mel
-    :param stop_token_target: ground-true的stop_token
-    :param stop_token_pred: 输出的stop_token
-    :return: 损失总和
-    """
-    stop_loss = tf.keras.losses.BinaryCrossentropy(
-        from_logits=True)(stop_token_target, stop_token_pred)
-    mel_loss = tf.keras.losses.MeanSquaredError()(mel_pred, mel_target) \
-               + tf.keras.losses.MeanSquaredError()(post_net_pred, mel_target) + stop_loss
-
-    return mel_loss
 
 
 def load_checkpoint(encoder: tf.keras.Model, decoder: tf.keras.Model,

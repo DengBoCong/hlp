@@ -6,21 +6,25 @@ from hlp.utils.layers import transformer_encoder_layer
 from hlp.utils.layers import transformer_decoder_layer
 
 
-def encoder(vocab_size: int, embedding_dim: int, num_layers: int,
+def encoder(vocab_size: int, embedding_dim: int, num_layers: int, feature_dim: int,
             encoder_units: int, num_heads: int, dropout: float = 0.1) -> tf.keras.Model:
     """
     transformer tts的encoder层
     :param vocab_size: 词汇大小
     :param embedding_dim: 嵌入层维度
     :param num_layers: encoder层数量
+    :param feature_dim: 特征维度
     :param encoder_units: 单元大小
     :param dropout: encoder的dropout采样率
     :param num_heads: 头注意力数量
     """
-    inputs = tf.keras.Input(shape=(None, None))
+    inputs = tf.keras.Input(shape=(None, feature_dim))
     padding_mask = tf.keras.layers.Lambda(_create_padding_mask,
                                           output_shape=(1, 1, None))(inputs)
-    outputs = inputs * tf.math.sqrt(tf.cast(embedding_dim, tf.float32))
+    outputs = tf.keras.layers.Dense(embedding_dim)(inputs)
+    outputs = tf.keras.layers.LayerNormalization()(outputs)
+
+    outputs = outputs * tf.math.sqrt(tf.cast(embedding_dim, tf.float32))
     pos_encoding = positional_encoding(vocab_size, embedding_dim)
     outputs = outputs + pos_encoding[:, :tf.shape(outputs)[1], :]
 
@@ -57,7 +61,7 @@ def decoder(vocab_size: int, embedding_dim: int, num_layers: int,
 
     embeddings = tf.keras.layers.Embedding(vocab_size, embedding_dim)(dec_inputs)
     embeddings *= tf.math.sqrt(tf.cast(embedding_dim, tf.float32))
-    embeddings = embedding_dim + pos_encoding[:, :tf.shape(embeddings)[1], :]
+    embeddings = embeddings + pos_encoding[:, :tf.shape(embeddings)[1], :]
 
     outputs = tf.keras.layers.Dropout(rate=dropout)(embeddings)
 
