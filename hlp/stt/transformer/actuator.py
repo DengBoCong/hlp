@@ -23,7 +23,7 @@ if __name__ == '__main__':
     parser = ArgumentParser(description='transformer tts V1.0.0')
     parser.add_argument('--config_file', default='', type=str, required=False, help='配置文件路径，为空则默认命令行，不为空则使用配置文件参数')
     parser.add_argument('--act', default='pre_treat', type=str, required=False, help='执行类型')
-    parser.add_argument('--epochs', default=100, type=int, required=False, help='训练轮次')
+    parser.add_argument('--epochs', default=4, type=int, required=False, help='训练轮次')
     parser.add_argument('--lr', default=0.0001, type=float, required=False, help='学习率')
     parser.add_argument('--encoder_vocab_size', default=10000, type=int, required=False, help='词汇量大小')
     parser.add_argument('--decoder_vocab_size', default=1000, type=int, required=False, help='词汇量大小')

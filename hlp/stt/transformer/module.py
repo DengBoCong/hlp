@@ -110,9 +110,10 @@ def recognize(encoder: tf.keras.Model, decoder: tf.keras.Model, beam_size: int,
         for i in range(max_sentence_length):
             enc_outputs, padding_mask = encoder(audio_feature)
             sentence_predictions = decoder(inputs=[dec_input, enc_outputs, padding_mask])
-            sentence_predictions = tf.squeeze(sentence_predictions, axis=0)
-            beam_search_container.expand(predictions=sentence_predictions, end_sign=tokenizer.word_index.get("<end>"))
+            sentence_predictions = tf.nn.softmax(sentence_predictions)
+            sentence_predictions = sentence_predictions[:, -1, :]
 
+            beam_search_container.expand(predictions=sentence_predictions, end_sign=tokenizer.word_index.get("<end>"))
             if beam_search_container.beam_size == 0:
                 break
 
@@ -123,11 +124,11 @@ def recognize(encoder: tf.keras.Model, decoder: tf.keras.Model, beam_size: int,
         # 从容器中抽取序列，生成最终结果
         for i in range(len(beam_search_result)):
             temp = beam_search_result[i].numpy()
-            text = tokenizer.sequences_to_texts(temp)
-            text[0] = text[0].replace("<start>", '').replace("<end>", '').replace(' ', '')
-            result = '<' + text[0] + '>' + result
+            text = tokenizer.sequences_to_texts(temp)[0]
+            text = text.replace("<start>", '').replace("<end>", '').replace(' ', '')
+            result = '<' + text + '>' + result
 
-        print("识别句子为".format(result))
+        print("识别句子为：{}".format(result))
 
     print("识别结束")
 
