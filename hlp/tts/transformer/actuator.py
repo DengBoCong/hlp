@@ -10,14 +10,8 @@ from hlp.tts.transformer.model import encoder
 from hlp.tts.transformer.model import decoder
 from hlp.tts.transformer.module import load_checkpoint
 
-if __name__ == '__main__':
-    """
-    Transformer TTS入口：指令需要附带运行参数
-    cmd：python transformer_launch.py -t/--type [执行模式]
-    执行类别：pre_treat/train/generate
 
-    generate模式下运行时，输入ESC即退出语音合成
-    """
+def main():
     parser = ArgumentParser(description='transformer tts V1.0.0')
     parser.add_argument('--config_file', default='', type=str, required=False, help='配置文件路径，为空则默认命令行，不为空则使用配置文件参数')
     parser.add_argument('--act', default='pre_treat', type=str, required=False, help='执行类型')
@@ -97,8 +91,8 @@ if __name__ == '__main__':
         with open(options['config_file'], 'r', encoding='utf-8') as config_file:
             options = json.load(config_file)
 
-    # 注意了，有关路径的参数，以tacotron2目录下为基准配置，只要
-    # tacotron2目录名未更改，任意移动位置不影响使用
+    # 注意了，有关路径的参数，以transformer目录下为基准配置，只要
+    # transformer目录名未更改，任意移动位置不影响使用
     work_path = os.path.abspath(__file__)[:os.path.abspath(__file__).find("\\transformer")]
     execute_type = options['act']
 
@@ -156,3 +150,14 @@ if __name__ == '__main__':
                                                 ref_db=options['ref_db'], top_db=options['top_db'])
     else:
         parser.error(msg='')
+
+
+if __name__ == '__main__':
+    """
+    Transformer TTS入口：指令需要附带运行参数
+    cmd：python actuator.py --act [执行模式]
+    执行类别：pre_treat/train/generate
+
+    generate模式下运行时，输入ESC即退出语音合成
+    """
+    main()

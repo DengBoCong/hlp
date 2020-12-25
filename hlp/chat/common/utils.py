@@ -22,7 +22,7 @@ def log_operator(level: str, log_file: str = None,
     :return: 日志记录器
     """
     if log_file is None:
-        log_file = os.getcwd() + '\\data\\runtime.log'
+        log_file = os.path.abspath(__file__)[:os.path.abspath(__file__).rfind("\\hlp\\")] + '\\hlp\\chat\\data\\runtime.log'
 
     logger = logging.getLogger()
     logger.setLevel(level)

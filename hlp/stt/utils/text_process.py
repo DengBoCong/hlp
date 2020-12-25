@@ -2,6 +2,32 @@ import tensorflow as tf
 from hlp.utils import text_split
 
 
+def tokenize_and_encode(texts: list, dict_path: str, max_len: int,
+                        num_words: int, unk_token: str = "<unk>"):
+    """
+    用于将文本序列集合转化为token序列
+    :param texts: 文本序列列表
+    :param dict_path: 字典保存路径
+    :param max_len: 文本最大长度
+    :param num_words:最多保存词汇数量
+    :param unk_token: 未登录词
+    :return texts: 处理好的文本token序列
+    :return tokenizer: tokenizer
+    """
+    tokenizer = tf.keras.preprocessing.text.Tokenizer(filters="", oov_token=unk_token, num_words=num_words)
+    tokenizer.fit_on_texts(texts)
+    texts = tokenizer.texts_to_sequences(texts)
+    texts = tf.keras.preprocessing.sequence.pad_sequences(texts, maxlen=max_len, padding="post")
+
+    with open(dict_path, 'w', encoding="utf-8") as dict_file:
+        dict_file.write(tokenizer.to_json())
+
+    return texts, tokenizer
+
+###################################################################
+###################################################################
+
+
 def split_and_encode(sentences, mode, word_index):
     """对文本进行切分和编码
 
@@ -130,16 +156,16 @@ def get_label_and_length(text_int_sequences_list, max_label_length):
     return target_tensor_numpy, target_length
 
 
-def tokenize_and_encode(texts):
-    """ 对文本进行tokenize和编码
-
-    :param texts: 已经用空格分隔的文本列表
-    :return: 文本编码序列, tokenizer
-    """
-    tokenizer = tf.keras.preprocessing.text.Tokenizer(filters='')  # 无过滤字符
-    tokenizer.fit_on_texts(texts)
-    text_int_sequences = tokenizer.texts_to_sequences(texts)
-    return text_int_sequences, tokenizer
+# def tokenize_and_encode(texts):
+#     """ 对文本进行tokenize和编码
+#
+#     :param texts: 已经用空格分隔的文本列表
+#     :return: 文本编码序列, tokenizer
+#     """
+#     tokenizer = tf.keras.preprocessing.text.Tokenizer(filters='')  # 无过滤字符
+#     tokenizer.fit_on_texts(texts)
+#     text_int_sequences = tokenizer.texts_to_sequences(texts)
+#     return text_int_sequences, tokenizer
 
 
 # 将输出token id序列解码为token序列

@@ -41,6 +41,10 @@ def train(epochs: int, train_data_path: str, max_len: int, vocab_size: int,
                            valid_data_path=valid_data_path, max_train_data_size=max_train_data_size,
                            max_valid_data_size=max_valid_data_size)
 
+    if steps_per_epoch == 0:
+        print("训练数据量过小，小于batch_size，请添加数据后重试")
+        exit(0)
+
     for epoch in range(epochs):
         print('Epoch {}/{}'.format(epoch + 1, epochs))
         start_time = time.time()
@@ -60,6 +64,11 @@ def train(epochs: int, train_data_path: str, max_len: int, vocab_size: int,
 
         if (epoch + 1) % checkpoint_save_freq == 0:
             checkpoint.save()
+
+            if valid_steps_per_epoch == 0:
+                print("验证数据量过小，小于batch_size，请添加数据后重试")
+                exit(0)
+
             _valid_step(model=model, dataset=valid_dataset, steps_per_epoch=valid_steps_per_epoch)
 
     return mel_outputs

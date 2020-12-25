@@ -41,6 +41,10 @@ def train(encoder: tf.keras.Model, decoder: tf.keras.Model, optimizer: tf.keras.
                            valid_data_path=valid_data_path, max_train_data_size=max_train_data_size,
                            max_valid_data_size=max_valid_data_size)
 
+    if steps_per_epoch == 0:
+        print("训练数据量过小，小于batch_size，请添加数据后重试")
+        exit(0)
+
     for epoch in range(epochs):
         print('Epoch {}/{}'.format(epoch + 1, epochs))
         start_time = time.time()
@@ -64,6 +68,11 @@ def train(encoder: tf.keras.Model, decoder: tf.keras.Model, optimizer: tf.keras.
 
         if (epoch + 1) % checkpoint_save_freq == 0:
             checkpoint.save()
+
+            if valid_steps_per_epoch == 0:
+                print("验证数据量过小，小于batch_size，请添加数据后重试")
+                exit(0)
+
             _valid_step(encoder=encoder, decoder=decoder, dataset=valid_dataset,
                         num_mel=num_mel, steps_per_epoch=valid_steps_per_epoch)
 

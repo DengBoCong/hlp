@@ -85,7 +85,7 @@ class LAS(tf.keras.Model):
                  max_pool_strides,
                  max_pool_size,
                  d,
-                 w, 
+                 w,
                  embedding_dim,
                  dec_units,
                  batch_size):
@@ -99,7 +99,7 @@ class LAS(tf.keras.Model):
                                cnn2_filters,
                                cnn2_kernel_size,
                                max_pool_strides,
-                               max_pool_size,       
+                               max_pool_size,
                                d,
                                w,
                                batch_size)

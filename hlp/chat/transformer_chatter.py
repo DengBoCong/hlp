@@ -8,7 +8,7 @@ import hlp.utils.optimizers as optimizers
 import hlp.chat.common.pre_treat as pre_treat
 import hlp.chat.common.data_utils as data_utils
 import hlp.chat.model.transformer as transformer
-from chat.chatter import Chatter
+from hlp.chat.chatter import Chatter
 from hlp.chat.common.utils import log_operator
 
 
@@ -123,7 +123,7 @@ class TransformerChatter(Chatter):
 def main():
     parser = ArgumentParser(description='%transformer chatbot V1.2.1')
     parser.add_argument('--config_file', default='', type=str, required=False, help='配置文件路径，为空则默认命令行，不为空则使用配置文件参数')
-    parser.add_argument('--type', default='pre_treat', type=str, required=False, help='执行类型')
+    parser.add_argument('--act', default='pre_treat', type=str, required=False, help='执行类型')
     parser.add_argument('--num_layers', default=2, type=int, required=False, help='encoder和decoder的内部层数')
     parser.add_argument('--d_model', default=256, type=int, required=False, help='特征维深度')
     parser.add_argument('--num_heads', default=8, type=int, required=False, help='头注意力数量')
@@ -162,7 +162,7 @@ def main():
 
     # 注意了有关路径的参数，以chat目录下为基准配置
     work_path = os.path.abspath(__file__)[:os.path.abspath(__file__).find("\\transformer")]
-    execute_type = options['type']
+    execute_type = options['act']
 
     if execute_type == 'train':
         chatter = TransformerChatter(execute_type=execute_type, checkpoint_dir=work_path + options['checkpoint'],
@@ -214,7 +214,7 @@ def main():
 if __name__ == "__main__":
     """
     Transformer入口：指令需要附带运行参数
-    cmd：python transformer_chatter.py --type [执行模式]
+    cmd：python transformer_chatter.py --act [执行模式]
     执行类别：pre_treat/train/chat，默认为pre_treat
     其他参数参见main方法
 
