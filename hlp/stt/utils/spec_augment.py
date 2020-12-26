@@ -178,7 +178,7 @@ def plot_spectrogram(mel_spectrogram, title):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Spec Augment')
-    parser.add_argument('--audio-path', default='./data/number/wav_test/0_jackson_1.wav',
+    parser.add_argument('--audio-path', default='../data/data_thchs30/data/A2_0.wav',
                         help='The audio file.')
     parser.add_argument('--time-warp-para', default=80,
                         help='time warp parameter W')
