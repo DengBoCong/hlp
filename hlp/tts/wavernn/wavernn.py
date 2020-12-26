@@ -10,18 +10,12 @@ class ResBlock(tf.keras.layers.Layer):
         self.batch_norm2 = tf.keras.layers.BatchNormalization()
 
     def call(self, x):
-
         residual = x
-        print("residual:", residual.shape)
-        print("x1:", x.shape)
-
         x = self.conv1(x)
         x = self.batch_norm1(x)
         x = tf.nn.relu(x)
         x = self.conv2(x)
         x = self.batch_norm2(x)
-
-
         return x + residual
 
 
@@ -39,15 +33,15 @@ class MelResNet(tf.keras.Model):
         self.conv_out = tf.keras.layers.Conv1D(res_out_dims, kernel_size=1)
 
     def call(self, x):
+        x = tf.transpose(x, [0, 2, 1])
         x = self.conv_in(x)
         x = self.batch_norm(x)
         x = tf.nn.relu(x)
-        print("x:::", x.shape)
         for f in self.layer:
             x = f(x)
-            print(1)
-        print(2)
+
         x = self.conv_out(x)
+        x = tf.transpose(x, (0, 2, 1))
         return x
 
 
@@ -75,26 +69,32 @@ class UpsampleNetwork(tf.keras.layers.Layer):
         self.indent = pad * total_scale
         self.resnet = MelResNet(res_blocks, feat_dims, compute_dims, res_out_dims, pad)
         self.resnet_stretch = Stretch2d(total_scale, 1)
-        self.up_layers = []
+        self.up_layers1 = []
+        self.up_layers2 = []
         for scale in upsample_scales:
             k_size = (1, scale * 2 + 1)
             padding = (0, scale)
             stretch = Stretch2d(scale, 1)
-            conv = tf.keras.layers.Conv2D(1, kernel_size=k_size,
+            conv = tf.keras.layers.Conv2D(filters=1, kernel_size=k_size,
                                           kernel_initializer=tf.constant_initializer(1. / k_size[1]),
                                           padding="same", use_bias=False)
-            self.up_layers.append(stretch)
-            self.up_layers.append(conv)
+            self.up_layers1.append(stretch)
+            self.up_layers2.append(conv)
 
     def call(self, m):
         aux = self.resnet(m)
         aux = tf.expand_dims(aux, axis=1)
-
         aux = self.resnet_stretch(aux)
         aux = tf.squeeze(aux, axis=1)
         m = tf.expand_dims(m, axis=1)
-        for f in self.up_layers:
-            m = f(m)
+
+        for f1, f2 in zip(self.up_layers1, self.up_layers2):
+            m = f1(m)
+            m = tf.transpose(m, (0, 3, 2, 1))
+
+            m = f2(m)
+            m = tf.transpose(m, (0, 3, 2, 1))
+
         m = tf.squeeze(m, axis=1)[:, :, self.indent:-self.indent]
         return tf.transpose(m, (0, 2, 1)), tf.transpose(aux, (0, 2, 1))
 
@@ -115,13 +115,13 @@ class WaveRNN(tf.keras.Model):
 
         # List of rnns to call `flatten_parameters()` on
         self._to_flatten = []
-
         self.rnn_dims = rnn_dims
         self.aux_dims = res_out_dims // 4
         self.hop_length = hop_length
         self.sample_rate = sample_rate
 
         self.upsample = UpsampleNetwork(feat_dims, upsample_factors, compute_dims, res_blocks, res_out_dims, pad)
+
         self.I = tf.keras.layers.Dense(rnn_dims, activation=None)
 
         self.rnn1 = tf.keras.layers.GRU(rnn_dims)
@@ -133,11 +133,10 @@ class WaveRNN(tf.keras.Model):
         self.fc3 = tf.keras.layers.Dense(self.n_classes, activation=None)
 
     def call(self, x, mels):
-
-        #self.step += 1
         bsize = x.shape[0]
-        h1 = tf.zeros(1, bsize, self.rnn_dims)
-        h2 = tf.zeros(1, bsize, self.rnn_dims)
+        h1 = tf.zeros(shape=(bsize, self.rnn_dims))
+
+        h2 = tf.zeros(shape=(bsize, self.rnn_dims))
         mels, aux = self.upsample(mels)
 
         aux_idx = [self.aux_dims * i for i in range(5)]
@@ -146,11 +145,6 @@ class WaveRNN(tf.keras.Model):
         a3 = aux[:, :, aux_idx[2]:aux_idx[3]]
         a4 = aux[:, :, aux_idx[3]:aux_idx[4]]
 
-
-        print("x:", x.shape)
-        print("mels:", mels.shape)
-        print("a1:", a1.shape)
-        exit(0)
         x = tf.concat([tf.expand_dims(x, axis=-1), mels, a1], axis=2)
         x = self.I(x)
         res = x

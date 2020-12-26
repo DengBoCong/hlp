@@ -53,18 +53,16 @@ def main():
     parser.add_argument('--voc_res_blocks', default=10, type=int, required=False, help='')
 
     parser.add_argument('--voc_batch_size', default=2, type=int, required=False, help='batch大小')
-    parser.add_argument('--voc_lr', default=1e-4, type=int, required=False, help='学习率')
+    parser.add_argument('--voc_lr', default=1e-5, type=int, required=False, help='学习率')
     parser.add_argument('--voc_checkpoint_every', default=25000, type=int, required=False, help='需要保存检查点的轮数')
     parser.add_argument('--voc_gen_at_checkpoint', default=5, type=int, required=False, help='在每个检查点生成的样本数量')
 
-    parser.add_argument('--voc_total_steps', default=1000000, type=int, required=False, help='训练步数')
+    parser.add_argument('--voc_total_steps', default=10000, type=int, required=False, help='训练步数')
     parser.add_argument('--voc_test_samples', default=50, type=int, required=False, help='测试样品数目')
     parser.add_argument('--voc_pad', default=2, type=int, required=False, help='填充')
     parser.add_argument('--voc_clip_grad_norm', default=4, type=int, required=False, help='')
     parser.add_argument('--voc_target', default=11000, type=int, required=False, help='在每个批次条目中产生的目标样品数量')
     parser.add_argument('--voc_overlap', default=550, type=int, required=False, help='批次间交叉衰落的样本数量')
-
-
 
     parser.add_argument('--act', default='pre_treat', type=str, required=False, help='执行类型')
     parser.add_argument('--metadata_file', default='\\data\\LJSpeech-1.1\\metadata.csv', type=str, required=False,
@@ -77,14 +75,14 @@ def main():
     parser.add_argument('--spectrum_data_dir', default='\\data\\LJSpeech-1.1\\feature\\', type=str, required=False,
                         help='目标数据存放路径')
 
-    parser.add_argument('--checkpoint_dir', default='\\data\\checkpoints\\tacotron2', type=str, required=False,
+    parser.add_argument('--checkpoint_dir', default='\\data\\checkpoints\\wavernn', type=str, required=False,
                         help='检查点保存路径')
     parser.add_argument('--wave_save_dir', default='\\data\\LJSpeech-1.1\\generate\\wavernn', type=str,
                         required=False,
                         help='合成的音频保存路径')
     parser.add_argument('--voc_seq_len', default='1375', type=int, required=False, help='音频句子长度=5*hop_length')
     parser.add_argument('--preemphasis', default='0.97', type=float, required=False, help='预加重')
-    parser.add_argument('--max_db', default='100', type=int, required=False, help='峰值分贝值')
+    parser.add_argument('--max_db', default='10000', type=int, required=False, help='峰值分贝值')
     parser.add_argument('--ref_db', default='20', type=int, required=False, help='参考分贝值')
     parser.add_argument('--top_db', default='15', type=int, required=False, help='峰值以下的阈值分贝值')
 
@@ -116,7 +114,6 @@ def main():
                                    checkpoint_save_size=options['voc_gen_at_checkpoint'])
 
     wav_name_list = process_wav_name(work_path+options['wave_train_path'])
-    print(wav_name_list)
     train_data_generator = generator(wav_name_list, options['voc_batch_size'], options['sample_rate'], options['peak_norm'],
                                      options['voc_mode'], options['bits'], options['mu_law'], work_path + options['wave_train_path'],
                                      options['voc_pad'], options['hop_length'], options['voc_seq_len'], options['preemphasis'],
@@ -167,12 +164,13 @@ def train_step(x, y, m, model, optimizer, voc_mode):
     loss = 0
     with tf.GradientTape() as tape:
         y_hat = model(x, m)
+
         y = tf.expand_dims(y, axis=-1)
         if voc_mode == 'RAW':
             y_hat = tf.expand_dims(tf.transpose(y_hat, (0, 2, 1)), axis=-1)
             loss_func = tf.nn.cross_entropy(y_hat, y)
         elif voc_mode == 'MOL':
-            y = y.float()
+            y = tf.cast(y, dtype=float)
             loss_func = Discretized_Mix_Logistic_Loss(y_hat, y)
         loss += loss_func
     batch_loss = loss
@@ -180,7 +178,6 @@ def train_step(x, y, m, model, optimizer, voc_mode):
     gradients = tape.gradient(loss, variables)  # 计算损失对参数的梯度
     optimizer.apply_gradients(zip(gradients, variables))  # 优化器反向传播更新参数
     return batch_loss, y_hat
-
 
 if __name__ == "__main__":
     main()
