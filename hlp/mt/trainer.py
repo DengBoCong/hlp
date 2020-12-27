@@ -1,15 +1,13 @@
 import time
-import os
 
 import tensorflow as tf
-import matplotlib.pyplot as plt
-import matplotlib.ticker as ticker
 
 from hlp.mt.common import load_dataset
 from hlp.mt.model import transformer as _transformer
 from hlp.mt.config import get_config as _config
 from hlp.mt.model import nmt_model
 from hlp.utils import optimizers as _optimizers
+from hlp.utils import train_history
 from hlp.mt import preprocess
 
 
@@ -47,33 +45,6 @@ def _train_epoch(dataset, transformer, optimizer, train_loss, train_accuracy, ba
                                                                       train_loss.result(),
                                                                       train_accuracy.result()), end='')
     print('\r{}/{} [==============================]'.format(sample_sum, sample_sum), end='')
-
-
-def _plot_history(history, validation_freq):
-    """根据history绘制训练效果图"""
-    # x轴
-    x_train = [i + 1 for i in range(len(history['loss']))]
-    x_validation = [(i + 1) * validation_freq for i in range(len(history['val_loss']))]
-    # 绘制
-    fig, ax = plt.subplots(1, 1)
-    tick_spacing = 1
-    if len(history['loss']) > 20:
-        tick_spacing = len(history['loss']) // 20
-    plt.plot(x_train, history['loss'], label='loss', marker='.')
-    plt.plot(x_train, history['accuracy'], label='accuracy', marker='.')
-    plt.plot(x_validation, history['val_loss'], label='val_loss', marker='.', linestyle='--')
-    plt.plot(x_validation, history['val_accuracy'], label='val_accuracy', marker='.', linestyle='--')
-    plt.xticks(x_validation)
-    plt.xlabel('epoch')
-    plt.legend()
-    ax.xaxis.set_major_locator(ticker.MultipleLocator(tick_spacing))
-    # 保存图片
-    save_path = _config.result_save_dir + 'history'
-    if not os.path.exists(os.path.dirname(save_path)):
-        os.makedirs(os.path.dirname(save_path), exist_ok=True)
-    plt.savefig(save_path)
-
-    plt.show()
 
 
 def train(transformer, validation_data='False', validation_split=0.0,
@@ -190,6 +161,6 @@ def train(transformer, validation_data='False', validation_split=0.0,
         ckpt_save_path = ckpt_manager.save()
         print('检查点已保存至：{}'.format(ckpt_save_path))
 
-    _plot_history(history, validation_freq)
+    train_history.show_and_save_history(history, _config.result_save_dir, validation_freq)
     print('训练完毕！')
     return history

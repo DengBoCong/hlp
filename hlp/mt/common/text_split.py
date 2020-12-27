@@ -1,6 +1,3 @@
-import re
-import jieba
-
 from hlp.mt.config import get_config as _config
 from hlp.utils import text_split
 
