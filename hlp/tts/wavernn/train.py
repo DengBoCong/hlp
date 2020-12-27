@@ -1,32 +1,30 @@
-import time
-import numpy as np
-import torch
-import sys
-import os
 import argparse
-import tensorflow as tf
-from generator import generator
-from hlp.tts.wavernn.module import load_checkpoint
-from hlp.tts.wavernn.wavernn import WaveRNN
-from hlp.tts.wavernn.module import Discretized_Mix_Logistic_Loss
-
-from preprocess import process_wav_name
-
-
 import json
+import os
+import sys
+import time
+
+import numpy as np
+import tensorflow as tf
+
+from hlp.tts.wavernn.generator import generator
+from hlp.tts.wavernn.utils import Discretized_Mix_Logistic_Loss
+from hlp.tts.wavernn.utils import load_checkpoint
+from hlp.tts.wavernn.preprocess import process_wav_name
+from hlp.tts.wavernn.wavernn import WaveRNN
+
 sys.path.append(os.path.abspath(__file__)[:os.path.abspath(__file__).rfind("\\hlp\\")])
 
 
 def main():
-
     # Parse Arguments
     parser = argparse.ArgumentParser(description='Train WaveRNN Vocoder')
-    parser.add_argument('--lr', '-l', type=float,  help='[float] override hparams.py learning rate')
-    #parser.add_argument('--batch_size', '-b', type=int, help='[int] override hparams.py batch size')
-    #parser.add_argument('--force_train', '-f', action='store_true', help='Forces the model to train past total steps')
-    #parser.add_argument('--gta', '-g', action='store_true', help='train wavernn on GTA features')
-    #parser.add_argument('--force_cpu', '-c', action='store_true', help='Forces CPU-only training, even when in CUDA capable environment')
-    #parser.add_argument('--hp_file', metavar='FILE', default='hparams.py', help='The file to use for the hyperparameters')
+    parser.add_argument('--lr', '-l', type=float, help='[float] override hparams.py learning rate')
+    # parser.add_argument('--batch_size', '-b', type=int, help='[int] override hparams.py batch size')
+    # parser.add_argument('--force_train', '-f', action='store_true', help='Forces the model to train past total steps')
+    # parser.add_argument('--gta', '-g', action='store_true', help='train wavernn on GTA features')
+    # parser.add_argument('--force_cpu', '-c', action='store_true', help='Forces CPU-only training, even when in CUDA capable environment')
+    # parser.add_argument('--hp_file', metavar='FILE', default='hparams.py', help='The file to use for the hyperparameters')
 
     parser.add_argument('--sample_rate', default=22050, type=int, required=False, help='采样比率')
 
@@ -94,42 +92,47 @@ def main():
     print('\nInitialising Model...\n')
     work_path = os.path.abspath(__file__)[:os.path.abspath(__file__).find("\\wavernn")]
     voc_model = WaveRNN(rnn_dims=options['voc_rnn_dims'],
-                    fc_dims=options['voc_fc_dims'],
-                    bits=options['bits'],
-                    pad=options['voc_pad'],
-                    upsample_factors=options['voc_upsample_factors'],
-                    feat_dims=options['num_mels'],
-                    compute_dims=options['voc_compute_dims'],
-                    res_out_dims=options['voc_res_out_dims'],
-                    res_blocks=options['voc_res_blocks'],
-                    hop_length=options['hop_length'],
-                    sample_rate=options['sample_rate'],
-                    mode=options['voc_mode'])
+                        fc_dims=options['voc_fc_dims'],
+                        bits=options['bits'],
+                        pad=options['voc_pad'],
+                        upsample_factors=options['voc_upsample_factors'],
+                        feat_dims=options['num_mels'],
+                        compute_dims=options['voc_compute_dims'],
+                        res_out_dims=options['voc_res_out_dims'],
+                        res_blocks=options['voc_res_blocks'],
+                        hop_length=options['hop_length'],
+                        sample_rate=options['sample_rate'],
+                        mode=options['voc_mode'])
 
-    #检查以确保hop_length正确分解
+    # 检查以确保hop_length正确分解
     assert np.cumprod(options['voc_upsample_factors'])[-1] == options['hop_length']
 
     optimizer = tf.keras.optimizers.Adam(lr=options['voc_lr'])
     ckpt_manager = load_checkpoint(model=voc_model, checkpoint_dir=work_path + options['checkpoint_dir'],
                                    checkpoint_save_size=options['voc_gen_at_checkpoint'])
 
-    wav_name_list = process_wav_name(work_path+options['wave_train_path'])
-    train_data_generator = generator(wav_name_list, options['voc_batch_size'], options['sample_rate'], options['peak_norm'],
-                                     options['voc_mode'], options['bits'], options['mu_law'], work_path + options['wave_train_path'],
-                                     options['voc_pad'], options['hop_length'], options['voc_seq_len'], options['preemphasis'],
+    wav_name_list = process_wav_name(work_path + options['wave_train_path'])
+    train_data_generator = generator(wav_name_list, options['voc_batch_size'], options['sample_rate'],
+                                     options['peak_norm'],
+                                     options['voc_mode'], options['bits'], options['mu_law'],
+                                     work_path + options['wave_train_path'],
+                                     options['voc_pad'], options['hop_length'], options['voc_seq_len'],
+                                     options['preemphasis'],
                                      options['n_fft'], options['num_mels'], options['win_length'], options['max_db']
                                      , options['ref_db'], options['top_db'])
 
     if os.path.exists(work_path + options['checkpoint_dir']):
-        ckpt_manager = load_checkpoint(voc_model, work_path+options['checkpoint_dir'], options['voc_gen_at_checkpoint'])
+        ckpt_manager = load_checkpoint(voc_model, work_path + options['checkpoint_dir'],
+                                       options['voc_gen_at_checkpoint'])
         print('已恢复至最新的检查点！')
     else:
-        checkpoint_prefix = os.path.join(work_path+options['checkpoint_dir'], "ckpt")
+        checkpoint_prefix = os.path.join(work_path + options['checkpoint_dir'], "ckpt")
         checkpoint = tf.train.Checkpoint(wavernn=voc_model)
-        ckpt_manager = tf.train.CheckpointManager(checkpoint, work_path+options['checkpoint_dir'], options['voc_gen_at_checkpoint'])
+        ckpt_manager = tf.train.CheckpointManager(checkpoint, work_path + options['checkpoint_dir'],
+                                                  options['voc_gen_at_checkpoint'])
         print('新的检查点已准备创建！')
 
-    voc_train_loop(work_path+options['checkpoint_dir'], voc_model, optimizer, train_data_generator,
+    voc_train_loop(work_path + options['checkpoint_dir'], voc_model, optimizer, train_data_generator,
                    ckpt_manager, options['voc_total_steps'], options['voc_batch_size']
                    , options['voc_mode'])
 
@@ -178,6 +181,7 @@ def train_step(x, y, m, model, optimizer, voc_mode):
     gradients = tape.gradient(loss, variables)  # 计算损失对参数的梯度
     optimizer.apply_gradients(zip(gradients, variables))  # 优化器反向传播更新参数
     return batch_loss, y_hat
+
 
 if __name__ == "__main__":
     main()

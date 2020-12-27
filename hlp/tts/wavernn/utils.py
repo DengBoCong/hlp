@@ -1,14 +1,8 @@
 import os
-import time
-import tensorflow as tf
-from playsound import playsound
-import scipy.io.wavfile as wave
-import hlp.tts.utils.load_dataset as _dataset
-from hlp.tts.utils.spec import melspectrogram2wav, spec_distance
 
-
-from hlp.tts.utils.text_preprocess import text_to_phonemes, text_to_sequence_phoneme
 import numpy as np
+import tensorflow as tf
+
 
 def load_checkpoint(model: tf.keras.Model, checkpoint_dir: str, checkpoint_save_size: int):
     """
@@ -46,7 +40,7 @@ def Discretized_Mix_Logistic_Loss(y_hat, y, num_classes=65536,
         log_scale_min = float(np.log(1e-14))
     y_hat = tf.transpose(y_hat, (0, 2, 1))
 
-    #assert y_hat.dim() == 3
+    # assert y_hat.dim() == 3
     assert y_hat.shape[1] % 3 == 0
     nr_mix = y_hat.shape[1] // 3
 
@@ -56,7 +50,8 @@ def Discretized_Mix_Logistic_Loss(y_hat, y, num_classes=65536,
     # unpack parameters. (B, T, num_mixtures) x 3
     logit_probs = y_hat[:, :, :nr_mix]
     means = y_hat[:, :, nr_mix:2 * nr_mix]
-    log_scales = tf.clip_by_value(y_hat[:, :, 2 * nr_mix:3 * nr_mix], clip_value_min=log_scale_min, clip_value_max=10000000)
+    log_scales = tf.clip_by_value(y_hat[:, :, 2 * nr_mix:3 * nr_mix], clip_value_min=log_scale_min,
+                                  clip_value_max=10000000)
 
     # B x T x 1 -> B x T x num_mixtures
     y = tf.tile(y, (1, 1, means.shape[-1]))
@@ -96,8 +91,8 @@ def Discretized_Mix_Logistic_Loss(y_hat, y, num_classes=65536,
     inner_inner_cond = tf.cast((cdf_delta > 1e-5), dtype=float)
 
     inner_inner_out = inner_inner_cond * \
-        tf.math.log(tf.clip_by_value(cdf_delta, clip_value_min=1e-12, clip_value_max=100000000)) + \
-        (1. - inner_inner_cond) * (log_pdf_mid - np.log((num_classes - 1) / 2))
+                      tf.math.log(tf.clip_by_value(cdf_delta, clip_value_min=1e-12, clip_value_max=100000000)) + \
+                      (1. - inner_inner_cond) * (log_pdf_mid - np.log((num_classes - 1) / 2))
     inner_cond = tf.cast((y > 0.999), dtype=float)
     inner_out = inner_cond * log_one_minus_cdf_min + (1. - inner_cond) * inner_inner_out
     cond = tf.cast((y < -0.999), dtype=float)

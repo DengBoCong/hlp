@@ -1,5 +1,6 @@
-import tensorflow as tf
 import numpy as np
+import tensorflow as tf
+
 
 class ResBlock(tf.keras.layers.Layer):
     def __init__(self, dims):
@@ -27,7 +28,7 @@ class MelResNet(tf.keras.Model):
         self.batch_norm = tf.keras.layers.BatchNormalization()
 
         self.layer = []
-        #self.layer = tf.keras.Sequential()
+        # self.layer = tf.keras.Sequential()
         for i in range(res_blocks):
             self.layer.append(ResBlock(compute_dims))
         self.conv_out = tf.keras.layers.Conv1D(res_out_dims, kernel_size=1)
@@ -162,4 +163,3 @@ class WaveRNN(tf.keras.Model):
         x = tf.concat([x, a4], axis=2)
         x = tf.nn.relu(self.fc2(x))
         return self.fc3(x)
-
