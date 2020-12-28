@@ -51,7 +51,7 @@ def split_zh_char(s):
     s = ' '.join(s)
     s = re.sub(r'[" "]+', " ", s)  # 合并多个空格
 
-    return s.strip().split()
+    return s.strip()
 
 
 def split_zh_word(s):

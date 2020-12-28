@@ -1,8 +1,6 @@
 import json
-
 import tensorflow as tf
-
-from hlp.stt.utils.metric import wers, lers
+from hlp.stt.utils.utils import wers, lers
 from hlp.stt.utils.text_process import int_to_text_sequence
 
 

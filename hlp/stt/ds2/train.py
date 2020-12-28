@@ -1,14 +1,12 @@
 import os
 import time
 from math import ceil
-
 import tensorflow as tf
 from matplotlib import pyplot as plt
-
 from hlp.stt.ds2.model import DS2
 from hlp.stt.ds2.util import get_config, get_dataset_info, compute_ctc_input_length, compute_metric, can_stop
 from hlp.stt.utils.generator import train_generator, test_generator
-from hlp.stt.utils.load_dataset import load_data
+from hlp.stt.utils.load_dataset import ds2_load_data
 from hlp.stt.utils.text_process import split_and_encode
 
 
@@ -121,16 +119,16 @@ if __name__ == "__main__":
 
     # 加载训练数据
     print("加载训练数据集...")
-    train_audio_path_list, train_text_list = load_data(dataset_name, data_path, num_examples)
+    train_audio_path_list, train_text_list = ds2_load_data(dataset_name, data_path, num_examples)
 
     valid_data_path = configs["valid"]["data_path"]
     # 是否含有验证valid数据集,若有则加载，若没有，则将train数据按比例切分一部分为valid数据
     if valid_data_path:
         print("加载验证数据集...")
         valid_num_examples = configs["valid"]["num_examples"]
-        valid_audio_data_path_list, valid_text_list = load_data(dataset_name,
-                                                                valid_data_path,
-                                                                valid_num_examples)
+        valid_audio_data_path_list, valid_text_list = ds2_load_data(dataset_name,
+                                                                    valid_data_path,
+                                                                    valid_num_examples)
     else:
         print("从训练集中划分验证数据...")
         valid_percent = configs["valid"]["valid_percent"]

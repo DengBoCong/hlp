@@ -1,10 +1,9 @@
 
 import json
-
 from hlp.stt.ds2.util import get_config
-from hlp.stt.utils.load_dataset import load_data
+from hlp.stt.utils.load_dataset import ds2_load_data
 from hlp.stt.utils.audio_process import max_audio_length
-from hlp.stt.utils.text_process import split_sentences, get_max_label_length, tokenize_and_encode
+from hlp.stt.utils.text_process import split_sentences, get_max_label_length, ds2_tokenize_and_encode
 
 
 if __name__ == "__main__":
@@ -16,14 +15,14 @@ if __name__ == "__main__":
 
     # 获取语料里所有语音路径list和文本list
     print("读取数据集的语音文件和转写...")
-    audio_data_path_list, text_list = load_data(dataset_name, data_path, num_examples)
+    audio_data_path_list, text_list = ds2_load_data(dataset_name, data_path, num_examples)
 
     print("对文本进行切分...")
     mode = configs["preprocess"]["text_process_mode"]
     splitted_text_list = split_sentences(text_list, mode)
 
     print("对文本进行编码...")
-    text_int_sequences, tokenizer = tokenize_and_encode(splitted_text_list)
+    text_int_sequences, tokenizer = ds2_tokenize_and_encode(splitted_text_list)
 
     print("统计最长语音和转写长度...")
     audio_feature_type = configs["other"]["audio_feature_type"]
