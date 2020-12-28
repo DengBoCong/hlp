@@ -107,3 +107,12 @@ class PLAS(tf.keras.Model):
 
     def initialize_hidden_state(self):
         return tf.zeros((self.batch_size, self.units))
+
+
+if __name__ == "__main__":
+    import numpy as np
+    # a = np.arange(12).reshape((1, 4, 3)).astype(np.float)
+    a = np.arange(15).reshape((1, 5, 3)).astype(np.float)
+    p_lstm = PBLSTM(8)
+    r = p_lstm(a)
+    print(r.shape)
