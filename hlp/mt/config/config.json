@@ -39,7 +39,7 @@
     "path_to_train_file_lm": "../data/anki/anki-cmn-eng.txt",
     "language": "zh",
     "tokenize_type": "CHAR",
-    "EPOCHS": 10,
+    "EPOCHS": 4,
     "num_sentences": 1000,
     "BATCH_SIZE": 32,
     "train_size": 0.8,

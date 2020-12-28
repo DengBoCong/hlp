@@ -1,5 +1,5 @@
-import re
 import tensorflow as tf
+from hlp.utils import text_split
 
 
 def tokenize_and_encode(texts: list, dict_path: str, max_len: int,
@@ -71,7 +71,7 @@ def split_sentence(line, mode):
     elif mode.lower() == "en_char":
         return _split_sentence_en_char(line)
     elif mode.lower() == "las_cn":
-        return _split_sentence_las_cn(line)
+        return _split_sentence_las_cn_char(line)
     elif mode.lower() == "las_en_word":
         return _split_sentence_las_en_word(line)
     elif mode.lower() == "las_en_char":
@@ -92,85 +92,50 @@ def split_sentences(sentences, mode):
 
 
 def _split_sentence_en_word(s):
-    s = s.lower().strip()
-    # 在单词与跟在其后的标点符号之间插入一个空格
-    # 例如： "he is a boy." => "he is a boy ."
-    s = re.sub(r"([?.!,])", r" \1 ", s)  # 切分断句的标点符号
-    s = re.sub(r'[" "]+', " ", s)  # 合并多个空格
-
-    # 除了 (a-z, A-Z, ".", "?", "!", ",")外的将所有字符替换为空格
-    s = re.sub(r"[^a-zA-Z?.!,]+", " ", s)
-    s = s.strip()
-    return s
+    result = text_split.split_en_word(s)
+    return result
 
 
 def _split_sentence_en_char(s):
-    s = s.lower().strip()
-
-    result = ""
-    for i in s:
-        if i == " ":
-            result += "<space> "
-        else:
-            result += i + " "
-    return result.strip()
+    result = text_split.split_en_char(s)
+    return result
 
 
 def _split_sentence_las_en_char(s):
-    s = s.lower().strip()
-    s = ' '.join(s)
-    s = re.sub(r"([?.!,])", r" \1 ", s)  # 切分断句的标点符号
-    s = re.sub(r'[" "]+', " ", s)  # 合并多个空格
-
-    # 除了 (a-z, A-Z, ".", "?", "!", ",")，将所有字符替换为空格
-    s = re.sub(r"[^a-zA-Z?.!,]+", " ", s)
-
-    s = s.strip()
+    s = text_split.split_en_char(s)
 
     # 给句子加上开始和结束标记
     # 以便模型知道何时开始和结束预测
-    s = '<start> ' + s + ' <end>'
+    s.insert(0, '<start>')
+    s.append('<end>')
 
     return s
 
 
 def _split_sentence_las_en_word(s):
-    s = s.lower().strip()
-    # 在单词与跟在其后的标点符号之间插入一个空格
-    # 例如： "he is a boy." => "he is a boy ."
-    s = re.sub(r"([?.!,])", r" \1 ", s)  # 切分断句的标点符号
-    s = re.sub(r'[" "]+', " ", s)  # 合并多个空格
+    s = text_split.split_en_word(s)
 
-    # 除了 (a-z, A-Z, ".", "?", "!", ",")外的将所有字符替换为空格
-    s = re.sub(r"[^a-zA-Z?.!,]+", " ", s)
-    s = s.strip()
     # 给句子加上开始和结束标记
     # 以便模型知道何时开始和结束预测
-    s = '<start> ' + s + ' <end>'
+    s.insert(0, '<start>')
+    s.append('<end>')
+
     return s
 
 
 def _split_sentence_cn(s):
-    s = s.lower().strip()
-
-    s = [c for c in s]
-    s = ' '.join(s)
-    s = re.sub(r'[" "]+', " ", s)  # 合并多个空格
-    s = s.strip()
-
-    return s
+    result = text_split.split_zh_char(s)
+    return result
 
 
-def _split_sentence_las_cn(s):
-    s = s.lower().strip()
+def _split_sentence_las_cn_char(s):
+    s = text_split.split_zh_char(s)
 
-    s = [c for c in s]
-    s = ' '.join(s)
-    s = re.sub(r'[" "]+', " ", s)  # 合并多个空格
-    s = s.strip()
     # 给句子加上开始和结束标记
     # 以便模型知道何时开始和结束预测
-    s = '<start> ' + s + ' <end>'
+    s.insert(0, '<start>')
+    s.append('<end>')
+
     return s
 
 
