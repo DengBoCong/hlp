@@ -18,7 +18,6 @@
 - 基于Transformer的机器翻译
 - 基于Transformer的语音识别
 - 基于Transformer的语音合成
-- SpecAugment语音数据增强
 - 基于Listen-Attend-Spell的语音识别
 - 基于检索的多轮闲聊系统
 - RNN-T流式语音识别
