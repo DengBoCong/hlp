@@ -30,7 +30,7 @@ class Encoder(tf.keras.Model):
         for i in range(self.d):
             self.bi_lstm.append(tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(w, return_sequences=True)))
 
-    def call(self, x, hidden):
+    def call(self, x):
         x = self.cnn1(x)
         x = self.cnn2(x)
         x = self.max_pool(x)
@@ -38,7 +38,7 @@ class Encoder(tf.keras.Model):
         for i in range(self.d):
             x = self.bi_lstm[i](x)
 
-        return x, hidden
+        return x
 
     def initialize_hidden_state(self):
         return tf.zeros((self.batch_sz, self.w))
@@ -104,7 +104,7 @@ class LAS(tf.keras.Model):
         self.decoder = Decoder(vocab_tar_size, embedding_dim, dec_units, w)
 
     def call(self, inputx_1, enc_hidden, dec_input):
-        enc_output, enc_hidden = self.encoder(inputx_1, enc_hidden)
+        enc_output = self.encoder(inputx_1)
 
         dec_hidden = enc_hidden  # 编码器状态作为解码器初始状态？
         predictions, dec_hidden, _ = self.decoder(dec_input, dec_hidden, enc_output)
