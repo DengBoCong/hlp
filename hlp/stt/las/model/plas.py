@@ -3,7 +3,7 @@ from hlp.utils.layers import BahdanauAttention
 
 
 class PBLSTM(tf.keras.layers.Layer):
-    """ 金字塔BiLSTM
+    """金字塔BiLSTM
 
     逐层缩减序列长度
     """
@@ -58,7 +58,7 @@ class Decoder(tf.keras.Model):
         self.attention = BahdanauAttention(dec_units)
 
     def call(self, x, hidden, enc_output):
-        """ 解码
+        """解码
 
         :param x: 目标符号, （批大小，id）
         :param hidden: 解码器状态, （批大小，隐藏层大小）
@@ -78,9 +78,9 @@ class Decoder(tf.keras.Model):
         output = tf.reshape(output, (-1, output.shape[2]))
 
         # 输出的形状 == （批大小，vocab）
-        token_dist = self.fc(output)
+        tokens_prob = self.fc(output)
 
-        return token_dist, state, attention_weights
+        return tokens_prob, state, attention_weights
 
 
 class PLAS(tf.keras.Model):
