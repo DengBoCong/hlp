@@ -89,7 +89,8 @@ def main():
               checkpoint_save_freq=options['checkpoint_save_freq'], checkpoint=ckpt_manager,
               optimizer=optimizer, dict_path=work_path + options['dict_path'], model=model,
               valid_data_split=options['valid_data_split'], valid_data_path="",
-              max_train_data_size=options['max_train_data_size'],
+              train_length_path=work_path + options['save_length_path'],
+              max_train_data_size=options['max_train_data_size'], valid_length_path="",
               max_valid_data_size=options['max_valid_data_size'])
     elif execute_type == 'recognize':
         print("待完善")
