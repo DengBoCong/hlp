@@ -256,3 +256,35 @@ def decode_sentence(sequence, tokenizer, language, mode):
             return _decode_sentence_tokenizer(sequence, tokenizer, join_str=' ')
     else:
         raise ValueError("语言(%s)暂不支持模式(%s)" % (language, mode))
+
+
+def get_encoded_sequences_path(language, postfix=''):
+    """根据语言获取已编码句子的保存路径
+
+    @param language: 语言
+    @param postfix: 保存路径的后缀
+    @return:已编码句子的保存路径
+    """
+    return _config.encoded_sequences_path_prefix + language + postfix
+
+
+def get_tokenizer_path(language, mode):
+    """合成字典保存路径
+
+    @param language:语言
+    @param mode:编码类型
+    @return:字典保存路径
+    """
+    return _config.tokenizer_path_prefix + language + '_' + mode.lower()
+
+
+def get_tokenizer_mode(language):
+    """根据语言确定编码的类型
+
+    @param language: 语言
+    @return: 编码类型
+    """
+    if language == "en":
+        return _config.en_tokenize_type
+    elif language == "zh":
+        return _config.zh_tokenize_type

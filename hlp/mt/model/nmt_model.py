@@ -3,6 +3,7 @@ import os
 from pathlib import Path
 import tensorflow as tf
 
+import hlp.mt.common.text_vectorize
 from hlp.mt.model import transformer as _transformer
 from hlp.mt.config import get_config as _config
 from hlp.mt.common import text_vectorize
@@ -29,10 +30,10 @@ def load_model():
     进行翻译或评估前数据恢复工作
     """
     # 获取字典保存路径
-    source_mode = preprocess.get_tokenizer_mode(_config.source_lang)
-    target_mode = preprocess.get_tokenizer_mode(_config.source_lang)
-    source_tokenizer_path = preprocess.get_tokenizer_path(_config.source_lang, source_mode)
-    target_tokenizer_path = preprocess.get_tokenizer_path(_config.target_lang, target_mode)
+    source_mode = hlp.mt.common.text_vectorize.get_tokenizer_mode(_config.source_lang)
+    target_mode = hlp.mt.common.text_vectorize.get_tokenizer_mode(_config.source_lang)
+    source_tokenizer_path = hlp.mt.common.text_vectorize.get_tokenizer_path(_config.source_lang, source_mode)
+    target_tokenizer_path = hlp.mt.common.text_vectorize.get_tokenizer_path(_config.target_lang, target_mode)
     # 加载源语言字典
     print("正在加载源语言(%s)字典..." % _config.source_lang)
     tokenizer_source, vocab_size_source = text_vectorize.load_tokenizer(source_tokenizer_path,

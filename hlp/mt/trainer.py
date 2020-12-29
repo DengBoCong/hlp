@@ -2,6 +2,7 @@ import time
 
 import tensorflow as tf
 
+import hlp.mt.common.text_vectorize
 from hlp.mt.common import load_dataset
 from hlp.mt.model import transformer as _transformer
 from hlp.mt.config import get_config as _config
@@ -95,14 +96,14 @@ def train(transformer, validation_data='False', validation_split=0.0,
 
     # 读取数据
     print("加载训练数据...")
-    source_sequences_path_train = preprocess.get_encoded_sequences_path(_config.source_lang, postfix='_train')
-    target_sequences_path_train = preprocess.get_encoded_sequences_path(_config.target_lang, postfix='_train')
+    source_sequences_path_train = hlp.mt.common.text_vectorize.get_encoded_sequences_path(_config.source_lang, postfix='_train')
+    target_sequences_path_train = hlp.mt.common.text_vectorize.get_encoded_sequences_path(_config.target_lang, postfix='_train')
     train_dataset, val_dataset = load_dataset.get_dataset(source_sequences_path_train, target_sequences_path_train,
                                                           cache, train_size, steps)
     if validation_data == 'True':  # 从文本中加载val_dataset
         print("加载验证数据...")
-        source_sequences_path_val = preprocess.get_encoded_sequences_path(_config.source_lang, postfix='_val')
-        target_sequences_path_val = preprocess.get_encoded_sequences_path(_config.target_lang, postfix='_val')
+        source_sequences_path_val = hlp.mt.common.text_vectorize.get_encoded_sequences_path(_config.source_lang, postfix='_val')
+        target_sequences_path_val = hlp.mt.common.text_vectorize.get_encoded_sequences_path(_config.target_lang, postfix='_val')
         val_dataset, _ = load_dataset.get_dataset(source_sequences_path_val, target_sequences_path_val,
                                                   cache, train_size, steps)
     print("开始训练...")
