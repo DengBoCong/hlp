@@ -89,7 +89,8 @@ if __name__ == '__main__':
               optimizer=optimizer, dict_path=work_path + options['dict_path'],
               valid_data_split=options['valid_data_split'], valid_data_path="",
               max_train_data_size=options['max_train_data_size'], encoder=encoder,
-              max_valid_data_size=options['max_valid_data_size'], decoder=decoder)
+              max_valid_data_size=options['max_valid_data_size'], decoder=decoder,
+              valid_length_path="", train_length_path=work_path + options['save_length_path'])
     elif execute_type == 'recognize':
         recognize(encoder=encoder, decoder=decoder, beam_size=options['beam_size'],
                   audio_feature_type=options['audio_feature_type'], max_length=options['max_time_step'],
