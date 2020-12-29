@@ -60,21 +60,17 @@ def get_input_and_length(audio_path_list, audio_feature_type, max_len):
         audio_feature_list.append(audio_feature)
         input_length_list.append([audio_feature.shape[0]])
 
-    input_tensor = tf.keras.preprocessing.sequence.pad_sequences(audio_feature_list,
-                                                                 maxlen=max_len,
-                                                                 dtype='float32',
-                                                                 padding='post'
-                                                                 )
+    input_tensor = tf.keras.preprocessing.sequence.pad_sequences(audio_feature_list, maxlen=max_len,
+                                                                 dtype='float32', padding='post')
     input_length = tf.convert_to_tensor(input_length_list)
 
     return input_tensor, input_length
 
 
 def max_audio_length(audio_path_list, audio_feature_type):
-    """ 获得语音特征帧最大长度
-
+    """
+    获得语音特征帧最大长度
     注意：这个方法会读取所有语音文件，并提取特征.
-
     :param audio_path_list: 语音文件列表
     :param audio_feature_type: 语音特征类型
     :return: 最大帧数

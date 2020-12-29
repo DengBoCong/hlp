@@ -3,12 +3,12 @@ import time
 import tensorflow as tf
 import matplotlib.pyplot as plt
 from hlp.stt.utils.load_dataset import load_data
-from hlp.stt.deepspeech2.util import compute_ctc_input_length
-from hlp.stt.deepspeech2.util import can_stop
 from hlp.stt.utils.audio_process import wav_to_feature
+from hlp.stt.utils.utils import compute_ctc_input_length
+from hlp.stt.utils.utils import can_stop
 from hlp.stt.utils.utils import wers
 from hlp.stt.utils.utils import lers
-from hlp.stt.utils.record import record
+from hlp.stt.utils.utils import record
 
 
 def train(model: tf.keras.Model, optimizer: tf.keras.optimizers.Adam,

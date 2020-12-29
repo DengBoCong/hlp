@@ -25,18 +25,6 @@ def tokenize_and_encode(texts: list, dict_path: str, max_len: int,
     return texts, tokenizer
 
 
-def ds2_tokenize_and_encode(texts):
-    """ 对文本进行tokenize和编码
-
-    :param texts: 已经用空格分隔的文本列表
-    :return: 文本编码序列, tokenizer
-    """
-    tokenizer = tf.keras.preprocessing.text.Tokenizer(filters='')  # 无过滤字符
-    tokenizer.fit_on_texts(texts)
-    text_int_sequences = tokenizer.texts_to_sequences(texts)
-    return text_int_sequences, tokenizer
-
-
 def split_and_encode(sentences, mode, word_index):
     """对文本进行切分和编码
 

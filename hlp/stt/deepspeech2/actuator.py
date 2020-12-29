@@ -3,7 +3,6 @@ import sys
 import json
 import tensorflow as tf
 from argparse import ArgumentParser
-
 sys.path.append(os.path.abspath(__file__)[:os.path.abspath(__file__).rfind("\\hlp\\")])
 from hlp.stt.utils.pre_treat import dispatch_pre_treat_func
 from hlp.stt.utils.utils import load_checkpoint

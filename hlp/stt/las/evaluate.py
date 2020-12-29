@@ -7,7 +7,7 @@ from hlp.stt.las.config import config
 from hlp.stt.las.model import plas, las
 from hlp.stt.utils import load_dataset
 from hlp.stt.utils.generator import test_generator
-from hlp.stt.utils.metric import lers
+from hlp.stt.utils.utils import lers
 from hlp.utils import beamsearch
 
 if __name__ == "__main__":

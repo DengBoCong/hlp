@@ -1,5 +1,48 @@
 import os
+import wave
+import pyaudio
 import tensorflow as tf
+
+
+def record(record_path, record_duration):
+    """从麦克风录音声音道文件
+
+    :param record_path: 声音文件保存路径
+    :param record_duration: 录制时间，秒
+    :return: 无
+    """
+    CHUNK = 1024
+    FORMAT = pyaudio.paInt16
+    CHANNELS = 1  # 声道数
+    RATE = 16000  # 采样率
+    RECORD_SECONDS = record_duration
+    WAVE_OUTPUT_FILENAME = record_path
+    p = pyaudio.PyAudio()
+
+    stream = p.open(format=FORMAT,
+                    channels=CHANNELS,
+                    rate=RATE,
+                    input=True,
+                    frames_per_buffer=CHUNK)
+    frames = []
+    print("开始录音：请在%d秒内输入语音:" % RECORD_SECONDS)
+    for i in range(1, int(RATE / CHUNK * RECORD_SECONDS) + 1):
+        data = stream.read(CHUNK)
+        frames.append(data)
+        if (i % (RATE / CHUNK)) == 0:
+            print('\r%s%d%s' % ("剩余", int(RECORD_SECONDS - (i // (RATE / CHUNK))), "秒"), end="")
+    print("\r录音结束\n")
+
+    stream.stop_stream()
+    stream.close()
+    p.terminate()
+
+    wf = wave.open(WAVE_OUTPUT_FILENAME, 'wb')
+    wf.setnchannels(CHANNELS)
+    wf.setsampwidth(p.get_sample_size(FORMAT))
+    wf.setframerate(RATE)
+    wf.writeframes(b''.join(frames))
+    wf.close()
 
 
 def wers(truths, preds):
@@ -51,7 +94,6 @@ def lers(truths, preds):
 
     for i in range(count):
         rate = _levenshtein(truths[i], preds[i])
-
         normrate = (float(rate) / len(truths[i]))
         norm_mean = norm_mean + normrate
         norm_rates.append(round(normrate, 4))
@@ -120,40 +162,30 @@ def load_checkpoint(model: tf.keras.Model, checkpoint_dir: str,
     return ckpt_manager
 
 
-# def compute_metric(model, val_data_generator, val_batchs, val_batch_size):
-#     dataset_information = config.get_dataset_info()
-#     units = config.units
-#     dec_units = config.dec_units
-#     # 确定使用的model类型
-#     model_type = config.model_type
-#     word_index = dataset_information["word_index"]
-#     index_word = dataset_information["index_word"]
-#     max_label_length = dataset_information["max_label_length"]
-#     results = []
-#     labels_list = []
-#     for batch, (input_tensor, _, text_list) in zip(range(1, val_batchs + 1), val_data_generator):
-#         if model_type == "las_d_w":
-#             hidden = tf.zeros((val_batch_size, dec_units))
-#         elif model_type == "las":
-#             hidden = tf.zeros((val_batch_size, units))
-#         dec_input = tf.expand_dims([word_index['<start>']] * val_batch_size, 1)
-#         result = ''  # 识别结果字符串
-#
-#         for t in range(max_label_length):
-#             predictions, _ = model(input_tensor, hidden, dec_input)
-#             predicted_ids = tf.argmax(predictions, 1).numpy()  # 贪婪解码，取最大
-#             idx = str(predicted_ids[0])
-#             if index_word[idx] == '<end>':
-#                 break
-#             else:
-#                 result += index_word[idx]
-#             dec_input = tf.expand_dims(predicted_ids, 1)
-#
-#         results.append(result)
-#         labels_list.append(text_list[0])
-#     norm_rates_lers, norm_aver_lers = lers(labels_list, results)
-#
-#     return norm_rates_lers, norm_aver_lers
+def compute_ctc_input_length(max_time_steps, ctc_time_steps, input_length):
+    """
+    计算ctc api中的参数input_length，基于https://github.com/tensorflow/models/blob/master/research/deep_speech
+    将ctc相关的api函数(ctc_loss,ctc_decode)所需要的参数input_length进行一个按比例缩减
+    这个比例是input_tensor的max_timestep:模型输出outputs的time_step
+    :param max_time_steps: 最大时间维度大小
+    :param ctc_time_steps: ctc计算的时间维度大小
+    :param input_length: 音频特征实际时间维度大小
+    :return: 计算的ctc长度
+    """
+    ctc_input_length = tf.cast(tf.multiply(input_length, ctc_time_steps), dtype=tf.float32)
+    return tf.cast(tf.math.floordiv(ctc_input_length, tf.cast(max_time_steps,
+                                                              dtype=tf.float32)), dtype=tf.int32)
+
+
+def can_stop(numbers):
+    last = numbers[-1]
+    rest = numbers[:-1]
+    # 最后一个错误率比所有的大则返回True
+    if all(i <= last for i in rest):
+        return True
+    else:
+        return False
+
 
 if __name__ == "__main__":
     pred1 = "i like you"
