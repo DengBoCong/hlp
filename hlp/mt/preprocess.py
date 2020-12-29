@@ -109,30 +109,22 @@ def train_preprocess():
 
     # 编码句子
     print("正在编码训练集句子...")
-    max_sequence_length_source = text_vectorize.encode_and_save(save_path=source_sequences_path_train,
-                                                                sentences=source_sentences,
-                                                                tokenizer=tokenizer_source,
-                                                                language=_config.source_lang,
-                                                                mode=source_mode)
-    max_sequence_length_target = text_vectorize.encode_and_save(save_path=target_sequences_path_train,
-                                                                sentences=target_sentences,
-                                                                tokenizer=tokenizer_target,
-                                                                language=_config.target_lang,
-                                                                mode=target_mode)
+    max_sequence_length_source = text_vectorize.encode_and_save(sentences=source_sentences, tokenizer=tokenizer_source,
+                                                                save_path=source_sequences_path_train,
+                                                                language=_config.source_lang, mode=source_mode)
+    max_sequence_length_target = text_vectorize.encode_and_save(sentences=target_sentences, tokenizer=tokenizer_target,
+                                                                save_path=target_sequences_path_train,
+                                                                language=_config.target_lang, mode=target_mode)
     print('最大源语言(%s)句子长度:%d' % (_config.source_lang, max_sequence_length_source))
     print('最大目标语言(%s)句子长度:%d' % (_config.target_lang, max_sequence_length_target))
 
     if _config.validation_data == "True":
         print("正在编码验证集句子...")
-        _ = text_vectorize.encode_and_save(save_path=source_sequences_path_val,
-                                           sentences=source_sentences_val,
-                                           tokenizer=tokenizer_source,
-                                           language=_config.source_lang,
+        _ = text_vectorize.encode_and_save(sentences=source_sentences_val, tokenizer=tokenizer_source,
+                                           save_path=source_sequences_path_val, language=_config.source_lang,
                                            mode=source_mode)
-        _ = text_vectorize.encode_and_save(save_path=target_sequences_path_val,
-                                           sentences=target_sentences_val,
-                                           tokenizer=tokenizer_target,
-                                           language=_config.target_lang,
+        _ = text_vectorize.encode_and_save(sentences=target_sentences_val, tokenizer=tokenizer_target,
+                                           save_path=target_sequences_path_val, language=_config.target_lang,
                                            mode=target_mode)
     print("语料处理完成.\n")
 

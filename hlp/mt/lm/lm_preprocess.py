@@ -47,8 +47,8 @@ def train_preprocess():
 
     # 使用字典对文本进行编码并保存
     print("正在编码训练集句子...")
-    max_sequence_length = text_vectorize.encode_and_save(encoded_sequences_path_train, sentences,
-                                                         tokenizer, language, mode)
+    max_sequence_length = text_vectorize.encode_and_save(sentences, tokenizer, encoded_sequences_path_train, language,
+                                                         mode)
     print('最大句子长度:%d' % max_sequence_length)
     print("句子编码完毕！\n")
 

@@ -58,7 +58,7 @@ def _predict_index(checkpoints_path, inp_sentence, model, beam_search_container,
     inp_sequence = tf.expand_dims(inp_sequence, 0)
 
     # start_token  shape:(1,)
-    start_token = text_vectorize.get_start_token(_config.start_word, target_tokenizer, language=_config.target_lang)
+    start_token = text_vectorize.encode_start_token(_config.start_word, target_tokenizer, language=_config.target_lang)
     end_token, _ = text_vectorize.encode_sentences([_config.end_word], target_tokenizer,
                                                    language=_config.target_lang, mode=target_mode)
     end_token = tf.squeeze(end_token)
