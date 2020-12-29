@@ -1,8 +1,10 @@
+import os
 import tensorflow as tf
 
-def wers(truths, preds):
-    """多个文本WER计算
 
+def wers(truths, preds):
+    """
+    多个文本WER计算
     :param truths: 以空格分隔的真实文本串list
     :param preds: 以空格分隔的预测文本串list
     :return: WER列表，WER平均值
@@ -21,8 +23,8 @@ def wers(truths, preds):
 
 
 def wer(truth, pred):
-    """单个WER计算
-
+    """
+    单个WER计算
     :param truth: 以空格分隔的真实文本串
     :param pred: 以空格分隔的预测文本串
     :return: WER
@@ -34,8 +36,8 @@ def wer(truth, pred):
 
 
 def lers(truths, preds):
-    """多个文本LER计算
-
+    """
+    多个文本LER计算
     :param truths: 以空格分隔的真实文本串list
     :param preds: 以空格分隔的预测文本串list
     :return: 规范化ler指标组成的list; 规范化ler均值
@@ -58,8 +60,8 @@ def lers(truths, preds):
 
 
 def ler(truth, pred):
-    """LER
-
+    """
+    LER
     :param truth: 以空格分隔的真实文本串
     :param pred: 以空格分隔的预测文本串
     :return: LER
@@ -68,8 +70,8 @@ def ler(truth, pred):
 
 
 def _levenshtein(a, b):
-    """计算a和b之间的Levenshtein距离
-
+    """
+    计算a和b之间的Levenshtein距离
     :param a: 原始文本
     :param b: 预测文本
     :return: a和b之间的Levenshtein距离
@@ -91,6 +93,32 @@ def _levenshtein(a, b):
             current[j] = min(add, delete, change)
 
     return current[n]
+
+
+def load_checkpoint(model: tf.keras.Model, checkpoint_dir: str,
+                    execute_type: str, checkpoint_save_size: int):
+    """
+    恢复检查点
+    :param model: 传入的模型
+    :param checkpoint_dir: 检查点保存目录
+    :param execute_type: 执行类型
+    :param checkpoint_save_size: 检查点最大保存数量
+    """
+    # 如果检查点存在就恢复，如果不存在就重新创建一个
+    checkpoint = tf.train.Checkpoint(model=model)
+    ckpt_manager = tf.train.CheckpointManager(checkpoint, checkpoint_dir, max_to_keep=checkpoint_save_size)
+
+    if os.path.exists(checkpoint_dir):
+        if ckpt_manager.latest_checkpoint:
+            checkpoint.restore(ckpt_manager.latest_checkpoint).expect_partial()
+    else:
+        os.makedirs(checkpoint_dir, exist_ok=True)
+        if execute_type == "recognize":
+            print("没有检查点，请先执行train模式")
+            exit(0)
+
+    return ckpt_manager
+
 
 # def compute_metric(model, val_data_generator, val_batchs, val_batch_size):
 #     dataset_information = config.get_dataset_info()

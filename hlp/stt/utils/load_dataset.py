@@ -4,8 +4,9 @@ import tensorflow as tf
 from hlp.stt.utils.text_process import tokenize_and_encode
 
 
-def load_data(train_data_path: str, max_len: int, vocab_size: int, batch_size: int, buffer_size: int,
-              dict_path: str = "", valid_data_split: float = 0.0, valid_data_path: str = "",
+def load_data(train_data_path: str, max_len: int, vocab_size: int, batch_size: int,
+              buffer_size: int, dict_path: str = "", valid_data_split: float = 0.0,
+              valid_data_path: str = "", train_length_path: str = "", valid_length_path: str = "",
               max_train_data_size: int = 0, max_valid_data_size: int = 0, unk_token: str = "<unk>"):
     """
     加载训练验证数据方法，验证数据的优先级为：验证数据文件>从训练集划分验证集
@@ -17,6 +18,8 @@ def load_data(train_data_path: str, max_len: int, vocab_size: int, batch_size: i
     :param batch_size: Dataset加载批大小
     :param valid_data_split: 用于从训练数据中划分验证数据
     :param valid_data_path: 验证数据文本路径
+    :param train_length_path: 训练样本长度保存路径
+    :param valid_length_path: 验证样本长度保存路径
     :param max_train_data_size: 最大训练数据量
     :param max_valid_data_size: 最大验证数据量
     :param unk_token: 未登录词
@@ -27,7 +30,9 @@ def load_data(train_data_path: str, max_len: int, vocab_size: int, batch_size: i
         exit(0)
 
     print("正在加载训练数据...")
-    train_audio_data_path, train_sentence_data = read_data(data_path=train_data_path, num_examples=max_train_data_size)
+    train_audio_data_path, train_sentence_data, train_length_data = read_data(data_path=train_data_path,
+                                                                              length_path=train_length_path,
+                                                                              num_examples=max_train_data_size)
 
     valid_flag = True  # 是否开启验证标记
     valid_steps_per_epoch = 0
@@ -35,15 +40,18 @@ def load_data(train_data_path: str, max_len: int, vocab_size: int, batch_size: i
     # 根据是否传入验证数据文件，切分验证数据
     if valid_data_path != "":
         print("正在加载验证数据...")
-        valid_audio_data_path, valid_sentence_data = read_data(data_path=valid_data_path,
-                                                               num_examples=max_valid_data_size)
+        valid_audio_data_path, valid_sentence_data, valid_length_data = read_data(data_path=valid_data_path,
+                                                                                  length_path=valid_length_path,
+                                                                                  num_examples=max_valid_data_size)
     elif valid_data_split != 0.0:
         print("从训练数据中划分验证数据...")
         train_size = int(len(train_audio_data_path) * (1.0 - valid_data_split))
         valid_audio_data_path = train_audio_data_path[train_size:]
         valid_sentence_data = train_sentence_data[train_size:]
+        valid_length_data = train_length_data[train_size:]
         train_audio_data_path = train_audio_data_path[:train_size]
         train_sentence_data = train_sentence_data[:train_size]
+        train_length_data = train_length_data[:train_size]
     else:
         print("没有验证数据.")
         valid_flag = False
@@ -54,7 +62,7 @@ def load_data(train_data_path: str, max_len: int, vocab_size: int, batch_size: i
     train_sentence_sequences, tokenizer = tokenize_and_encode(texts=train_sentence_data,
                                                               max_len=max_len, num_words=vocab_size,
                                                               dict_path=dict_path, unk_token=unk_token)
-    train_dataset = _to_dataset(data=(train_audio_data_path, train_sentence_sequences),
+    train_dataset = _to_dataset(data=(train_audio_data_path, train_sentence_sequences, train_length_data),
                                 batch_size=batch_size, buffer_size=buffer_size)
     steps_per_epoch = len(train_sentence_sequences) // batch_size
 
@@ -62,7 +70,7 @@ def load_data(train_data_path: str, max_len: int, vocab_size: int, batch_size: i
         valid_sentence_sequences = tokenizer.texts_to_sequences(valid_sentence_data)
         valid_sentence_sequences = tf.keras.preprocessing.sequence.pad_sequences(valid_sentence_sequences,
                                                                                  maxlen=max_len, padding="post")
-        valid_dataset = _to_dataset(data=(valid_audio_data_path, valid_sentence_sequences),
+        valid_dataset = _to_dataset(data=(valid_audio_data_path, valid_sentence_sequences, valid_length_data),
                                     batch_size=batch_size, buffer_size=buffer_size)
         valid_steps_per_epoch = len(valid_sentence_sequences) // batch_size
     else:
@@ -88,9 +96,10 @@ def _to_dataset(data: tuple, batch_size: int, buffer_size: int):
     return dataset
 
 
-def read_data(data_path: str, num_examples: int):
+def read_data(data_path: str, length_path: str, num_examples: int):
     """
     :param data_path: 需要读取整理的数据文件路径
+    :param length_path: 样本长度保存路径
     :param num_examples: 读取的数据量大小
     :return: 返回读取的音频特征数据路径和句子数据
     """
@@ -106,7 +115,9 @@ def read_data(data_path: str, num_examples: int):
             audio_data_path.append(line[0])
             sentence_data.append(line[1])
 
-    return audio_data_path, sentence_data
+    length_data = np.load(length_path)
+
+    return audio_data_path, sentence_data, length_data
 
 
 def read_npy_file(filename):
@@ -119,16 +130,17 @@ def read_npy_file(filename):
     return data.astype(np.float32)
 
 
-def _process_audio_sentence_pairs(audio_data_path: tf.Tensor, sentence: tf.Tensor):
+def _process_audio_sentence_pairs(audio_data_path: tf.Tensor, sentence: tf.Tensor, length: tf.Tensor):
     """
     用于处理音频句子对，将其转化为张量
     :param audio_data_path: 音频特征数据保存文件
     :param sentence: 音频句子
+    :param length: 样本长度
     :return: audio_feature, sentence
     """
     [audio_feature] = tf.py_function(read_npy_file, [audio_data_path], [tf.float32])
 
-    return audio_feature, sentence
+    return audio_feature, sentence, length
 
 
 def ds2_load_data(dataset_name, data_path, num_examples):

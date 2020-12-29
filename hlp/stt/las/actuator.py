@@ -6,7 +6,7 @@ from argparse import ArgumentParser
 sys.path.append(os.path.abspath(__file__)[:os.path.abspath(__file__).rfind("\\hlp\\")])
 from hlp.stt.utils.pre_treat import dispatch_pre_treat_func
 from hlp.stt.las.module import train
-from hlp.stt.las.module import load_checkpoint
+from hlp.stt.utils.utils import load_checkpoint
 from hlp.stt.las.model.las import LAS
 from hlp.stt.las.model.plas import PLAS
 
@@ -52,6 +52,8 @@ def main():
                         help='字典存放路径')
     parser.add_argument('--checkpoint_dir', default='\\data\\checkpoints\\las', type=str, required=False,
                         help='检查点保存路径')
+    parser.add_argument('--save_length_path', default='\\data\\data_thchs30\\length.npy', type=str, required=False,
+                        help='训练数据集存放目录路径')
 
     options = parser.parse_args().__dict__
     if options['config_file'] != '':

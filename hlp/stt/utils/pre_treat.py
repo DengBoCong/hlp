@@ -6,13 +6,14 @@ from hlp.stt.utils.audio_process import wav_to_feature
 
 def dispatch_pre_treat_func(func_type: str, data_path: str, dataset_infos_file: str, max_length: int,
                             spectrum_data_dir: str, audio_feature_type: str = "mfcc",
-                            transcript_row: int = 0):
+                            save_length_path: str = "", transcript_row: int = 0):
     """
     预处理方法分发匹配
     :param func_type: 预处理方法类型
     :param data_path: 数据存放目录路径
     :param dataset_infos_file: 保存处理之后的数据路径
     :param max_length: 最大音频补齐长度
+    :param save_length_path: 保存样本长度文件路径
     :param spectrum_data_dir: 保存处理后的音频特征数据目录
     :param audio_feature_type: 特征类型
     :param transcript_row: 使用文本数据中的第几行，第一行文字，第二行拼音，第三行音节
@@ -23,11 +24,13 @@ def dispatch_pre_treat_func(func_type: str, data_path: str, dataset_infos_file: 
                                                               dataset_infos_file=dataset_infos_file,
                                                               spectrum_data_dir=spectrum_data_dir,
                                                               audio_feature_type=audio_feature_type,
-                                                              transcript_row=transcript_row),
+                                                              transcript_row=transcript_row,
+                                                              save_length_path=save_length_path),
         "librispeech": lambda: preprocess_librispeech_speech_raw_data(data_path=data_path, max_length=max_length,
                                                                       dataset_infos_file=dataset_infos_file,
                                                                       spectrum_data_dir=spectrum_data_dir,
-                                                                      audio_feature_type=audio_feature_type)
+                                                                      audio_feature_type=audio_feature_type,
+                                                                      save_length_path=save_length_path)
     }
 
     operation.get(func_type, "thchs30")()
@@ -35,7 +38,8 @@ def dispatch_pre_treat_func(func_type: str, data_path: str, dataset_infos_file: 
 
 def preprocess_thchs30_speech_raw_data(data_path: str, dataset_infos_file: str, max_length: int,
                                        spectrum_data_dir: str, audio_feature_type: str = "mfcc",
-                                       transcript_row: int = 0, start_sign: str = "<start>", end_sign: str = "<end>"):
+                                       save_length_path: str = "", transcript_row: int = 0,
+                                       start_sign: str = "<start>", end_sign: str = "<end>"):
     """
     用于处理thchs30数据集的方法，将数据整理为<音频地址, 句子>的
     形式，这样方便后续进行分批读取
@@ -44,6 +48,7 @@ def preprocess_thchs30_speech_raw_data(data_path: str, dataset_infos_file: str, 
     :param max_length: 最大音频补齐长度
     :param spectrum_data_dir: 保存处理后的音频特征数据目录
     :param audio_feature_type: 特征类型
+    :param save_length_path: 保存样本长度文件路径
     :param transcript_row: 使用文本数据中的第几行，第一行文字，第二行拼音，第三行音节
     :param start_sign: 句子开始标记
     :param end_sign: 句子结束标记
@@ -58,9 +63,11 @@ def preprocess_thchs30_speech_raw_data(data_path: str, dataset_infos_file: str, 
         os.makedirs(spectrum_data_dir)
 
     count = 0
+    len_list = []
     with open(dataset_infos_file, 'w', encoding='utf-8') as ds_infos_file:
         for data_name in data_list:
             if os.path.splitext(data_name)[1] == ".wav":
+                len_pair = []
                 # 音频文件
                 audio_path = data_path + data_name
                 # 对应的文本
@@ -72,9 +79,12 @@ def preprocess_thchs30_speech_raw_data(data_path: str, dataset_infos_file: str, 
                     texts = text_file.readlines()
                 text = texts[transcript_row].strip()
                 text = start_sign + " " + text + " " + end_sign
+                len_pair.append(len(text.split(" ")))
 
                 audio_feature_file = spectrum_data_dir + data_name + ".npy"
                 audio_feature = wav_to_feature(audio_path, audio_feature_type)
+                len_pair.append(audio_feature.shape[0])
+
                 audio_feature = tf.expand_dims(audio_feature, axis=0)
                 audio_feature = tf.keras.preprocessing.sequence.pad_sequences(audio_feature, maxlen=max_length,
                                                                               dtype="float32", padding="post")
@@ -83,32 +93,39 @@ def preprocess_thchs30_speech_raw_data(data_path: str, dataset_infos_file: str, 
                 np.save(file=audio_feature_file, arr=audio_feature)
                 ds_infos_file.write(audio_feature_file + '\t' + text + "\n")
 
+                len_list.append(len_pair)
                 count += 1
                 print('\r已处理音频句子对数：{}'.format(count), flush=True, end='')
+
+    if save_length_path is not "":
+        np.save(file=save_length_path, arr=len_list)
 
     print("\n数据处理完毕，共计{}条语音数据".format(count))
 
 
 def preprocess_librispeech_speech_raw_data(data_path: str, dataset_infos_file: str, max_length: int,
-                                           spectrum_data_dir: str, audio_feature_type: str = "mfcc"):
+                                           spectrum_data_dir: str, save_length_path: str = "",
+                                           audio_feature_type: str = "mfcc"):
     """
     用于处理librispeech数据集的方法，将数据整理为<音频地址, 句子>的
     形式，这样方便后续进行分批读取
     :param data_path: 数据存放目录路径
     :param dataset_infos_file: 保存处理之后的数据路径
     :param max_length: 最大音频补齐长度
+    :param save_length_path: 保存样本长度文件路径
     :param spectrum_data_dir: 保存处理后的音频特征数据目录
     :param audio_feature_type: 特征类型
     :return: 无返回值
     """
     if not os.path.exists(data_path):
-        print("thchs30数据集不存在，请检查重试")
+        print("librispeech数据集不存在，请检查重试")
         exit(0)
 
     if not os.path.exists(spectrum_data_dir):
         os.makedirs(spectrum_data_dir)
 
     count = 0
+    len_list = []
     with open(dataset_infos_file, 'w', encoding='utf-8') as ds_infos_file:
         first_folders = os.listdir(data_path)
         for first_folder in first_folders:
@@ -124,18 +141,25 @@ def preprocess_librispeech_speech_raw_data(data_path: str, dataset_infos_file: s
 
                         if line == "":
                             continue
+                        len_pair = []
                         line = line.split(" ", 1)
+                        len_pair.append(len(line[1].split(" ")))
 
                         audio_path = os.path.join(second_dir, line[0] + ".flac")
 
                         audio_feature_file = spectrum_data_dir + line[0] + ".npy"
                         audio_feature = wav_to_feature(audio_path, audio_feature_type)
+                        len_pair.append(audio_feature.shape[0])
                         audio_feature = tf.keras.preprocessing.sequence.pad_sequences(audio_feature, maxlen=max_length,
                                                                                       dtype="float32", padding="post")
                         np.save(file=audio_feature_file, arr=audio_feature)
                         ds_infos_file.write(audio_feature_file + "\t" + line[1] + "\n")
 
                         count += 1
+                        len_list.append(len_pair)
                         print('\r已处理音频句子对数：{}'.format(count), flush=True, end='')
+
+    if save_length_path is not "":
+        np.save(file=save_length_path, arr=len_list)
 
     print("\n数据处理完毕，共计{}条语音数据".format(count))

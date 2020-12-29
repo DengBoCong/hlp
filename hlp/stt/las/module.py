@@ -1,4 +1,3 @@
-import os
 import time
 import tensorflow as tf
 from hlp.stt.utils.load_dataset import load_data
@@ -62,7 +61,6 @@ def train(epochs: int, train_data_path: str, max_len: int, vocab_size: int,
             # print("平均字母错误率: ", norm_aver_lers)
 
 
-
 def _train_step(audio_feature, sentence, enc_hidden, tokenizer, model, las_optimizer, train_batch_size):
     loss = 0
     dec_input = tf.expand_dims([tokenizer.word_index.get('<start>')] * train_batch_size, 1)
@@ -84,24 +82,3 @@ def _train_step(audio_feature, sentence, enc_hidden, tokenizer, model, las_optim
     gradients = tape.gradient(loss, variables)  # 计算损失对参数的梯度
     las_optimizer.apply_gradients(zip(gradients, variables))  # 优化器反向传播更新参数
     return batch_loss
-
-
-def load_checkpoint(model: tf.keras.Model, checkpoint_dir: str,
-                    execute_type: str, checkpoint_save_size: int):
-    """
-    恢复检查点
-    """
-    # 如果检查点存在就恢复，如果不存在就重新创建一个
-    checkpoint = tf.train.Checkpoint(model=model)
-    ckpt_manager = tf.train.CheckpointManager(checkpoint, checkpoint_dir, max_to_keep=checkpoint_save_size)
-
-    if os.path.exists(checkpoint_dir):
-        if ckpt_manager.latest_checkpoint:
-            checkpoint.restore(ckpt_manager.latest_checkpoint).expect_partial()
-    else:
-        os.makedirs(checkpoint_dir, exist_ok=True)
-        if execute_type == "recognize":
-            print("没有检查点，请先执行train模式")
-            exit(0)
-
-    return ckpt_manager
