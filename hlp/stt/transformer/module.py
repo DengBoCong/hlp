@@ -11,7 +11,8 @@ def train(encoder: tf.keras.Model, decoder: tf.keras.Model, optimizer: tf.keras.
           epochs: int, checkpoint: tf.train.CheckpointManager, train_data_path: str, max_len: int,
           vocab_size: int, batch_size: int, buffer_size: int, checkpoint_save_freq: int,
           dict_path: str = "", valid_data_split: float = 0.0, valid_data_path: str = "",
-          max_train_data_size: int = 0, max_valid_data_size: int = 0):
+          max_train_data_size: int = 0, max_valid_data_size: int = 0,
+          train_length_path: str = "", valid_length_path: str = ""):
     """
     训练模块
     :param encoder: 模型的encoder
@@ -30,12 +31,15 @@ def train(encoder: tf.keras.Model, decoder: tf.keras.Model, optimizer: tf.keras.
     :param max_train_data_size: 最大训练数据量
     :param max_valid_data_size: 最大验证数据量
     :param checkpoint_save_freq: 检查点保存频率
+    :param train_length_path: 训练样本长度保存路径
+    :param valid_length_path: 验证样本长度保存路径
     """
     _, train_dataset, valid_dataset, steps_per_epoch, valid_steps_per_epoch = \
         load_data(train_data_path=train_data_path, max_len=max_len, vocab_size=vocab_size,
                   batch_size=batch_size, buffer_size=buffer_size, dict_path=dict_path,
                   valid_data_split=valid_data_split, valid_data_path=valid_data_path,
-                  max_train_data_size=max_train_data_size, max_valid_data_size=max_valid_data_size)
+                  max_train_data_size=max_train_data_size, max_valid_data_size=max_valid_data_size,
+                  valid_length_path=valid_length_path, train_length_path=train_length_path)
 
     if steps_per_epoch == 0:
         print("训练数据量过小，小于batch_size，请添加数据后重试")
@@ -46,7 +50,7 @@ def train(encoder: tf.keras.Model, decoder: tf.keras.Model, optimizer: tf.keras.
         start_time = time.time()
         total_loss = 0
 
-        for (batch, (audio_feature, sentence)) in enumerate(train_dataset.take(steps_per_epoch)):
+        for (batch, (audio_feature, sentence, length)) in enumerate(train_dataset.take(steps_per_epoch)):
             batch_start = time.time()
             sentence_input = sentence[:, :-1]
             sentence_real = sentence[:, 1:]
@@ -171,7 +175,7 @@ def _valid_step(encoder: tf.keras.Model, decoder: tf.keras.Model,
     start_time = time.time()
     total_loss = 0
 
-    for (batch, (audio_feature, sentence)) in enumerate(dataset.take(steps_per_epoch)):
+    for (batch, (audio_feature, sentence, length)) in enumerate(dataset.take(steps_per_epoch)):
         batch_start = time.time()
         sentence_input = sentence[:, :-1]
         sentence_real = sentence[:, 1:]

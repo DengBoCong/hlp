@@ -24,9 +24,6 @@ def tokenize_and_encode(texts: list, dict_path: str, max_len: int,
 
     return texts, tokenizer
 
-###################################################################
-###################################################################
-
 
 def split_and_encode(sentences, mode, word_index):
     """对文本进行切分和编码
@@ -154,18 +151,6 @@ def get_label_and_length(text_int_sequences_list, max_label_length):
                                                                         )
     target_length = tf.convert_to_tensor(target_length_list)
     return target_tensor_numpy, target_length
-
-
-# def tokenize_and_encode(texts):
-#     """ 对文本进行tokenize和编码
-#
-#     :param texts: 已经用空格分隔的文本列表
-#     :return: 文本编码序列, tokenizer
-#     """
-#     tokenizer = tf.keras.preprocessing.text.Tokenizer(filters='')  # 无过滤字符
-#     tokenizer.fit_on_texts(texts)
-#     text_int_sequences = tokenizer.texts_to_sequences(texts)
-#     return text_int_sequences, tokenizer
 
 
 # 将输出token id序列解码为token序列

@@ -84,14 +84,9 @@ class Decoder(tf.keras.Model):
 
 
 class LAS(tf.keras.Model):
-    def __init__(self, vocab_tar_size,
-                 cnn1_filters, cnn1_kernel_size,
-                 cnn2_filters, cnn2_kernel_size,
-                 max_pool_strides, max_pool_size,
-                 d, w,
-                 embedding_dim,
-                 dec_units,
-                 batch_size):
+    def __init__(self, vocab_tar_size, cnn1_filters, cnn1_kernel_size, cnn2_filters,
+                 cnn2_kernel_size, max_pool_strides, max_pool_size, d, w,
+                 embedding_dim, dec_units, batch_size):
         super(LAS, self).__init__()
         self.vocab_tar_size = vocab_tar_size
         self.d = d
@@ -99,15 +94,14 @@ class LAS(tf.keras.Model):
         self.batch_size = batch_size
         self.encoder = Encoder(cnn1_filters, cnn1_kernel_size,
                                cnn2_filters, cnn2_kernel_size,
-                               max_pool_strides, max_pool_size,
-                               d, w)
+                               max_pool_strides, max_pool_size, d, w)
         self.decoder = Decoder(vocab_tar_size, embedding_dim, dec_units, w)
 
     def call(self, inputx_1, enc_hidden, dec_input):
         enc_output = self.encoder(inputx_1)
 
         dec_hidden = enc_hidden  # 编码器状态作为解码器初始状态？
-        predictions, dec_hidden, _ = self.decoder(dec_input, dec_hidden, enc_output)
+        predictions, dec_hidden = self.decoder(dec_input, dec_hidden, enc_output)
         return predictions, dec_hidden
 
     def initialize_hidden_state(self):

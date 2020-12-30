@@ -3,7 +3,6 @@ import sys
 import json
 import tensorflow as tf
 from argparse import ArgumentParser
-
 sys.path.append(os.path.abspath(__file__)[:os.path.abspath(__file__).rfind("\\hlp\\")])
 from hlp.stt.utils.pre_treat import dispatch_pre_treat_func
 from hlp.stt.transformer.module import train
@@ -56,14 +55,16 @@ if __name__ == '__main__':
                         help='字典存放路径')
     parser.add_argument('--checkpoint_dir', default='\\data\\checkpoints\\transformer', type=str, required=False,
                         help='检查点保存路径')
+    parser.add_argument('--save_length_path', default='\\data\\data_thchs30\\length.npy', type=str, required=False,
+                        help='训练数据集存放目录路径')
 
     options = parser.parse_args().__dict__
     if options['config_file'] != '':
         with open(options['config_file'], 'r', encoding='utf-8') as config_file:
             options = json.load(config_file)
 
-    # 注意了，有关路径的参数，以tacotron2目录下为基准配置，只要
-    # tacotron2目录名未更改，任意移动位置不影响使用
+    # 注意了，有关路径的参数，以transformer目录下为基准配置，只要
+    # transformer目录名未更改，任意移动位置不影响使用
     work_path = os.path.abspath(__file__)[:os.path.abspath(__file__).find("\\transformer")]
     execute_type = options['act']
 
@@ -88,7 +89,8 @@ if __name__ == '__main__':
               optimizer=optimizer, dict_path=work_path + options['dict_path'],
               valid_data_split=options['valid_data_split'], valid_data_path="",
               max_train_data_size=options['max_train_data_size'], encoder=encoder,
-              max_valid_data_size=options['max_valid_data_size'], decoder=decoder)
+              max_valid_data_size=options['max_valid_data_size'], decoder=decoder,
+              valid_length_path="", train_length_path=work_path + options['save_length_path'])
     elif execute_type == 'recognize':
         recognize(encoder=encoder, decoder=decoder, beam_size=options['beam_size'],
                   audio_feature_type=options['audio_feature_type'], max_length=options['max_time_step'],
