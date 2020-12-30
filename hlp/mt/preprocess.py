@@ -1,5 +1,6 @@
 import re
 
+from hlp.mt.common.text_vectorize import get_encoded_sequences_path, get_tokenizer_path, get_tokenizer_mode
 from hlp.mt.config import get_config as _config
 from hlp.mt.common import text_vectorize
 from hlp.mt.common.text_split import preprocess_sentences
@@ -15,52 +16,14 @@ def _count_words(sentences):
     return count
 
 
-def get_tokenizer_mode(language):
-    """根据语言确定编码的类型
-
-    @param language: 语言
-    @return: 编码类型
-    """
-    if language == "en":
-        return _config.en_tokenize_type
-    elif language == "zh":
-        return _config.zh_tokenize_type
-
-
-def get_tokenizer_path(language, mode):
-    """合成字典保存路径
-
-    @param language:语言
-    @param mode:编码类型
-    @return:字典保存路径
-    """
-    return _config.tokenizer_path_prefix + language + '_' + mode.lower()
-
-
-def get_encoded_sequences_path(language, postfix=''):
-    """根据语言获取已编码句子的保存路径
-
-    @param language: 语言
-    @param postfix: 保存路径的后缀
-    @return:已编码句子的保存路径
-    """
-    return _config.encoded_sequences_path_prefix + language + postfix
-
-
 def train_preprocess():
-    """
-    模型训练所需要的文本预处理
-    - 加载句子
-    - 预处理句子
-    - 生成及保存字典
-    - 编码句子
-
-    """
     # 获取source、target编码模式，字典保存路径，编码句子保存路径
     source_mode = get_tokenizer_mode(_config.source_lang)
-    target_mode = get_tokenizer_mode(_config.source_lang)
+    target_mode = get_tokenizer_mode(_config.target_lang)
+
     source_tokenizer_path = get_tokenizer_path(_config.source_lang, source_mode)
     target_tokenizer_path = get_tokenizer_path(_config.target_lang, target_mode)
+
     source_sequences_path_train = get_encoded_sequences_path(_config.source_lang, postfix='_train')
     target_sequences_path_train = get_encoded_sequences_path(_config.target_lang, postfix='_train')
     source_sequences_path_val = get_encoded_sequences_path(_config.source_lang, postfix='_val')
@@ -76,6 +39,7 @@ def train_preprocess():
         source_sentences_val, target_sentences_val = load_sentences(_config.path_to_val_file,
                                                                     _config.num_validate_sentences)
 
+    print('已加载句子数量:%d' % _config.num_sentences)
     # 计算语料词数
     num_words = _count_words(source_sentences)
     print('源语料(%s)词数：%d' % (_config.source_lang, num_words))
@@ -89,8 +53,6 @@ def train_preprocess():
         print('预处理验证数据集...')
         source_sentences_val = preprocess_sentences(source_sentences_val, _config.source_lang, source_mode)
         target_sentences_val = preprocess_sentences(target_sentences_val, _config.target_lang, target_mode)
-
-    print('已加载句子数量:%d' % _config.num_sentences)
 
     # 生成及保存字典
     print('正在生成、保存源语言(%s)字典(分词方式:%s)...' % (_config.source_lang, _config.en_tokenize_type))
@@ -109,43 +71,27 @@ def train_preprocess():
 
     # 编码句子
     print("正在编码训练集句子...")
-    max_sequence_length_source = text_vectorize.encode_and_save(save_path=source_sequences_path_train,
-                                                                sentences=source_sentences,
-                                                                tokenizer=tokenizer_source,
-                                                                language=_config.source_lang,
-                                                                mode=source_mode)
-    max_sequence_length_target = text_vectorize.encode_and_save(save_path=target_sequences_path_train,
-                                                                sentences=target_sentences,
-                                                                tokenizer=tokenizer_target,
-                                                                language=_config.target_lang,
-                                                                mode=target_mode)
+    max_sequence_length_source = text_vectorize.encode_and_save(sentences=source_sentences, tokenizer=tokenizer_source,
+                                                                save_path=source_sequences_path_train,
+                                                                language=_config.source_lang, mode=source_mode)
+    max_sequence_length_target = text_vectorize.encode_and_save(sentences=target_sentences, tokenizer=tokenizer_target,
+                                                                save_path=target_sequences_path_train,
+                                                                language=_config.target_lang, mode=target_mode)
     print('最大源语言(%s)句子长度:%d' % (_config.source_lang, max_sequence_length_source))
     print('最大目标语言(%s)句子长度:%d' % (_config.target_lang, max_sequence_length_target))
 
     if _config.validation_data == "True":
         print("正在编码验证集句子...")
-        _ = text_vectorize.encode_and_save(save_path=source_sequences_path_val,
-                                           sentences=source_sentences_val,
-                                           tokenizer=tokenizer_source,
-                                           language=_config.source_lang,
+        _ = text_vectorize.encode_and_save(sentences=source_sentences_val, tokenizer=tokenizer_source,
+                                           save_path=source_sequences_path_val, language=_config.source_lang,
                                            mode=source_mode)
-        _ = text_vectorize.encode_and_save(save_path=target_sequences_path_val,
-                                           sentences=target_sentences_val,
-                                           tokenizer=tokenizer_target,
-                                           language=_config.target_lang,
+        _ = text_vectorize.encode_and_save(sentences=target_sentences_val, tokenizer=tokenizer_target,
+                                           save_path=target_sequences_path_val, language=_config.target_lang,
                                            mode=target_mode)
     print("语料处理完成.\n")
 
     return vocab_size_source, vocab_size_target
 
 
-def translate_proprecess():
-    """翻译所需的预处理"""
-
-
-def main():
-    train_preprocess()
-
-
 if __name__ == '__main__':
-    main()
+    train_preprocess()

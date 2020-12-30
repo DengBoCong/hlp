@@ -50,6 +50,7 @@ def create_and_save_tokenizer(sentences, save_path, language, mode):
     # 若目录不存在，则创建目录
     if not os.path.exists(os.path.dirname(save_path)):
         os.makedirs(os.path.dirname(save_path), exist_ok=True)
+
     if language == 'zh':
         return _create_and_save_tokenizer_keras(sentences, save_path)
     elif language == 'en':
@@ -89,6 +90,7 @@ def load_tokenizer(path, language, mode):
     """
     if not os.path.exists(path):
         raise ValueError("路径(%s)不存在" % path)
+
     if language == 'zh':
         return _load_tokenizer_keras(path)
     elif language == 'en':
@@ -101,12 +103,12 @@ def load_tokenizer(path, language, mode):
 
 
 def _encode_sentences_bpe(sentences, tokenizer):
-    """
+    """编码和填充句子
     Args:
         sentences: 需要编码的句子列表
         tokenizer: 字典
 
-    Returns:编码好的句子
+    Returns:编码好的句子, 最大编码长度
     """
     sequences = [tokenizer.encode(s) for s in sentences]
     sequences = tf.keras.preprocessing.sequence.pad_sequences(sequences, padding='post')
@@ -115,12 +117,12 @@ def _encode_sentences_bpe(sentences, tokenizer):
 
 
 def _encode_sentences_keras(sentences, tokenizer):
-    """
+    """编码和填充句子
     Args:
         sentences: 需要编码的句子列表
         tokenizer: 字典
 
-    Returns:编码好的句子
+    Returns:编码好的句子, 最大编码长度
     """
     sequences = tokenizer.texts_to_sequences(sentences)
     sequences = tf.keras.preprocessing.sequence.pad_sequences(sequences, padding='post')
@@ -147,11 +149,10 @@ def encode_sentences(sentences, tokenizer, language, mode):
             raise ValueError("语言(%s)暂不支持模式(%s)" % (language, mode))
 
 
-def get_start_token(start_word, tokenizer, language):
-    """
+def encode_start_token(start_word, tokenizer, language):
+    """对开始符编码
+
     由于BPE分词的特殊性，在BPE获取start_token时需要在start_word后加一个空格
-    故在此使用方法对mode(编码模式)进行判断
-    返回 start_token  shape --> (1,) eg：[3]
     """
     if language == "en":
         mode = _config.en_tokenize_type
@@ -173,7 +174,7 @@ def get_start_token(start_word, tokenizer, language):
 
 def _encode_and_save_bpe(sentences, tokenizer, path):
     """
-    将编码好的句子保存至文件，返回最大句子长度
+    编码和填充句子并保存至文件，返回最大句子长度
     Args:
         sentences: 需要编码的句子
         tokenizer: 字典
@@ -190,7 +191,7 @@ def _encode_and_save_bpe(sentences, tokenizer, path):
 
 def _encode_and_save_keras(sentences, tokenizer, path):
     """
-    将编码好的句子保存至文件，返回最大句子长度
+    编码和填充句子并保存至文件，返回最大句子长度
     Args:
         sentences: 需要编码的句子
         tokenizer: 字典
@@ -204,8 +205,8 @@ def _encode_and_save_keras(sentences, tokenizer, path):
     return max_sequence_length
 
 
-def encode_and_save(save_path, sentences, tokenizer, language, mode):
-    """编码并保存句子
+def encode_and_save(sentences, tokenizer, save_path, language, mode):
+    """编码填充并保存句子
     @param save_path:保存的路径
     @param sentences:需要进行编码并保存的句子
     @param tokenizer:使用的字典
@@ -215,6 +216,7 @@ def encode_and_save(save_path, sentences, tokenizer, language, mode):
     """
     if not os.path.exists(os.path.dirname(save_path)):
         os.makedirs(os.path.dirname(save_path), exist_ok=True)
+
     if language == 'zh':
         return _encode_and_save_keras(sentences, tokenizer, save_path)
     elif language == 'en':
@@ -254,3 +256,35 @@ def decode_sentence(sequence, tokenizer, language, mode):
             return _decode_sentence_tokenizer(sequence, tokenizer, join_str=' ')
     else:
         raise ValueError("语言(%s)暂不支持模式(%s)" % (language, mode))
+
+
+def get_encoded_sequences_path(language, postfix=''):
+    """根据语言获取已编码句子的保存路径
+
+    @param language: 语言
+    @param postfix: 保存路径的后缀
+    @return:已编码句子的保存路径
+    """
+    return _config.encoded_sequences_path_prefix + language + postfix
+
+
+def get_tokenizer_path(language, mode):
+    """合成字典保存路径
+
+    @param language:语言
+    @param mode:编码类型
+    @return:字典保存路径
+    """
+    return _config.tokenizer_path_prefix + language + '_' + mode.lower()
+
+
+def get_tokenizer_mode(language):
+    """根据语言确定编码的类型
+
+    @param language: 语言
+    @return: 编码类型
+    """
+    if language == "en":
+        return _config.en_tokenize_type
+    elif language == "zh":
+        return _config.zh_tokenize_type

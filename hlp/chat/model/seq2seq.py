@@ -3,8 +3,8 @@ import hlp.utils.layers as layers
 import hlp.chat.common.utils as utils
 
 
-def cell_layer(units: int, input_feature_dim: int, cell_type: str = 'lstm',
-               if_bidirectional: bool = True) -> tf.keras.Model:
+def rnn_layer(units: int, input_feature_dim: int, cell_type: str = 'lstm',
+              if_bidirectional: bool = True) -> tf.keras.Model:
     """
     RNNCell层，其中可定义cell类型，是否双向
     :param units: cell单元数
@@ -34,7 +34,7 @@ def cell_layer(units: int, input_feature_dim: int, cell_type: str = 'lstm',
     return tf.keras.Model(inputs=inputs, outputs=[outputs, states])
 
 
-def encoder(vocab_size: int, embedding_dim: int, enc_units: int, layer_size: int,
+def encoder(vocab_size: int, embedding_dim: int, enc_units: int, num_layers: int,
             cell_type: str, if_bidirectional: bool = True) -> tf.keras.Model:
     """
     seq2seq的encoder，主要就是使用Embedding和GRU对输入进行编码，
@@ -43,7 +43,7 @@ def encoder(vocab_size: int, embedding_dim: int, enc_units: int, layer_size: int
     :param vocab_size: 词汇量大小
     :param embedding_dim: 词嵌入维度
     :param enc_units: 单元大小
-    :param layer_size: encoder中内部RNN层数
+    :param num_layers: encoder中内部RNN层数
     :param cell_type: cell类型，lstm/gru， 默认lstm
     :param if_bidirectional: 是否双向
     :return: Seq2Seq的Encoder
@@ -51,15 +51,15 @@ def encoder(vocab_size: int, embedding_dim: int, enc_units: int, layer_size: int
     inputs = tf.keras.Input(shape=(None,))
     outputs = tf.keras.layers.Embedding(vocab_size, embedding_dim)(inputs)
 
-    for i in range(layer_size):
-        outputs, states = cell_layer(units=enc_units, input_feature_dim=outputs.shape[-1],
-                                     cell_type=cell_type, if_bidirectional=if_bidirectional)(outputs)
+    for i in range(num_layers):
+        outputs, states = rnn_layer(units=enc_units, input_feature_dim=outputs.shape[-1],
+                                    cell_type=cell_type, if_bidirectional=if_bidirectional)(outputs)
 
     return tf.keras.Model(inputs=inputs, outputs=[outputs, states])
 
 
 def decoder(vocab_size: int, embedding_dim: int, dec_units: int, enc_units: int,
-            layer_size: int, cell_type: str) -> tf.keras.Model:
+            num_layers: int, cell_type: str) -> tf.keras.Model:
     """
     seq2seq的decoder，将初始化的x、隐藏层和encoder的输出作为
     输入，encoder的输入用来和隐藏层进行attention，得到的上下文
@@ -68,24 +68,24 @@ def decoder(vocab_size: int, embedding_dim: int, dec_units: int, enc_units: int,
     :param embedding_dim: 词嵌入维度
     :param dec_units: decoder单元大小
     :param enc_units: encoder单元大小
-    :param layer_size: encoder中内部RNN层数
+    :param num_layers: encoder中内部RNN层数
     :param cell_type: cell类型，lstm/gru， 默认lstm
     :return: Seq2Seq的Decoder
     """
     inputs = tf.keras.Input(shape=(None,))
     enc_output = tf.keras.Input(shape=(None, enc_units))
-    hidden = tf.keras.Input(shape=(enc_units,))
+    dec_hidden = tf.keras.Input(shape=(enc_units,))
 
     embeddings = tf.keras.layers.Embedding(vocab_size, embedding_dim)(inputs)
-    context_vector, attention_weight = layers.BahdanauAttention(dec_units)(hidden, enc_output)
+    context_vector, attention_weight = layers.BahdanauAttention(dec_units)(dec_hidden, enc_output)
     outputs = tf.concat([tf.expand_dims(context_vector, 1), embeddings], axis=-1)
 
-    for i in range(layer_size):
+    for i in range(num_layers):
         # Decoder中不允许使用双向
-        outputs, states = cell_layer(units=dec_units, input_feature_dim=outputs.shape[-1],
-                                     cell_type=cell_type, if_bidirectional=False)(outputs)
+        outputs, states = rnn_layer(units=dec_units, input_feature_dim=outputs.shape[-1],
+                                    cell_type=cell_type, if_bidirectional=False)(outputs)
 
     outputs = tf.reshape(outputs, (-1, outputs.shape[-1]))
     outputs = tf.keras.layers.Dense(vocab_size)(outputs)
 
-    return tf.keras.Model(inputs=[inputs, enc_output, hidden], outputs=[outputs, states, attention_weight])
+    return tf.keras.Model(inputs=[inputs, enc_output, dec_hidden], outputs=[outputs, states, attention_weight])

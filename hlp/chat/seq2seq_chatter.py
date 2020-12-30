@@ -9,7 +9,7 @@ sys.path.append(os.path.abspath(__file__)[:os.path.abspath(__file__).rfind("\\hl
 import hlp.chat.common.data_utils as data_utils
 import hlp.chat.common.pre_treat as pre_treat
 import hlp.chat.model.seq2seq as seq2seq
-from chat.chatter import Chatter
+from hlp.chat.chatter import Chatter
 from hlp.chat.common.utils import log_operator
 
 
@@ -48,11 +48,11 @@ class Seq2SeqChatter(Chatter):
         self.enc_units = units
 
         self.encoder = seq2seq.encoder(vocab_size=vocab_size, embedding_dim=embedding_dim,
-                                       enc_units=int(units / 2), layer_size=encoder_layers,
+                                       enc_units=int(units / 2), num_layers=encoder_layers,
                                        cell_type=cell_type, if_bidirectional=if_bidirectional)
         self.decoder = seq2seq.decoder(vocab_size=vocab_size, embedding_dim=embedding_dim,
                                        enc_units=units, dec_units=units,
-                                       layer_size=decoder_layers, cell_type=cell_type)
+                                       num_layers=decoder_layers, cell_type=cell_type)
 
         self.optimizer = tf.keras.optimizers.Adam()
         self.train_loss = tf.keras.metrics.Mean()

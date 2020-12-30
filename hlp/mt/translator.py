@@ -4,6 +4,7 @@
 import tensorflow as tf
 import copy
 
+import hlp.mt.common.text_vectorize
 from hlp.mt.config import get_config as _config
 from hlp.mt.model import transformer as _transformer
 from hlp.mt.model import checkpoint
@@ -47,8 +48,8 @@ def _checkpoint_ensembling(checkpoints_path, model, inputs, decoder_input):
 
 def _predict_index(checkpoints_path, inp_sentence, model, beam_search_container, input_tokenizer, target_tokenizer):
     """对输入句子进行翻译并返回编码的句子列表"""
-    input_mode = preprocess.get_tokenizer_mode(_config.source_lang)
-    target_mode = preprocess.get_tokenizer_mode(_config.target_lang)
+    input_mode = hlp.mt.common.text_vectorize.get_tokenizer_mode(_config.source_lang)
+    target_mode = hlp.mt.common.text_vectorize.get_tokenizer_mode(_config.target_lang)
 
     sentence = text_split.preprocess_sentences([inp_sentence], _config.source_lang, input_mode)
 
@@ -58,7 +59,7 @@ def _predict_index(checkpoints_path, inp_sentence, model, beam_search_container,
     inp_sequence = tf.expand_dims(inp_sequence, 0)
 
     # start_token  shape:(1,)
-    start_token = text_vectorize.get_start_token(_config.start_word, target_tokenizer, language=_config.target_lang)
+    start_token = text_vectorize.encode_start_token(_config.start_word, target_tokenizer, language=_config.target_lang)
     end_token, _ = text_vectorize.encode_sentences([_config.end_word], target_tokenizer,
                                                    language=_config.target_lang, mode=target_mode)
     end_token = tf.squeeze(end_token)
@@ -102,7 +103,7 @@ def translate(sentence, model, tokenizer_source, tokenizer_target, beam_size=_co
     predict_idxes = _predict_index(checkpoints_path, sentence, model, beam_search_container, tokenizer_source, tokenizer_target)
 
     predicted_sentences = []
-    target_mode = preprocess.get_tokenizer_mode(_config.target_lang)
+    target_mode = hlp.mt.common.text_vectorize.get_tokenizer_mode(_config.target_lang)
     # 从容器中抽取序列，生成最终结果
     for i in range(len(predict_idxes)):
         predict_idx = predict_idxes[i].numpy()
