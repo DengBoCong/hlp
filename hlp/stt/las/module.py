@@ -69,20 +69,16 @@ def _train_step(audio_feature, sentence, enc_hidden, tokenizer, model, las_optim
     loss = 0
     dec_input = tf.expand_dims([tokenizer.word_index.get('<start>')] * train_batch_size, 1)
     with tf.GradientTape() as tape:
-        # 解码器输入符号
         for t in range(1, sentence.shape[1]):
-            print(t)
             predictions, _ = model(audio_feature, enc_hidden, dec_input)
 
-            loss += loss_func_mask(sentence[:, t], predictions)  # 根据预测计算损失
-            print("loss===={}".format(loss))
+            loss += loss_func_mask(sentence[:, t], predictions)
             # 使用导师驱动，下一步输入符号是训练集中对应目标符号
             dec_input = sentence[:, t]
             dec_input = tf.expand_dims(dec_input, 1)
 
-    batch_loss = (loss / int(sentence.shape[1]))
-    print("batch_loss===={}".format(batch_loss))
+    batch_loss = loss / int(sentence.shape[1])
     variables = model.trainable_variables
-    gradients = tape.gradient(loss, variables)  # 计算损失对参数的梯度
-    las_optimizer.apply_gradients(zip(gradients, variables))  # 优化器反向传播更新参数
+    gradients = tape.gradient(loss, variables)
+    las_optimizer.apply_gradients(zip(gradients, variables))
     return batch_loss
