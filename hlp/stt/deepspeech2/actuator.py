@@ -100,7 +100,7 @@ if __name__ == '__main__':
         dispatch_pre_treat_func(func_type=options['dataset_type'],
                                 data_path=work_path + options['train_data_dir'],
                                 dataset_infos_file=work_path + options['train_file'],
-                                max_length=options['max_time_step'], transcript_row=0,
+                                max_length=options['max_time_step'], transcript_row=1,
                                 spectrum_data_dir=work_path + options['spectrum_data_dir'],
                                 audio_feature_type=options['audio_feature_type'],
                                 save_length_path=work_path + options['save_length_path'])
