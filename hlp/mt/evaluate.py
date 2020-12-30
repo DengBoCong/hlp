@@ -1,4 +1,4 @@
-
+import hlp.mt.common.misc
 from hlp.mt.common import bleu as _bleu
 from hlp.mt.common import load_dataset
 from hlp.mt.config import get_config as _config
@@ -30,7 +30,7 @@ def _calc_bleu(path, transformer, tokenizer_source, tokenizer_target):
 
 
 def main():
-    if nmt_model.check_point():  # 检测是否有检查点
+    if hlp.mt.common.misc.check_and_create():  # 检测是否有检查点
         # 读取保存的需要的配置
         transformer, _, tokenizer_source, tokenizer_target = nmt_model.load_model()
         _calc_bleu(_config.path_to_eval_file, transformer, tokenizer_source, tokenizer_target)

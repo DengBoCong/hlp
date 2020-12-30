@@ -1,6 +1,3 @@
-import os
-
-from pathlib import Path
 import tensorflow as tf
 
 import hlp.mt.common.text_vectorize
@@ -8,7 +5,6 @@ from hlp.mt.model import transformer as _transformer
 from hlp.mt.config import get_config as _config
 from hlp.mt.common import text_vectorize
 from hlp.utils import optimizers as _optimizers
-from hlp.mt import preprocess
 
 
 def create_model(vocab_size_source, vocab_size_target):
@@ -54,16 +50,3 @@ def load_model():
     transformer = create_model(vocab_size_source, vocab_size_target)
 
     return transformer, optimizer, tokenizer_source, tokenizer_target
-
-
-def check_point():
-    """
-    检测检查点目录下是否有文件
-    """
-    # 进行语言对判断从而确定检查点路径
-    checkpoint_dir = _config.checkpoint_path
-    is_exist = Path(checkpoint_dir)
-    if not is_exist.exists():
-        os.makedirs(checkpoint_dir, exist_ok=True)
-    if_ckpt = tf.io.gfile.listdir(checkpoint_dir)
-    return if_ckpt

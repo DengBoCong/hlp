@@ -1,6 +1,7 @@
 import time
 import tensorflow as tf
 
+import hlp.mt.common.misc
 import hlp.mt.common.text_vectorize
 from hlp.mt import preprocess as _pre
 from hlp.mt.common import load_dataset
@@ -76,7 +77,7 @@ def _train(transformer, validation_data='False', validation_split=0.0,
     ckpt = tf.train.Checkpoint(transformer=transformer,
                                optimizer=optimizer)
     ckpt_manager = tf.train.CheckpointManager(ckpt, checkpoint_path, max_to_keep=_config.max_checkpoints_num)
-    if nmt_model.check_point():
+    if hlp.mt.common.misc.check_and_create():
         ckpt.restore(ckpt_manager.latest_checkpoint)
         print('已恢复至最新检查点！')
 
