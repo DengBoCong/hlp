@@ -1,10 +1,12 @@
 import hlp.mt.common.misc
 from hlp.mt.model import nmt_model
 from hlp.mt import translator
+from hlp.mt.config import get_config as _config
+from hlp.mt.common.misc import check_and_create
 
 
 def main():
-    if hlp.mt.common.misc.check_and_create():  # 检测是否有检查点
+    if check_and_create(_config.checkpoint_path):  # 检测是否有检查点
         # 读取保存的需要的配置
         transformer, _, tokenizer_source, tokenizer_target = nmt_model.load_model()
 

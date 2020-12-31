@@ -10,6 +10,7 @@ from hlp.mt.model import nmt_model
 from hlp.mt.model import transformer as _transformer
 from hlp.utils import optimizers as _optimizers
 from hlp.utils import train_history
+from hlp.mt.common.misc import check_and_create
 
 
 def _train_step(inp, tar, transformer, optimizer, train_loss, train_accuracy):
@@ -77,7 +78,7 @@ def _train(transformer, validation_data='False', validation_split=0.0,
     ckpt = tf.train.Checkpoint(transformer=transformer,
                                optimizer=optimizer)
     ckpt_manager = tf.train.CheckpointManager(ckpt, checkpoint_path, max_to_keep=_config.max_checkpoints_num)
-    if hlp.mt.common.misc.check_and_create():
+    if check_and_create(_config.checkpoint_path):
         ckpt.restore(ckpt_manager.latest_checkpoint)
         print('已恢复至最新检查点！')
 
