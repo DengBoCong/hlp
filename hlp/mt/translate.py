@@ -18,7 +18,9 @@ def main():
             if sentence == '0':
                 break
             else:
-                print('翻译结果:', translator.translate(sentence, transformer, tokenizer_source, tokenizer_target))
+                print('翻译结果:', translator.translate(sentence, transformer,
+                                                    tokenizer_source, tokenizer_target,
+                                                    beam_size=_config.BEAM_SIZE))
     else:
         print('请先训练才可使用翻译功能...')
 

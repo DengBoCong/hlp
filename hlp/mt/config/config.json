@@ -5,7 +5,7 @@
   "en_tokenize_type": "WORD",
   "zh_tokenize_type": "CHAR",
   "train_size": 0.9,
-  "BEAM_SIZE": 3,
+  "BEAM_SIZE": 1,
   "validation_data": "False",
   "checkpoint_ensembling": "True",
   "num_validate_sentences": 200,
