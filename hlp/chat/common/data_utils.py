@@ -428,7 +428,7 @@ def creat_index_dataset(data_fn: str, solr_sever: str, max_database_size: int):
                 })
 
             if count % 100 == 0:
-                print("已处理了 {} 轮次对话".format(count))
+                print("\r已处理了 {} 轮次对话".format(count), flush=True, end="")
     solr.delete(q="*:*")
     solr.add(docs=responses)
 
