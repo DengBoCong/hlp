@@ -91,6 +91,41 @@ def train(model: tf.keras.Model, optimizer: tf.keras.optimizers.Adam,
     return history
 
 
+def evaluate(model: tf.keras.Model, data_path: str, max_len: int,
+             vocab_size: int, batch_size: int, buffer_size: int,
+             dict_path: str = "", length_path: str = "", max_data_size: int = 0):
+    """
+    评估模块
+    :param model: 模型
+    :param data_path: 文本数据路径
+    :param max_len: 文本序列最大长度
+    :param vocab_size: 词汇大小
+    :param buffer_size: Dataset加载缓存大小
+    :param batch_size: Dataset加载批大小
+    :param dict_path: 字典路径，若使用phoneme则不用传
+    :param max_data_size: 最大训练数据量
+    :param length_path: 训练样本长度保存路径
+    :return: 返回历史指标数据
+    """
+    _, valid_dataset, _, valid_steps_per_epoch, _ = \
+        load_data(train_data_path=data_path, max_len=max_len, vocab_size=vocab_size,
+                  batch_size=batch_size, buffer_size=buffer_size, dict_path=dict_path,
+                  valid_data_split=0.0, valid_data_path="",
+                  train_length_path=length_path, valid_length_path="",
+                  max_train_data_size=max_data_size, max_valid_data_size=0)
+
+    if not os.path.exists(dict_path):
+        print("字典文件不存在，请检查之后重试")
+        exit(0)
+
+    with open(dict_path, 'r', encoding='utf-8') as dict_file:
+        json_string = dict_file.read().strip().strip("\n")
+        tokenizer = tf.keras.preprocessing.text.tokenizer_from_json(json_string)
+
+    _, _, _ = _valid_step(model=model, dataset=valid_dataset,
+                          steps_per_epoch=valid_steps_per_epoch, tokenizer=tokenizer)
+
+
 def recognize(model: tf.keras.Model, audio_feature_type: str,
               record_path: str, max_length: int, dict_path: str):
     """

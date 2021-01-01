@@ -53,7 +53,6 @@ def load_data(train_data_path: str, max_len: int, vocab_size: int, batch_size: i
         train_sentence_data = train_sentence_data[:train_size]
         train_length_data = train_length_data[:train_size]
     else:
-        print("没有验证数据.")
         valid_flag = False
 
     if dict_path == "":

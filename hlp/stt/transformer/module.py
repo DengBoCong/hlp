@@ -75,6 +75,44 @@ def train(encoder: tf.keras.Model, decoder: tf.keras.Model, optimizer: tf.keras.
             _valid_step(encoder=encoder, decoder=decoder, dataset=valid_dataset, steps_per_epoch=valid_steps_per_epoch)
 
 
+def evaluate(encoder: tf.keras.Model, decoder: tf.keras.Model, optimizer: tf.keras.optimizers.Adam,
+          epochs: int, checkpoint: tf.train.CheckpointManager, train_data_path: str, max_len: int,
+          vocab_size: int, batch_size: int, buffer_size: int, checkpoint_save_freq: int,
+          dict_path: str = "", valid_data_split: float = 0.0, valid_data_path: str = "",
+          max_train_data_size: int = 0, max_valid_data_size: int = 0,
+          train_length_path: str = "", valid_length_path: str = ""):
+    """
+    评估模块
+    :param encoder: 模型的encoder
+    :param decoder: 模型的decoder
+    :param optimizer: 优化器
+    :param checkpoint: 检查点管理器
+    :param epochs: 训练周期
+    :param train_data_path: 文本数据路径
+    :param max_len: 文本序列最大长度
+    :param vocab_size: 词汇大小
+    :param buffer_size: Dataset加载缓存大小
+    :param batch_size: Dataset加载批大小
+    :param dict_path: 字典路径，若使用phoneme则不用传
+    :param valid_data_split: 用于从训练数据中划分验证数据
+    :param valid_data_path: 验证数据文本路径
+    :param max_train_data_size: 最大训练数据量
+    :param max_valid_data_size: 最大验证数据量
+    :param checkpoint_save_freq: 检查点保存频率
+    :param train_length_path: 训练样本长度保存路径
+    :param valid_length_path: 验证样本长度保存路径
+    :return: 无返回值
+    """
+    _, valid_dataset, _, valid_steps_per_epoch, _ = \
+        load_data(train_data_path=train_data_path, max_len=max_len, vocab_size=vocab_size,
+                  batch_size=batch_size, buffer_size=buffer_size, dict_path=dict_path,
+                  valid_data_split="", valid_data_path="",
+                  max_train_data_size=max_train_data_size, max_valid_data_size=max_valid_data_size,
+                  valid_length_path=valid_length_path, train_length_path=train_length_path)
+
+    _valid_step(encoder=encoder, decoder=decoder, dataset=valid_dataset, steps_per_epoch=valid_steps_per_epoch)
+
+
 def recognize(encoder: tf.keras.Model, decoder: tf.keras.Model, beam_size: int,
               audio_feature_type: str, max_length: int, max_sentence_length: int, dict_path: str):
     """
