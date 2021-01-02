@@ -1,7 +1,9 @@
 import os
 import wave
-# import pyaudio
+import time
+import pyaudio
 import tensorflow as tf
+import matplotlib.pyplot as plt
 
 
 def record(record_path, record_duration):
@@ -43,6 +45,38 @@ def record(record_path, record_duration):
     wf.setframerate(RATE)
     wf.writeframes(b''.join(frames))
     wf.close()
+
+
+def plot_history(history, valid_epoch_freq, history_img_path):
+    """
+    绘制各种指标数据
+    :param history: 历史指标数据
+    :param valid_epoch_freq: 验证频率
+    :param history_img_path: 历史指标显示图片保存位置
+    :return: 无返回值
+    """
+    plt.subplot(2, 1, 1)
+    epoch1 = [i for i in range(1, 1 + len(history["loss"]))]
+    epoch2 = [i * valid_epoch_freq for i in range(1, 1 + len(history["wers"]))]
+
+    plt.xlabel("epoch")
+    plt.ylabel("loss")
+    plt.plot(epoch1, history["loss"], "--*b")
+    plt.xticks(epoch1)
+
+    # 绘制metric(valid_loss、wers、norm_lers)
+    plt.subplot(2, 1, 2)
+    plt.xlabel("epoch")
+    plt.ylabel("metric")
+    plt.plot(epoch2, history["wers"], "--*r", label="wers")
+    plt.plot(epoch2, history["norm_lers"], "--*y", label="norm_lers")
+    plt.xticks(epoch2)
+
+    plt.legend()
+    if not os.path.exists(history_img_path):
+        os.makedirs(history_img_path, exist_ok=True)
+    plt.savefig(history_img_path + time.strftime("%Y_%m_%d_%H_%M_%S_", time.localtime(time.time())))
+    plt.show()
 
 
 def wers(truths, preds):

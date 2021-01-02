@@ -82,8 +82,7 @@ if __name__ == '__main__':
 
     encoder = encoder(vocab_size=options['encoder_vocab_size'], embedding_dim=options['embedding_dim'],
                       feature_dim=options['feature_dim'], num_layers=options['num_layers'],
-                      encoder_units=options['encoder_units'],
-                      num_heads=options['num_heads'], dropout=options['dropout'])
+                      encoder_units=options['encoder_units'], num_heads=options['num_heads'], dropout=options['dropout'])
     decoder = decoder(vocab_size=options['decoder_vocab_size'], embedding_dim=options['embedding_dim'],
                       num_layers=options['num_layers'], decoder_units=options['decoder_units'],
                       num_heads=options['num_heads'], dropout=options['dropout'])
