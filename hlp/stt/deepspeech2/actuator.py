@@ -44,6 +44,7 @@ if __name__ == '__main__':
     parser.add_argument('--max_valid_data_size', default=0, type=int, required=False, help='从验证集集读取最大数据量，0即全部数据')
     parser.add_argument('--audio_feature_type', default='mfcc', type=str, required=False, help='音频处理方式')
     parser.add_argument('--dataset_type', default='thchs30', type=str, required=False, help='数据集类型')
+    # parser.add_argument('--dataset_type', default='librispeech', type=str, required=False, help='数据集类型')
     parser.add_argument('--max_time_step', default=1100, type=int, required=False, help='最大音频补齐长度')
     parser.add_argument('--stop_early_limits', default=5, type=int, required=False, help='验证指标不增长个数停止')
     parser.add_argument('--checkpoint_dir', default='\\data\\checkpoints\\deepspeech2', type=str, required=False,
@@ -52,6 +53,11 @@ if __name__ == '__main__':
                         required=False, help='整理后的音频句子对保存路径')
     parser.add_argument('--valid_file', default='\\data\\data_thchs30\\processed_valid_file.txt', type=str,
                         required=False, help='整理后的音频句子对保存路径')
+    # parser.add_argument('--train_file', default='\\data\\LibriSpeech\\processed_train_file.txt', type=str,
+    #                     required=False, help='整理后的音频句子对保存路径')
+    # parser.add_argument('--valid_file', default='\\data\\LibriSpeech\\processed_valid_file.txt', type=str,
+    #                     required=False, help='整理后的音频句子对保存路径')
+
     parser.add_argument('--dict_path', default='\\data\\data_thchs30\\deepspeech2_dict.json', type=str, required=False,
                         help='字典存放路径')
     parser.add_argument('--train_data_dir', default='\\data\\data_thchs30\\train\\', type=str, required=False,
@@ -67,6 +73,23 @@ if __name__ == '__main__':
                         required=False, help='测试数据整理后的音频句子对保存路径')
     parser.add_argument('--valid_length_path', default='\\data\\data_thchs30\\valid_length.npy', type=str,
                         required=False, help='测试数据集样本长度存放目录路径')
+
+    # parser.add_argument('--dict_path', default='\\data\\LibriSpeech\\deepspeech2_dict.json', type=str, required=False,
+    #                     help='字典存放路径')
+    # parser.add_argument('--train_data_dir', default='\\data\\LibriSpeech\\train-clean-5\\', type=str, required=False,
+    #                     help='训练数据集存放目录路径')
+    # parser.add_argument('--train_spectrum_data_dir', default='\\data\\LibriSpeech\\train_feature\\', type=str,
+    #                     required=False, help='训练数据整理后的音频句子对保存路径')
+    # parser.add_argument('--train_length_path', default='\\data\\LibriSpeech\\train_length.npy', type=str,
+    #                     required=False,
+    #                     help='训练数据集样本长度存放目录路径')
+    # parser.add_argument('--valid_data_dir', default='\\data\\LibriSpeech\\dev-clean-2\\', type=str, required=False,
+    #                     help='测试数据集存放目录路径')
+    # parser.add_argument('--valid_spectrum_data_dir', default='\\data\\LibriSpeech\\valid_feature\\', type=str,
+    #                     required=False, help='测试数据整理后的音频句子对保存路径')
+    # parser.add_argument('--valid_length_path', default='\\data\\LibriSpeech\\valid_length.npy', type=str,
+    #                     required=False, help='测试数据集样本长度存放目录路径')
+
     parser.add_argument('--history_img_path', default='\\data\\history\\deepspeech2\\', type=str,
                         required=False, help='历史数据指标图表保存路径')
     parser.add_argument('--record_path', default='\\data\\record\\', type=str, required=False,
@@ -93,7 +116,6 @@ if __name__ == '__main__':
 
     if execute_type == 'train':
         train(epochs=options['epochs'], train_data_path=work_path + options['train_file'],
-              max_len=options['max_sentence_length'], vocab_size=options['vocab_size'],
               batch_size=options['batch_size'], buffer_size=options['buffer_size'],
               checkpoint_save_freq=options['checkpoint_save_freq'], checkpoint=ckpt_manager,
               optimizer=optimizer, dict_path=work_path + options['dict_path'],
@@ -105,35 +127,28 @@ if __name__ == '__main__':
               max_valid_data_size=options['max_valid_data_size'],
               history_img_path=work_path + options['history_img_path'])
     elif execute_type == 'evaluate':
-        evaluate(model=model, data_path=work_path + options['valid_file'], max_len=options['max_sentence_length'],
-                 vocab_size=options['vocab_size'], batch_size=options['batch_size'],
+        evaluate(model=model, data_path=work_path + options['valid_file'], batch_size=options['batch_size'],
                  buffer_size=options['buffer_size'], dict_path=work_path + options['dict_path'],
                  length_path=work_path + options['valid_length_path'], max_data_size=options['max_valid_data_size'])
     elif execute_type == 'recognize':
-        recognize(model=model, audio_feature_type=options['audio_feature_type'],
-                  record_path=work_path + options['record_path'], max_length=options['max_time_step'],
-                  dict_path=work_path + options['dict_path'])
+        recognize(model=model, audio_feature_type=options['audio_feature_type'], max_length=options['max_time_step'],
+                  record_path=work_path + options['record_path'], dict_path=work_path + options['dict_path'])
     elif execute_type == 'pre_treat':
         print("正在处理训练数据集")
-        dispatch_pre_treat_func(func_type=options['dataset_type'],
-                                data_path=work_path + options['train_data_dir'],
-                                dataset_infos_file=work_path + options['train_file'],
-                                max_time_step=options['max_time_step'], transcript_row=0,
-                                spectrum_data_dir=work_path + options['train_spectrum_data_dir'],
-                                audio_feature_type=options['audio_feature_type'],
-                                save_length_path=work_path + options['train_length_path'],
-                                max_treat_data_size=options['max_train_data_size'],
-                                vocab_size=options['vocab_size'],
-                                max_sentence_length=options['max_sentence_length'],
-                                dict_path=work_path + options['dict_path'])
-        # print("正在处理测试数据集")
-        # dispatch_pre_treat_func(func_type=options['dataset_type'],
-        #                         data_path=work_path + options['valid_data_dir'],
-        #                         dataset_infos_file=work_path + options['valid_file'],
-        #                         max_length=options['max_time_step'], transcript_row=0,
-        #                         spectrum_data_dir=work_path + options['valid_spectrum_data_dir'],
-        #                         audio_feature_type=options['audio_feature_type'],
-        #                         save_length_path=work_path + options['valid_length_path'],
-        #                         max_treat_data_size=options['max_valid_data_size'])
+        dispatch_pre_treat_func(
+            func_type=options['dataset_type'], data_path=work_path + options['train_data_dir'],
+            dataset_infos_file=work_path + options['train_file'], vocab_size=options['vocab_size'],
+            max_time_step=options['max_time_step'], spectrum_data_dir=work_path + options['train_spectrum_data_dir'],
+            audio_feature_type=options['audio_feature_type'], save_length_path=work_path + options['train_length_path'],
+            max_treat_data_size=options['max_train_data_size'], max_sentence_length=options['max_sentence_length'],
+            dict_path=work_path + options['dict_path'], transcript_row=0)
+        print("正在处理测试数据集")
+        dispatch_pre_treat_func(
+            func_type=options['dataset_type'], data_path=work_path + options['valid_data_dir'],
+            dataset_infos_file=work_path + options['valid_file'], max_time_step=options['max_time_step'],
+            transcript_row=0, spectrum_data_dir=work_path + options['valid_spectrum_data_dir'],
+            audio_feature_type=options['audio_feature_type'], save_length_path=work_path + options['valid_length_path'],
+            max_treat_data_size=options['max_valid_data_size'], vocab_size=options['vocab_size'], is_train=False,
+            max_sentence_length=options['max_sentence_length'], dict_path=work_path + options['dict_path'])
     else:
         parser.error(msg='')

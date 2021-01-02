@@ -9,14 +9,15 @@ from hlp.stt.utils.utils import can_stop
 from hlp.stt.utils.utils import wers
 from hlp.stt.utils.utils import lers
 from hlp.stt.utils.utils import record
+from hlp.stt.utils.utils import load_tokenizer
 
 
-def train(model: tf.keras.Model, optimizer: tf.keras.optimizers.Adam,
-          epochs: int, checkpoint: tf.train.CheckpointManager, train_data_path: str, max_len: int,
-          vocab_size: int, batch_size: int, buffer_size: int, checkpoint_save_freq: int,
-          dict_path: str = "", valid_data_split: float = 0.0, valid_data_path: str = "",
-          train_length_path: str = "", valid_length_path: str = "", stop_early_limits: int = 0,
-          max_train_data_size: int = 0, max_valid_data_size: int = 0, history_img_path: str = ""):
+def train(model: tf.keras.Model, optimizer: tf.keras.optimizers.Adam, epochs: int,
+          checkpoint: tf.train.CheckpointManager, train_data_path: str, batch_size: int,
+          buffer_size: int, checkpoint_save_freq: int, dict_path: str = "",
+          valid_data_split: float = 0.0, valid_data_path: str = "", train_length_path: str = "",
+          valid_length_path: str = "", stop_early_limits: int = 0, max_train_data_size: int = 0,
+          max_valid_data_size: int = 0, history_img_path: str = ""):
     """
     训练模块
     :param model: 模型
@@ -24,8 +25,6 @@ def train(model: tf.keras.Model, optimizer: tf.keras.optimizers.Adam,
     :param checkpoint: 检查点管理器
     :param epochs: 训练周期
     :param train_data_path: 文本数据路径
-    :param max_len: 文本序列最大长度
-    :param vocab_size: 词汇大小
     :param buffer_size: Dataset加载缓存大小
     :param batch_size: Dataset加载批大小
     :param dict_path: 字典路径，若使用phoneme则不用传
@@ -40,12 +39,14 @@ def train(model: tf.keras.Model, optimizer: tf.keras.optimizers.Adam,
     :param history_img_path: 历史指标数据图表保存路径
     :return: 返回历史指标数据
     """
-    tokenizer, train_dataset, valid_dataset, steps_per_epoch, valid_steps_per_epoch = \
-        load_data(train_data_path=train_data_path, max_len=max_len, vocab_size=vocab_size,
-                  batch_size=batch_size, buffer_size=buffer_size, dict_path=dict_path,
+    train_dataset, valid_dataset, steps_per_epoch, valid_steps_per_epoch = \
+        load_data(train_data_path=train_data_path, batch_size=batch_size, buffer_size=buffer_size,
                   valid_data_split=valid_data_split, valid_data_path=valid_data_path,
                   train_length_path=train_length_path, valid_length_path=valid_length_path,
                   max_train_data_size=max_train_data_size, max_valid_data_size=max_valid_data_size)
+
+    tokenizer = load_tokenizer(dict_path=dict_path)
+
     history = {"loss": [], "wers": [], "norm_lers": []}
 
     if steps_per_epoch == 0:
@@ -91,15 +92,12 @@ def train(model: tf.keras.Model, optimizer: tf.keras.optimizers.Adam,
     return history
 
 
-def evaluate(model: tf.keras.Model, data_path: str, max_len: int,
-             vocab_size: int, batch_size: int, buffer_size: int,
+def evaluate(model: tf.keras.Model, data_path: str, batch_size: int, buffer_size: int,
              dict_path: str = "", length_path: str = "", max_data_size: int = 0):
     """
     评估模块
     :param model: 模型
     :param data_path: 文本数据路径
-    :param max_len: 文本序列最大长度
-    :param vocab_size: 词汇大小
     :param buffer_size: Dataset加载缓存大小
     :param batch_size: Dataset加载批大小
     :param dict_path: 字典路径，若使用phoneme则不用传
@@ -107,20 +105,12 @@ def evaluate(model: tf.keras.Model, data_path: str, max_len: int,
     :param length_path: 训练样本长度保存路径
     :return: 返回历史指标数据
     """
-    _, valid_dataset, _, valid_steps_per_epoch, _ = \
-        load_data(train_data_path=data_path, max_len=max_len, vocab_size=vocab_size,
-                  batch_size=batch_size, buffer_size=buffer_size, dict_path=dict_path,
-                  valid_data_split=0.0, valid_data_path="",
-                  train_length_path=length_path, valid_length_path="",
-                  max_train_data_size=max_data_size, max_valid_data_size=0)
+    valid_dataset, _, valid_steps_per_epoch, _ = \
+        load_data(train_data_path=data_path, batch_size=batch_size, buffer_size=buffer_size,
+                  valid_data_split=0.0, valid_data_path="", train_length_path=length_path,
+                  valid_length_path="", max_train_data_size=max_data_size, max_valid_data_size=0)
 
-    if not os.path.exists(dict_path):
-        print("字典文件不存在，请检查之后重试")
-        exit(0)
-
-    with open(dict_path, 'r', encoding='utf-8') as dict_file:
-        json_string = dict_file.read().strip().strip("\n")
-        tokenizer = tf.keras.preprocessing.text.tokenizer_from_json(json_string)
+    tokenizer = load_tokenizer(dict_path=dict_path)
 
     _, _, _ = _valid_step(model=model, dataset=valid_dataset,
                           steps_per_epoch=valid_steps_per_epoch, tokenizer=tokenizer)
@@ -165,9 +155,7 @@ def recognize(model: tf.keras.Model, audio_feature_type: str,
             output = tf.keras.backend.ctc_decode(y_pred=predictions, input_length=tf.reshape(
                 ctc_input_length, [ctc_input_length.shape[0]]), greedy=True)
 
-            with open(dict_path, 'r', encoding='utf-8') as dict_file:
-                json_string = dict_file.read().strip().strip("\n")
-                tokenizer = tf.keras.preprocessing.text.tokenizer_from_json(json_string)
+            tokenizer = load_tokenizer(dict_path=dict_path)
 
             sentence = tokenizer.sequences_to_texts(output[0][0].numpy())
             sentence = sentence[0].replace("<start>", '').replace("<end>", '').replace(' ', '')
@@ -197,8 +185,8 @@ def _train_step(model: tf.keras.Model, optimizer: tf.keras.optimizers.Adam,
     return batch_loss
 
 
-def _valid_step(model: tf.keras.Model, dataset: tf.data.Dataset,
-                steps_per_epoch: int, tokenizer: tf.keras.preprocessing.text.Tokenizer):
+def _valid_step(model: tf.keras.Model, dataset: tf.data.Dataset, steps_per_epoch: int,
+                tokenizer: tf.keras.preprocessing.text.Tokenizer):
     """
     验证模块
     :param model: 模型

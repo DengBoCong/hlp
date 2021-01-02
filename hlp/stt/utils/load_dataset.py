@@ -1,19 +1,14 @@
 import os
 import numpy as np
 import tensorflow as tf
-from hlp.stt.utils.text_process import tokenize_and_encode
 
 
-def load_data(train_data_path: str, max_len: int, vocab_size: int, batch_size: int,
-              buffer_size: int, dict_path: str = "", valid_data_split: float = 0.0,
+def load_data(train_data_path: str, batch_size: int, buffer_size: int, valid_data_split: float = 0.0,
               valid_data_path: str = "", train_length_path: str = "", valid_length_path: str = "",
-              max_train_data_size: int = 0, max_valid_data_size: int = 0, unk_token: str = "<unk>"):
+              max_train_data_size: int = 0, max_valid_data_size: int = 0):
     """
     加载训练验证数据方法，验证数据的优先级为：验证数据文件>从训练集划分验证集
     :param train_data_path: 文本数据路径
-    :param max_len: 文本序列最大长度
-    :param vocab_size: 词汇大小
-    :param dict_path: 字典路径，若使用phoneme则不用传
     :param buffer_size: Dataset加载缓存大小
     :param batch_size: Dataset加载批大小
     :param valid_data_split: 用于从训练数据中划分验证数据
@@ -22,7 +17,6 @@ def load_data(train_data_path: str, max_len: int, vocab_size: int, batch_size: i
     :param valid_length_path: 验证样本长度保存路径
     :param max_train_data_size: 最大训练数据量
     :param max_valid_data_size: 最大验证数据量
-    :param unk_token: 未登录词
     :return: 返回train_dataset, valid_dataset, steps_per_epoch, valid_steps_per_epoch
     """
     if not os.path.exists(train_data_path):
@@ -30,9 +24,8 @@ def load_data(train_data_path: str, max_len: int, vocab_size: int, batch_size: i
         exit(0)
 
     print("正在加载训练数据...")
-    train_audio_data_path, train_sentence_data, train_length_data = read_data(data_path=train_data_path,
-                                                                              length_path=train_length_path,
-                                                                              num_examples=max_train_data_size)
+    train_audio_data_path, train_sentence_data_path, train_length_data = \
+        read_data(data_path=train_data_path, length_path=train_length_path, num_examples=max_train_data_size)
 
     valid_flag = True  # 是否开启验证标记
     valid_steps_per_epoch = 0
@@ -40,43 +33,33 @@ def load_data(train_data_path: str, max_len: int, vocab_size: int, batch_size: i
     # 根据是否传入验证数据文件，切分验证数据
     if valid_data_path != "":
         print("正在加载验证数据...")
-        valid_audio_data_path, valid_sentence_data, valid_length_data = read_data(data_path=valid_data_path,
-                                                                                  length_path=valid_length_path,
-                                                                                  num_examples=max_valid_data_size)
+        valid_audio_data_path, valid_sentence_data_path, valid_length_data = \
+            read_data(data_path=valid_data_path, length_path=valid_length_path, num_examples=max_valid_data_size)
     elif valid_data_split != 0.0:
         print("从训练数据中划分验证数据...")
         train_size = int(len(train_audio_data_path) * (1.0 - valid_data_split))
         valid_audio_data_path = train_audio_data_path[train_size:]
-        valid_sentence_data = train_sentence_data[train_size:]
+        valid_sentence_data_path = train_sentence_data_path[train_size:]
         valid_length_data = train_length_data[train_size:]
         train_audio_data_path = train_audio_data_path[:train_size]
-        train_sentence_data = train_sentence_data[:train_size]
+        train_sentence_data_path = train_sentence_data_path[:train_size]
         train_length_data = train_length_data[:train_size]
     else:
         valid_flag = False
 
-    if dict_path == "":
-        print("请在加载数据时，传入字典保存路径")
-        exit(0)
-    train_sentence_sequences, tokenizer = tokenize_and_encode(texts=train_sentence_data,
-                                                              max_len=max_len, num_words=vocab_size,
-                                                              dict_path=dict_path, unk_token=unk_token)
-    train_dataset = _to_dataset(data=(train_audio_data_path, train_sentence_sequences, train_length_data),
+    train_dataset = _to_dataset(data=(train_audio_data_path, train_sentence_data_path, train_length_data),
                                 batch_size=batch_size, buffer_size=buffer_size)
-    steps_per_epoch = len(train_sentence_sequences) // batch_size
+    steps_per_epoch = len(train_sentence_data_path) // batch_size
 
     if valid_flag:
-        valid_sentence_sequences = tokenizer.texts_to_sequences(valid_sentence_data)
-        valid_sentence_sequences = tf.keras.preprocessing.sequence.pad_sequences(valid_sentence_sequences,
-                                                                                 maxlen=max_len, padding="post")
-        valid_dataset = _to_dataset(data=(valid_audio_data_path, valid_sentence_sequences, valid_length_data),
+        valid_dataset = _to_dataset(data=(valid_audio_data_path, valid_sentence_data_path, valid_length_data),
                                     batch_size=batch_size, buffer_size=buffer_size)
-        valid_steps_per_epoch = len(valid_sentence_sequences) // batch_size
+        valid_steps_per_epoch = len(valid_sentence_data_path) // batch_size
     else:
         valid_dataset = None
 
     print("训练验证数据加载完毕")
-    return tokenizer, train_dataset, valid_dataset, steps_per_epoch, valid_steps_per_epoch
+    return train_dataset, valid_dataset, steps_per_epoch, valid_steps_per_epoch
 
 
 def _to_dataset(data: tuple, batch_size: int, buffer_size: int):
@@ -103,7 +86,7 @@ def read_data(data_path: str, length_path: str, num_examples: int):
     :return: 返回读取的音频特征数据路径和句子数据
     """
     audio_data_path = []
-    sentence_data = []
+    sentence_data_path = []
     with open(data_path, 'r', encoding="utf-8") as data_file:
         lines = data_file.read().strip().split('\n')
         if num_examples != 0:
@@ -112,11 +95,11 @@ def read_data(data_path: str, length_path: str, num_examples: int):
         for line in lines:
             line = line.strip().strip("\n").replace("/", " ").split("\t")
             audio_data_path.append(line[0])
-            sentence_data.append(line[1])
+            sentence_data_path.append(line[1])
 
     length_data = np.load(length_path)
 
-    return audio_data_path, sentence_data, length_data
+    return audio_data_path, sentence_data_path, length_data
 
 
 def read_npy_file(filename):
@@ -125,18 +108,18 @@ def read_npy_file(filename):
     :param filename: 传入的文件名张量
     :return: 返回读取的数据
     """
-    data = np.load(filename.numpy().decode())
-    return data.astype(np.float32)
+    return np.load(filename.numpy().decode())
 
 
-def _process_audio_sentence_pairs(audio_data_path: tf.Tensor, sentence: tf.Tensor, length: tf.Tensor):
+def _process_audio_sentence_pairs(audio_data_path: tf.Tensor, sentence_data_path: tf.Tensor, length: tf.Tensor):
     """
     用于处理音频句子对，将其转化为张量
     :param audio_data_path: 音频特征数据保存文件
-    :param sentence: 音频句子
+    :param sentence_data_path: 音频句子
     :param length: 样本长度
     :return: audio_feature, sentence
     """
     [audio_feature] = tf.py_function(read_npy_file, [audio_data_path], [tf.float32])
+    [sentence] = tf.py_function(read_npy_file, [sentence_data_path], [tf.int32])
 
     return audio_feature, sentence, length

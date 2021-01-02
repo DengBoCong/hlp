@@ -162,6 +162,22 @@ def load_checkpoint(model: tf.keras.Model, checkpoint_dir: str,
     return ckpt_manager
 
 
+def load_tokenizer(dict_path: str):
+    """
+    通过字典加载tokenizer
+    :param dict_path: 字典路径
+    :return tokenizer: 分词器
+    """
+    if not os.path.exists(dict_path):
+        print("字典不存在，请检查之后重试")
+        exit(0)
+    with open(dict_path, 'r', encoding='utf-8') as dict_file:
+        json_string = dict_file.read().strip().strip("\n")
+        tokenizer = tf.keras.preprocessing.text.tokenizer_from_json(json_string)
+
+    return tokenizer
+
+
 def compute_ctc_input_length(max_time_steps, ctc_time_steps, input_length):
     """
     计算ctc api中的参数input_length，基于https://github.com/tensorflow/models/blob/master/research/deep_speech
