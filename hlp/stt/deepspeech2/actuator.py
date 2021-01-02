@@ -3,7 +3,6 @@ import sys
 import json
 import tensorflow as tf
 from argparse import ArgumentParser
-
 sys.path.append(os.path.abspath(__file__)[:os.path.abspath(__file__).rfind("\\hlp\\")])
 from hlp.stt.utils.pre_treat import dispatch_pre_treat_func
 from hlp.stt.utils.utils import load_checkpoint
@@ -44,7 +43,6 @@ if __name__ == '__main__':
     parser.add_argument('--max_valid_data_size', default=0, type=int, required=False, help='从验证集集读取最大数据量，0即全部数据')
     parser.add_argument('--audio_feature_type', default='mfcc', type=str, required=False, help='音频处理方式')
     parser.add_argument('--dataset_type', default='thchs30', type=str, required=False, help='数据集类型')
-    # parser.add_argument('--dataset_type', default='librispeech', type=str, required=False, help='数据集类型')
     parser.add_argument('--max_time_step', default=1100, type=int, required=False, help='最大音频补齐长度')
     parser.add_argument('--stop_early_limits', default=5, type=int, required=False, help='验证指标不增长个数停止')
     parser.add_argument('--checkpoint_dir', default='\\data\\checkpoints\\deepspeech2', type=str, required=False,
@@ -53,11 +51,6 @@ if __name__ == '__main__':
                         required=False, help='整理后的音频句子对保存路径')
     parser.add_argument('--valid_file', default='\\data\\data_thchs30\\processed_valid_file.txt', type=str,
                         required=False, help='整理后的音频句子对保存路径')
-    # parser.add_argument('--train_file', default='\\data\\LibriSpeech\\processed_train_file.txt', type=str,
-    #                     required=False, help='整理后的音频句子对保存路径')
-    # parser.add_argument('--valid_file', default='\\data\\LibriSpeech\\processed_valid_file.txt', type=str,
-    #                     required=False, help='整理后的音频句子对保存路径')
-
     parser.add_argument('--dict_path', default='\\data\\data_thchs30\\deepspeech2_dict.json', type=str, required=False,
                         help='字典存放路径')
     parser.add_argument('--train_data_dir', default='\\data\\data_thchs30\\train\\', type=str, required=False,
@@ -73,23 +66,6 @@ if __name__ == '__main__':
                         required=False, help='测试数据整理后的音频句子对保存路径')
     parser.add_argument('--valid_length_path', default='\\data\\data_thchs30\\valid_length.npy', type=str,
                         required=False, help='测试数据集样本长度存放目录路径')
-
-    # parser.add_argument('--dict_path', default='\\data\\LibriSpeech\\deepspeech2_dict.json', type=str, required=False,
-    #                     help='字典存放路径')
-    # parser.add_argument('--train_data_dir', default='\\data\\LibriSpeech\\train-clean-5\\', type=str, required=False,
-    #                     help='训练数据集存放目录路径')
-    # parser.add_argument('--train_spectrum_data_dir', default='\\data\\LibriSpeech\\train_feature\\', type=str,
-    #                     required=False, help='训练数据整理后的音频句子对保存路径')
-    # parser.add_argument('--train_length_path', default='\\data\\LibriSpeech\\train_length.npy', type=str,
-    #                     required=False,
-    #                     help='训练数据集样本长度存放目录路径')
-    # parser.add_argument('--valid_data_dir', default='\\data\\LibriSpeech\\dev-clean-2\\', type=str, required=False,
-    #                     help='测试数据集存放目录路径')
-    # parser.add_argument('--valid_spectrum_data_dir', default='\\data\\LibriSpeech\\valid_feature\\', type=str,
-    #                     required=False, help='测试数据整理后的音频句子对保存路径')
-    # parser.add_argument('--valid_length_path', default='\\data\\LibriSpeech\\valid_length.npy', type=str,
-    #                     required=False, help='测试数据集样本长度存放目录路径')
-
     parser.add_argument('--history_img_path', default='\\data\\history\\deepspeech2\\', type=str,
                         required=False, help='历史数据指标图表保存路径')
     parser.add_argument('--record_path', default='\\data\\record\\', type=str, required=False,

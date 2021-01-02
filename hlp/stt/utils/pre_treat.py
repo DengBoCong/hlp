@@ -105,8 +105,7 @@ def preprocess_thchs30_speech_raw_data(data_path: str, dataset_infos_file: str, 
                 len_pair.append(vocab_size if audio_feature.shape[0] > vocab_size else audio_feature.shape[0])
                 text_file_path_list.append(text_token_file)
 
-                audio_feature = tf.expand_dims(audio_feature, axis=0)
-                audio_feature = tf.keras.preprocessing.sequence.pad_sequences(audio_feature, maxlen=max_time_step,
+                audio_feature = tf.keras.preprocessing.sequence.pad_sequences([audio_feature], maxlen=max_time_step,
                                                                               dtype="float32", padding="post")
                 audio_feature = tf.squeeze(audio_feature, axis=0)
 
@@ -184,10 +183,12 @@ def preprocess_librispeech_speech_raw_data(data_path: str, dataset_infos_file: s
                         text_list.append(text)
 
                         audio_feature = wav_to_feature(audio_path, audio_feature_type)
-                        len_pair.append(audio_feature.shape[0])
-                        audio_feature = tf.keras.preprocessing.sequence.pad_sequences(audio_feature,
-                                                                                      maxlen=max_time_step,
-                                                                                      dtype="float32", padding="post")
+                        len_pair.append(vocab_size if audio_feature.shape[0] > vocab_size else audio_feature.shape[0])
+
+                        audio_feature = tf.keras.preprocessing.sequence.pad_sequences(
+                            [audio_feature], maxlen=max_time_step, dtype="float32", padding="post")
+                        audio_feature = tf.squeeze(audio_feature, axis=0)
+
                         np.save(file=audio_feature_file, arr=audio_feature)
                         ds_infos_file.write(audio_feature_file + "\t" + spectrum_data_dir + line[0] + "text.npy" + "\n")
 

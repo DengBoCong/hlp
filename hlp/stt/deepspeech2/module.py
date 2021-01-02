@@ -146,6 +146,7 @@ def recognize(model: tf.keras.Model, audio_feature_type: str,
 
             # 加载录音数据并预测
             audio_feature = wav_to_feature(record_path, audio_feature_type)
+            audio_feature = audio_feature[:max_length, :]
             input_tensor = tf.keras.preprocessing.sequence.pad_sequences([audio_feature], padding='post',
                                                                          maxlen=max_length, dtype='float32')
             predictions = model(input_tensor)
