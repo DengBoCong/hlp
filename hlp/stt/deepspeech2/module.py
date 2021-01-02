@@ -116,12 +116,15 @@ def evaluate(model: tf.keras.Model, data_path: str, batch_size: int, buffer_size
                           steps_per_epoch=valid_steps_per_epoch, tokenizer=tokenizer)
 
 
-def recognize(model: tf.keras.Model, audio_feature_type: str,
-              record_path: str, max_length: int, dict_path: str):
+def recognize(model: tf.keras.Model, audio_feature_type: str, start_sign: str,
+              unk_sign: str, end_sign: str, record_path: str, max_length: int, dict_path: str):
     """
     语音识别模块
     :param model: 模型
     :param audio_feature_type: 特征类型
+    :param start_sign: 开始标记
+    :param end_sign: 结束标记
+    :param unk_sign: 未登录词
     :param record_path: 录音保存路径
     :param max_length: 最大音频补齐长度
     :param dict_path: 字典保存路径
@@ -159,7 +162,7 @@ def recognize(model: tf.keras.Model, audio_feature_type: str,
             tokenizer = load_tokenizer(dict_path=dict_path)
 
             sentence = tokenizer.sequences_to_texts(output[0][0].numpy())
-            sentence = sentence[0].replace("<start>", '').replace("<end>", '').replace(' ', '')
+            sentence = sentence[0].replace(start_sign, '').replace(end_sign, '').replace(unk_sign, '').replace(' ', '')
             print("Output:", sentence)
 
 

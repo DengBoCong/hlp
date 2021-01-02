@@ -6,6 +6,7 @@ from argparse import ArgumentParser
 sys.path.append(os.path.abspath(__file__)[:os.path.abspath(__file__).rfind("\\hlp\\")])
 from hlp.stt.utils.pre_treat import dispatch_pre_treat_func
 from hlp.stt.transformer.module import train
+from hlp.stt.transformer.module import evaluate
 from hlp.stt.transformer.module import recognize
 from hlp.stt.transformer.module import load_checkpoint
 from hlp.stt.transformer.model import encoder
@@ -38,25 +39,36 @@ if __name__ == '__main__':
     parser.add_argument('--dropout', default=0.1, type=float, required=False, help='encoder的dropout采样率')
     parser.add_argument('--num_layers', default=2, type=int, required=False, help='encoder和decoder的layer层数')
     parser.add_argument('--max_sentence_length', default=100, type=int, required=False, help='最大句子序列长度')
-    parser.add_argument('--valid_data_split', default=0.1, type=float, required=False, help='从训练数据划分验证数据的比例')
-    parser.add_argument('--max_train_data_size', default=20, type=int, required=False, help='从训练集读取最大数据量，0即全部数据')
+    parser.add_argument('--valid_data_split', default=0.0, type=float, required=False, help='从训练数据划分验证数据的比例')
+    parser.add_argument('--max_train_data_size', default=0, type=int, required=False, help='从训练集读取最大数据量，0即全部数据')
     parser.add_argument('--max_valid_data_size', default=0, type=int, required=False, help='从验证集集读取最大数据量，0即全部数据')
     parser.add_argument('--checkpoint_save_size', default=2, type=int, required=False, help='训练中最多保存checkpoint数量')
     parser.add_argument('--dataset_type', default='thchs30', type=str, required=False, help='数据集类型')
     parser.add_argument('--audio_feature_type', default='fbank', type=str, required=False, help='音频处理方式')
+    parser.add_argument('--start_sign', default='<start>', type=str, required=False, help='开始标记')
+    parser.add_argument('--end_sign', default='<end>', type=str, required=False, help='结束标记')
+    parser.add_argument('--unk_sign', default='<unk>', type=str, required=False, help='未登录词')
     parser.add_argument('--max_time_step', default=1100, type=int, required=False, help='最大音频补齐长度')
-    parser.add_argument('--train_data_dir', default='\\data\\data_thchs30\\data\\', type=str, required=False,
+    parser.add_argument('--train_data_dir', default='\\data\\data_thchs30\\train\\', type=str, required=False,
                         help='训练数据集存放目录路径')
+    parser.add_argument('--valid_data_dir', default='\\data\\data_thchs30\\test\\', type=str, required=False,
+                        help='测试数据集存放目录路径')
     parser.add_argument('--train_file', default='\\data\\data_thchs30\\processed_train_file.txt', type=str,
                         required=False, help='整理后的音频句子对保存路径')
-    parser.add_argument('--spectrum_data_dir', default='\\data\\data_thchs30\\feature\\', type=str,
+    parser.add_argument('--valid_file', default='\\data\\data_thchs30\\processed_valid_file.txt', type=str,
                         required=False, help='整理后的音频句子对保存路径')
+    parser.add_argument('--train_spectrum_data_dir', default='\\data\\data_thchs30\\train_feature\\', type=str,
+                        required=False, help='整理后的音频句子对保存路径')
+    parser.add_argument('--valid_spectrum_data_dir', default='\\data\\data_thchs30\\valid_feature\\', type=str,
+                        required=False, help='测试数据整理后的音频句子对保存路径')
     parser.add_argument('--dict_path', default='\\data\\data_thchs30\\transformer_dict.json', type=str, required=False,
                         help='字典存放路径')
     parser.add_argument('--checkpoint_dir', default='\\data\\checkpoints\\transformer', type=str, required=False,
                         help='检查点保存路径')
-    parser.add_argument('--save_length_path', default='\\data\\data_thchs30\\length.npy', type=str, required=False,
-                        help='训练数据集存放目录路径')
+    parser.add_argument('--train_length_path', default='\\data\\data_thchs30\\train_length.npy', type=str,
+                        required=False, help='训练数据集样本长度存放目录路径')
+    parser.add_argument('--valid_length_path', default='\\data\\data_thchs30\\valid_length.npy', type=str,
+                        required=False, help='测试数据集样本长度存放目录路径')
 
     options = parser.parse_args().__dict__
     if options['config_file'] != '':
@@ -83,24 +95,41 @@ if __name__ == '__main__':
 
     if execute_type == 'train':
         train(epochs=options['epochs'], train_data_path=work_path + options['train_file'],
-              max_len=options['max_sentence_length'], vocab_size=options['decoder_vocab_size'],
               batch_size=options['batch_size'], buffer_size=options['buffer_size'],
               checkpoint_save_freq=options['checkpoint_save_freq'], checkpoint=ckpt_manager,
-              optimizer=optimizer, dict_path=work_path + options['dict_path'],
-              valid_data_split=options['valid_data_split'], valid_data_path="",
+              optimizer=optimizer, valid_data_split=options['valid_data_split'],
+              valid_data_path=work_path + options['valid_file'],
               max_train_data_size=options['max_train_data_size'], encoder=encoder,
               max_valid_data_size=options['max_valid_data_size'], decoder=decoder,
-              valid_length_path="", train_length_path=work_path + options['save_length_path'])
+              valid_length_path=work_path + options['valid_length_path'],
+              train_length_path=work_path + options['train_length_path'])
+    elif execute_type == 'evaluate':
+        evaluate(encoder=encoder, decoder=decoder, data_path=work_path + options['valid_file'],
+                 batch_size=options['batch_size'], buffer_size=options['buffer_size'],
+                 max_data_size=options['max_valid_data_size'], length_path=work_path + options['valid_length_path'])
     elif execute_type == 'recognize':
         recognize(encoder=encoder, decoder=decoder, beam_size=options['beam_size'],
+                  start_sign=options['start_sign'], end_sign=options['end_sign'], unk_sign=options['unk_sign'],
                   audio_feature_type=options['audio_feature_type'], max_length=options['max_time_step'],
                   max_sentence_length=options['max_sentence_length'], dict_path=work_path + options['dict_path'])
     elif execute_type == 'pre_treat':
-        dispatch_pre_treat_func(func_type=options['dataset_type'],
-                                data_path=work_path + options['train_data_dir'],
-                                dataset_infos_file=work_path + options['train_file'],
-                                max_length=options['max_time_step'], transcript_row=0,
-                                spectrum_data_dir=work_path + options['spectrum_data_dir'],
-                                audio_feature_type=options['audio_feature_type'])
+        print("正在处理训练数据集")
+        dispatch_pre_treat_func(
+            func_type=options['dataset_type'], data_path=work_path + options['train_data_dir'],
+            start_sign=options['start_sign'], end_sign=options['end_sign'], unk_sign=options['unk_sign'],
+            dataset_infos_file=work_path + options['train_file'], vocab_size=options['decoder_vocab_size'],
+            max_time_step=options['max_time_step'], spectrum_data_dir=work_path + options['train_spectrum_data_dir'],
+            audio_feature_type=options['audio_feature_type'], save_length_path=work_path + options['train_length_path'],
+            max_treat_data_size=options['max_train_data_size'], max_sentence_length=options['max_sentence_length'],
+            dict_path=work_path + options['dict_path'], transcript_row=0)
+        print("正在处理测试数据集")
+        dispatch_pre_treat_func(
+            func_type=options['dataset_type'], data_path=work_path + options['valid_data_dir'],
+            start_sign=options['start_sign'], end_sign=options['end_sign'], unk_sign=options['unk_sign'],
+            dataset_infos_file=work_path + options['valid_file'], max_time_step=options['max_time_step'],
+            transcript_row=0, spectrum_data_dir=work_path + options['valid_spectrum_data_dir'],
+            audio_feature_type=options['audio_feature_type'], save_length_path=work_path + options['valid_length_path'],
+            max_treat_data_size=options['max_valid_data_size'], vocab_size=options['decoder_vocab_size'], is_train=False,
+            max_sentence_length=options['max_sentence_length'], dict_path=work_path + options['dict_path'])
     else:
         parser.error(msg='')

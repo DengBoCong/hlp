@@ -43,6 +43,9 @@ if __name__ == '__main__':
     parser.add_argument('--max_valid_data_size', default=0, type=int, required=False, help='从验证集集读取最大数据量，0即全部数据')
     parser.add_argument('--audio_feature_type', default='mfcc', type=str, required=False, help='音频处理方式')
     parser.add_argument('--dataset_type', default='thchs30', type=str, required=False, help='数据集类型')
+    parser.add_argument('--start_sign', default='<start>', type=str, required=False, help='开始标记')
+    parser.add_argument('--end_sign', default='<end>', type=str, required=False, help='结束标记')
+    parser.add_argument('--unk_sign', default='<unk>', type=str, required=False, help='未登录词')
     parser.add_argument('--max_time_step', default=1100, type=int, required=False, help='最大音频补齐长度')
     parser.add_argument('--stop_early_limits', default=5, type=int, required=False, help='验证指标不增长个数停止')
     parser.add_argument('--checkpoint_dir', default='\\data\\checkpoints\\deepspeech2', type=str, required=False,
@@ -108,11 +111,13 @@ if __name__ == '__main__':
                  length_path=work_path + options['valid_length_path'], max_data_size=options['max_valid_data_size'])
     elif execute_type == 'recognize':
         recognize(model=model, audio_feature_type=options['audio_feature_type'], max_length=options['max_time_step'],
+                  start_sign=options['start_sign'], end_sign=options['end_sign'], unk_sign=options['unk_sign'],
                   record_path=work_path + options['record_path'], dict_path=work_path + options['dict_path'])
     elif execute_type == 'pre_treat':
         print("正在处理训练数据集")
         dispatch_pre_treat_func(
             func_type=options['dataset_type'], data_path=work_path + options['train_data_dir'],
+            start_sign=options['start_sign'], end_sign=options['end_sign'], unk_sign=options['unk_sign'],
             dataset_infos_file=work_path + options['train_file'], vocab_size=options['vocab_size'],
             max_time_step=options['max_time_step'], spectrum_data_dir=work_path + options['train_spectrum_data_dir'],
             audio_feature_type=options['audio_feature_type'], save_length_path=work_path + options['train_length_path'],
@@ -121,6 +126,7 @@ if __name__ == '__main__':
         print("正在处理测试数据集")
         dispatch_pre_treat_func(
             func_type=options['dataset_type'], data_path=work_path + options['valid_data_dir'],
+            start_sign=options['start_sign'], end_sign=options['end_sign'], unk_sign=options['unk_sign'],
             dataset_infos_file=work_path + options['valid_file'], max_time_step=options['max_time_step'],
             transcript_row=0, spectrum_data_dir=work_path + options['valid_spectrum_data_dir'],
             audio_feature_type=options['audio_feature_type'], save_length_path=work_path + options['valid_length_path'],

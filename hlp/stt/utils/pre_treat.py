@@ -6,9 +6,10 @@ from hlp.stt.utils.text_process import tokenize_and_encode
 
 
 def dispatch_pre_treat_func(func_type: str, data_path: str, dataset_infos_file: str, max_time_step: int,
-                            vocab_size: int, max_sentence_length: int, spectrum_data_dir: str,
-                            dict_path: str = "", audio_feature_type: str = "mfcc", save_length_path: str = "",
-                            transcript_row: int = 0, max_treat_data_size: int = 0, is_train: bool = True):
+                            vocab_size: int, max_sentence_length: int, spectrum_data_dir: str, start_sign: str,
+                            end_sign: str, unk_sign: str, dict_path: str = "", audio_feature_type: str = "mfcc",
+                            save_length_path: str = "", transcript_row: int = 0, max_treat_data_size: int = 0,
+                            is_train: bool = True):
     """
     预处理方法分发匹配
     :param func_type: 预处理方法类型
@@ -19,6 +20,9 @@ def dispatch_pre_treat_func(func_type: str, data_path: str, dataset_infos_file: 
     :param max_sentence_length: 文本序列最大长度
     :param save_length_path: 保存样本长度文件路径
     :param spectrum_data_dir: 保存处理后的音频特征数据目录
+    :param start_sign: 句子开始标记
+    :param end_sign: 句子结束标记
+    :param unk_token: 未登录词
     :param dict_path: 字典路径，若使用phoneme则不用传
     :param audio_feature_type: 特征类型
     :param transcript_row: 使用文本数据中的第几行，第一行文字，第二行拼音，第三行音节
@@ -29,15 +33,15 @@ def dispatch_pre_treat_func(func_type: str, data_path: str, dataset_infos_file: 
     operation = {
         "thchs30": lambda: preprocess_thchs30_speech_raw_data(
             data_path=data_path, max_time_step=max_time_step, dataset_infos_file=dataset_infos_file,
-            spectrum_data_dir=spectrum_data_dir, audio_feature_type=audio_feature_type,
+            spectrum_data_dir=spectrum_data_dir, audio_feature_type=audio_feature_type, unk_sign=unk_sign,
             transcript_row=transcript_row, is_train=is_train, save_length_path=save_length_path,
             max_sentence_length=max_sentence_length, max_treat_data_size=max_treat_data_size,
-            vocab_size=vocab_size, dict_path=dict_path),
+            vocab_size=vocab_size, dict_path=dict_path, start_sign=start_sign, end_sign=end_sign),
         "librispeech": lambda: preprocess_librispeech_speech_raw_data(
             data_path=data_path, max_time_step=max_time_step, dataset_infos_file=dataset_infos_file,
-            spectrum_data_dir=spectrum_data_dir, audio_feature_type=audio_feature_type,
-            save_length_path=save_length_path, max_sentence_length=max_sentence_length,
-            max_treat_data_size=max_treat_data_size, vocab_size=vocab_size, dict_path=dict_path)
+            spectrum_data_dir=spectrum_data_dir, audio_feature_type=audio_feature_type, start_sign=start_sign,
+            save_length_path=save_length_path, max_sentence_length=max_sentence_length, end_sign=end_sign,
+            max_treat_data_size=max_treat_data_size, vocab_size=vocab_size, dict_path=dict_path, unk_sign=unk_sign)
     }
 
     operation.get(func_type, "thchs30")()
@@ -47,7 +51,7 @@ def preprocess_thchs30_speech_raw_data(data_path: str, dataset_infos_file: str, 
                                        spectrum_data_dir: str, max_sentence_length: int, vocab_size: int,
                                        audio_feature_type: str = "mfcc", save_length_path: str = "",
                                        is_train: bool = True, transcript_row: int = 0, start_sign: str = "<start>",
-                                       dict_path: str = "", end_sign: str = "<end>", unk_token: str = "<unk>",
+                                       dict_path: str = "", end_sign: str = "<end>", unk_sign: str = "<unk>",
                                        max_treat_data_size: int = 0):
     """
     用于处理thchs30数据集的方法，将数据整理为<音频地址, 句子>的
@@ -65,7 +69,7 @@ def preprocess_thchs30_speech_raw_data(data_path: str, dataset_infos_file: str, 
     :param transcript_row: 使用文本数据中的第几行，第一行文字，第二行拼音，第三行音节
     :param start_sign: 句子开始标记
     :param end_sign: 句子结束标记
-    :param unk_token: 未登录词
+    :param unk_sign: 未登录词
     :param max_treat_data_size: 最大处理数据，若为0，则全部数据
     :return: 无返回值
     """
@@ -119,7 +123,7 @@ def preprocess_thchs30_speech_raw_data(data_path: str, dataset_infos_file: str, 
                     break
 
     _treat_sentence_and_length(text_list, text_file_path_list, len_list, max_sentence_length,
-                               vocab_size, save_length_path, is_train, dict_path, unk_token)
+                               vocab_size, save_length_path, is_train, dict_path, unk_sign)
 
     print("\n数据处理完毕，共计{}对语音句子数据".format(count))
 
@@ -127,7 +131,7 @@ def preprocess_thchs30_speech_raw_data(data_path: str, dataset_infos_file: str, 
 def preprocess_librispeech_speech_raw_data(data_path: str, dataset_infos_file: str, max_time_step: int,
                                            spectrum_data_dir: str, max_sentence_length: int, vocab_size: int,
                                            save_length_path: str = "", start_sign: str = "<start>",
-                                           end_sign: str = "<end>", unk_token: str = "<unk>", dict_path: str = "",
+                                           end_sign: str = "<end>", unk_sign: str = "<unk>", dict_path: str = "",
                                            is_train: bool = True, audio_feature_type: str = "mfcc",
                                            max_treat_data_size: int = 0):
     """
@@ -142,7 +146,7 @@ def preprocess_librispeech_speech_raw_data(data_path: str, dataset_infos_file: s
     :param spectrum_data_dir: 保存处理后的音频特征数据目录
     :param start_sign: 句子开始标记
     :param end_sign: 句子结束标记
-    :param unk_token: 未登录词
+    :param unk_sign: 未登录词
     :param dict_path: 字典路径，若使用phoneme则不用传
     :param is_train: 处理的是否是训练数据
     :param audio_feature_type: 特征类型
@@ -199,7 +203,7 @@ def preprocess_librispeech_speech_raw_data(data_path: str, dataset_infos_file: s
                             break
 
     _treat_sentence_and_length(text_list, text_file_path_list, len_list, max_sentence_length,
-                               vocab_size, save_length_path, is_train, dict_path, unk_token)
+                               vocab_size, save_length_path, is_train, dict_path, unk_sign)
 
     print("\n数据处理完毕，共计{}对语音句子数据".format(count))
 

@@ -5,13 +5,13 @@ from hlp.utils.beamsearch import BeamSearch
 from hlp.stt.utils.load_dataset import load_data
 from hlp.utils.optimizers import loss_func_mask
 from hlp.stt.utils.audio_process import wav_to_feature
+from hlp.stt.utils.utils import load_tokenizer
 
 
 def train(encoder: tf.keras.Model, decoder: tf.keras.Model, optimizer: tf.keras.optimizers.Adam,
-          epochs: int, checkpoint: tf.train.CheckpointManager, train_data_path: str, max_len: int,
-          vocab_size: int, batch_size: int, buffer_size: int, checkpoint_save_freq: int,
-          dict_path: str = "", valid_data_split: float = 0.0, valid_data_path: str = "",
-          max_train_data_size: int = 0, max_valid_data_size: int = 0,
+          epochs: int, checkpoint: tf.train.CheckpointManager, train_data_path: str,
+          batch_size: int, buffer_size: int, checkpoint_save_freq: int, valid_data_split: float = 0.0,
+          valid_data_path: str = "", max_train_data_size: int = 0, max_valid_data_size: int = 0,
           train_length_path: str = "", valid_length_path: str = ""):
     """
     训练模块
@@ -21,11 +21,8 @@ def train(encoder: tf.keras.Model, decoder: tf.keras.Model, optimizer: tf.keras.
     :param checkpoint: 检查点管理器
     :param epochs: 训练周期
     :param train_data_path: 文本数据路径
-    :param max_len: 文本序列最大长度
-    :param vocab_size: 词汇大小
     :param buffer_size: Dataset加载缓存大小
     :param batch_size: Dataset加载批大小
-    :param dict_path: 字典路径，若使用phoneme则不用传
     :param valid_data_split: 用于从训练数据中划分验证数据
     :param valid_data_path: 验证数据文本路径
     :param max_train_data_size: 最大训练数据量
@@ -34,12 +31,11 @@ def train(encoder: tf.keras.Model, decoder: tf.keras.Model, optimizer: tf.keras.
     :param train_length_path: 训练样本长度保存路径
     :param valid_length_path: 验证样本长度保存路径
     """
-    _, train_dataset, valid_dataset, steps_per_epoch, valid_steps_per_epoch = \
-        load_data(train_data_path=train_data_path, max_len=max_len, vocab_size=vocab_size,
-                  batch_size=batch_size, buffer_size=buffer_size, dict_path=dict_path,
+    train_dataset, valid_dataset, steps_per_epoch, valid_steps_per_epoch = \
+        load_data(train_data_path=train_data_path, batch_size=batch_size, buffer_size=buffer_size,
                   valid_data_split=valid_data_split, valid_data_path=valid_data_path,
-                  max_train_data_size=max_train_data_size, max_valid_data_size=max_valid_data_size,
-                  valid_length_path=valid_length_path, train_length_path=train_length_path)
+                  train_length_path=train_length_path, valid_length_path=valid_length_path,
+                  max_train_data_size=max_train_data_size, max_valid_data_size=max_valid_data_size)
 
     if steps_per_epoch == 0:
         print("训练数据量过小，小于batch_size，请添加数据后重试")
@@ -75,51 +71,38 @@ def train(encoder: tf.keras.Model, decoder: tf.keras.Model, optimizer: tf.keras.
             _valid_step(encoder=encoder, decoder=decoder, dataset=valid_dataset, steps_per_epoch=valid_steps_per_epoch)
 
 
-def evaluate(encoder: tf.keras.Model, decoder: tf.keras.Model, optimizer: tf.keras.optimizers.Adam,
-          epochs: int, checkpoint: tf.train.CheckpointManager, train_data_path: str, max_len: int,
-          vocab_size: int, batch_size: int, buffer_size: int, checkpoint_save_freq: int,
-          dict_path: str = "", valid_data_split: float = 0.0, valid_data_path: str = "",
-          max_train_data_size: int = 0, max_valid_data_size: int = 0,
-          train_length_path: str = "", valid_length_path: str = ""):
+def evaluate(encoder: tf.keras.Model, decoder: tf.keras.Model, data_path: str,
+             batch_size: int, buffer_size: int, length_path: str = "", max_data_size: int = 0):
     """
     评估模块
     :param encoder: 模型的encoder
     :param decoder: 模型的decoder
-    :param optimizer: 优化器
-    :param checkpoint: 检查点管理器
-    :param epochs: 训练周期
-    :param train_data_path: 文本数据路径
-    :param max_len: 文本序列最大长度
-    :param vocab_size: 词汇大小
+    :param data_path: 文本数据路径
     :param buffer_size: Dataset加载缓存大小
     :param batch_size: Dataset加载批大小
-    :param dict_path: 字典路径，若使用phoneme则不用传
-    :param valid_data_split: 用于从训练数据中划分验证数据
-    :param valid_data_path: 验证数据文本路径
-    :param max_train_data_size: 最大训练数据量
-    :param max_valid_data_size: 最大验证数据量
-    :param checkpoint_save_freq: 检查点保存频率
-    :param train_length_path: 训练样本长度保存路径
-    :param valid_length_path: 验证样本长度保存路径
+    :param max_data_size: 最大训练数据量
+    :param length_path: 训练样本长度保存路径
     :return: 无返回值
     """
-    _, valid_dataset, _, valid_steps_per_epoch, _ = \
-        load_data(train_data_path=train_data_path, max_len=max_len, vocab_size=vocab_size,
-                  batch_size=batch_size, buffer_size=buffer_size, dict_path=dict_path,
-                  valid_data_split="", valid_data_path="",
-                  max_train_data_size=max_train_data_size, max_valid_data_size=max_valid_data_size,
-                  valid_length_path=valid_length_path, train_length_path=train_length_path)
+    valid_dataset, _, valid_steps_per_epoch, _ = \
+        load_data(train_data_path=data_path, batch_size=batch_size, buffer_size=buffer_size,
+                  valid_data_split=0.0, valid_data_path="", train_length_path=length_path,
+                  valid_length_path="", max_train_data_size=max_data_size, max_valid_data_size=0)
 
     _valid_step(encoder=encoder, decoder=decoder, dataset=valid_dataset, steps_per_epoch=valid_steps_per_epoch)
 
 
-def recognize(encoder: tf.keras.Model, decoder: tf.keras.Model, beam_size: int,
-              audio_feature_type: str, max_length: int, max_sentence_length: int, dict_path: str):
+def recognize(encoder: tf.keras.Model, decoder: tf.keras.Model, beam_size: int, start_sign: str,
+              unk_sign: str, end_sign: str, audio_feature_type: str, max_length: int,
+              max_sentence_length: int, dict_path: str):
     """
     语音识别模块
     :param encoder: 模型的encoder
     :param decoder: 模型的decoder
     :param beam_size: beam_size
+    :param start_sign: 开始标记
+    :param end_sign: 结束标记
+    :param unk_sign: 未登录词
     :param audio_feature_type: 特征类型
     :param max_length: 最大音频补齐长度
     :param max_sentence_length: 最大音频补齐长度
@@ -139,23 +122,21 @@ def recognize(encoder: tf.keras.Model, decoder: tf.keras.Model, beam_size: int,
             continue
 
         audio_feature = wav_to_feature(path, audio_feature_type)
-        audio_feature = tf.expand_dims(audio_feature, axis=0)
-        audio_feature = tf.keras.preprocessing.sequence.pad_sequences(audio_feature, maxlen=max_length,
+        audio_feature = tf.keras.preprocessing.sequence.pad_sequences([audio_feature], maxlen=max_length,
                                                                       dtype="float32", padding="post")
 
-        with open(dict_path, 'r', encoding='utf-8') as dict_file:
-            json_string = dict_file.read().strip().strip("\n")
-            tokenizer = tf.keras.preprocessing.text.tokenizer_from_json(json_string)
-        dec_input = tf.expand_dims([tokenizer.word_index.get("<start>", "<unk>")], 0)
+        tokenizer = load_tokenizer(dict_path=dict_path)
+        dec_input = tf.expand_dims([tokenizer.word_index.get(start_sign, unk_sign)], 0)
 
         beam_search_container.reset(inputs=audio_feature, dec_input=dec_input)
+
         for i in range(max_sentence_length):
             enc_outputs, padding_mask = encoder(audio_feature)
             sentence_predictions = decoder(inputs=[dec_input, enc_outputs, padding_mask])
             sentence_predictions = tf.nn.softmax(sentence_predictions)
             sentence_predictions = sentence_predictions[:, -1, :]
 
-            beam_search_container.expand(predictions=sentence_predictions, end_sign=tokenizer.word_index.get("<end>"))
+            beam_search_container.expand(predictions=sentence_predictions, end_sign=tokenizer.word_index.get(end_sign))
             if beam_search_container.beam_size == 0:
                 break
 
@@ -167,7 +148,7 @@ def recognize(encoder: tf.keras.Model, decoder: tf.keras.Model, beam_size: int,
         for i in range(len(beam_search_result)):
             temp = beam_search_result[i].numpy()
             text = tokenizer.sequences_to_texts(temp)[0]
-            text = text.replace("<start>", '').replace("<end>", '').replace(' ', '')
+            text = text.replace(start_sign, '').replace(end_sign, '').replace(unk_sign, '').replace(' ', '')
             result = '<' + text + '>' + result
 
         print("识别句子为：{}".format(result))
