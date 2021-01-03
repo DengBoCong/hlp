@@ -27,7 +27,7 @@ def load_model():
     """
     # 获取字典保存路径
     source_mode = hlp.mt.common.text_vectorize.get_tokenizer_mode(_config.source_lang)
-    target_mode = hlp.mt.common.text_vectorize.get_tokenizer_mode(_config.source_lang)
+    target_mode = hlp.mt.common.text_vectorize.get_tokenizer_mode(_config.target_lang)
     source_tokenizer_path = hlp.mt.common.text_vectorize.get_tokenizer_path(_config.source_lang, source_mode)
     target_tokenizer_path = hlp.mt.common.text_vectorize.get_tokenizer_path(_config.target_lang, target_mode)
     # 加载源语言字典

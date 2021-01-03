@@ -1,10 +1,12 @@
 import hlp.mt.common.misc
 from hlp.mt.model import nmt_model
 from hlp.mt import translator
+from hlp.mt.config import get_config as _config
+from hlp.mt.common.misc import check_and_create
 
 
 def main():
-    if hlp.mt.common.misc.check_and_create():  # 检测是否有检查点
+    if check_and_create(_config.checkpoint_path):  # 检测是否有检查点
         # 读取保存的需要的配置
         transformer, _, tokenizer_source, tokenizer_target = nmt_model.load_model()
 
@@ -16,7 +18,9 @@ def main():
             if sentence == '0':
                 break
             else:
-                print('翻译结果:', translator.translate(sentence, transformer, tokenizer_source, tokenizer_target))
+                print('翻译结果:', translator.translate(sentence, transformer,
+                                                    tokenizer_source, tokenizer_target,
+                                                    beam_size=_config.BEAM_SIZE))
     else:
         print('请先训练才可使用翻译功能...')
 
