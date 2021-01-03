@@ -6,7 +6,6 @@ from argparse import ArgumentParser
 sys.path.append(os.path.abspath(__file__)[:os.path.abspath(__file__).rfind("\\hlp\\")])
 import hlp.utils.optimizers as optimizers
 import hlp.chat.common.pre_treat as pre_treat
-import hlp.chat.common.data_utils as data_utils
 import hlp.chat.model.transformer as transformer
 from hlp.chat.chatter import Chatter
 from hlp.chat.common.utils import log_operator
@@ -37,46 +36,32 @@ class TransformerChatter(Chatter):
         :param max_length: 单个句子最大长度
         :return: 无返回值
         """
-        super().__init__(checkpoint_dir, beam_size, max_length)
-        self.start_sign = start_sign
-        self.end_sign = end_sign
+        super().__init__(checkpoint_dir, beam_size, max_length, dict_fn, start_sign, end_sign)
 
-        self.model = transformer.transformer(
-            vocab_size=vocab_size,
-            num_layers=num_layers,
-            units=units,
-            d_model=d_model,
-            num_heads=num_heads,
-            dropout=dropout
-        )
-
+        self.model = transformer.transformer(vocab_size=vocab_size, num_layers=num_layers, units=units,
+                                             d_model=d_model, num_heads=num_heads, dropout=dropout)
         self.learning_rate = optimizers.CustomSchedule(d_model)
-        self.optimizer = tf.keras.optimizers.Adam(
-            self.learning_rate, beta_1=0.9, beta_2=0.98, epsilon=1e-9
-        )
+        self.optimizer = tf.keras.optimizers.Adam(self.learning_rate, beta_1=0.9, beta_2=0.98, epsilon=1e-9)
         self.train_loss = tf.keras.metrics.Mean(name='train_loss')
         self.train_accuracy = tf.keras.metrics.SparseCategoricalAccuracy(name='train_accuracy')
 
         self.checkpoint = tf.train.Checkpoint(transformer=self.model, optimizer=self.optimizer)
 
-        if execute_type == "chat":
-            print('正在从“{}”处加载字典...'.format(dict_fn))
-            self.token = data_utils.load_token_dict(dict_fn=dict_fn)
-        print('正在检查是否存在检查点...')
+        print('正在检查是否存在检查点')
         if self.ckpt:
-            print('存在检查点，正在从“{}”中加载检查点...'.format(checkpoint_dir))
+            print('存在检查点，正在加载检查点')
             self.checkpoint.restore(tf.train.latest_checkpoint(checkpoint_dir)).expect_partial()
         else:
             if execute_type == "train":
-                print('不存在检查点，正在train模式...')
+                print('不存在检查点，正在train模式')
             else:
                 print('不存在检查点，请先执行train模式，再进入chat模式')
                 exit(0)
 
-        log_operator(level=10).info("启动SMN聊天器，执行类别为：{}，模型参数配置为：num_layers：{}，"
+        log_operator(level=10).info("启动Transformer聊天器，执行类别为：{}，模型参数配置为：num_layers：{}，"
                                     "d_model：{}，num_heads：{}，units：{}，dropout：{}，vocab_size：{}，"
-                                    "max_length：{}".format(execute_type, num_layers, d_model,
-                                                           num_heads, units, dropout, vocab_size, max_length))
+                                    "max_length：{}".format(execute_type, num_layers, d_model, num_heads,
+                                                           units, dropout, vocab_size, max_length))
 
     def _init_loss_accuracy(self):
         """
@@ -131,8 +116,8 @@ def main():
     parser.add_argument('--dropout', default=0.1, type=float, required=False, help='dropout')
     parser.add_argument('--vocab_size', default=1500, type=int, required=False, help='词汇大小')
     parser.add_argument('--embedding_dim', default=256, type=int, required=False, help='嵌入层维度大小')
-    parser.add_argument('--max_train_data_size', default=200, type=int, required=False, help='用于训练的最大数据大小')
-    parser.add_argument('--max_valid_data_size', default=100, type=int, required=False, help='用于验证的最大数据大小')
+    parser.add_argument('--max_train_data_size', default=0, type=int, required=False, help='用于训练的最大数据大小')
+    parser.add_argument('--max_valid_data_size', default=0, type=int, required=False, help='用于验证的最大数据大小')
     parser.add_argument('--max_length', default=40, type=int, required=False, help='单个序列的最大长度')
     parser.add_argument('--dict_file', default='\\data\\transformer_dict.json', type=str, required=False, help='字典路径')
     parser.add_argument('--checkpoint', default='\\checkpoints\\transformer', type=str, required=False, help='检查点路径')
@@ -152,8 +137,9 @@ def main():
     parser.add_argument('--beam_size', default=3, type=int, required=False, help='BeamSearch的beam大小')
     parser.add_argument('--valid_data_split', default=0.2, type=float, required=False, help='从训练数据集中划分验证数据的比例')
     parser.add_argument('--epochs', default=5, type=int, required=False, help='训练步数')
-    parser.add_argument('--start_sign', default='start', type=str, required=False, help='序列开始标记')
-    parser.add_argument('--end_sign', default='end', type=str, required=False, help='序列结束标记')
+    parser.add_argument('--start_sign', default='<start>', type=str, required=False, help='序列开始标记')
+    parser.add_argument('--end_sign', default='<end>', type=str, required=False, help='序列结束标记')
+    parser.add_argument('--unk_sign', default='<unk>', type=str, required=False, help='未登录词')
 
     options = parser.parse_args().__dict__
     if options['config_file'] != '':
@@ -165,33 +151,28 @@ def main():
     execute_type = options['act']
 
     if execute_type == 'train':
-        chatter = TransformerChatter(execute_type=execute_type, checkpoint_dir=work_path + options['checkpoint'],
-                                     num_layers=options['num_layers'], units=options['units'],
-                                     d_model=options['d_model'], num_heads=options['num_heads'],
-                                     dropout=options['dropout'], beam_size=options['beam_size'],
-                                     start_sign=options['start_sign'], end_sign=options['end_sign'],
-                                     vocab_size=options['vocab_size'], dict_fn=work_path + options['dict_file'],
-                                     max_length=options['max_length'])
+        chatter = TransformerChatter(
+            execute_type=execute_type, checkpoint_dir=work_path + options['checkpoint'],
+            num_layers=options['num_layers'], units=options['units'], d_model=options['d_model'],
+            num_heads=options['num_heads'], dropout=options['dropout'], beam_size=options['beam_size'],
+            start_sign=options['start_sign'], end_sign=options['end_sign'], vocab_size=options['vocab_size'],
+            dict_fn=work_path + options['dict_file'], max_length=options['max_length'])
 
-        chatter.train(chatter.checkpoint, dict_fn=work_path + options['dict_file'], valid_data_fn='',
-                      data_fn=work_path + options['qa_tokenized_data'], batch_size=options['batch_size'],
-                      buffer_size=options['buffer_size'], epochs=options['epochs'],
-                      max_valid_data_size=options['max_valid_data_size'],
-                      max_train_data_size=options['max_train_data_size'],
-                      valid_data_split=options['valid_data_split'],
-                      checkpoint_save_freq=options['checkpoint_save_freq'],
-                      checkpoint_save_size=options['checkpoint_save_size'],
-                      save_dir=work_path + options['history_image_dir'],
-                      valid_freq=options['valid_freq'])
+        chatter.train(
+            chatter.checkpoint, valid_data_fn='', data_fn=work_path + options['qa_tokenized_data'],
+            batch_size=options['batch_size'], buffer_size=options['buffer_size'], epochs=options['epochs'],
+            valid_freq=options['valid_freq'], max_valid_data_size=options['max_valid_data_size'],
+            max_train_data_size=options['max_train_data_size'], valid_data_split=options['valid_data_split'],
+            checkpoint_save_freq=options['checkpoint_save_freq'], checkpoint_save_size=options['checkpoint_save_size'],
+            save_dir=work_path + options['history_image_dir'])
 
     elif execute_type == 'chat':
-        chatter = TransformerChatter(execute_type=execute_type, checkpoint_dir=work_path + options['checkpoint'],
-                                     num_layers=options['num_layers'], units=options['units'],
-                                     d_model=options['d_model'], num_heads=options['num_heads'],
-                                     dropout=options['dropout'], beam_size=options['beam_size'],
-                                     start_sign=options['start_sign'], end_sign=options['end_sign'],
-                                     vocab_size=options['vocab_size'], dict_fn=work_path + options['dict_file'],
-                                     max_length=options['max_length'])
+        chatter = TransformerChatter(
+            execute_type=execute_type, checkpoint_dir=work_path + options['checkpoint'],
+            num_layers=options['num_layers'], units=options['units'], d_model=options['d_model'],
+            num_heads=options['num_heads'], dropout=options['dropout'], beam_size=options['beam_size'],
+            start_sign=options['start_sign'], end_sign=options['end_sign'], vocab_size=options['vocab_size'],
+            dict_fn=work_path + options['dict_file'], max_length=options['max_length'])
 
         print("Agent: 你好！结束聊天请输入ESC。")
         while True:
@@ -202,11 +183,14 @@ def main():
             response = chatter.respond(req=req)
             print("Agent: ", response)
     elif execute_type == 'pre_treat':
-        pre_treat.preprocess_datasets(dataset_name="lccc", raw_data_path=work_path + options['resource_data'],
-                                      tokenized_data_path=work_path + options['tokenized_data'],
-                                      remove_tokenized=True)
-        pre_treat.to_single_turn_dataset(tokenized_data_path=work_path + options['tokenized_data'],
-                                         qa_data_path=work_path + options['qa_tokenized_data'])
+        pre_treat.preprocess_datasets(
+            dataset_name="lccc", raw_data_path=work_path + options['resource_data'],
+            tokenized_data_path=work_path + options['tokenized_data'], remove_tokenized=True)
+        pre_treat.to_single_turn_dataset(
+            tokenized_data_path=work_path + options['tokenized_data'], dict_path=work_path + options['dict_file'],
+            unk_sign=options['unk_sign'], start_sign=options['start_sign'], end_sign=options['end_sign'],
+            max_data_size=options['max_train_data_size'], vocab_size=options['vocab_size'],
+            qa_data_path=work_path + options['qa_tokenized_data'])
     else:
         parser.error(msg='')
 

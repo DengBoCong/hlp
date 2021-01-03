@@ -2,6 +2,7 @@ import os
 import json
 import jieba
 import numpy as np
+import tensorflow as tf
 from hlp.chat.common.utils import log_operator
 
 
@@ -22,12 +23,20 @@ def _check_file(raw_file: str, processed_file: str, remove_tokenized: bool = Tru
         os.remove(processed_file)
 
 
-def to_single_turn_dataset(tokenized_data_path: str, qa_data_path: str, remove_tokenized: bool = True):
+def to_single_turn_dataset(tokenized_data_path: str, qa_data_path: str, dict_path: str, vocab_size: int,
+                           start_sign: str = "<start>", end_sign: str = "<end>", unk_sign: str = "<unk>",
+                           max_data_size: int = 0, remove_tokenized: bool = True):
     """生成单轮对话数据集
 
     用于处理已经分词好的多轮次数据集的方法，将数据集处理成问答对的形式
     :param tokenized_data_path: 已切分多轮对话数据路径
     :param qa_data_path: 单轮对话数据保存路径
+    :param dict_path: 字典保存路径
+    :param vocab_size: 词汇量大小
+    :param start_sign: 开始标记
+    :param end_sign: 结束标记
+    :param unk_sign: 未登录词
+    :param max_data_size: 最大加载数据量，,0为所有数据
     :param remove_tokenized: 是否移除原有分词文本
     :return: 无返回值
     """
@@ -39,6 +48,7 @@ def to_single_turn_dataset(tokenized_data_path: str, qa_data_path: str, remove_t
     min_len = 10000
     sentence_len = []
     one_pair = []
+    all_text_list = []
 
     # 对每一轮对话上下文进行配对，形成一问一答两个部分，如果遇到下一轮对话，直接跳过
     with open(tokenized_data_path, encoding="utf-8") as raw_file, \
@@ -54,11 +64,16 @@ def to_single_turn_dataset(tokenized_data_path: str, qa_data_path: str, remove_t
                 continue
             elif len(one_pair) == 1:
                 one_pair.append(line)
-                single_turn_data_file.write(one_pair[0] + "\t" + one_pair[1] + "\n")
+                question = start_sign + " " + one_pair[0] + " " + end_sign
+                answer = start_sign + " " + one_pair[1] + " " + end_sign
+                single_turn_data_file.write(question + "\t" + answer + "\n")
+                all_text_list.append(question)
+                all_text_list.append(answer)
                 one_pair = [line]
                 sentences_count += 1
-                if sentences_count % 10000 == 0:
-                    print('已处理：', sentences_count, '个问答对')
+                print('\r已处理：{}个问答对'.format(sentences_count), flush=True, end="")
+                if sentences_count == max_data_size:
+                    break
             else:
                 one_pair.append(line)
 
@@ -67,10 +82,15 @@ def to_single_turn_dataset(tokenized_data_path: str, qa_data_path: str, remove_t
             min_len = min(min_len, length)
             sentence_len.append(length)
 
-    message = "对话数据集转换完毕：共处理{}轮对话数据，整理出{}对" \
+    tokenizer = tf.keras.preprocessing.text.Tokenizer(filters="", num_words=vocab_size, oov_token=unk_sign)
+    tokenizer.fit_on_texts(all_text_list)
+    with open(dict_path, 'w', encoding='utf-8') as dict_file:
+        dict_file.write(tokenizer.to_json())
+
+    message = "对话数据集转换完毕，并保存字典：共处理{}轮对话数据，整理出{}对" \
               "问答对，语句最大长度：{}，语句最短长度{}，语句平均长度{:.3f}".format(count, sentences_count,
                                                            max_len, min_len, np.mean(sentence_len))
-    print(message)
+    print("\n" + message)
     logger = log_operator(level=10)
     logger.info(message)
 
@@ -97,8 +117,7 @@ def preprocess_raw_xiao_huang_ji_data(raw_data: str, tokenized_data: str, if_rem
             if line == "":
                 tokenized_file.write("\n")
                 count += 1
-                if count % 10000 == 0:
-                    print("已读取：{}轮对话数据".format(count))
+                print("\r已读取：{}轮对话数据".format(count), flush=True, end="")
                 continue
 
             length = len(line)
@@ -110,7 +129,7 @@ def preprocess_raw_xiao_huang_ji_data(raw_data: str, tokenized_data: str, if_rem
     message = "数据处理完毕，数据信息统计：共处理{}轮对话数据，语句最大长度：{}，语" \
               "句最短长度{}，语句平均长度{:.3f}".format(count, max_len, min_len, np.mean(sentence_len))
 
-    print(message)
+    print("\n" + message)
     logger = log_operator(level=10)
     logger.info(message)
 
@@ -145,13 +164,13 @@ def preprocess_raw_lccc_data(raw_data_path: str, tokenized_data_path: str, remov
 
             tokenized_file.write("\n")
             count += 1
-            if count % 10000 == 0:
-                print("已读取：{}轮对话数据".format(count))
+
+            print("\r已读取：{}轮对话数据".format(count), flush=True, end="")
 
     message = "数据预处理完毕：共处理{}轮对话数据，语句最大长度：{}，语" \
               "句最短长度{}，语句平均长度{:.3f}".format(count, max_len, min_len, np.mean(sentence_len))
 
-    print(message)
+    print("\n" + message)
     logger = log_operator(level=10)
     logger.info(message)
 
@@ -194,13 +213,12 @@ def preprocess_raw_douban_data(raw_data: str, tokenized_data: str, repeat_data: 
                 tokenized_file.write(utterance + "\n")
             tokenized_file.write("\n")
             count += 1
-            if count % 10000 == 0:
-                print("数据处理进度：{}".format(count))
+            print("\r数据处理进度：{}".format(count), flush=True, end="")
 
     message = "数据处理完毕，数据信息统计：共处理{}轮对话数据，语句最大长度：{}，语" \
               "句最短长度{}，语句平均长度{:.3f}".format(count, max_len, min_len, np.mean(sentence_len))
 
-    print(message)
+    print("\n" + message)
     logger = log_operator(level=10)
     logger.info(message)
 
@@ -234,13 +252,12 @@ def preprocess_raw_cross_woz_data(raw_data: str, tokenized_data: str, if_remove:
                 tokenized_file.write(" ".join(jieba.cut(sentence)) + "\n")
             tokenized_file.write("\n")
             count += 1
-            if count % 10000 == 0:
-                print("已读取：{}轮对话数据".format(count))
+            print("\r已读取：{}轮对话数据".format(count), flush=True, end="")
 
     message = "数据处理完毕，数据信息统计：共处理{}轮对话数据，语句最大长度：{}，语" \
               "句最短长度{}，语句平均长度{:.3f}".format(count, max_len, min_len, np.mean(sentence_len))
 
-    print(message)
+    print("\n" + message)
     logger = log_operator(level=10)
     logger.info(message)
 
@@ -277,13 +294,12 @@ def preprocess_raw_tie_ba_data(raw_data: str, tokenized_data: str, if_remove: bo
             tokenized_file.write("\n")
 
             count += 1
-            if count % 10000 == 0:
-                print("已读取：{}轮对话数据".format(count))
+            print("\r已读取：{}轮对话数据".format(count), flush=True, end="")
 
     message = "数据处理完毕，数据信息统计：共处理{}轮对话数据，语句最大长度：{}，语" \
               "句最短长度{}，语句平均长度{:.3f}".format(count, max_len, min_len, np.mean(sentence_len))
 
-    print(message)
+    print("\n" + message)
     logger = log_operator(level=10)
     logger.info(message)
 
@@ -338,13 +354,12 @@ def preprocess_raw_wei_bo_data(raw_post_data: str, raw_response_data,
             tokenized_file.write(post_data + "\n" + response_data + "\n\n")
 
             count += 1
-            if count % 10000 == 0:
-                print("已读取：{}轮对话数据".format(count))
+            print("\r已读取：{}轮对话数据".format(count), flush=True, end="")
 
     message = "数据处理完毕：共处理{}轮对话数据，语句最大长度：{}，语" \
               "句最短长度{}，语句平均长度{:.3f}".format(count, max_len, min_len, np.mean(sentence_len))
 
-    print(message)
+    print("\n" + message)
     logger = log_operator(level=10)
     logger.info(message)
 
@@ -382,13 +397,12 @@ def preprocess_raw_qin_yun_data(raw_data: str, tokenized_data: str, if_remove: b
             tokenized_file.write("\n")
 
             count += 1
-            if count % 10000 == 0:
-                print("已读取：{}轮对话数据".format(count))
+            print("\r已读取：{}轮对话数据".format(count), flush=True, end="")
 
     message = "数据处理完毕，数据信息统计：共处理{}轮对话数据，语句最大长度：{}，语" \
               "句最短长度{}，语句平均长度{:.3f}".format(count, max_len, min_len, np.mean(sentence_len))
 
-    print(message)
+    print("\n" + message)
     logger = log_operator(level=10)
     logger.info(message)
 
@@ -418,19 +432,17 @@ def combine_tokenized_data_single(standby_data: list, combine_data: str, if_remo
                 line = line.strip().strip("\n").replace("/", " ")
                 combine_file.write(line + "\n")
                 count += 1
-                if count % 10000 == 0:
-                    print("数据处理进度：{}".format(count))
+                print("\r数据处理进度：{}".format(count), flush=True, end="")
 
         file_count += 1
 
     message = "数据处理完毕，数据信息统计：共处理{}个分词文件，整理出{}条数据".format(file_count, count)
-    print(message)
+    print("\n" + message)
     logger = log_operator(level=10)
     logger.info(message)
 
 
-def preprocess_datasets(dataset_name: str, raw_data_path: str,
-                        tokenized_data_path: str,
+def preprocess_datasets(dataset_name: str, raw_data_path: str, tokenized_data_path: str,
                         remove_tokenized: bool = True, reserve_data: str = None):
     """对话数据集处理
 
@@ -444,13 +456,16 @@ def preprocess_datasets(dataset_name: str, raw_data_path: str,
     """
     print("数据集：", dataset_name)
     operation = {
-        "xiao_huang_ji": lambda: preprocess_raw_xiao_huang_ji_data(raw_data_path, tokenized_data_path, remove_tokenized),
+        "xiao_huang_ji": lambda: preprocess_raw_xiao_huang_ji_data(raw_data_path,
+                                                                   tokenized_data_path, remove_tokenized),
         "tie_ba": lambda: preprocess_raw_tie_ba_data(raw_data_path, tokenized_data_path, remove_tokenized),
-        "ppt_gossiping": lambda: preprocess_raw_ppt_gossiping_data(raw_data_path, tokenized_data_path, remove_tokenized),
+        "ppt_gossiping": lambda: preprocess_raw_ppt_gossiping_data(raw_data_path,
+                                                                   tokenized_data_path, remove_tokenized),
         "lccc": lambda: preprocess_raw_lccc_data(raw_data_path, tokenized_data_path, remove_tokenized),
         "dou_ban": lambda: preprocess_raw_douban_data(raw_data_path, tokenized_data_path, 2, remove_tokenized),
         "cross_woz": lambda: preprocess_raw_cross_woz_data(raw_data_path, tokenized_data_path, remove_tokenized),
-        "wei_bo": lambda: preprocess_raw_wei_bo_data(raw_data_path, reserve_data, tokenized_data_path, remove_tokenized),
+        "wei_bo": lambda: preprocess_raw_wei_bo_data(raw_data_path, reserve_data,
+                                                     tokenized_data_path, remove_tokenized),
         "qin_yun": lambda: preprocess_raw_qin_yun_data(raw_data_path, tokenized_data_path, remove_tokenized)
     }
 

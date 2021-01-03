@@ -6,7 +6,7 @@ from hlp.utils.optimizers import loss_func_mask
 from hlp.utils.beamsearch import BeamSearch
 from hlp.stt.utils.utils import wers
 from hlp.stt.utils.utils import lers
-from hlp.stt.utils.utils import load_tokenizer
+from hlp.utils.utils import load_tokenizer
 from hlp.stt.utils.utils import plot_history
 from hlp.stt.utils.utils import record
 from hlp.stt.utils.audio_process import wav_to_feature
@@ -76,8 +76,9 @@ def train(epochs: int, train_data_path: str, batch_size: int, buffer_size: int, 
                 print("验证数据量过小，小于batch_size，请添加数据后重试")
                 exit(0)
 
-            valid_loss, valid_wer, valid_ler = _valid_step(model=model, dataset=valid_dataset,
-                                                           steps_per_epoch=valid_steps_per_epoch, tokenizer=tokenizer)
+            valid_loss, valid_wer, valid_ler = _valid_step(model=model, dataset=valid_dataset, enc_hidden=enc_hidden,
+                                                           dec_input=dec_input, steps_per_epoch=valid_steps_per_epoch,
+                                                           tokenizer=tokenizer)
             history["wers"].append(valid_wer)
             history["norm_lers"].append(valid_ler)
 
@@ -175,7 +176,7 @@ def recognize(model: tf.keras.Model, audio_feature_type: str, start_sign: str, u
             for i in range(len(beam_search_result)):
                 temp = beam_search_result[i].numpy()
                 text = tokenizer.sequences_to_texts(temp)[0]
-                text = text.replace(start_sign, '').replace(end_sign, '').replace(unk_sign, '').replace(' ', '')
+                text = text.replace(start_sign, '').replace(end_sign, '').replace(' ', '')
                 result = '<' + text + '>' + result
 
             print("识别句子为：{}".format(result))

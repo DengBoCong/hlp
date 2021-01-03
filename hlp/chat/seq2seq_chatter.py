@@ -1,12 +1,9 @@
 import json
 import os
 import sys
-from argparse import ArgumentParser
-
 import tensorflow as tf
-
+from argparse import ArgumentParser
 sys.path.append(os.path.abspath(__file__)[:os.path.abspath(__file__).rfind("\\hlp\\")])
-import hlp.chat.common.data_utils as data_utils
 import hlp.chat.common.pre_treat as pre_treat
 import hlp.chat.model.seq2seq as seq2seq
 from hlp.chat.chatter import Chatter
@@ -40,10 +37,8 @@ class Seq2SeqChatter(Chatter):
         :param if_bidirectional: 是否双向
         :return: 无返回值
         """
-        super().__init__(checkpoint_dir, beam_size, max_length)
+        super().__init__(checkpoint_dir, beam_size, max_length, dict_fn, start_sign, end_sign)
         self.units = units
-        self.start_sign = start_sign
-        self.end_sign = end_sign
         self.batch_size = batch_size
         self.enc_units = units
 
@@ -60,16 +55,13 @@ class Seq2SeqChatter(Chatter):
         self.loss_object = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True, reduction='none')
         self.checkpoint = tf.train.Checkpoint(optimizer=self.optimizer, encoder=self.encoder, decoder=self.decoder)
 
-        if execute_type == "chat":
-            print('正在从{}中加载字典...'.format(dict_fn))
-            self.token = data_utils.load_token_dict(dict_fn=dict_fn)
-        print('正在检查是否存在检查点...')
+        print('正在检查是否存在检查点')
         if self.ckpt:
-            print('存在检查点，正在从{}中加载检查点...'.format(checkpoint_dir))
+            print('存在检查点，正在加载检查点')
             self.checkpoint.restore(tf.train.latest_checkpoint(checkpoint_dir)).expect_partial()
         else:
             if execute_type == "train":
-                print('不存在检查点，从头开始训练...')
+                print('不存在检查点，从头开始训练')
             else:
                 print('不存在检查点，请先执行train模式，再进入chat模式')
                 exit(0)
@@ -98,13 +90,14 @@ class Seq2SeqChatter(Chatter):
         with tf.GradientTape() as tape:
             enc_output, enc_hidden = self.encoder(inputs=inp)
             dec_hidden = enc_hidden
-            # 这里初始化decoder的输入，首个token为start，shape为（128, 1）
+            # 这里初始化decoder的输入，首个token为start
             dec_input = tf.expand_dims([2] * self.batch_size, 1)
-            # 这里针对每个训练出来的结果进行损失计算
             for t in range(1, tar.shape[1]):
                 predictions, dec_hidden, attention_weight = self.decoder(inputs=[dec_input, enc_output, dec_hidden])
                 loss += self._loss_function(tar[:, t], predictions, weight)
-                # 这一步使用teacher forcing
+
+                if sum(tar[:, t]) == 0:
+                    break
                 dec_input = tf.expand_dims(tar[:, t], 1)
                 self.train_accuracy(tar[:, t], predictions)
 
@@ -138,7 +131,6 @@ class Seq2SeqChatter(Chatter):
         :param weights: 样本数据的权重
         :return: 该batch的平均损失
         """
-        # 这里进来的real和pred的shape为（128,）
         mask = tf.math.logical_not(tf.math.equal(real, 0))
 
         if weights is not None:
@@ -161,8 +153,8 @@ def main():
     parser.add_argument('--embedding_dim', default=256, type=int, required=False, help='嵌入层维度大小')
     parser.add_argument('--encoder_layers', default=2, type=int, required=False, help='encoder的层数')
     parser.add_argument('--decoder_layers', default=2, type=int, required=False, help='decoder的层数')
-    parser.add_argument('--max_train_data_size', default=200, type=int, required=False, help='用于训练的最大数据大小')
-    parser.add_argument('--max_valid_data_size', default=100, type=int, required=False, help='用于验证的最大数据大小')
+    parser.add_argument('--max_train_data_size', default=0, type=int, required=False, help='用于训练的最大数据大小')
+    parser.add_argument('--max_valid_data_size', default=0, type=int, required=False, help='用于验证的最大数据大小')
     parser.add_argument('--max_length', default=40, type=int, required=False, help='单个序列的最大长度')
     parser.add_argument('--dict_file', default='\\data\\seq2seq_dict.json', type=str, required=False, help='字典路径')
     parser.add_argument('--checkpoint', default='\\checkpoints\\seq2seq', type=str, required=False, help='检查点路径')
@@ -184,6 +176,7 @@ def main():
     parser.add_argument('--epochs', default=5, type=int, required=False, help='训练步数')
     parser.add_argument('--start_sign', default='start', type=str, required=False, help='序列开始标记')
     parser.add_argument('--end_sign', default='end', type=str, required=False, help='序列结束标记')
+    parser.add_argument('--unk_sign', default='<unk>', type=str, required=False, help='未登录词')
 
     options = parser.parse_args().__dict__
     if options['config_file'] != '':
@@ -196,31 +189,25 @@ def main():
 
     if execute_type == 'train':
         print("开始训练模型...")
-        chatter = Seq2SeqChatter(execute_type=execute_type, checkpoint_dir=work_path + options['checkpoint'],
-                                 beam_size=options['beam_size'], units=options['units'],
-                                 embedding_dim=options['embedding_dim'], batch_size=options['batch_size'],
-                                 start_sign=options['start_sign'], end_sign=options['end_sign'],
-                                 vocab_size=options['vocab_size'], dict_fn=work_path + options['dict_file'],
-                                 max_length=options['max_length'], encoder_layers=options['encoder_layers'],
-                                 decoder_layers=options['decoder_layers'], cell_type='lstm',
-                                 if_bidirectional=True)
-        chatter.train(chatter.checkpoint, dict_fn=work_path + options['dict_file'], valid_data_fn='',
-                      data_fn=work_path + options['qa_tokenized_data'], batch_size=options['batch_size'],
-                      buffer_size=options['buffer_size'], valid_data_split=options['valid_data_split'],
+        chatter = Seq2SeqChatter(
+            execute_type=execute_type, checkpoint_dir=work_path + options['checkpoint'], units=options['units'],
+            beam_size=options['beam_size'], embedding_dim=options['embedding_dim'], batch_size=options['batch_size'],
+            start_sign=options['start_sign'], end_sign=options['end_sign'], vocab_size=options['vocab_size'],
+            dict_fn=work_path + options['dict_file'], max_length=options['max_length'], if_bidirectional=True,
+            encoder_layers=options['encoder_layers'], decoder_layers=options['decoder_layers'], cell_type='lstm')
+        chatter.train(chatter.checkpoint, valid_data_fn='', data_fn=work_path + options['qa_tokenized_data'],
+                      valid_data_split=options['valid_data_split'], save_dir=work_path + options['history_image_dir'],
                       max_valid_data_size=options['max_valid_data_size'], valid_freq=options['valid_freq'],
                       max_train_data_size=options['max_train_data_size'], epochs=options['epochs'],
-                      checkpoint_save_freq=options['checkpoint_save_freq'],
-                      checkpoint_save_size=options['checkpoint_save_size'],
-                      save_dir=work_path + options['history_image_dir'])
+                      checkpoint_save_freq=options['checkpoint_save_freq'], batch_size=options['batch_size'],
+                      checkpoint_save_size=options['checkpoint_save_size'], buffer_size=options['buffer_size'])
     elif execute_type == 'chat':
-        chatter = Seq2SeqChatter(execute_type=execute_type, checkpoint_dir=work_path + options['checkpoint'],
-                                 beam_size=options['beam_size'], units=options['units'],
-                                 embedding_dim=options['embedding_dim'], batch_size=options['batch_size'],
-                                 start_sign=options['start_sign'], end_sign=options['end_sign'],
-                                 vocab_size=options['vocab_size'], dict_fn=work_path + options['dict_file'],
-                                 max_length=options['max_length'], encoder_layers=options['encoder_layers'],
-                                 decoder_layers=options['decoder_layers'], cell_type='lstm',
-                                 if_bidirectional=True)
+        chatter = Seq2SeqChatter(
+            execute_type=execute_type, checkpoint_dir=work_path + options['checkpoint'], units=options['units'],
+            beam_size=options['beam_size'], embedding_dim=options['embedding_dim'], batch_size=options['batch_size'],
+            start_sign=options['start_sign'], end_sign=options['end_sign'], vocab_size=options['vocab_size'],
+            dict_fn=work_path + options['dict_file'], max_length=options['max_length'], if_bidirectional=True,
+            encoder_layers=options['encoder_layers'], decoder_layers=options['decoder_layers'], cell_type='lstm')
         print("Agent: 你好！结束聊天请输入ESC。")
         while True:
             req = input("User: ")
@@ -230,13 +217,13 @@ def main():
             response = chatter.respond(req=req)
             print("Agent: ", response)
     elif execute_type == 'pre_treat':
-        print("对语料进行处理...")
-        pre_treat.preprocess_datasets(dataset_name="lccc",
-                                      raw_data_path=work_path + options['resource_data'],
-                                      tokenized_data_path=work_path + options['tokenized_data'],
-                                      remove_tokenized=True)
-        pre_treat.to_single_turn_dataset(tokenized_data_path=work_path + options['tokenized_data'],
-                                         qa_data_path=work_path + options['qa_tokenized_data'])
+        pre_treat.preprocess_datasets(dataset_name="lccc", raw_data_path=work_path + options['resource_data'],
+                                      tokenized_data_path=work_path + options['tokenized_data'], remove_tokenized=True)
+        pre_treat.to_single_turn_dataset(
+            tokenized_data_path=work_path + options['tokenized_data'], dict_path=work_path + options['dict_file'],
+            unk_sign=options['unk_sign'], start_sign=options['start_sign'], end_sign=options['end_sign'],
+            max_data_size=options['max_train_data_size'], vocab_size=options['vocab_size'],
+            qa_data_path=work_path + options['qa_tokenized_data'])
     else:
         parser.error(msg='')
 

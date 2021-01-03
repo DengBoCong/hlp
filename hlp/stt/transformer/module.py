@@ -5,7 +5,7 @@ from hlp.utils.beamsearch import BeamSearch
 from hlp.stt.utils.load_dataset import load_data
 from hlp.utils.optimizers import loss_func_mask
 from hlp.stt.utils.audio_process import wav_to_feature
-from hlp.stt.utils.utils import load_tokenizer
+from hlp.utils.utils import load_tokenizer
 
 
 def train(encoder: tf.keras.Model, decoder: tf.keras.Model, optimizer: tf.keras.optimizers.Adam,
@@ -148,7 +148,7 @@ def recognize(encoder: tf.keras.Model, decoder: tf.keras.Model, beam_size: int, 
         for i in range(len(beam_search_result)):
             temp = beam_search_result[i].numpy()
             text = tokenizer.sequences_to_texts(temp)[0]
-            text = text.replace(start_sign, '').replace(end_sign, '').replace(unk_sign, '').replace(' ', '')
+            text = text.replace(start_sign, '').replace(end_sign, '').replace(' ', '')
             result = '<' + text + '>' + result
 
         print("识别句子为：{}".format(result))

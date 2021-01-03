@@ -8,7 +8,7 @@ from hlp.stt.utils.utils import can_stop
 from hlp.stt.utils.utils import wers
 from hlp.stt.utils.utils import lers
 from hlp.stt.utils.utils import record
-from hlp.stt.utils.utils import load_tokenizer
+from hlp.utils.utils import load_tokenizer
 from hlp.stt.utils.utils import plot_history
 
 
@@ -162,7 +162,7 @@ def recognize(model: tf.keras.Model, audio_feature_type: str, start_sign: str,
             tokenizer = load_tokenizer(dict_path=dict_path)
 
             sentence = tokenizer.sequences_to_texts(output[0][0].numpy())
-            sentence = sentence[0].replace(start_sign, '').replace(end_sign, '').replace(unk_sign, '').replace(' ', '')
+            sentence = sentence[0].replace(start_sign, '').replace(end_sign, '').replace(' ', '')
             print("Output:", sentence)
 
 

@@ -7,6 +7,7 @@ import matplotlib.ticker as ticker
 from collections import deque
 import hlp.chat.common.data_utils as data_utils
 from hlp.utils.beamsearch import BeamSearch
+from hlp.utils.utils import load_tokenizer
 
 
 class Chatter(object):
@@ -16,21 +17,23 @@ class Chatter(object):
     不同模型或方法实现的聊天子类化该类。
     """
 
-    def __init__(self, checkpoint_dir: str, beam_size: int, max_length: int):
+    def __init__(self, checkpoint_dir: str, beam_size: int, max_length: int, dict_fn: str, start_sign, end_sign):
         """
         聊天器初始化，用于加载模型
         :param checkpoint_dir: 检查点保存目录路径
         :param beam_size: batch大小
         :param max_length: 单个句子最大长度
+        :param dict_fn: 保存字典路径
+        :param start_sign: 开始标记
+        :param end_sign: 结束标记
         return: 无返回值
         """
         self.max_length = max_length
+        self.dict_fn = dict_fn
+        self.start_sign = start_sign
+        self.end_sign = end_sign
         self.checkpoint_dir = checkpoint_dir
-        self.beam_search_container = BeamSearch(
-            beam_size=beam_size,
-            max_length=max_length,
-            worst_score=0
-        )
+        self.beam_search_container = BeamSearch(beam_size=beam_size, max_length=max_length, worst_score=0)
 
         if not os.path.exists(checkpoint_dir):
             os.makedirs(checkpoint_dir, exist_ok=True)
@@ -63,14 +66,13 @@ class Chatter(object):
         """
         pass
 
-    def train(self, checkpoint: tf.train.Checkpoint, dict_fn: str, data_fn: str, batch_size: int,
+    def train(self, checkpoint: tf.train.Checkpoint, data_fn: str, batch_size: int,
               buffer_size: int, max_train_data_size: int, epochs: int, max_valid_data_size: int,
               checkpoint_save_freq: int, checkpoint_save_size: int, save_dir: str,
               valid_data_split: float = 0.0, valid_data_fn: str = "", valid_freq: int = 1):
         """
         对模型进行训练，验证数据集优先级为：预设验证文本>训练划分文本>无验证
         :param checkpoint: 模型的检查点
-        :param dict_fn: 字典路径
         :param data_fn: 数据文本路径
         :param buffer_size: Dataset加载缓存大小
         :param batch_size: Dataset加载批大小
@@ -85,21 +87,18 @@ class Chatter(object):
         :param valid_freq: 验证频率
         :return: 各训练指标
         """
-        print('训练开始，正在准备数据中...')
+        print('训练开始，正在准备数据中')
         train_dataset, valid_dataset, steps_per_epoch, valid_steps_per_epoch, checkpoint_prefix = \
-            data_utils.load_data(dict_fn=dict_fn, data_fn=data_fn, start_sign=self.start_sign,
-                                 buffer_size=buffer_size, batch_size=batch_size,
-                                 end_sign=self.end_sign, checkpoint_dir=self.checkpoint_dir,
+            data_utils.load_data(dict_fn=self.dict_fn, data_fn=data_fn, buffer_size=buffer_size,
+                                 batch_size=batch_size, checkpoint_dir=self.checkpoint_dir,
                                  max_length=self.max_length, valid_data_split=valid_data_split,
                                  valid_data_fn=valid_data_fn, max_train_data_size=max_train_data_size,
                                  max_valid_data_size=max_valid_data_size)
 
-        valid_epochs_count = 0  # 用于记录验证轮次
         checkpoint_queue = deque(maxlen=checkpoint_save_size + 1)  # 用于保存该次训练产生的检查点名
         history = {'accuracy': [], 'loss': [], 'val_accuracy': [], 'val_loss': []}
 
         for epoch in range(epochs):
-            valid_epochs_count += 1
             print('Epoch {}/{}'.format(epoch + 1, epochs))
             start_time = time.time()
             self._init_loss_accuracy()
@@ -124,15 +123,15 @@ class Chatter(object):
                              .format(step_time, step_loss, step_accuracy))
             sys.stdout.flush()
 
-            if valid_epochs_count % checkpoint_save_freq == 0:
+            if (epoch + 1) % checkpoint_save_freq == 0:
                 checkpoint.save(file_prefix=checkpoint_prefix)
                 checkpoint_queue.append(tf.train.latest_checkpoint(checkpoint_dir=self.checkpoint_dir))
-                if len(checkpoint_queue) == checkpoint_save_size:
+                if len(checkpoint_queue) == checkpoint_save_size + 1:
                     checkpoint_name = checkpoint_queue[0]
                     os.remove(checkpoint_name + '.index')
                     os.remove(checkpoint_name + '.data-00000-of-00001')
 
-            if valid_dataset is not None and valid_epochs_count % valid_freq == 0:
+            if valid_dataset is not None and (epoch + 1) % valid_freq == 0:
                 valid_loss, valid_accuracy = self._valid_step(valid_dataset=valid_dataset,
                                                               steps_per_epoch=valid_steps_per_epoch)
                 history['val_accuracy'].append(valid_accuracy.numpy())
@@ -210,14 +209,15 @@ class Chatter(object):
         :return: 系统回复字符串
         """
         # 对req进行初步处理
-        inputs, dec_input = data_utils.preprocess_request(sentence=req, token=self.token, max_length=self.max_length,
-                                                          start_sign=self.start_sign, end_sign=self.end_sign)
+        tokenizer = load_tokenizer(self.dict_fn)
+        inputs, dec_input = data_utils.preprocess_request(sentence=req, tokenizer=tokenizer,
+                                                          max_length=self.max_length, start_sign=self.start_sign)
         self.beam_search_container.reset(inputs=inputs, dec_input=dec_input)
         inputs, dec_input = self.beam_search_container.get_search_inputs()
 
         for t in range(self.max_length):
             predictions = self._create_predictions(inputs, dec_input, t)
-            self.beam_search_container.expand(predictions=predictions, end_sign=self.token.get(self.end_sign))
+            self.beam_search_container.expand(predictions=predictions, end_sign=tokenizer.word_index.get(self.end_sign))
             # 注意了，如果BeamSearch容器里的beam_size为0了，说明已经找到了相应数量的结果，直接跳出循环
             if self.beam_search_container.beam_size == 0:
                 break
@@ -229,7 +229,7 @@ class Chatter(object):
         # 从容器中抽取序列，生成最终结果
         for i in range(len(beam_search_result)):
             temp = beam_search_result[i].numpy()
-            text = data_utils.sequences_to_texts(temp, self.token)
+            text = tokenizer.sequences_to_texts(temp)
             text[0] = text[0].replace(self.start_sign, '').replace(self.end_sign, '').replace(' ', '')
             result = '<' + text[0] + '>' + result
         return result

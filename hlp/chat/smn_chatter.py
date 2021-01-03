@@ -9,6 +9,7 @@ sys.path.append(os.path.abspath(__file__)[:os.path.abspath(__file__).rfind("\\hl
 import hlp.chat.model.smn as smn
 import hlp.chat.common.utils as utils
 import hlp.chat.common.data_utils as data_utils
+from hlp.utils.utils import load_tokenizer
 
 
 class SMNChatter():
@@ -53,16 +54,13 @@ class SMNChatter():
         if not ckpt:
             os.makedirs(checkpoint_dir)
 
-        if execute_type == "chat":
-            print('正在从“{}”处加载字典...'.format(self.dict_fn))
-            self.token = data_utils.load_token_dict(dict_fn=self.dict_fn)
-        print('正在检查是否存在检查点...')
+        print('正在检查是否存在检查点')
         if ckpt:
-            print('存在检查点，正在从“{}”中加载检查点...'.format(checkpoint_dir))
+            print('存在检查点，正在加载检查点'.format(checkpoint_dir))
             self.checkpoint.restore(tf.train.latest_checkpoint(checkpoint_dir)).expect_partial()
         else:
             if execute_type == "train":
-                print('不存在检查点，正在train模式...')
+                print('不存在检查点，正在train模式')
             else:
                 print('不存在检查点，请先执行train模式，再进入chat模式')
                 exit(0)
@@ -126,29 +124,25 @@ class SMNChatter():
             sys.stdout.flush()
             self.checkpoint.save(file_prefix=checkpoint_prefix)
 
-    def evaluate(self, valid_fn: str, dict_fn: str = "", tokenizer: tf.keras.preprocessing.text.Tokenizer = None,
-                 max_turn_utterances_num: int = 10, max_valid_data_size: int = 0):
+    def evaluate(self, valid_fn: str, dict_fn: str = "", max_turn_utterances_num: int = 10,
+                 max_valid_data_size: int = 0):
         """
         验证功能，注意了dict_fn和tokenizer两个比传其中一个
         :param valid_fn: 验证数据集路径
         :param dict_fn: 字典路径
-        :param tokenizer: 分词器
         :param max_turn_utterances_num: 最大训练数据量
         :param max_valid_data_size: 最大验证数据量
         :return: r2_1, r10_1指标
         """
-        token_dict = None
         step = max_valid_data_size // max_turn_utterances_num
         if max_valid_data_size == 0:
             return None
-        if dict_fn is not "":
-            token_dict = data_utils.load_token_dict(dict_fn)
         # 处理并加载评价数据，注意，如果max_valid_data_size传
         # 入0，就直接跳过加载评价数据，也就是说只训练不评价
+        tokenizer = load_tokenizer(dict_path=dict_fn)
         valid_dataset = data_utils.load_smn_valid_data(data_fn=valid_fn,
                                                        max_sentence=self.max_sentence,
                                                        max_utterance=self.max_utterance,
-                                                       token_dict=token_dict,
                                                        tokenizer=tokenizer,
                                                        max_turn_utterances_num=max_turn_utterances_num,
                                                        max_valid_data_size=max_valid_data_size)
@@ -175,7 +169,8 @@ class SMNChatter():
         self.solr.ping()
         history = req[-self.max_utterance:]
         pad_sequences = [0] * self.max_sentence
-        utterance = data_utils.dict_texts_to_sequences(history, self.token)
+        tokenizer = load_tokenizer(self.dict_fn)
+        utterance = tokenizer.texts_to_sequences(history)
         utterance_len = len(utterance)
 
         # 如果当前轮次中的历史语句不足max_utterances数量，需要在尾部进行填充
@@ -196,7 +191,7 @@ class SMNChatter():
             return "Sorry! I didn't hear clearly, can you say it again?"
         else:
             utterances = [utterance] * len(candidates)
-            responses = data_utils.dict_texts_to_sequences(candidates, self.token)
+            responses = tokenizer.texts_to_sequences(candidates)
             responses = tf.keras.preprocessing.sequence.pad_sequences(responses, maxlen=self.max_sentence,
                                                                       padding="post")
             utterances = tf.convert_to_tensor(utterances)
@@ -238,7 +233,7 @@ def main():
     parser.add_argument('--max_valid_data_size', default=100, type=int, required=False, help='用于验证的最大数据大小')
     parser.add_argument('--learning_rate', default=0.001, type=float, required=False, help='学习率')
     parser.add_argument('--max_database_size', default=0, type=int, required=False, help='最大数据候选数量')
-    parser.add_argument('--dict_file', default='\\data\\smn_dict_fn.json', type=str, required=False, help='字典路径')
+    parser.add_argument('--dict_file', default='\\data\\smn_dict.json', type=str, required=False, help='字典路径')
     parser.add_argument('--checkpoint', default='\\checkpoints\\smn', type=str, required=False, help='检查点路径')
     parser.add_argument('--tokenized_train', default='\\data\\ubuntu_train.txt', type=str, required=False,
                         help='处理好的多轮分词训练数据集路径')
@@ -251,6 +246,7 @@ def main():
     parser.add_argument('--epochs', default=5, type=int, required=False, help='训练步数')
     parser.add_argument('--batch_size', default=32, type=int, required=False, help='batch大小')
     parser.add_argument('--buffer_size', default=20000, type=int, required=False, help='Dataset加载缓冲大小')
+    parser.add_argument('--unk_sign', default='<unk>', type=str, required=False, help='未登录词')
 
     options = parser.parse_args().__dict__
     if options['config_file'] != '':
@@ -262,41 +258,39 @@ def main():
     execute_type = options['act']
 
     if execute_type == 'train':
-        chatter = SMNChatter(units=options['units'], vocab_size=options['vocab_size'],
-                             execute_type=execute_type, dict_fn=work_path + options['dict_file'],
-                             solr_server=options['solr_server'], embedding_dim=options['embedding_dim'],
-                             checkpoint_dir=work_path + options['checkpoint'], learning_rate=options['learning_rate'],
-                             max_utterance=options['max_utterance'], max_sentence=options['max_sentence'],
-                             database_fn=work_path + options['candidate_database'])
+        chatter = SMNChatter(
+            units=options['units'], vocab_size=options['vocab_size'], execute_type=execute_type,
+            dict_fn=work_path + options['dict_file'], solr_server=options['solr_server'],
+            embedding_dim=options['embedding_dim'], checkpoint_dir=work_path + options['checkpoint'],
+            learning_rate=options['learning_rate'], max_utterance=options['max_utterance'],
+            max_sentence=options['max_sentence'], database_fn=work_path + options['candidate_database'])
         chatter.train(epochs=options['epochs'], data_fn=work_path + options['tokenized_train'],
                       batch_size=options['batch_size'], buffer_size=options['buffer_size'],
                       max_train_data_size=options['max_train_data_size'],
                       max_valid_data_size=options['max_valid_data_size'])
-
     elif execute_type == 'pre_treat':
-        data_utils.creat_index_dataset(data_fn=work_path + options['tokenized_train'],
-                                       solr_sever=options['solr_server'],
-                                       max_database_size=options['max_database_size'])
-
+        data_utils.creat_index_dataset(data_fn=work_path + options['tokenized_train'], unk_sign=options['unk_sign'],
+                                       solr_sever=options['solr_server'], dict_path=work_path + options['dict_file'],
+                                       max_database_size=options['max_database_size'], vocab_size=options['vocab_size'])
     elif execute_type == 'evaluate':
-        chatter = SMNChatter(units=options['units'], vocab_size=options['vocab_size'],
-                             execute_type=execute_type, dict_fn=work_path + options['dict_file'],
-                             solr_server=options['solr_server'], learning_rate=options['learning_rate'],
-                             embedding_dim=options['embedding_dim'], checkpoint_dir=work_path + options['checkpoint'],
-                             max_utterance=options['max_utterance'], max_sentence=options['max_sentence'],
-                             database_fn=work_path + options['candidate_database'])
+        chatter = SMNChatter(
+            units=options['units'], vocab_size=options['vocab_size'], execute_type=execute_type,
+            dict_fn=work_path + options['dict_file'], solr_server=options['solr_server'],
+            embedding_dim=options['embedding_dim'], checkpoint_dir=work_path + options['checkpoint'],
+            learning_rate=options['learning_rate'], max_utterance=options['max_utterance'],
+            max_sentence=options['max_sentence'], database_fn=work_path + options['candidate_database'])
         r2_1, r10_1 = chatter.evaluate(valid_fn=work_path + options['tokenized_valid'],
                                        dict_fn=work_path + options['dict_file'],
                                        max_valid_data_size=options['max_valid_data_size'])
         print("指标：R2@1-{:0.3f}，R10@1-{:0.3f}".format(r2_1, r10_1))
 
     elif execute_type == 'chat':
-        chatter = SMNChatter(units=options['units'], vocab_size=options['vocab_size'],
-                             execute_type=execute_type, dict_fn=work_path + options['dict_file'],
-                             solr_server=options['solr_server'], learning_rate=options['learning_rate'],
-                             embedding_dim=options['embedding_dim'], checkpoint_dir=work_path + options['checkpoint'],
-                             max_utterance=options['max_utterance'], max_sentence=options['max_sentence'],
-                             database_fn=work_path + options['candidate_database'])
+        chatter = SMNChatter(
+            units=options['units'], vocab_size=options['vocab_size'], execute_type=execute_type,
+            dict_fn=work_path + options['dict_file'], solr_server=options['solr_server'],
+            embedding_dim=options['embedding_dim'], checkpoint_dir=work_path + options['checkpoint'],
+            learning_rate=options['learning_rate'], max_utterance=options['max_utterance'],
+            max_sentence=options['max_sentence'], database_fn=work_path + options['candidate_database'])
         history = []  # 用于存放历史对话
         print("Agent: 你好！结束聊天请输入ESC。")
         while True:
