@@ -89,7 +89,7 @@ class PLAS(tf.keras.Model):
         self.units = units
         self.batch_size = batch_size
         # TODO: 编码器和解码器使用不同的单元数
-        self.encoder = Encoder(embedding_dim, units, batch_size)
+        self.encoder = Encoder(embedding_dim, units)
         self.decoder = Decoder(vocab_tar_size, embedding_dim, units)
 
     def call(self, x, enc_hidden, dec_input):
