@@ -94,7 +94,7 @@ def preprocess_thchs30_speech_raw_data(data_path: str, dataset_infos_file: str, 
                     exit(0)
                 with open(text_file_name, 'r', encoding='utf-8') as text_file:
                     texts = text_file.readlines()
-                text = texts[transcript_row].strip()[8:]
+                text = texts[0].strip().strip("\n")[8:]
 
                 with open(data_fir + text, 'r', encoding='utf-8') as text_file:
                     texts = text_file.readlines()

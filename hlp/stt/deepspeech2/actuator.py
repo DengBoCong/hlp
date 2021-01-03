@@ -122,7 +122,7 @@ if __name__ == '__main__':
             max_time_step=options['max_time_step'], spectrum_data_dir=work_path + options['train_spectrum_data_dir'],
             audio_feature_type=options['audio_feature_type'], save_length_path=work_path + options['train_length_path'],
             max_treat_data_size=options['max_train_data_size'], max_sentence_length=options['max_sentence_length'],
-            dict_path=work_path + options['dict_path'], transcript_row=0)
+            dict_path=work_path + options['dict_path'], transcript_row=1)
         print("正在处理测试数据集")
         dispatch_pre_treat_func(
             func_type=options['dataset_type'], data_path=work_path + options['valid_data_dir'],

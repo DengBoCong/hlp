@@ -14,36 +14,25 @@ class DS2(tf.keras.Model):
                  **kwargs):
         super(DS2, self).__init__(**kwargs)
 
-        self.bn1 = tf.keras.layers.BatchNormalization(axis=-1,
-                                                      momentum=0.99,
-                                                      epsilon=0.001)
+        self.bn1 = tf.keras.layers.BatchNormalization(axis=-1, momentum=0.99, epsilon=0.001)
 
         self.conv_layers = conv_layers
         self.conv = []
         for i in range(conv_layers):
-            self.conv.append(tf.keras.layers.Conv1D(filters=filters,
-                                                    kernel_size=kernel_size,
-                                                    strides=strides,
-                                                    padding="valid",
-                                                    activation="relu",
-                                                    name="conv" + str(i)))
+            self.conv.append(tf.keras.layers.Conv1D(filters=filters, kernel_size=kernel_size,
+                                                    strides=strides, padding="valid",
+                                                    activation="relu", name="conv" + str(i)))
 
-        self.bn2 = tf.keras.layers.BatchNormalization(axis=-1,
-                                                      momentum=0.99,
-                                                      epsilon=0.001)
+        self.bn2 = tf.keras.layers.BatchNormalization(axis=-1, momentum=0.99, epsilon=0.001)
 
         self.bi_gru_layers = bi_gru_layers
         self.bi_gru = []
         for i in range(bi_gru_layers):
-            self.bi_gru.append(tf.keras.layers.Bidirectional(tf.keras.layers.GRU(gru_units,
-                                                                                 activation="relu",
-                                                                                 return_sequences=True),
-                                                             merge_mode="sum",
-                                                             name="bi_gru" + str(i)))
+            self.bi_gru.append(tf.keras.layers.Bidirectional(
+                tf.keras.layers.GRU(gru_units, activation="relu", return_sequences=True),
+                merge_mode="sum", name="bi_gru" + str(i)))
 
-        self.bn3 = tf.keras.layers.BatchNormalization(axis=-1,
-                                                      momentum=0.99,
-                                                      epsilon=0.001)
+        self.bn3 = tf.keras.layers.BatchNormalization(axis=-1, momentum=0.99, epsilon=0.001)
 
         self.fc = tf.keras.layers.TimeDistributed(tf.keras.layers.Dense(fc_units, activation=clipped_relu))
         self.sm = tf.keras.layers.TimeDistributed(tf.keras.layers.Dense(output_dim, activation="softmax"))
