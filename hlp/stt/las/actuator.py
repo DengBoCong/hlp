@@ -7,9 +7,10 @@ sys.path.append(os.path.abspath(__file__)[:os.path.abspath(__file__).rfind("\\hl
 from hlp.stt.utils.pre_treat import dispatch_pre_treat_func
 from hlp.stt.las.module import train
 from hlp.stt.las.module import evaluate
+from hlp.stt.las.module import recognize
 from hlp.stt.utils.utils import load_checkpoint
-from hlp.stt.las.model.las import LAS
-from hlp.stt.las.model.plas import PLAS
+from hlp.stt.las.las import LAS
+from hlp.stt.las.plas import PLAS
 
 
 def main():
@@ -32,8 +33,8 @@ def main():
     parser.add_argument('--cnn2_kernel_size', default=3, type=int, required=False, help='卷积核大小')
     parser.add_argument('--max_pool_strides', default=2, type=int, required=False, help='池化步幅')
     parser.add_argument('--max_pool_size', default=7, type=int, required=False, help='池化大小')
-    parser.add_argument('--d', default=1, type=int, required=False, help='')
-    parser.add_argument('--w', default=256, type=int, required=False, help='')
+    parser.add_argument('--d', default=1, type=int, required=False, help='BiLSTM层数')
+    parser.add_argument('--w', default=256, type=int, required=False, help='BiLSTM单元数')
     parser.add_argument('--emb_dim', default=256, type=int, required=False, help='')
     parser.add_argument('--dec_units', default=256, type=int, required=False, help='')
     parser.add_argument('--max_time_step', default=1100, type=int, required=False, help='最大音频补齐长度')
@@ -67,6 +68,8 @@ def main():
                         required=False, help='训练数据集样本长度存放目录路径')
     parser.add_argument('--valid_length_path', default='\\data\\data_thchs30\\valid_length.npy', type=str,
                         required=False, help='测试数据集样本长度存放目录路径')
+    parser.add_argument('--record_path', default='\\data\\record\\', type=str, required=False,
+                        help='录音保存目录')
 
     options = parser.parse_args().__dict__
     if options['config_file'] != '':
@@ -110,7 +113,10 @@ def main():
                  buffer_size=options['buffer_size'], dict_path=work_path + options['dict_path'],
                  length_path=work_path + options['valid_length_path'], max_data_size=options['max_valid_data_size'])
     elif execute_type == 'recognize':
-        print("待完善")
+        recognize(model=model, audio_feature_type=options['audio_feature_type'], max_length=options['max_time_step'],
+                  start_sign=options['start_sign'], end_sign=options['end_sign'], unk_sign=options['unk_sign'],
+                  record_path=work_path + options['record_path'], dict_path=work_path + options['dict_path'],
+                  beam_size=options['beam_size'], max_sentence_length=options['max_sentence_length'], w=options['w'])
     elif execute_type == 'pre_treat':
         print("正在处理训练数据集")
         dispatch_pre_treat_func(

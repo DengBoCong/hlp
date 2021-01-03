@@ -4,10 +4,8 @@ from hlp.utils.layers import BahdanauAttention
 
 
 class Encoder(tf.keras.Model):
-    def __init__(self, cnn1_filters, cnn1_kernel_size,
-                 cnn2_filters, cnn2_kernel_size,
-                 max_pool_strides, max_pool_size,
-                 d, w):
+    def __init__(self, cnn1_filters, cnn1_kernel_size, cnn2_filters,
+                 cnn2_kernel_size, max_pool_strides, max_pool_size, d, w):
         """
 
         :param cnn1_filters:

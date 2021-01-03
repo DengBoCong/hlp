@@ -1,12 +1,15 @@
+import os
 import time
 import tensorflow as tf
 from hlp.stt.utils.load_dataset import load_data
 from hlp.utils.optimizers import loss_func_mask
+from hlp.utils.beamsearch import BeamSearch
 from hlp.stt.utils.utils import wers
 from hlp.stt.utils.utils import lers
 from hlp.stt.utils.utils import load_tokenizer
 from hlp.stt.utils.utils import plot_history
-from hlp.utils.beamsearch import BeamSearchDecoder
+from hlp.stt.utils.utils import record
+from hlp.stt.utils.audio_process import wav_to_feature
 
 
 def train(epochs: int, train_data_path: str, batch_size: int, buffer_size: int, checkpoint_save_freq: int,
@@ -51,7 +54,7 @@ def train(epochs: int, train_data_path: str, batch_size: int, buffer_size: int, 
         total_loss = 0
         start_time = time.time()
         enc_hidden = model.initialize_hidden_state()
-        dec_input = tf.expand_dims([tokenizer.word_index.get('<start>')] * batch_size, 1)
+        dec_input = tf.cast(tf.expand_dims([tokenizer.word_index.get('<start>')] * batch_size, 1), dtype=tf.int64)
 
         print("Epoch {}/{}".format(epoch + 1, epochs))
         for (batch, (audio_feature, sentence, length)) in enumerate(train_dataset.take(steps_per_epoch)):
@@ -77,9 +80,7 @@ def train(epochs: int, train_data_path: str, batch_size: int, buffer_size: int, 
                                                            steps_per_epoch=valid_steps_per_epoch, tokenizer=tokenizer)
             history["wers"].append(valid_wer)
             history["norm_lers"].append(valid_ler)
-            # norm_rates_lers, norm_aver_lers = compute_metric(model, val_data_generator,
-            #                                                  val_batchs, val_batch_size)
-            # print("平均字母错误率: ", norm_aver_lers)
+
     plot_history(history=history, valid_epoch_freq=checkpoint_save_freq, history_img_path=history_img_path)
     return history
 
@@ -104,10 +105,80 @@ def evaluate(model: tf.keras.Model, data_path: str, batch_size: int, buffer_size
 
     tokenizer = load_tokenizer(dict_path=dict_path)
     enc_hidden = model.initialize_hidden_state()
-    dec_input = tf.expand_dims([tokenizer.word_index.get('<start>')] * batch_size, 1)
+    dec_input = tf.cast(tf.expand_dims([tokenizer.word_index.get('<start>')] * batch_size, 1), dtype=tf.int64)
 
     _, _, _ = _valid_step(model=model, dataset=valid_dataset, steps_per_epoch=valid_steps_per_epoch,
                           tokenizer=tokenizer, enc_hidden=enc_hidden, dec_input=dec_input)
+
+
+def recognize(model: tf.keras.Model, audio_feature_type: str, start_sign: str, unk_sign: str, end_sign: str,
+              w: int, beam_size: int, record_path: str, max_length: int, max_sentence_length: int, dict_path: str):
+    """
+    语音识别模块
+    :param model: 模型
+    :param audio_feature_type: 特征类型
+    :param start_sign: 开始标记
+    :param end_sign: 结束标记
+    :param unk_sign: 未登录词
+    :param w: BiLSTM单元数
+    :param beam_size: Beam Size
+    :param record_path: 录音保存路径
+    :param max_length: 最大音频补齐长度
+    :param max_sentence_length: 最大句子长度
+    :param dict_path: 字典保存路径
+    :return: 无返回值
+    """
+    tokenizer = load_tokenizer(dict_path=dict_path)
+    enc_hidden = tf.zeros((1, w))
+    dec_input = tf.expand_dims([tokenizer.word_index.get('<start>')], 1)
+    beam_search = BeamSearch(beam_size=beam_size, max_length=max_sentence_length, worst_score=0)
+
+    while True:
+        try:
+            record_duration = int(input("请设定录音时长(秒, 负数结束，0则继续输入音频路径):"))
+        except BaseException:
+            print("录音时长只能为int数值")
+        else:
+            if record_duration < 0:
+                break
+            if not os.path.exists(record_path):
+                os.makedirs(record_path)
+            # 录音
+            if record_duration == 0:
+                record_path = input("请输入音频路径：")
+            else:
+                record_path = record_path + time.strftime("%Y_%m_%d_%H_%M_%S_", time.localtime(time.time())) + ".wav"
+                record(record_path, record_duration)
+
+            # 加载录音数据并预测
+            audio_feature = wav_to_feature(record_path, audio_feature_type)
+            audio_feature = audio_feature[:max_length, :]
+            input_tensor = tf.keras.preprocessing.sequence.pad_sequences([audio_feature], padding='post',
+                                                                         maxlen=max_length, dtype='float32')
+
+            beam_search.reset(inputs=input_tensor, dec_input=dec_input)
+            decoder_input = dec_input
+            for t in range(1, max_sentence_length):
+                decoder_input = decoder_input[:, -1:]
+                predictions, _ = model(input_tensor, enc_hidden, decoder_input)
+                predictions = tf.nn.softmax(predictions)
+
+                beam_search.expand(predictions=predictions, end_sign=tokenizer.word_index.get(end_sign))
+                if beam_search.beam_size == 0:
+                    break
+
+                input_tensor, decoder_input = beam_search.get_search_inputs()
+
+            beam_search_result = beam_search.get_result(top_k=3)
+            result = ''
+            # 从容器中抽取序列，生成最终结果
+            for i in range(len(beam_search_result)):
+                temp = beam_search_result[i].numpy()
+                text = tokenizer.sequences_to_texts(temp)[0]
+                text = text.replace(start_sign, '').replace(end_sign, '').replace(unk_sign, '').replace(' ', '')
+                result = '<' + text + '>' + result
+
+            print("识别句子为：{}".format(result))
 
 
 def _train_step(model: tf.keras.Model, optimizer: tf.keras.optimizers.Adam, audio_feature: tf.Tensor,
@@ -160,21 +231,19 @@ def _valid_step(model: tf.keras.Model, dataset: tf.data.Dataset, steps_per_epoch
     for (batch, (audio_feature, sentence, length)) in enumerate(dataset.take(steps_per_epoch)):
         loss = 0
         batch_start = time.time()
-        result = []
+        result = dec_input
 
         for t in range(1, sentence.shape[1]):
             dec_input = dec_input[:, -1:]
             predictions, _ = model(audio_feature, enc_hidden, dec_input)
+            loss += loss_func_mask(sentence[:, t], predictions)
             predictions = tf.argmax(predictions, axis=-1)
 
-            result.append(predictions)
-            loss += loss_func_mask(sentence[:, t], predictions)
+            dec_input = tf.expand_dims(predictions, axis=-1)
+            result = tf.concat([result, dec_input], axis=-1)
 
         batch_loss = (loss / int(sentence.shape[0]))
-        print(result)
-        exit(0)
-
-        results = tokenizer.sequences_to_texts(output[0][0].numpy())
+        results = tokenizer.sequences_to_texts(result.numpy())
         sentence = tokenizer.sequences_to_texts(sentence.numpy())
 
         _, aver_wer = wers(sentence, results)
@@ -183,10 +252,9 @@ def _valid_step(model: tf.keras.Model, dataset: tf.data.Dataset, steps_per_epoch
         aver_wers += aver_wer
         aver_norm_lers += norm_aver_ler
 
-        loss = tf.reduce_mean(loss)
-        total_loss += loss
+        total_loss += batch_loss
         print('\r{}/{} [Batch {} Loss {:.4f} {:.1f}s]'.format((batch + 1), steps_per_epoch, batch + 1,
-                                                              loss.numpy(), (time.time() - batch_start)), end='')
+                                                              batch_loss.numpy(), (time.time() - batch_start)), end='')
     print(' - {:.0f}s/step - loss: {:.4f} - average_wer：{:.4f} - '
           'average_norm_ler：{:.4f}'.format((time.time() - start_time) / steps_per_epoch,
                                            total_loss / steps_per_epoch, aver_wers / steps_per_epoch,
